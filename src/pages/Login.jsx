@@ -27,49 +27,54 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white px-4">
-      <form onSubmit={handleLogin} className="w-full max-w-sm bg-white border border-gray-200 rounded-2xl shadow-md p-8">
-        <h1 className="text-2xl font-bold text-black mb-6 text-center">SwimLine4</h1>
-        <p className="text-sm text-gray-500 text-center mb-6">Accedi</p>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-blue-50 to-white px-4">
+      <form onSubmit={handleLogin} className="w-full max-w-sm bg-gradient-to-br from-blue-500 to-blue-600 rounded-3xl shadow-2xl shadow-blue-300 p-8">
+        <div className="flex justify-center mb-4">
+          <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center text-3xl">
+            🏊
+          </div>
+        </div>
+        <h1 className="text-2xl font-extrabold text-white mb-1 text-center tracking-tight">SwimLine4</h1>
+        <p className="text-sm text-blue-100 text-center mb-6">Bentornato, accedi al tuo account</p>
 
-        <label className="block text-sm text-gray-700 mb-1">Email</label>
+        <label className="block text-sm font-medium text-blue-50 mb-1">Email</label>
         <input
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full border border-white/30 bg-white/90 rounded-xl px-4 py-2.5 mb-4 focus:outline-none focus:ring-2 focus:ring-white transition"
           required
         />
 
-        <label className="block text-sm text-gray-700 mb-1">Password</label>
+        <label className="block text-sm font-medium text-blue-50 mb-1">Password</label>
         <input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full border border-white/30 bg-white/90 rounded-xl px-4 py-2.5 mb-2 focus:outline-none focus:ring-2 focus:ring-white transition"
           required
         />
 
         <button
           type="button"
           onClick={handleResetPassword}
-          className="text-sm text-blue-500 hover:underline mb-4 block"
+          className="text-sm text-blue-100 hover:text-white underline mb-4 block transition"
         >
           Password dimenticata?
         </button>
 
-        {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
+        {error && <p className="text-sm text-white bg-red-500/80 rounded-lg px-3 py-2 mb-4">{error}</p>}
 
         <button
           type="submit"
-          className="w-full bg-blue-500 text-white font-semibold rounded-lg py-2 hover:bg-blue-600 transition"
+          className="w-full bg-white text-blue-600 font-bold rounded-xl py-3 hover:bg-blue-50 active:scale-[0.98] transition shadow-lg"
         >
           Accedi
         </button>
 
-        <p className="text-sm text-gray-600 text-center mt-4">
+        <p className="text-sm text-blue-100 text-center mt-5">
           Non hai un account?{' '}
-          <Link to="/registrati" className="text-blue-500 hover:underline">Registrati</Link>
+          <Link to="/registrati" className="text-white font-semibold hover:underline">Registrati</Link>
         </p>
       </form>
     </div>
