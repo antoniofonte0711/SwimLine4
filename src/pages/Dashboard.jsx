@@ -1,8 +1,13 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { supabase } from '../lib/supabaseClient'
 
 export default function Dashboard() {
   const { profile, isAdmin } = useAuth()
+
+  async function handleLogout() {
+    await supabase.auth.signOut()
+  }
 
   return (
     <div className="min-h-screen bg-white px-4 py-8 max-w-3xl mx-auto">
@@ -10,11 +15,16 @@ export default function Dashboard() {
         <h1 className="text-2xl font-bold text-black">
           Ciao{profile?.nome ? `, ${profile.nome}` : ''}!
         </h1>
-        {isAdmin && (
-          <Link to="/admin" className="text-sm text-blue-500 hover:underline">
-            Pannello amministratore
-          </Link>
-        )}
+        <div className="flex items-center gap-4">
+          {isAdmin && (
+            <Link to="/admin" className="text-sm text-blue-500 hover:underline">
+              Pannello amministratore
+            </Link>
+          )}
+          <button onClick={handleLogout} className="text-sm text-gray-500 hover:underline">
+            Esci
+          </button>
+        </div>
       </header>
 
       <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6 mb-8">

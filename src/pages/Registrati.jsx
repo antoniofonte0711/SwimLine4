@@ -17,7 +17,19 @@ export default function Registrati() {
     e.preventDefault()
     setError('')
 
-    const { data, error } = await supabase.auth.signUp({ email, password })
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          nome,
+          cognome,
+          data_nascita: dataNascita,
+          role,
+        },
+      },
+    })
+
     if (error) {
       setError('Errore nella registrazione: ' + error.message)
       return
