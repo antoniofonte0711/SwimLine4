@@ -13,7 +13,7 @@ export default function Login() {
     setError('')
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) setError('Email o password non corretti.')
-    else navigate('/')
+    else navigate('/dashboard')
   }
 
   async function handleResetPassword() {

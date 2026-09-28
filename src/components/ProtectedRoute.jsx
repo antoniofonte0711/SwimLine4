@@ -7,8 +7,8 @@ export default function ProtectedRoute({ children, requireAdmin = false, require
   if (loading) return <div className="p-6 text-center text-gray-500">Caricamento...</div>
 
   if (!user) return <Navigate to="/login" replace />
-  if (requireAdmin && !isAdmin) return <Navigate to="/" replace />
-  if (requireCoach && !isCoach) return <Navigate to="/" replace />
+  if (requireAdmin && !isAdmin) return <Navigate to="/dashboard" replace />
+  if (requireCoach && !isCoach) return <Navigate to="/dashboard" replace />
 
   return children
 }
