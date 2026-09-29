@@ -1,56 +1,56 @@
-import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import { useAuth } from '../context/AuthContext'
+import AppShell from '../components/AppShell'
+import FormLavoro from '../components/FormLavoro'
+import CarrelloCard from '../components/CarrelloCard'
+import { dataLocale } from '../lib/lavori'
+import { tempoInSecondi, secondiInTempo } from '../lib/tempo'
 
+// Home: ultimo lavoro, scelta del lavoro e carrello della giornata
 export default function Dashboard() {
-  const { profile, isAdmin } = useAuth()
-  const navigate = useNavigate()
+  const { user } = useAuth()
+  const [giorno, setGiorno] = useState(dataLocale())
+  const [ultimo, setUltimo] = useState(null)
 
-  async function handleLogout() {
-    await supabase.auth.signOut()
-    navigate('/')
-  }
+  const caricaUltimo = useCallback(async () => {
+    const { data } = await supabase
+      .from('allenamenti')
+      .select('tipo_lavoro, distanza, ripetizioni, stile, passaggi, tempo_totale')
+      .eq('atleta_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+    setUltimo(data?.[0] || null)
+  }, [user.id])
+
+  useEffect(() => {
+    caricaUltimo()
+  }, [caricaUltimo])
+
+  const tempi = ultimo
+    ? [...(ultimo.passaggi || []), ultimo.tempo_totale].map(tempoInSecondi).filter((t) => t !== null)
+    : []
+  const migliore = tempi.length ? secondiInTempo(Math.min(...tempi)) : null
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      <div className="max-w-3xl mx-auto px-4 py-8">
-        <header className="flex justify-between items-center mb-8">
-          <div>
-            <p className="text-sm text-gray-400">Bentornato</p>
-            <h1 className="text-3xl font-extrabold text-black tracking-tight">
-              {profile?.nome || 'Ciao'} 👋
-            </h1>
-          </div>
-          <div className="flex items-center gap-3">
-            {isAdmin && (
-              <Link to="/admin" className="text-sm font-semibold text-white bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-full transition shadow-md shadow-blue-200">
-                ⚙️ Admin
-              </Link>
-            )}
-            <button onClick={handleLogout} className="text-sm font-semibold text-gray-500 hover:text-white hover:bg-gray-800 px-4 py-2 rounded-full transition border border-gray-200">
-              Esci
-            </button>
-          </div>
-        </header>
-
-        <div className="bg-white border border-blue-100 rounded-2xl p-6 mb-8 shadow-sm">
-          <p className="text-gray-400 text-sm mb-1">Ultimo tempo migliorato</p>
-          <p className="text-3xl font-extrabold text-blue-600">— nessun dato ancora —</p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Link to="/allenamenti"
-            className="group bg-blue-500 text-white rounded-2xl py-10 text-center hover:bg-blue-600 hover:-translate-y-1 active:translate-y-0 transition shadow-lg shadow-blue-200">
-            <div className="text-4xl mb-2 group-hover:scale-110 transition">🏊</div>
-            <div className="text-xl font-bold">Allenamento</div>
-          </Link>
-          <Link to="/gare"
-            className="group bg-black text-white rounded-2xl py-10 text-center hover:bg-gray-800 hover:-translate-y-1 active:translate-y-0 transition shadow-lg shadow-gray-300">
-            <div className="text-4xl mb-2 group-hover:scale-110 transition">🏆</div>
-            <div className="text-xl font-bold">Gare</div>
-          </Link>
-        </div>
+    <AppShell titolo="Home" attiva="home" giorno={giorno} onGiorno={setGiorno}>
+      <div className="bg-blue-600 text-white rounded-3xl p-5 mb-3 shadow-lg shadow-blue-200">
+        <p className="text-sm text-blue-100">Ultimo lavoro</p>
+        {ultimo ? (
+          <>
+            <p className="text-3xl font-extrabold mt-1">{migliore || '—'}</p>
+            <p className="text-sm text-blue-100">
+              {ultimo.tipo_lavoro} · {ultimo.ripetizioni || 1}×{ultimo.distanza} m {ultimo.stile || ''}
+              {migliore && ' · miglior passaggio'}
+            </p>
+          </>
+        ) : (
+          <p className="text-lg font-bold mt-1">Nessun lavoro ancora: aggiungine uno qui sotto</p>
+        )}
       </div>
-    </div>
+
+      <FormLavoro />
+      <CarrelloCard giorno={giorno} onSalvato={caricaUltimo} />
+    </AppShell>
   )
 }
