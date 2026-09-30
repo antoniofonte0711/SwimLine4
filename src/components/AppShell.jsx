@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { CalendarioFoglio } from './SelettoreData'
 import { useAuth } from '../context/AuthContext'
 import { dataLocale } from '../lib/lavori'
 import { nomeRuolo } from '../lib/permessi'
@@ -19,11 +21,19 @@ export default function AppShell({ titolo, attiva, indietro, giorno, onGiorno, c
   const { profile, ruolo, staVedendoCome, cambiaVista } = useAuth()
   const voci = VOCI.filter(([chiave]) => !(ruolo === 'ospite' && chiave === 'riepilogo'))
   const iniziale = (profile?.nome || 'A').charAt(0).toUpperCase()
+  const [calAperto, setCalAperto] = useState(false)
+  // La striscia è centrata sul giorno scelto: con le frecce si scorre di una settimana, col calendario si va ovunque
+  const centro = new Date((giorno || dataLocale()) + 'T12:00:00')
   const giorni = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date()
+    const d = new Date(centro)
     d.setDate(d.getDate() - 3 + i)
     return d
   })
+  const sposta = (n) => {
+    const d = new Date(centro)
+    d.setDate(d.getDate() + n)
+    onGiorno(dataLocale(d))
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -47,7 +57,16 @@ export default function AppShell({ titolo, attiva, indietro, giorno, onGiorno, c
           <h1 className="text-2xl font-semibold mt-3">{titolo}</h1>
 
           {onGiorno && (
-            <div className="flex justify-between mt-4">
+            <div className="flex items-center justify-between mt-4 text-sm">
+              <button onClick={() => sposta(-7)} aria-label="Settimana precedente" className="w-9 h-9 rounded-full bg-white/15 text-lg font-bold">‹</button>
+              <button onClick={() => setCalAperto(true)} className="font-semibold capitalize px-3 py-1 rounded-full bg-white/15">
+                📅 {centro.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })}
+              </button>
+              <button onClick={() => sposta(7)} aria-label="Settimana successiva" className="w-9 h-9 rounded-full bg-white/15 text-lg font-bold">›</button>
+            </div>
+          )}
+          {onGiorno && (
+            <div className="flex justify-between mt-2">
               {giorni.map((d) => {
                 const valore = dataLocale(d)
                 const scelto = valore === giorno
@@ -65,6 +84,8 @@ export default function AppShell({ titolo, attiva, indietro, giorno, onGiorno, c
           )}
         </div>
       </header>
+
+      {calAperto && <CalendarioFoglio valore={giorno} onScegli={onGiorno} onChiudi={() => setCalAperto(false)} />}
 
       <main className="-mt-6 rounded-t-[28px] bg-slate-50 px-4 pt-5 pb-32">
         <div className="max-w-md mx-auto">

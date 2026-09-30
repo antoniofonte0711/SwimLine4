@@ -4,7 +4,8 @@ import { useAuth } from '../context/AuthContext'
 import AppShell from '../components/AppShell'
 import { STILI, dataLocale } from '../lib/lavori'
 import { puoModificare } from '../lib/permessi'
-import { ESEMPIO_TEMPO, ERRORE_TEMPO, normalizzaTempo, tempoValido } from '../lib/tempo'
+import InputTempo from '../components/InputTempo'
+import { ERRORE_TEMPO, normalizzaTempo, tempoValido, passaggiCoerenti } from '../lib/tempo'
 import {
   leggiCoda, aggiungiInCoda, rimuoviDaCoda, sincronizza,
   salvaCache, leggiCache, erroreDiRete, useOnline,
@@ -82,6 +83,11 @@ export default function Gare() {
         return
       }
       passaggi.push(t)
+    }
+    const incoerente = passaggiCoerenti(passaggi, tempo)
+    if (incoerente) {
+      setErrore(incoerente)
+      return
     }
     if (form.file && !navigator.onLine) {
       setErrore('Sei offline: il video non si può caricare adesso. Togli il file oppure riprova con la connessione.')
@@ -208,9 +214,9 @@ export default function Gare() {
             {STILI.map((s) => <option key={s}>{s}</option>)}
           </select>
 
-          <label className="block text-xs text-gray-500 mb-1">Tempo finale</label>
-          <input value={form.tempo} placeholder={ESEMPIO_TEMPO}
-            onChange={(e) => setForm({ ...form, tempo: e.target.value })} className={CAMPO + ' mb-4'} />
+          <div className="mb-4">
+            <InputTempo etichetta="Tempo finale" value={form.tempo} onChange={(v) => setForm({ ...form, tempo: v })} />
+          </div>
 
           {nPassaggi > 0 && (
             <>
@@ -218,9 +224,8 @@ export default function Gare() {
               <div className="grid grid-cols-2 gap-3 mb-4">
                 {Array.from({ length: nPassaggi }, (_, i) => (
                   <div key={i}>
-                    <label className="block text-xs text-gray-500 mb-1">Ai {(i + 1) * passo} m</label>
-                    <input value={form.passaggi[i] || ''} placeholder={ESEMPIO_TEMPO} aria-label={`Passaggio ai ${(i + 1) * passo} metri`}
-                      onChange={(e) => cambiaPassaggio(i, e.target.value)} className={CAMPO} />
+                    <InputTempo etichetta={`Ai ${(i + 1) * passo} m`} value={form.passaggi[i] || ''} vuotoOk
+                      onChange={(v) => cambiaPassaggio(i, v)} />
                   </div>
                 ))}
               </div>

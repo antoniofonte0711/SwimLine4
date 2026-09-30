@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useCarrello, filePerLavoro } from '../context/CarrelloContext'
 import { TIPI_LAVORO, STILI, distanzaDaTipo } from '../lib/lavori'
-import { ESEMPIO_TEMPO, ERRORE_TEMPO, normalizzaTempo, tempoValido } from '../lib/tempo'
+import InputTempo from './InputTempo'
+import { ERRORE_TEMPO, normalizzaTempo, tempoValido } from '../lib/tempo'
 
 const CAMPO = 'w-full border border-gray-200 bg-gray-50 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400'
 const INIZIALE = { tipo_lavoro: 'C1', distanza: 75, ripetizioni: 4, stile: 'Stile libero', passaggi: [], file: null }
@@ -92,9 +93,8 @@ export default function FormLavoro() {
       <div className="grid grid-cols-2 gap-3 mb-4">
         {Array.from({ length: n }, (_, i) => (
           <div key={i}>
-            <label className="block text-xs text-gray-500 mb-1">Passaggio {i + 1}</label>
-            <input value={f.passaggi[i] || ''} placeholder={ESEMPIO_TEMPO} aria-label={`Passaggio ${i + 1}`}
-              onChange={(e) => cambiaPassaggio(i, e.target.value)} className={CAMPO} />
+            <InputTempo etichetta={`Passaggio ${i + 1}`} value={f.passaggi[i] || ''} vuotoOk
+              onChange={(v) => cambiaPassaggio(i, v)} />
           </div>
         ))}
       </div>

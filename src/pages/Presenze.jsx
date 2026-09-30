@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import AppShell from '../components/AppShell'
+import SelettoreData from '../components/SelettoreData'
 import { dataLocale } from '../lib/lavori'
 import { STATI, GIORNI_ALLENAMENTO } from '../lib/presenze'
 
@@ -55,9 +56,7 @@ export default function Presenze() {
   return (
     <AppShell titolo="Presenze" attiva="funzioni" indietro="/funzioni">
       <div className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">
-        <label className="block text-xs text-gray-500 mb-1">Giorno</label>
-        <input type="date" value={giorno} onChange={(e) => setGiorno(e.target.value)}
-          className="w-full border border-gray-200 bg-gray-50 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+        <SelettoreData etichetta="Giorno" valore={giorno} onChange={setGiorno} />
         {fuoriAllenamento && (
           <p className="text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2 mt-3">
             Questo non è un giorno di allenamento fisso (lunedì-venerdì).

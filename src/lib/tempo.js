@@ -8,13 +8,55 @@ const REGEX_VECCHIO = /^(\d+):(\d+)\.(\d+)$/ // vecchi dati salvati come 01:05.4
 export const ESEMPIO_TEMPO = `1'20"00`
 export const ERRORE_TEMPO = `Formato del tempo non valido. Scrivilo così: 1'20"00 (minuti ' secondi " centesimi) oppure 59"00 se sei sotto il minuto.`
 
-// Sistema gli apici "intelligenti" che le tastiere dei telefoni inseriscono da sole
+export const ERRORE_TEMPO_BREVE = `Tempo non valido: scrivilo come 59"50 oppure 1'22"34 (anche 5950 o 12234).`
+
+const cc2 = (x) => (x.length === 1 ? x + '0' : x)
+const costruisci = (m, s, c) =>
+  m > 0 ? `${m}'${String(s).padStart(2, '0')}"${cc2(String(c))}` : `${Number(s)}"${cc2(String(c))}`
+
+// Input intelligente: capisce 59, 5950, 12234, 59.5, 59,50, 1:22.34, 1'22"34 e lo porta al formato standard.
+// Se non riesce a capirlo (o i secondi sono 60 o più) restituisce il testo pulito, che poi la validazione rifiuta.
 export function normalizzaTempo(t) {
-  return (t || '')
+  const s = (t || '')
     .trim()
     .replace(/[’‘′`´]/g, "'")
     .replace(/[”“″]/g, '"')
     .replace(/''/g, '"')
+    .replace(/\s+/g, '')
+  if (!s) return ''
+  if (REGEX_CON_MINUTI.test(s) || REGEX_SENZA_MINUTI.test(s)) return s
+
+  let m, sec, cent
+  if (/^\d+$/.test(s)) {
+    if (s.length <= 2) { m = 0; sec = Number(s); cent = '00' }
+    else {
+      cent = s.slice(-2)
+      const resto = s.slice(0, -2)
+      sec = Number(resto.slice(-2))
+      m = resto.length > 2 ? Number(resto.slice(0, -2)) : 0
+    }
+  } else if ((m = s.match(/^(\d{1,2})[.,"](\d{1,2})$/))) {
+    sec = Number(m[1]); cent = cc2(m[2]); m = 0
+  } else if ((m = s.match(/^(\d{1,2})[:'.,](\d{1,2})[.,"](\d{1,2})$/))) {
+    sec = Number(m[2]); cent = cc2(m[3]); m = Number(m[1])
+  } else return s
+
+  if (sec > 59 || m > 99) return s
+  return costruisci(m, sec, cent)
+}
+
+// Passaggi cumulativi di una gara: devono crescere e restare sotto il tempo finale
+export function passaggiCoerenti(passaggi, finale) {
+  let prec = 0
+  for (let i = 0; i < passaggi.length; i++) {
+    const sec = tempoInSecondi(passaggi[i])
+    if (sec === null) continue
+    if (sec <= prec) return `Il passaggio ${i + 1} deve essere più lento del precedente.`
+    prec = sec
+  }
+  const fin = tempoInSecondi(finale)
+  if (fin !== null && prec >= fin) return 'L\'ultimo passaggio deve essere più veloce del tempo finale.'
+  return null
 }
 
 export function tempoValido(t) {
