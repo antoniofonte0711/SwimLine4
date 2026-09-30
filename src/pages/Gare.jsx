@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import AppShell from '../components/AppShell'
 import { STILI, dataLocale } from '../lib/lavori'
+import { puoModificare } from '../lib/permessi'
 import { ESEMPIO_TEMPO, ERRORE_TEMPO, normalizzaTempo, tempoValido } from '../lib/tempo'
 import {
   leggiCoda, aggiungiInCoda, rimuoviDaCoda, sincronizza,
@@ -18,9 +19,10 @@ const VUOTO = { nome_gara: '', data_gara: dataLocale(), distanza: '100', stile: 
 const formattaDataGara = (s) => (s ? new Date(s + 'T12:00:00').toLocaleDateString('it-IT') : '')
 
 export default function Gare() {
-  const { user } = useAuth()
+  const { user, ruolo } = useAuth()
   const online = useOnline()
-  const [vista, setVista] = useState(VISTE[0])
+  const viste = puoModificare(ruolo) ? VISTE : [VISTE[1]]
+  const [vista, setVista] = useState(viste[0])
   const [gare, setGare] = useState([])
   const [coda, setCoda] = useState([])
   const [form, setForm] = useState(VUOTO)
@@ -177,11 +179,11 @@ export default function Gare() {
       <div className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">
         <label className="block text-xs text-gray-500 mb-1">Cosa vuoi fare?</label>
         <select value={vista} onChange={(e) => setVista(e.target.value)} className={CAMPO}>
-          {VISTE.map((v) => <option key={v}>{v}</option>)}
+          {viste.map((v) => <option key={v}>{v}</option>)}
         </select>
       </div>
 
-      {vista === 'Nuova gara' && (
+      {vista === 'Nuova gara' && puoModificare(ruolo) && (
         <form onSubmit={salva} className="bg-white border border-gray-100 rounded-3xl p-5 shadow-sm">
           <label className="block text-xs text-gray-500 mb-1">Nome gara</label>
           <input value={form.nome_gara} placeholder="Es. Trofeo d'Autunno"

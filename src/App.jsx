@@ -14,6 +14,7 @@ import Gare from './pages/Gare'
 import Storico from './pages/Storico'
 import Progressi from './pages/Progressi'
 import Presenze from './pages/Presenze'
+import Squadra from './pages/Squadra'
 import InArrivo from './pages/InArrivo'
 import AdminPanel from './pages/AdminPanel'
 
@@ -22,7 +23,6 @@ const PROSSIMAMENTE = [
   ['/video', 'Video'],
   ['/record', 'Record'],
   ['/archivio', 'Archivio gare'],
-  ['/squadra', 'Squadra'],
   ['/calendario', 'Calendario'],
   ['/impostazioni', 'Impostazioni'],
 ]
@@ -46,6 +46,7 @@ export default function App() {
 
             <Route path="/storico" element={<ProtectedRoute><Storico /></ProtectedRoute>} />
             <Route path="/progressi" element={<ProtectedRoute><Progressi /></ProtectedRoute>} />
+            <Route path="/squadra" element={<ProtectedRoute><Squadra /></ProtectedRoute>} />
             <Route path="/presenze" element={<ProtectedRoute requireCoach><Presenze /></ProtectedRoute>} />
 
             {PROSSIMAMENTE.map(([percorso, titolo]) => (

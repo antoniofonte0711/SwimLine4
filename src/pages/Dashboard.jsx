@@ -6,6 +6,7 @@ import AppShell from '../components/AppShell'
 import { coloreLavoro, dataLocale, formattaGiorno } from '../lib/lavori'
 import { leggiCoda } from '../lib/codaOffline'
 import { STATI } from '../lib/presenze'
+import { puoModificare } from '../lib/permessi'
 
 const COLORE_STATO = {
   presente: 'bg-green-100 text-green-700',
@@ -15,7 +16,7 @@ const COLORE_STATO = {
 
 // Home: i giorni e, sotto, gli allenamenti del giorno scelto
 export default function Dashboard() {
-  const { user } = useAuth()
+  const { user, ruolo } = useAuth()
   const [giorno, setGiorno] = useState(dataLocale())
   const [righe, setRighe] = useState([])
   const [presenza, setPresenza] = useState(null)
@@ -35,6 +36,18 @@ export default function Dashboard() {
     carica()
     return () => { attivo = false }
   }, [giorno, user.id])
+
+  if (ruolo === 'ospite') {
+    return (
+      <AppShell titolo="Home" attiva="home">
+        <div className="bg-white border border-gray-100 rounded-3xl p-8 text-center shadow-sm">
+          <p className="text-4xl mb-2">👋</p>
+          <p className="font-bold mb-1">Benvenuto in SwimLine4</p>
+          <p className="text-sm text-gray-400">Da ospite puoi vedere la squadra e il calendario gare.</p>
+        </div>
+      </AppShell>
+    )
+  }
 
   return (
     <AppShell titolo="Home" attiva="home" giorno={giorno} onGiorno={setGiorno}>
@@ -68,10 +81,16 @@ export default function Dashboard() {
         </div>
       )}
 
+      {ruolo === 'genitore' && (
+        <p className="text-xs text-gray-400 text-center mb-3 px-2">Vista genitore, in sola lettura. Il collegamento con i tempi di tuo figlio arriva con la fase Genitori.</p>
+      )}
+
+      {puoModificare(ruolo) && (
       <Link to="/allenamenti"
         className="block text-center font-bold text-blue-600 bg-blue-50 rounded-2xl py-3.5 hover:bg-blue-100 active:scale-[0.98] transition">
         ➕ Aggiungi un lavoro
       </Link>
+      )}
     </AppShell>
   )
 }

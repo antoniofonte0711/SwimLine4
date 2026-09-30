@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { dataLocale } from '../lib/lavori'
+import { nomeRuolo } from '../lib/permessi'
 
 const VOCI = [
   ['home', '/dashboard', '🏠', 'Home'],
@@ -15,7 +16,8 @@ const LETTERE = ['D', 'L', 'M', 'M', 'G', 'V', 'S']
 // indietro: percorso a cui torna il tasto "Indietro" (facoltativo)
 // giorno + onGiorno: se presenti, mostrano la striscia dei giorni
 export default function AppShell({ titolo, attiva, indietro, giorno, onGiorno, children }) {
-  const { profile } = useAuth()
+  const { profile, ruolo, staVedendoCome, cambiaVista } = useAuth()
+  const voci = VOCI.filter(([chiave]) => !(ruolo === 'ospite' && chiave === 'riepilogo'))
   const iniziale = (profile?.nome || 'A').charAt(0).toUpperCase()
   const giorni = Array.from({ length: 7 }, (_, i) => {
     const d = new Date()
@@ -25,6 +27,12 @@ export default function AppShell({ titolo, attiva, indietro, giorno, onGiorno, c
 
   return (
     <div className="min-h-screen bg-slate-50">
+      {staVedendoCome && (
+        <div className="sticky top-0 z-50 bg-amber-400 text-black text-sm px-4 py-2 flex items-center justify-between gap-3 pt-[max(env(safe-area-inset-top),0.5rem)]">
+          <span>👁 Stai vedendo l'app come: <b>{nomeRuolo(ruolo)}</b></span>
+          <button onClick={() => cambiaVista('admin')} className="font-bold bg-black text-white rounded-full px-3 py-1">Torna admin</button>
+        </div>
+      )}
       <header className="bg-blue-600 text-white px-5 pt-[max(env(safe-area-inset-top),1rem)] pb-10">
         <div className="max-w-md mx-auto">
           <div className="flex items-center justify-between">
@@ -71,7 +79,7 @@ export default function AppShell({ titolo, attiva, indietro, giorno, onGiorno, c
       </main>
 
       <nav className="fixed bottom-3 left-1/2 -translate-x-1/2 w-[calc(100%-1.5rem)] max-w-md bg-white border border-gray-200 rounded-full shadow-xl flex p-1.5 mb-[env(safe-area-inset-bottom)]">
-        {VOCI.map(([chiave, percorso, icona, nome]) => (
+        {voci.map(([chiave, percorso, icona, nome]) => (
           <Link key={chiave} to={percorso}
             className={`flex-1 text-center text-[11px] py-2 rounded-full transition ${
               attiva === chiave ? 'bg-blue-600 text-white' : 'text-gray-500'

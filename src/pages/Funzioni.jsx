@@ -1,10 +1,12 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { funzioniConsentite } from '../lib/permessi'
 import AppShell from '../components/AppShell'
 
 const FUNZIONI = [
   ['/allenamenti', '⏱', 'Allenamenti'],
   ['/storico', '📖', 'Storico'],
+  ['/presenze', '✅', 'Presenze'],
   ['/gare', '🏆', 'Gare'],
   ['/video', '🎥', 'Video'],
   ['/progressi', '📈', 'Progressi'],
@@ -14,11 +16,11 @@ const FUNZIONI = [
   ['/calendario', '🗓', 'Calendario'],
   ['/impostazioni', '⚙️', 'Impostazioni'],
 ]
-const SOLO_COACH = [['/presenze', '✅', 'Presenze']]
 
 export default function Funzioni() {
-  const { isCoach } = useAuth()
-  const voci = isCoach ? [...FUNZIONI.slice(0, 2), ...SOLO_COACH, ...FUNZIONI.slice(2)] : FUNZIONI
+  const { ruolo } = useAuth()
+  const consentite = funzioniConsentite(ruolo)
+  const voci = FUNZIONI.filter(([percorso]) => consentite.includes(percorso))
 
   return (
     <AppShell titolo="Funzioni" attiva="funzioni">

@@ -69,7 +69,7 @@ export default function Presenze() {
 
       {atleti.length === 0 && (
         <p className="text-sm text-gray-400 text-center py-8">
-          Non vedo atleti da mostrare. Gli atleti della tua squadra compariranno qui quando sistemiamo i permessi della visuale coach.
+          Nessun atleta nella tua squadra: compaiono qui quando scelgono la tua squadra in registrazione.
         </p>
       )}
 
