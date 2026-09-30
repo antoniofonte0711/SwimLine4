@@ -46,8 +46,9 @@ export default function EditorAllenamento({ squadra, giorno }) {
   async function salva(pubblica) {
     setErrore('')
     setOk('')
-    if (righe.some((r) => Number(r.distanza) < 25)) {
-      setErrore('Ogni riga deve avere una distanza da 25 metri in su.')
+    const storta = righe.findIndex((r) => !(Number(r.distanza) >= 25))
+    if (storta >= 0) {
+      setErrore(`Riga ${storta + 1}: scrivi la distanza (da 25 metri in su) nel campo "Distanza (m)".`)
       return
     }
     const pulite = righe.map((r) => ({
@@ -111,7 +112,8 @@ export default function EditorAllenamento({ squadra, giorno }) {
               <input type="number" min="25" step="25" value={r.distanza} onChange={(e) => cambia(i, 'distanza', e.target.value)} className={CAMPO} />
             </div>
           </div>
-          <input value={r.note} onChange={(e) => cambia(i, 'note', e.target.value)} placeholder="Note (recupero, ritmo, gambe...)" className={CAMPO} />
+          <label className="block text-xs text-gray-500 mb-1">Note (facoltative: recupero, ritmo...)</label>
+          <input value={r.note} onChange={(e) => cambia(i, 'note', e.target.value)} placeholder="Es. rec 20&quot;, gambe veloci" className={CAMPO} />
           {righe.length > 1 && (
             <button onClick={() => setRighe(righe.filter((_, k) => k !== i))} className="text-xs text-red-500 mt-2">Togli riga</button>
           )}
