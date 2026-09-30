@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { TIPI_LAVORO, STILI, distanzaDaTipo } from '../lib/lavori'
+import { GIORNI_ALLENAMENTO } from '../lib/presenze'
 import { RIGA_VUOTA, TIPI_COACH, addGiorni, metriPiano } from '../lib/pianoSquadra'
 
 const CAMPO = 'w-full border border-gray-200 bg-gray-50 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400'
@@ -40,7 +41,10 @@ export default function EditorAllenamento({ squadra, giorno }) {
     const d = distanzaDaTipo(tipo)
     setRighe(righe.map((r, k) => (k === i ? { ...r, tipo_lavoro: tipo, distanza: d ?? r.distanza } : r)))
   }
-  const prossimi = Array.from({ length: 7 }, (_, i) => addGiorni(giorno, i + 1))
+  // Solo giorni di allenamento (lunedì-venerdì): i prossimi 10 dopo la data scelta
+  const prossimi = Array.from({ length: 21 }, (_, i) => addGiorni(giorno, i + 1))
+    .filter((d) => GIORNI_ALLENAMENTO.includes(new Date(d + 'T12:00:00').getDay()))
+    .slice(0, 10)
   const toggleExtra = (d) => setExtra(extra.includes(d) ? extra.filter((x) => x !== d) : [...extra, d])
 
   async function salva(pubblica) {
