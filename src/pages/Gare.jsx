@@ -5,6 +5,7 @@ import AppShell from '../components/AppShell'
 import { STILI, dataLocale } from '../lib/lavori'
 import { puoModificare } from '../lib/permessi'
 import InputTempo from '../components/InputTempo'
+import GareCoach from '../components/GareCoach'
 import { ERRORE_TEMPO, normalizzaTempo, tempoValido, passaggiCoerenti } from '../lib/tempo'
 import {
   leggiCoda, aggiungiInCoda, rimuoviDaCoda, sincronizza,
@@ -19,7 +20,7 @@ const VUOTO = { nome_gara: '', data_gara: dataLocale(), distanza: '100', stile: 
 
 const formattaDataGara = (s) => (s ? new Date(s + 'T12:00:00').toLocaleDateString('it-IT') : '')
 
-export default function Gare() {
+function GareAtleta() {
   const { user, ruolo } = useAuth()
   const online = useOnline()
   const viste = puoModificare(ruolo) ? VISTE : [VISTE[1]]
@@ -271,4 +272,9 @@ export default function Gare() {
       )}
     </AppShell>
   )
+}
+
+export default function Gare() {
+  const { ruolo } = useAuth()
+  return ruolo === 'coach' ? <GareCoach /> : <GareAtleta />
 }

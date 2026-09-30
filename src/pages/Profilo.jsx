@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { RUOLI_VISTA, nomeRuolo } from '../lib/permessi'
 import AppShell from '../components/AppShell'
+import BoxSquadra from '../components/BoxSquadra'
 
 // Il ruolo (atleta, coach, genitore) si sceglie solo alla registrazione: qui non si cambia.
 // Solo l'admin può "vedere come" un altro ruolo, per controllare cosa vedrebbe.
@@ -29,6 +30,8 @@ export default function Profilo() {
         <p className="text-xl font-bold">{profile?.nome} {profile?.cognome}</p>
         <p className="text-sm text-gray-400 capitalize">{profile?.role}</p>
       </div>
+
+      {['atleta', 'genitore', 'coach', 'admin'].includes(profile?.role) && <BoxSquadra />}
 
       {adminReale && (
         <div className="bg-white border border-gray-100 rounded-3xl p-5 shadow-sm mb-3">

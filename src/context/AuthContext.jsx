@@ -49,6 +49,10 @@ export function AuthProvider({ children }) {
     setLoading(false)
   }
 
+  async function ricaricaProfilo() {
+    if (user) await loadProfile(user.id)
+  }
+
   function cambiaVista(ruolo) {
     const valore = ruolo === 'admin' ? '' : ruolo
     setVistaCome(valore)
@@ -68,7 +72,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, profile, loading, isAdmin, isCoach, ruolo, adminReale, staVedendoCome, cambiaVista }}
+      value={{ user, profile, loading, isAdmin, isCoach, ruolo, adminReale, staVedendoCome, cambiaVista, ricaricaProfilo }}
     >
       {children}
     </AuthContext.Provider>
