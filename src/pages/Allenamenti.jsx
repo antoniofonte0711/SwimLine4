@@ -5,10 +5,14 @@ import CarrelloCard from '../components/CarrelloCard'
 import StoricoAllenamenti from '../components/StoricoAllenamenti'
 import { dataLocale } from '../lib/lavori'
 import { useOnline } from '../lib/codaOffline'
+import { useAuth } from '../context/AuthContext'
+import EditorAllenamento from '../components/EditorAllenamento'
+import { SenzaSquadra } from '../components/PianoCard'
+import { useMiaSquadra } from '../lib/pianoSquadra'
 
 const VISTE = ['Aggiungi lavoro', 'Storico']
 
-export default function Allenamenti() {
+function AllenamentiAtleta() {
   const online = useOnline()
   const [vista, setVista] = useState(VISTE[0])
 
@@ -37,4 +41,27 @@ export default function Allenamenti() {
       {vista === 'Storico' && <StoricoAllenamenti />}
     </AppShell>
   )
+}
+
+// Coach: sceglie qualsiasi data e prepara la scheda per la squadra
+function AllenamentiCoach() {
+  const [giorno, setGiorno] = useState(dataLocale())
+  const { squadra, pronto } = useMiaSquadra()
+  return (
+    <AppShell titolo="Allenamenti" attiva="funzioni" indietro="/funzioni">
+      <div className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">
+        <label className="block text-xs text-gray-500 mb-1">Data dell'allenamento</label>
+        <input type="date" value={giorno} onChange={(e) => e.target.value && setGiorno(e.target.value)}
+          className="w-full border border-gray-200 bg-gray-50 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+      </div>
+      {!pronto ? <p className="text-center text-gray-400 py-8">Carico…</p>
+        : !squadra ? <SenzaSquadra />
+        : <EditorAllenamento squadra={squadra} giorno={giorno} />}
+    </AppShell>
+  )
+}
+
+export default function Allenamenti() {
+  const { ruolo } = useAuth()
+  return ruolo === 'coach' ? <AllenamentiCoach /> : <AllenamentiAtleta />
 }

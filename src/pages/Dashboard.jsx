@@ -7,6 +7,9 @@ import { coloreLavoro, dataLocale, formattaGiorno } from '../lib/lavori'
 import { leggiCoda } from '../lib/codaOffline'
 import { STATI } from '../lib/presenze'
 import { puoModificare } from '../lib/permessi'
+import PianoCard, { SenzaSquadra } from '../components/PianoCard'
+import EditorAllenamento from '../components/EditorAllenamento'
+import { useMiaSquadra } from '../lib/pianoSquadra'
 
 const COLORE_STATO = {
   presente: 'bg-green-100 text-green-700',
@@ -15,11 +18,20 @@ const COLORE_STATO = {
 }
 
 // Home: i giorni e, sotto, gli allenamenti del giorno scelto
-export default function Dashboard() {
+function HomeAtleta() {
   const { user, ruolo } = useAuth()
   const [giorno, setGiorno] = useState(dataLocale())
   const [righe, setRighe] = useState([])
   const [presenza, setPresenza] = useState(null)
+  const [piano, setPiano] = useState(null)
+
+  // Allenamento pubblicato dal coach per questo giorno
+  useEffect(() => {
+    let attivo = true
+    supabase.from('allenamenti_squadra').select('*').eq('data', giorno).limit(1)
+      .then(({ data }) => { if (attivo) setPiano(data?.[0] || null) })
+    return () => { attivo = false }
+  }, [giorno])
 
   useEffect(() => {
     let attivo = true
@@ -58,6 +70,8 @@ export default function Dashboard() {
         )}
       </div>
 
+      <PianoCard piano={piano} />
+
       {righe.length === 0 ? (
         <div className="bg-white border border-gray-100 rounded-3xl p-8 text-center text-gray-400 shadow-sm mb-3">
           <p className="text-4xl mb-2">🏊</p>
@@ -93,4 +107,23 @@ export default function Dashboard() {
       )}
     </AppShell>
   )
+}
+
+// Home del coach: l'allenamento della giornata per la squadra
+function HomeCoach() {
+  const [giorno, setGiorno] = useState(dataLocale())
+  const { squadra, pronto } = useMiaSquadra()
+  return (
+    <AppShell titolo="Home" attiva="home" giorno={giorno} onGiorno={setGiorno}>
+      <p className="text-sm font-semibold text-gray-500 capitalize mb-3 px-1">{formattaGiorno(giorno)}</p>
+      {!pronto ? <p className="text-center text-gray-400 py-8">Carico…</p>
+        : !squadra ? <SenzaSquadra />
+        : <EditorAllenamento squadra={squadra} giorno={giorno} />}
+    </AppShell>
+  )
+}
+
+export default function Dashboard() {
+  const { ruolo } = useAuth()
+  return ruolo === 'coach' ? <HomeCoach /> : <HomeAtleta />
 }

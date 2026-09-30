@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import AppShell from '../components/AppShell'
 import { dataLocale } from '../lib/lavori'
+import RiepilogoCoach from '../components/RiepilogoCoach'
 import { ALLENAMENTI_SETTIMANA, lunediDi, riepilogoPresenze } from '../lib/presenze'
 
 function Pallino({ valore, colore, etichetta }) {
@@ -15,7 +16,7 @@ function Pallino({ valore, colore, etichetta }) {
 }
 
 // Dashboard: riepilogo della settimana e presenze
-export default function Riepilogo() {
+function RiepilogoAtleta() {
   const { user } = useAuth()
   const [righe, setRighe] = useState([])
   const [presenze, setPresenze] = useState([])
@@ -76,4 +77,9 @@ export default function Riepilogo() {
       </p>
     </AppShell>
   )
+}
+
+export default function Riepilogo() {
+  const { ruolo } = useAuth()
+  return ruolo === 'coach' ? <RiepilogoCoach /> : <RiepilogoAtleta />
 }
