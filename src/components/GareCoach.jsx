@@ -1,35 +1,144 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import AppShell from './AppShell'
 import InputTempo from './InputTempo'
 import SelettoreData from './SelettoreData'
 import { SenzaSquadra } from './PianoCard'
 import { STILI, dataLocale } from '../lib/lavori'
-import { normalizzaTempo, tempoValido, ERRORE_TEMPO_BREVE } from '../lib/tempo'
+import {
+  normalizzaTempo, tempoValido, tempoInSecondi, secondiInTempo,
+  passaggiCoerenti, ERRORE_TEMPO_BREVE,
+} from '../lib/tempo'
 import { useMiaSquadra } from '../lib/pianoSquadra'
 
 const CAMPO = 'w-full border border-gray-200 bg-gray-50 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400'
-const DISTANZE = ['50', '100', '200', '400', '800', '1500']
+const CARD = 'bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm'
+const DISTANZE = ['25', '50', '100', '200', '400', '800', '1500']
+const MSG_MIGRAZIONE = 'Manca una colonna nel database: esegui migrazione_fase6_gare_coach.sql su Supabase.'
 
-// Gare del coach: scegli la gara, poi a quali atleti assegnarla e il tempo di ognuno
+const dataIt = (s) => (s ? new Date(s + 'T12:00:00').toLocaleDateString('it-IT') : '')
+const nomeGara = (g) => `${g.distanza} m ${g.stile}`
+
+// Differenza rispetto al tempo di iscrizione: negativo = migliorato (verde)
+function differenza(iscr, finale) {
+  const a = tempoInSecondi(iscr)
+  const b = tempoInSecondi(finale)
+  if (a === null || b === null) return null
+  const diff = Math.round((b - a) * 100) / 100
+  if (diff === 0) return { testo: '=', classe: 'text-gray-500 bg-gray-100' }
+  const testo = (diff < 0 ? '-' : '+') + secondiInTempo(Math.abs(diff))
+  return { testo, classe: diff < 0 ? 'text-green-700 bg-green-100' : 'text-red-600 bg-red-100' }
+}
+
+function Differenziale({ iscr, finale }) {
+  const d = differenza(iscr, finale)
+  if (!d) return null
+  return <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${d.classe}`}>{d.testo}</span>
+}
+
+// Scheda di un atleta in una gara già assegnata: tempo effettivo + passaggi
+function SchedaRisultato({ g, onSalvato }) {
+  const d = Number(g.distanza)
+  const passo = d <= 50 ? 25 : 50
+  const nPassaggi = Math.max(0, Math.ceil(d / passo) - 1)
+  const [aperta, setAperta] = useState(false)
+  const [tempo, setTempo] = useState(g.tempo || '')
+  const [passaggi, setPassaggi] = useState(g.passaggi || [])
+  const [errore, setErrore] = useState('')
+  const [invio, setInvio] = useState(false)
+
+  async function salva() {
+    setErrore('')
+    const t = normalizzaTempo(tempo)
+    if (!tempoValido(t)) return setErrore(ERRORE_TEMPO_BREVE)
+    const p = []
+    for (let i = 0; i < nPassaggi; i++) {
+      const x = normalizzaTempo(passaggi[i])
+      if (!x) continue
+      if (!tempoValido(x)) return setErrore(`Passaggio ai ${(i + 1) * passo} m: ${ERRORE_TEMPO_BREVE}`)
+      p.push(x)
+    }
+    const incoerente = passaggiCoerenti(p, t)
+    if (incoerente) return setErrore(incoerente)
+    setInvio(true)
+    const { error } = await supabase.from('gare').update({ tempo: t, passaggi: p }).eq('id', g.id)
+    setInvio(false)
+    if (error) return setErrore('Non sono riuscito a salvare: ' + error.message)
+    setAperta(false)
+    onSalvato()
+  }
+
+  return (
+    <div className="py-3 border-t border-gray-100 first:border-t-0">
+      <button onClick={() => setAperta(!aperta)} className="w-full flex items-center justify-between gap-2 text-left">
+        <span className="min-w-0">
+          <span className="font-semibold block truncate">{g.atleta?.nome} {g.atleta?.cognome}</span>
+          <span className="text-xs text-gray-400">
+            {g.tempo_iscrizione ? `Iscrizione ${g.tempo_iscrizione}` : 'Senza tempo di iscrizione'}
+          </span>
+        </span>
+        <span className="flex items-center gap-2 shrink-0">
+          {g.tempo
+            ? <><b className="text-blue-600">{g.tempo}</b><Differenziale iscr={g.tempo_iscrizione} finale={g.tempo} /></>
+            : <span className="text-xs font-bold px-3 py-1 rounded-full bg-yellow-100 text-yellow-700">Da inserire</span>}
+        </span>
+      </button>
+
+      {aperta && (
+        <div className="mt-3">
+          <InputTempo etichetta="Tempo effettivo" value={tempo} onChange={setTempo} />
+          {tempo && g.tempo_iscrizione && (
+            <p className="text-sm text-gray-500 mt-2">Rispetto all'iscrizione: <Differenziale iscr={g.tempo_iscrizione} finale={normalizzaTempo(tempo)} /></p>
+          )}
+          {nPassaggi > 0 && (
+            <>
+              <p className="text-sm text-gray-500 mt-3 mb-2">Passaggi ogni {passo} m</p>
+              <div className="grid grid-cols-2 gap-3">
+                {Array.from({ length: nPassaggi }, (_, i) => (
+                  <InputTempo key={i} etichetta={`Ai ${(i + 1) * passo} m`} vuotoOk value={passaggi[i] || ''}
+                    onChange={(v) => { const n = [...passaggi]; n[i] = v; setPassaggi(n) }} />
+                ))}
+              </div>
+            </>
+          )}
+          {errore && <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mt-3">{errore}</p>}
+          <button onClick={salva} disabled={invio}
+            className="w-full mt-3 font-bold text-white bg-blue-600 disabled:bg-gray-300 rounded-2xl py-3">
+            {invio ? 'Salvo…' : 'Salva risultato'}
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Gare del coach: assegna la gara a più atleti, poi inserisci i risultati
 export default function GareCoach() {
   const { squadra, pronto } = useMiaSquadra()
   const [modo, setModo] = useState('nuova')
   const [atleti, setAtleti] = useState([])
   const [gare, setGare] = useState([])
+
+  // nuova gara
   const [nome, setNome] = useState('')
   const [data, setData] = useState(dataLocale())
+  const [orario, setOrario] = useState('')
   const [distanza, setDistanza] = useState('100')
   const [stile, setStile] = useState('Stile libero')
-  const [righe, setRighe] = useState({}) // { idAtleta: { incluso, iscr, tempo } }
+  const [righe, setRighe] = useState({}) // { idAtleta: { incluso, iscr } }
   const [errore, setErrore] = useState('')
   const [ok, setOk] = useState('')
   const [invio, setInvio] = useState(false)
 
+  // risultati
+  const [trofeo, setTrofeo] = useState('')
+  const [garaSel, setGaraSel] = useState('')
+
   const caricaGare = useCallback(async (elenco) => {
     const ids = elenco.map((a) => a.id)
     if (!ids.length) return setGare([])
-    const { data: g } = await supabase.from('gare').select('*').in('atleta_id', ids).order('data_gara', { ascending: false }).limit(60)
+    const { data: g } = await supabase.from('gare').select('*').in('atleta_id', ids)
+      .order('data_gara', { ascending: false }).limit(300)
     setGare((g || []).map((r) => ({ ...r, atleta: elenco.find((a) => a.id === r.atleta_id) })))
   }, [])
 
@@ -39,8 +148,16 @@ export default function GareCoach() {
       .then(({ data: a }) => { setAtleti(a || []); caricaGare(a || []) })
   }, [squadra?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const riga = (id) => righe[id] || { incluso: false, iscr: '', tempo: '' }
-  const cambia = (id, patch) => setRighe({ ...righe, [id]: { ...riga(id), ...patch } })
+  const riga = (id) => righe[id] || { incluso: false, iscr: '' }
+  const cambia = (id, patch) => setRighe((r) => ({ ...r, [id]: { ...(r[id] || { incluso: false, iscr: '' }), ...patch } }))
+  const nSelezionati = atleti.filter((a) => riga(a.id).incluso).length
+  const tuttiSelezionati = atleti.length > 0 && nSelezionati === atleti.length
+
+  function selezionaTutti() {
+    const nuovo = {}
+    atleti.forEach((a) => { nuovo[a.id] = { ...riga(a.id), incluso: !tuttiSelezionati } })
+    setRighe(nuovo)
+  }
 
   async function salva() {
     setErrore('')
@@ -50,33 +167,42 @@ export default function GareCoach() {
     if (!scelti.length) return setErrore('Seleziona almeno un atleta.')
     const records = []
     for (const a of scelti) {
-      const r = riga(a.id)
-      const tempo = normalizzaTempo(r.tempo)
-      const iscr = normalizzaTempo(r.iscr)
-      if (!tempoValido(tempo)) return setErrore(`${a.nome}: ${ERRORE_TEMPO_BREVE}`)
+      const iscr = normalizzaTempo(riga(a.id).iscr)
       if (iscr && !tempoValido(iscr)) return setErrore(`${a.nome}, tempo di iscrizione: ${ERRORE_TEMPO_BREVE}`)
-      const rec = { atleta_id: a.id, nome_gara: nome.trim(), distanza: Number(distanza), stile, tempo, data_gara: data }
-      if (iscr) rec.tempo_iscrizione = iscr
-      records.push(rec)
+      records.push({
+        atleta_id: a.id, nome_gara: nome.trim(), distanza: Number(distanza), stile,
+        data_gara: data, orario: orario || null, tempo: null, passaggi: [],
+        ...(iscr ? { tempo_iscrizione: iscr } : {}),
+      })
     }
     setInvio(true)
     const { error } = await supabase.from('gare').insert(records)
     setInvio(false)
     if (error) {
-      return setErrore(error.message.includes('tempo_iscrizione')
-        ? 'Manca la colonna del tempo di iscrizione: esegui migrazione_fase5_coach_tempi.sql su Supabase.'
-        : 'Non sono riuscito a salvare: ' + error.message)
+      return setErrore(/tempo_iscrizione|orario|null value/.test(error.message)
+        ? MSG_MIGRAZIONE : 'Non sono riuscito a salvare: ' + error.message)
     }
-    setOk(`Gara salvata per ${records.length} atleta/i. Puoi inserirne un'altra: nome, data e stile sono ancora qui.`)
-    setNome('')
+    setOk(`Gara assegnata a ${records.length} atleta/i. I tempi si inseriscono da "Risultati".`)
     setRighe({})
     caricaGare(atleti)
   }
 
-  async function togli(g) {
-    if (!window.confirm(`Eliminare ${g.nome_gara} di ${g.atleta?.nome}?`)) return
-    const { error } = await supabase.from('gare').delete().eq('id', g.id)
+  // trofei = gruppi per nome + data; gare specifiche = distanza + stile dentro il trofeo
+  const trofei = useMemo(() => {
+    const m = new Map()
+    gare.forEach((g) => { const k = `${g.nome_gara}||${g.data_gara}`; if (!m.has(k)) m.set(k, { k, nome: g.nome_gara, data: g.data_gara }) })
+    return [...m.values()]
+  }, [gare])
+  const delTrofeo = gare.filter((g) => `${g.nome_gara}||${g.data_gara}` === trofeo)
+  const gareDelTrofeo = [...new Set(delTrofeo.map(nomeGara))]
+  const risultati = delTrofeo.filter((g) => !garaSel || nomeGara(g) === garaSel)
+
+  async function eliminaGara() {
+    if (!risultati.length) return
+    if (!window.confirm(`Eliminare ${garaSel || 'tutte le gare'} del trofeo per ${risultati.length} atleta/i?`)) return
+    const { error } = await supabase.from('gare').delete().in('id', risultati.map((g) => g.id))
     if (error) return window.alert('Non sono riuscito a eliminare: ' + error.message)
+    setGaraSel('')
     caricaGare(atleti)
   }
 
@@ -87,7 +213,7 @@ export default function GareCoach() {
         : (
           <>
             <div className="grid grid-cols-2 gap-2 mb-3">
-              {[['nuova', '+ Nuova gara'], ['elenco', 'Gare inserite']].map(([k, n]) => (
+              {[['nuova', '+ Nuova gara'], ['risultati', 'Risultati']].map(([k, n]) => (
                 <button key={k} onClick={() => setModo(k)}
                   className={`rounded-xl py-2.5 text-sm font-semibold ${modo === k ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 border border-gray-200'}`}>{n}</button>
               ))}
@@ -95,15 +221,21 @@ export default function GareCoach() {
 
             {modo === 'nuova' ? (
               <>
-                <div className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">
-                  <label className="block text-xs text-gray-500 mb-1">Nome gara</label>
+                <div className={CARD}>
+                  <label className="block text-xs text-gray-500 mb-1">Nome gara / trofeo</label>
                   <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Es. Trofeo d'Autunno" className={CAMPO + ' mb-3'} />
-                  <div className="mb-3"><SelettoreData etichetta="Data" valore={data} onChange={setData} /></div>
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    <SelettoreData etichetta="Data" valore={data} onChange={setData} />
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Orario</label>
+                      <input type="time" value={orario} onChange={(e) => setOrario(e.target.value)} className={CAMPO} />
+                    </div>
+                  </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-xs text-gray-500 mb-1">Distanza (m)</label>
                       <select value={distanza} onChange={(e) => setDistanza(e.target.value)} className={CAMPO}>
-                        {DISTANZE.map((d) => <option key={d}>{d}</option>)}
+                        {DISTANZE.map((x) => <option key={x}>{x}</option>)}
                       </select>
                     </div>
                     <div>
@@ -115,9 +247,16 @@ export default function GareCoach() {
                   </div>
                 </div>
 
-                <div className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">
-                  <p className="font-bold mb-1">A chi assegni la gara?</p>
-                  <p className="text-xs text-gray-400 mb-2">Tocca gli atleti che l'hanno nuotata e scrivi il loro tempo.</p>
+                <div className={CARD}>
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="font-bold">A chi assegni la gara?</p>
+                    {atleti.length > 0 && (
+                      <button onClick={selezionaTutti} className="text-xs font-bold text-blue-600">
+                        {tuttiSelezionati ? 'Deseleziona tutti' : 'Seleziona tutti'}
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-400 mb-2">Tocca gli atleti. Il tempo di iscrizione è facoltativo; il risultato lo scrivi dopo la gara.</p>
                   {atleti.length === 0 && <p className="text-sm text-gray-400 py-3">Nessun atleta nella squadra.</p>}
                   {atleti.map((a, i) => {
                     const r = riga(a.id)
@@ -130,9 +269,8 @@ export default function GareCoach() {
                           </span>
                         </button>
                         {r.incluso && (
-                          <div className="grid grid-cols-2 gap-3 mt-3">
-                            <InputTempo etichetta="Tempo iscrizione" value={r.iscr} vuotoOk onChange={(v) => cambia(a.id, { iscr: v })} />
-                            <InputTempo etichetta="Tempo effettivo" value={r.tempo} onChange={(v) => cambia(a.id, { tempo: v })} />
+                          <div className="mt-3">
+                            <InputTempo etichetta="Tempo di iscrizione" value={r.iscr} vuotoOk onChange={(v) => cambia(a.id, { iscr: v })} />
                           </div>
                         )}
                       </div>
@@ -143,32 +281,49 @@ export default function GareCoach() {
                 {errore && <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mb-3">{errore}</p>}
                 {ok && <p className="text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2 mb-3">{ok}</p>}
                 <button onClick={salva} disabled={invio} className="w-full font-bold text-white bg-blue-600 disabled:bg-gray-300 rounded-2xl py-3.5">
-                  {invio ? 'Salvo…' : 'Salva gara'}
+                  {invio ? 'Salvo…' : `Assegna gara${nSelezionati ? ` a ${nSelezionati}` : ''}`}
                 </button>
               </>
             ) : (
-              <div className="bg-white border border-gray-100 rounded-3xl p-5 shadow-sm">
-                <p className="font-bold mb-2">Gare della squadra</p>
-                {gare.length === 0 && <p className="text-sm text-gray-400 py-3">Nessuna gara inserita.</p>}
-                {gare.map((g, i) => (
-                  <div key={g.id} className={`flex items-center justify-between py-3 gap-2 ${i ? 'border-t border-gray-100' : ''}`}>
-                    <div className="min-w-0">
-                      <p className="font-semibold truncate">{g.nome_gara} · {g.atleta?.nome} {g.atleta?.cognome?.charAt(0)}.</p>
-                      <p className="text-xs text-gray-400">
-                        {new Date(g.data_gara + 'T12:00:00').toLocaleDateString('it-IT')} · {g.distanza} m {g.stile}
-                        {g.tempo_iscrizione ? ` · iscr. ${g.tempo_iscrizione}` : ''}
-                      </p>
+              <>
+                <div className={CARD}>
+                  <label className="block text-xs text-gray-500 mb-1">Trofeo</label>
+                  <select value={trofeo} onChange={(e) => { setTrofeo(e.target.value); setGaraSel('') }} className={CAMPO + ' mb-3'}>
+                    <option value="">Scegli il trofeo…</option>
+                    {trofei.map((t) => <option key={t.k} value={t.k}>{t.nome} · {dataIt(t.data)}</option>)}
+                  </select>
+                  {trofeo && (
+                    <>
+                      <label className="block text-xs text-gray-500 mb-1">Gara</label>
+                      <select value={garaSel} onChange={(e) => setGaraSel(e.target.value)} className={CAMPO}>
+                        <option value="">Tutte le gare del trofeo</option>
+                        {gareDelTrofeo.map((n) => <option key={n}>{n}</option>)}
+                      </select>
+                    </>
+                  )}
+                </div>
+
+                {trofei.length === 0 && <p className="text-center text-gray-400 py-8">Nessuna gara assegnata ancora 🏆</p>}
+                {trofeo && (
+                  <div className={CARD}>
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="font-bold">{garaSel || 'Tutte le gare'}</p>
+                      <button onClick={eliminaGara} aria-label="Elimina" className="text-red-500 text-lg">🗑</button>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <b>{g.tempo}</b>
-                      <button onClick={() => togli(g)} aria-label="Elimina" className="text-red-500 text-lg">🗑</button>
-                    </div>
+                    {risultati[0]?.orario && <p className="text-xs text-gray-400 mb-1">Orario {risultati[0].orario.slice(0, 5)}</p>}
+                    {risultati.map((g) => (
+                      <div key={g.id}>
+                        {!garaSel && <p className="text-xs font-bold text-gray-400 mt-2">{nomeGara(g)}</p>}
+                        <SchedaRisultato g={g} onSalvato={() => caricaGare(atleti)} />
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
           </>
         )}
     </AppShell>
   )
 }
+
