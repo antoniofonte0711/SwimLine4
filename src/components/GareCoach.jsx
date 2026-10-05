@@ -36,6 +36,40 @@ function Differenziale({ iscr, finale }) {
   return <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${d.classe}`}>{d.testo}</span>
 }
 
+// Parziali calcolati: tu scrivi i passaggi (tempo totale a ogni tappa), il resto lo calcola l'app
+function calcolaParziali(passaggi, finale, passo, distanza) {
+  const punti = [{ m: 0, sec: 0 }]
+  passaggi.forEach((p, i) => {
+    const sec = tempoInSecondi(normalizzaTempo(p))
+    if (sec !== null) punti.push({ m: (i + 1) * passo, sec })
+  })
+  const fin = tempoInSecondi(normalizzaTempo(finale))
+  if (fin !== null) punti.push({ m: distanza, sec: fin })
+  const out = []
+  for (let i = 1; i < punti.length; i++) {
+    const diff = Math.round((punti[i].sec - punti[i - 1].sec) * 100) / 100
+    if (diff <= 0) return [] // dati incoerenti: li segnala già la validazione al salvataggio
+    out.push({ da: punti[i - 1].m, a: punti[i].m, sec: diff })
+  }
+  return out
+}
+
+function Parziali({ passaggi, finale, passo, distanza }) {
+  const lista = calcolaParziali(passaggi, finale, passo, distanza)
+  if (lista.length < 2) return null
+  return (
+    <div className="mt-3 bg-blue-50 rounded-2xl px-4 py-3">
+      <p className="text-xs font-bold text-blue-700 mb-1">Parziali calcolati</p>
+      {lista.map((x) => (
+        <div key={x.da} className="flex justify-between text-sm py-0.5">
+          <span className="text-gray-600">{x.da}–{x.a} m</span>
+          <b className="text-blue-700">{secondiInTempo(x.sec)}</b>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 // Scheda di un atleta in una gara già assegnata: tempo effettivo + passaggi
 function SchedaRisultato({ g, onSalvato }) {
   const d = Number(g.distanza)
@@ -92,13 +126,14 @@ function SchedaRisultato({ g, onSalvato }) {
           )}
           {nPassaggi > 0 && (
             <>
-              <p className="text-sm text-gray-500 mt-3 mb-2">Passaggi ogni {passo} m</p>
+              <p className="text-sm text-gray-500 mt-3 mb-2">Scrivi il passaggio (tempo totale a quel punto): i parziali li calcolo io</p>
               <div className="grid grid-cols-2 gap-3">
                 {Array.from({ length: nPassaggi }, (_, i) => (
                   <InputTempo key={i} etichetta={`Ai ${(i + 1) * passo} m`} vuotoOk value={passaggi[i] || ''}
                     onChange={(v) => { const n = [...passaggi]; n[i] = v; setPassaggi(n) }} />
                 ))}
               </div>
+              <Parziali passaggi={passaggi} finale={tempo} passo={passo} distanza={d} />
             </>
           )}
           {errore && <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mt-3">{errore}</p>}
