@@ -41,13 +41,21 @@ export function CarrelloProvider({ children }) {
     filePerLavoro.delete(id)
     setStato((s) => ({ ...s, voci: s.voci.filter((v) => v.id !== id) }))
   }
+  const sposta = (id, verso) => setStato((s) => {
+    const i = s.voci.findIndex((v) => v.id === id)
+    const j = i + verso
+    if (i < 0 || j < 0 || j >= s.voci.length) return s
+    const voci = [...s.voci]
+    ;[voci[i], voci[j]] = [voci[j], voci[i]]
+    return { ...s, voci }
+  })
   const svuota = () => {
     stato.voci.forEach((v) => filePerLavoro.delete(v.id))
     setStato((s) => ({ ...s, voci: [] }))
   }
 
   return (
-    <CarrelloCtx.Provider value={{ voci: stato.voci, aggiungi, rimuovi, svuota }}>
+    <CarrelloCtx.Provider value={{ voci: stato.voci, aggiungi, rimuovi, sposta, svuota }}>
       {children}
     </CarrelloCtx.Provider>
   )

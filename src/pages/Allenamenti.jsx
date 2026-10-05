@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import AppShell from '../components/AppShell'
 import FormLavoro from '../components/FormLavoro'
 import CarrelloCard from '../components/CarrelloCard'
@@ -46,7 +47,8 @@ function AllenamentiAtleta() {
 
 // Coach: sceglie qualsiasi data e prepara la scheda per la squadra
 function AllenamentiCoach() {
-  const [giorno, setGiorno] = useState(dataLocale())
+  const [params] = useSearchParams()
+  const [giorno, setGiorno] = useState(params.get('data') || dataLocale())
   const { squadra, pronto } = useMiaSquadra()
   return (
     <AppShell titolo="Allenamenti" attiva="funzioni" indietro="/funzioni">

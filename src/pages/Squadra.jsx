@@ -1,9 +1,16 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import AppShell from '../components/AppShell'
 import { coloreLavoro, formattaGiorno } from '../lib/lavori'
 import { tempoInSecondi } from '../lib/tempo'
+import RisultatiAtleta from '../components/RisultatiAtleta'
+import SchedaProgressi from '../components/SchedaProgressi'
+import Riferimenti from '../components/Riferimenti'
+import { dataLocale } from '../lib/lavori'
+import { riepilogoPresenze, STATI } from '../lib/presenze'
+import { useMiaSquadra } from '../lib/pianoSquadra'
 
 const CAMPO = 'w-full border border-gray-200 bg-gray-50 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400'
 const dataIt = (s) => (s ? new Date(s + 'T12:00:00').toLocaleDateString('it-IT') : '')
@@ -15,10 +22,10 @@ export default function Squadra() {
   const [nomeSquadra, setNomeSquadra] = useState('')
   const [atleti, setAtleti] = useState([])
   const [scelto, setScelto] = useState('')
-  const [vista, setVista] = useState('Gare')
+  const [vista, setVista] = useState(isCoach ? 'Oggi' : 'Gare')
   const [gare, setGare] = useState([])
   const [allenamenti, setAllenamenti] = useState([])
-  const viste = isCoach ? ['Gare', 'Allenamenti'] : ['Gare']
+  const viste = isCoach ? ['Oggi', 'Gare', 'Allenamenti', 'Presenze', 'Grafico tempi', 'Riferimenti'] : ['Gare']
 
   useEffect(() => {
     async function carica() {
@@ -93,6 +100,11 @@ export default function Squadra() {
         )}
       </div>
 
+      {scelto && isCoach && vista === 'Oggi' && <OggiAtleta key={scelto} atletaId={scelto} />}
+      {scelto && isCoach && vista === 'Presenze' && <PresenzeBreve key={scelto} atletaId={scelto} />}
+      {scelto && isCoach && vista === 'Grafico tempi' && <SchedaProgressi key={scelto} atletaId={scelto} />}
+      {scelto && isCoach && vista === 'Riferimenti' && <Riferimenti key={scelto} atletaId={scelto} />}
+
       {scelto && vista === 'Gare' && (
         <>
           {elencoMigliori.length > 0 && (
@@ -140,5 +152,51 @@ export default function Squadra() {
         </>
       )}
     </AppShell>
+  )
+}
+
+// L'allenamento di oggi, anche se l'atleta non ha ancora nessun tempo: il coach può scriverli da qui
+function OggiAtleta({ atletaId }) {
+  const { squadra } = useMiaSquadra()
+  const oggi = dataLocale()
+  const [piano, setPiano] = useState(undefined)
+
+  useEffect(() => {
+    if (!squadra) return
+    supabase.from('allenamenti_squadra').select('*').eq('squadra_id', squadra.id).eq('data', oggi).maybeSingle()
+      .then(({ data }) => setPiano(data || null))
+  }, [squadra?.id, oggi]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (piano === undefined) return <p className="text-center text-gray-400 py-6">Carico…</p>
+  return <RisultatiAtleta piano={piano} atletaId={atletaId} giorno={oggi} />
+}
+
+// Assenze e percentuale; in basso a destra il grafico completo
+function PresenzeBreve({ atletaId }) {
+  const [righe, setRighe] = useState([])
+  useEffect(() => {
+    supabase.from('presenze').select('data, stato').eq('atleta_id', atletaId).order('data', { ascending: false }).limit(1000)
+      .then(({ data }) => setRighe(data || []))
+  }, [atletaId])
+  const tot = riepilogoPresenze(righe)
+  const assenze = righe.filter((r) => r.stato !== 'presente').slice(0, 15)
+  return (
+    <>
+      <div className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">
+        <p className="text-sm text-gray-500">Presenze</p>
+        <p className="text-3xl font-extrabold text-blue-600">{tot.percentuale === null ? '—' : `${tot.percentuale}%`}</p>
+        <p className="font-bold mt-4 mb-1 text-sm">Assenze</p>
+        {assenze.length === 0 && <p className="text-sm text-gray-400">Nessuna assenza.</p>}
+        {assenze.map((r, i) => (
+          <div key={r.data} className={`flex justify-between py-2 text-sm ${i ? 'border-t border-gray-100' : ''}`}>
+            <span>{new Date(r.data + 'T12:00:00').toLocaleDateString('it-IT')}</span>
+            <span className="text-gray-400">{STATI[r.stato]}</span>
+          </div>
+        ))}
+      </div>
+      <div className="text-right">
+        <Link to={`/squadra/presenze/${atletaId}`} className="text-sm font-semibold text-blue-600">Grafico completo delle presenze →</Link>
+      </div>
+    </>
   )
 }

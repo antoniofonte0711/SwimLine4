@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import AppShell from './AppShell'
@@ -113,9 +114,10 @@ export default function RiepilogoCoach() {
               <p className="text-sm font-semibold capitalize">{formattaGiorno(p.data)}</p>
               <p className="text-xs text-gray-400">{p.titolo || 'Allenamento'} · {(metriPiano(p.righe) / 1000).toFixed(1).replace('.', ',')} km</p>
             </div>
-            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-blue-50 text-blue-600">
-              {!p.pubblicato ? 'Bozza' : p.visibilita === 'coach' ? 'Solo coach' : 'Pubblicato'}
-            </span>
+            <Link to={`/allenamenti?data=${p.data}`}
+              className="text-xs font-bold px-3 py-1.5 rounded-full bg-blue-50 text-blue-600 active:scale-95">
+              {!p.pubblicato ? 'Bozza' : p.visibilita === 'coach' ? 'Solo coach' : 'Pubblicato'} ›
+            </Link>
           </div>
         ))}
       </div>

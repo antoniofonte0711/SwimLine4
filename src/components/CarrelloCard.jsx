@@ -7,7 +7,7 @@ import { aggiungiInCoda, erroreDiRete } from '../lib/codaOffline'
 // Il carrello della giornata: qui vedi tutto quello che hai aggiunto e salvi in un colpo solo
 export default function CarrelloCard({ giorno, onSalvato }) {
   const { user } = useAuth()
-  const { voci, rimuovi, svuota } = useCarrello()
+  const { voci, rimuovi, sposta, svuota } = useCarrello()
   const [errore, setErrore] = useState('')
   const [messaggio, setMessaggio] = useState('')
   const [salvando, setSalvando] = useState(false)
@@ -101,13 +101,17 @@ export default function CarrelloCard({ giorno, onSalvato }) {
         </div>
       </div>
 
-      {voci.map((v) => (
+      {voci.map((v, idx) => (
         <div key={v.id} className="flex items-start justify-between gap-2 border-t border-gray-100 py-3 text-sm">
           <div>
             <p className="font-semibold">{v.tipo_lavoro} · {v.ripetizioni}×{v.distanza} m {v.stile} {v.conVideo && '🎥'}</p>
             {v.passaggi.length > 0 && <p className="text-xs text-gray-400">{v.passaggi.join(' · ')}</p>}
           </div>
-          <button onClick={() => rimuovi(v.id)} aria-label="Rimuovi" className="text-gray-300 hover:text-red-500 text-xl leading-none">×</button>
+          <div className="flex items-center gap-1 shrink-0">
+            <button onClick={() => sposta(v.id, -1)} disabled={idx === 0} aria-label="Sposta su" className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 font-bold disabled:opacity-30">↑</button>
+            <button onClick={() => sposta(v.id, 1)} disabled={idx === voci.length - 1} aria-label="Sposta giù" className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 font-bold disabled:opacity-30">↓</button>
+            <button onClick={() => rimuovi(v.id)} aria-label="Rimuovi" className="text-gray-300 hover:text-red-500 text-xl leading-none px-1">×</button>
+          </div>
         </div>
       ))}
 

@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { TIPI_LAVORO, STILI, distanzaDaTipo } from '../lib/lavori'
 import { GIORNI_ALLENAMENTO } from '../lib/presenze'
 import { RIGA_VUOTA, TIPI_COACH, addGiorni, metriPiano } from '../lib/pianoSquadra'
+import PianoCard from './PianoCard'
 
 const CAMPO = 'w-full border border-gray-200 bg-gray-50 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400'
 const GG = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab']
@@ -19,12 +21,15 @@ export default function EditorAllenamento({ squadra, giorno }) {
   const [extra, setExtra] = useState([])
   const [errore, setErrore] = useState('')
   const [ok, setOk] = useState('')
+  // Dopo la pubblicazione si vede la vista compatta; "Modifica" riapre l'editor
+  const [modifica, setModifica] = useState(true)
 
   useEffect(() => {
     let attivo = true
     setErrore('')
     setOk('')
     setExtra([])
+    setModifica(true)
     supabase.from('allenamenti_squadra').select('*').eq('squadra_id', squadra.id).eq('data', giorno).maybeSingle()
       .then(({ data }) => {
         if (!attivo) return
@@ -32,6 +37,7 @@ export default function EditorAllenamento({ squadra, giorno }) {
         setRighe(data?.righe?.length ? data.righe : [{ ...RIGA_VUOTA }])
         setVis(data?.visibilita || 'squadra')
         setStato(data ? (data.pubblicato ? 'pubblicato' : 'bozza') : 'nuovo')
+        setModifica(!data?.pubblicato)
       })
     return () => { attivo = false }
   }, [giorno, squadra.id])
@@ -40,6 +46,17 @@ export default function EditorAllenamento({ squadra, giorno }) {
   const cambiaTipo = (i, tipo) => {
     const d = distanzaDaTipo(tipo)
     setRighe(righe.map((r, k) => (k === i ? { ...r, tipo_lavoro: tipo, distanza: d ?? r.distanza } : r)))
+  }
+  const sposta = (i, verso) => {
+    const j = i + verso
+    if (j < 0 || j >= righe.length) return
+    const copia = [...righe]
+    ;[copia[i], copia[j]] = [copia[j], copia[i]]
+    setRighe(copia)
+  }
+  const aggiungiLavoro = (tipo) => {
+    const d = tipo ? distanzaDaTipo(tipo) : null
+    setRighe([...righe, { ...RIGA_VUOTA, ...(tipo ? { tipo_lavoro: tipo } : {}), ...(d ? { distanza: d } : {}) }])
   }
   // Solo giorni di allenamento (lunedì-venerdì): i prossimi 10 dopo la data scelta
   const prossimi = Array.from({ length: 21 }, (_, i) => addGiorni(giorno, i + 1))
@@ -72,6 +89,7 @@ export default function EditorAllenamento({ squadra, giorno }) {
     )
     if (error) return setErrore('Non sono riuscito a salvare: ' + error.message)
     setStato(pubblica ? 'pubblicato' : 'bozza')
+    setModifica(!pubblica)
     setExtra([])
     setOk(pubblica
       ? (vis === 'squadra' ? `Pubblicato alla squadra su ${giorni.length} giorno/i.` : 'Salvato: lo vedi solo tu.')
@@ -84,7 +102,29 @@ export default function EditorAllenamento({ squadra, giorno }) {
     setTitolo('')
     setRighe([{ ...RIGA_VUOTA }])
     setStato('nuovo')
+    setModifica(true)
     setOk('Allenamento eliminato.')
+  }
+
+  if (stato === 'pubblicato' && !modifica) {
+    return (
+      <>
+        <div className="flex items-center justify-between mb-2 px-1">
+          <p className="font-bold">Allenamento di {squadra.nome}</p>
+          <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-blue-50 text-blue-600">
+            {vis === 'coach' ? 'Solo coach' : 'Pubblicato'}
+          </span>
+        </div>
+        <PianoCard piano={{ titolo: titolo || 'Allenamento', righe }} />
+        {ok && <p className="text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2 mb-3">{ok}</p>}
+        <button onClick={() => setModifica(true)} className="w-full font-bold text-blue-600 bg-blue-50 rounded-2xl py-3 mb-3">✏️ Modifica</button>
+        <div className="text-right">
+          <Link to={`/risultati?data=${giorno}`} className="text-sm font-semibold text-blue-600">
+            Entra nella registrazione risultati per ogni atleta →
+          </Link>
+        </div>
+      </>
+    )
   }
 
   return (
@@ -118,13 +158,30 @@ export default function EditorAllenamento({ squadra, giorno }) {
           </div>
           <label className="block text-xs text-gray-500 mb-1">Note (facoltative: recupero, ritmo...)</label>
           <input value={r.note} onChange={(e) => cambia(i, 'note', e.target.value)} placeholder="Es. rec 20&quot;, gambe veloci" className={CAMPO} />
-          {righe.length > 1 && (
-            <button onClick={() => setRighe(righe.filter((_, k) => k !== i))} className="text-xs text-red-500 mt-2">Togli riga</button>
-          )}
+          <div className="flex items-center justify-between mt-2">
+            <div className="flex gap-2">
+              <button onClick={() => sposta(i, -1)} disabled={i === 0} aria-label="Sposta su"
+                className="w-9 h-9 rounded-full bg-gray-100 text-gray-600 font-bold disabled:opacity-30">↑</button>
+              <button onClick={() => sposta(i, 1)} disabled={i === righe.length - 1} aria-label="Sposta giù"
+                className="w-9 h-9 rounded-full bg-gray-100 text-gray-600 font-bold disabled:opacity-30">↓</button>
+            </div>
+            {righe.length > 1 && (
+              <button onClick={() => setRighe(righe.filter((_, k) => k !== i))} className="text-xs text-red-500">Togli lavoro</button>
+            )}
+          </div>
         </div>
       ))}
-      <button onClick={() => setRighe([...righe, { ...RIGA_VUOTA }])}
-        className="w-full text-blue-600 font-bold bg-blue-50 rounded-2xl py-3 mb-3">+ Aggiungi riga</button>
+      <div className="bg-white border border-gray-100 rounded-3xl p-4 mb-3 shadow-sm">
+        <button onClick={() => aggiungiLavoro()}
+          className="w-full text-blue-600 font-bold bg-blue-50 rounded-2xl py-3 mb-3">+ Aggiungi Lavoro</button>
+        <p className="text-xs text-gray-400 mb-2">Oppure scegli subito il tipo di lavoro:</p>
+        <div className="flex flex-wrap gap-2">
+          {[...TIPI_COACH, ...TIPI_LAVORO].map((t) => (
+            <button key={t} onClick={() => aggiungiLavoro(t)}
+              className="text-xs font-semibold rounded-full px-3 py-1.5 bg-gray-100 text-gray-600 active:scale-95">+ {t}</button>
+          ))}
+        </div>
+      </div>
 
       <div className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">
         <p className="text-sm font-bold mb-2">Chi lo vede</p>

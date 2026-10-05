@@ -18,13 +18,15 @@ import Squadra from './pages/Squadra'
 import Record from './pages/Record'
 import InArrivo from './pages/InArrivo'
 import AdminPanel from './pages/AdminPanel'
+import Impostazioni from './pages/Impostazioni'
+import RisultatiAllenamento from './pages/RisultatiAllenamento'
+import PresenzeAtleta from './pages/PresenzeAtleta'
 
 // Sezioni che arrivano nella fase 2
 const PROSSIMAMENTE = [
   ['/video', 'Video'],
   ['/archivio', 'Archivio gare'],
   ['/calendario', 'Calendario'],
-  ['/impostazioni', 'Impostazioni'],
 ]
 
 export default function App() {
@@ -49,6 +51,10 @@ export default function App() {
             <Route path="/squadra" element={<ProtectedRoute><Squadra /></ProtectedRoute>} />
             <Route path="/record" element={<ProtectedRoute><Record /></ProtectedRoute>} />
             <Route path="/presenze" element={<ProtectedRoute requireCoach><Presenze /></ProtectedRoute>} />
+
+            <Route path="/impostazioni" element={<ProtectedRoute requireCoach><Impostazioni /></ProtectedRoute>} />
+            <Route path="/risultati" element={<ProtectedRoute requireCoach><RisultatiAllenamento /></ProtectedRoute>} />
+            <Route path="/squadra/presenze/:id" element={<ProtectedRoute requireCoach><PresenzeAtleta /></ProtectedRoute>} />
 
             {PROSSIMAMENTE.map(([percorso, titolo]) => (
               <Route key={percorso} path={percorso}
