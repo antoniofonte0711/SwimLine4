@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { dataLocale, formattaGiorno } from '../lib/lavori'
 
 const MESI = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre']
@@ -21,9 +22,11 @@ export function CalendarioFoglio({ valore, onScegli, onChiudi }) {
   const celle = [...Array(vuote).fill(null), ...Array.from({ length: giorniMese }, (_, i) => i + 1)]
   const iso = (g) => dataLocale(new Date(anno, mese, g, 12))
 
-  return (
-    <div className="fixed inset-0 z-[60] flex items-end bg-black/40" onClick={onChiudi}>
-      <div className="w-full max-w-md mx-auto bg-white rounded-t-3xl p-5 pb-[max(env(safe-area-inset-bottom),1.25rem)]"
+  // Portale su <body>: il calendario resta sempre al centro dello schermo,
+  // anche se la pagina sotto ha margini o spostamenti laterali
+  return createPortal(
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40" onClick={onChiudi}>
+      <div className="w-full max-w-sm bg-white rounded-3xl p-5 shadow-xl"
         onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-3">
           <button onClick={() => vaiMese(-1)} aria-label="Mese precedente" className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 text-xl font-bold">‹</button>
@@ -51,7 +54,8 @@ export function CalendarioFoglio({ valore, onScegli, onChiudi }) {
           <button onClick={onChiudi} className="font-bold text-gray-600 bg-gray-100 rounded-2xl py-3">Chiudi</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 
