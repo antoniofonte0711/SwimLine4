@@ -42,7 +42,7 @@ export default function Squadra() {
       setNomeSquadra(nome)
 
       const { data } = isCoach
-        ? await supabase.from('profiles').select('id, nome, cognome').eq('role', 'atleta').order('cognome')
+        ? await supabase.from('profiles').select('id, nome, cognome').in('role', ['atleta', 'admin']).order('cognome')
         : await supabase.from('compagni_squadra').select('id, nome, cognome').order('cognome')
       setAtleti(data || [])
       setScelto((s) => s || data?.[0]?.id || '')

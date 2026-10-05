@@ -31,7 +31,7 @@ export default function RiepilogoCoach() {
   const carica = useCallback(async () => {
     if (!squadra) return
     const [{ data: a }, { data: p }] = await Promise.all([
-      supabase.from('profiles').select('id, nome, cognome').eq('role', 'atleta').eq('squadra_id', squadra.id).order('cognome'),
+      supabase.from('profiles').select('id, nome, cognome').in('role', ['atleta', 'admin']).eq('squadra_id', squadra.id).order('cognome'),
       sups(),
     ])
     function sups() {

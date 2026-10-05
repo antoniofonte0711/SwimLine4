@@ -19,6 +19,7 @@ import Record from './pages/Record'
 import InArrivo from './pages/InArrivo'
 import AdminPanel from './pages/AdminPanel'
 import Impostazioni from './pages/Impostazioni'
+import Calendario from './pages/Calendario'
 import RisultatiAllenamento from './pages/RisultatiAllenamento'
 import PresenzeAtleta from './pages/PresenzeAtleta'
 
@@ -26,7 +27,6 @@ import PresenzeAtleta from './pages/PresenzeAtleta'
 const PROSSIMAMENTE = [
   ['/video', 'Video'],
   ['/archivio', 'Archivio gare'],
-  ['/calendario', 'Calendario'],
 ]
 
 export default function App() {
@@ -52,6 +52,7 @@ export default function App() {
             <Route path="/record" element={<ProtectedRoute><Record /></ProtectedRoute>} />
             <Route path="/presenze" element={<ProtectedRoute requireCoach><Presenze /></ProtectedRoute>} />
 
+            <Route path="/calendario" element={<ProtectedRoute><Calendario /></ProtectedRoute>} />
             <Route path="/impostazioni" element={<ProtectedRoute requireCoach><Impostazioni /></ProtectedRoute>} />
             <Route path="/risultati" element={<ProtectedRoute requireCoach><RisultatiAllenamento /></ProtectedRoute>} />
             <Route path="/squadra/presenze/:id" element={<ProtectedRoute requireCoach><PresenzeAtleta /></ProtectedRoute>} />

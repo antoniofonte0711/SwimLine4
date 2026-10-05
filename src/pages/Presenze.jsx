@@ -22,7 +22,7 @@ export default function Presenze() {
 
   const carica = useCallback(async () => {
     const [{ data: a }, { data: p }] = await Promise.all([
-      supabase.from('profiles').select('id, nome, cognome').eq('role', 'atleta').order('cognome'),
+      supabase.from('profiles').select('id, nome, cognome').in('role', ['atleta', 'admin']).order('cognome'),
       supabase.from('presenze').select('atleta_id, stato').eq('data', giorno),
     ])
     setAtleti(a || [])

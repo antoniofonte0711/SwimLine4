@@ -179,7 +179,7 @@ export default function GareCoach() {
 
   useEffect(() => {
     if (!squadra) return
-    supabase.from('profiles').select('id, nome, cognome').eq('role', 'atleta').eq('squadra_id', squadra.id).order('cognome')
+    supabase.from('profiles').select('id, nome, cognome').in('role', ['atleta', 'admin']).eq('squadra_id', squadra.id).order('cognome')
       .then(({ data: a }) => { setAtleti(a || []); caricaGare(a || []) })
   }, [squadra?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 

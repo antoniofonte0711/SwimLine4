@@ -27,7 +27,7 @@ export default function Record() {
       setCarico(true)
       // nomi degli atleti visibili (coach: la sua squadra, atleta: i compagni)
       const { data: persone } = isCoach
-        ? await supabase.from('profiles').select('id, nome, cognome').eq('role', 'atleta')
+        ? await supabase.from('profiles').select('id, nome, cognome').in('role', ['atleta', 'admin'])
         : await supabase.from('compagni_squadra').select('id, nome, cognome')
       const mappa = {}
       ;(persone || []).forEach((p) => { mappa[p.id] = `${p.nome} ${p.cognome}` })

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { useCarrello, filePerLavoro } from '../context/CarrelloContext'
@@ -101,8 +102,11 @@ export default function CarrelloCard({ giorno, onSalvato }) {
         </div>
       </div>
 
+      <AnimatePresence initial={false}>
       {voci.map((v, idx) => (
-        <div key={v.id} className="flex items-start justify-between gap-2 border-t border-gray-100 py-3 text-sm">
+        <motion.div key={v.id} layout initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 40 }}
+          transition={{ type: 'spring', stiffness: 500, damping: 38 }}
+          className="flex items-start justify-between gap-2 border-t border-gray-100 py-3 text-sm">
           <div>
             <p className="font-semibold">{v.tipo_lavoro} · {v.ripetizioni}×{v.distanza} m {v.stile} {v.conVideo && '🎥'}</p>
             {v.passaggi.length > 0 && <p className="text-xs text-gray-400">{v.passaggi.join(' · ')}</p>}
@@ -112,8 +116,9 @@ export default function CarrelloCard({ giorno, onSalvato }) {
             <button onClick={() => sposta(v.id, 1)} disabled={idx === voci.length - 1} aria-label="Sposta giù" className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 font-bold disabled:opacity-30">↓</button>
             <button onClick={() => rimuovi(v.id)} aria-label="Rimuovi" className="text-gray-300 hover:text-red-500 text-xl leading-none px-1">×</button>
           </div>
-        </div>
+        </motion.div>
       ))}
+      </AnimatePresence>
 
       {errore && <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mt-2">{errore}</p>}
       {messaggio && <p className="text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2 mt-2">{messaggio}</p>}

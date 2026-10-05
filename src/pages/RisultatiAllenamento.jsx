@@ -21,7 +21,7 @@ export default function RisultatiAllenamento() {
 
   useEffect(() => {
     if (!squadra) return
-    supabase.from('profiles').select('id, nome, cognome').eq('role', 'atleta').eq('squadra_id', squadra.id).order('cognome')
+    supabase.from('profiles').select('id, nome, cognome').in('role', ['atleta', 'admin']).eq('squadra_id', squadra.id).order('cognome')
       .then(({ data }) => {
         setAtleti(data || [])
         setAtleta((a) => a || data?.[0]?.id || '')

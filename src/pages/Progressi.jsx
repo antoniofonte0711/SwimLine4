@@ -14,7 +14,7 @@ function ProgressiCoach() {
 
   useEffect(() => {
     if (!squadra) return
-    supabase.from('profiles').select('id, nome, cognome').eq('role', 'atleta').eq('squadra_id', squadra.id).order('cognome')
+    supabase.from('profiles').select('id, nome, cognome').in('role', ['atleta', 'admin']).eq('squadra_id', squadra.id).order('cognome')
       .then(({ data }) => setAtleti(data || []))
   }, [squadra?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 

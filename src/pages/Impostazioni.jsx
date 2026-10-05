@@ -46,7 +46,7 @@ export default function Impostazioni() {
         : (
           <div className="bg-white border border-gray-100 rounded-3xl p-5 shadow-sm">
             <p className="font-bold">Aggiungi un atleta a {squadra.nome}</p>
-            <p className="text-xs text-gray-400 mb-3">Compaiono gli atleti registrati che non hanno ancora una squadra, più quelli già nella tua.</p>
+            <p className="text-xs text-gray-400 mb-3">Compaiono gli atleti registrati che non hanno ancora una squadra, più quelli già nella tua. Se sei admin trovi anche te stesso.</p>
             <input value={cerca} onChange={(e) => setCerca(e.target.value)} placeholder="Cerca per nome"
               className="w-full border border-gray-200 bg-gray-50 rounded-xl px-3 py-2.5 mb-3 focus:outline-none focus:ring-2 focus:ring-blue-400" />
             {errore && <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mb-3">{errore}</p>}
@@ -54,7 +54,7 @@ export default function Impostazioni() {
             {visibili.length === 0 && <p className="text-sm text-gray-400 py-3">Nessun atleta trovato.</p>}
             {visibili.map((a, i) => (
               <div key={a.id} className={`flex items-center justify-between py-3 ${i ? 'border-t border-gray-100' : ''}`}>
-                <p className="font-semibold">{a.nome} {a.cognome}</p>
+                <p className="font-semibold">{a.nome} {a.cognome}{a.sono_io && <span className="text-xs font-bold text-blue-600"> (tu)</span>}</p>
                 {a.nella_mia_squadra
                   ? <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-green-50 text-green-700">Già in squadra</span>
                   : <button onClick={() => aggiungi(a)} disabled={invio === a.id}

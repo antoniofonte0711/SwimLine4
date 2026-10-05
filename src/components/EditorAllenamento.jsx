@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { Reorder, AnimatePresence, useDragControls } from 'framer-motion'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { TIPI_LAVORO, STILI, distanzaDaTipo } from '../lib/lavori'
@@ -11,11 +12,64 @@ const CAMPO = 'w-full border border-gray-200 bg-gray-50 rounded-xl px-3 py-2.5 f
 const GG = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab']
 const STATO = { nuovo: 'Nuovo', bozza: 'Bozza', pubblicato: 'Pubblicato' }
 
+const nuovaRiga = (extra = {}) => ({ ...RIGA_VUOTA, ...extra, _id: crypto.randomUUID() })
+const conId = (lista) => lista.map((r) => ({ ...r, _id: r._id || crypto.randomUUID() }))
+
+// Una riga di lavoro: si trascina dalla maniglia ⠿ oppure con le frecce, e si muove con un'animazione
+function RigaLavoro({ r, i, totale, cambia, cambiaTipo, sposta, togli }) {
+  const controlli = useDragControls()
+  return (
+    <Reorder.Item as="div" value={r} dragListener={false} dragControls={controlli}
+      initial={{ opacity: 0, y: 16, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.15 } }}
+      whileDrag={{ scale: 1.03, boxShadow: '0 18px 40px rgba(37,99,235,0.25)', zIndex: 20 }}
+      transition={{ type: 'spring', stiffness: 500, damping: 38 }}
+      className="relative bg-white border border-gray-100 rounded-3xl p-4 mb-3 shadow-sm">
+      <div className="flex items-center justify-between mb-3">
+        <div onPointerDown={(e) => controlli.start(e)} style={{ touchAction: 'none' }}
+          className="flex items-center gap-2 cursor-grab active:cursor-grabbing select-none text-gray-400 text-sm font-semibold">
+          <span className="text-xl leading-none">⠿</span> Lavoro {i + 1}
+        </div>
+        <div className="flex gap-2">
+          <button onClick={() => sposta(i, -1)} disabled={i === 0} aria-label="Sposta su"
+            className="w-9 h-9 rounded-full bg-gray-100 text-gray-600 font-bold disabled:opacity-30 active:scale-90 transition">↑</button>
+          <button onClick={() => sposta(i, 1)} disabled={i === totale - 1} aria-label="Sposta giù"
+            className="w-9 h-9 rounded-full bg-gray-100 text-gray-600 font-bold disabled:opacity-30 active:scale-90 transition">↓</button>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-2 mb-2">
+        <select value={r.tipo_lavoro} onChange={(e) => cambiaTipo(i, e.target.value)} className={CAMPO}>
+          {[...TIPI_COACH, ...TIPI_LAVORO].map((t) => <option key={t}>{t}</option>)}
+        </select>
+        <select value={r.stile} onChange={(e) => cambia(i, 'stile', e.target.value)} className={CAMPO}>
+          {STILI.map((s) => <option key={s}>{s}</option>)}
+        </select>
+        <div>
+          <label className="block text-xs text-gray-500 mb-1">Ripetizioni</label>
+          <input type="number" min="1" max="50" value={r.ripetizioni} onChange={(e) => cambia(i, 'ripetizioni', e.target.value)} className={CAMPO} />
+        </div>
+        <div>
+          <label className="block text-xs text-gray-500 mb-1">Distanza (m)</label>
+          <input type="number" min="25" step="25" value={r.distanza} onChange={(e) => cambia(i, 'distanza', e.target.value)} className={CAMPO} />
+        </div>
+      </div>
+      <label className="block text-xs text-gray-500 mb-1">Note (facoltative: recupero, ritmo...)</label>
+      <input value={r.note} onChange={(e) => cambia(i, 'note', e.target.value)} placeholder={'Es. rec 20", gambe veloci'} className={CAMPO} />
+      {totale > 1 && (
+        <div className="text-right mt-2">
+          <button onClick={() => togli(i)} className="text-xs text-red-500">Togli lavoro</button>
+        </div>
+      )}
+    </Reorder.Item>
+  )
+}
+
 // Il coach prepara l'allenamento di un giorno per la squadra (non un allenamento per sé)
 export default function EditorAllenamento({ squadra, giorno }) {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [titolo, setTitolo] = useState('')
-  const [righe, setRighe] = useState([{ ...RIGA_VUOTA }])
+  const [righe, setRighe] = useState(() => [nuovaRiga()])
   const [vis, setVis] = useState('squadra')
   const [stato, setStato] = useState('nuovo')
   const [extra, setExtra] = useState([])
@@ -24,23 +78,34 @@ export default function EditorAllenamento({ squadra, giorno }) {
   // Dopo la pubblicazione si vede la vista compatta; "Modifica" riapre l'editor
   const [modifica, setModifica] = useState(true)
 
+  async function carica() {
+    const { data } = await supabase.from('allenamenti_squadra').select('*').eq('squadra_id', squadra.id).eq('data', giorno).maybeSingle()
+    setTitolo(data?.titolo || '')
+    setRighe(data?.righe?.length ? conId(data.righe) : [nuovaRiga()])
+    setVis(data?.visibilita || 'squadra')
+    setStato(data ? (data.pubblicato ? 'pubblicato' : 'bozza') : 'nuovo')
+    return data
+  }
+
   useEffect(() => {
     let attivo = true
     setErrore('')
     setOk('')
     setExtra([])
     setModifica(true)
-    supabase.from('allenamenti_squadra').select('*').eq('squadra_id', squadra.id).eq('data', giorno).maybeSingle()
-      .then(({ data }) => {
-        if (!attivo) return
-        setTitolo(data?.titolo || '')
-        setRighe(data?.righe?.length ? data.righe : [{ ...RIGA_VUOTA }])
-        setVis(data?.visibilita || 'squadra')
-        setStato(data ? (data.pubblicato ? 'pubblicato' : 'bozza') : 'nuovo')
-        setModifica(!data?.pubblicato)
-      })
+    carica().then((data) => { if (attivo) setModifica(!data?.pubblicato) })
     return () => { attivo = false }
-  }, [giorno, squadra.id])
+  }, [giorno, squadra.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Esce dalla modifica scartando ciò che non hai salvato
+  async function esci() {
+    setErrore('')
+    setOk('')
+    setExtra([])
+    if (stato === 'nuovo') return navigate('/funzioni')
+    await carica()
+    setModifica(false)
+  }
 
   const cambia = (i, campo, v) => setRighe(righe.map((r, k) => (k === i ? { ...r, [campo]: v } : r)))
   const cambiaTipo = (i, tipo) => {
@@ -56,8 +121,9 @@ export default function EditorAllenamento({ squadra, giorno }) {
   }
   const aggiungiLavoro = (tipo) => {
     const d = tipo ? distanzaDaTipo(tipo) : null
-    setRighe([...righe, { ...RIGA_VUOTA, ...(tipo ? { tipo_lavoro: tipo } : {}), ...(d ? { distanza: d } : {}) }])
+    setRighe([...righe, nuovaRiga({ ...(tipo ? { tipo_lavoro: tipo } : {}), ...(d ? { distanza: d } : {}) })])
   }
+  const togli = (i) => setRighe(righe.filter((_, k) => k !== i))
   // Solo giorni di allenamento (lunedì-venerdì): i prossimi 10 dopo la data scelta
   const prossimi = Array.from({ length: 21 }, (_, i) => addGiorni(giorno, i + 1))
     .filter((d) => GIORNI_ALLENAMENTO.includes(new Date(d + 'T12:00:00').getDay()))
@@ -100,29 +166,31 @@ export default function EditorAllenamento({ squadra, giorno }) {
     const { error } = await supabase.from('allenamenti_squadra').delete().eq('squadra_id', squadra.id).eq('data', giorno)
     if (error) return setErrore('Non sono riuscito a eliminare: ' + error.message)
     setTitolo('')
-    setRighe([{ ...RIGA_VUOTA }])
+    setRighe([nuovaRiga()])
     setStato('nuovo')
     setModifica(true)
     setOk('Allenamento eliminato.')
   }
 
-  if (stato === 'pubblicato' && !modifica) {
+  if (stato !== 'nuovo' && !modifica) {
     return (
       <>
         <div className="flex items-center justify-between mb-2 px-1">
           <p className="font-bold">Allenamento di {squadra.nome}</p>
           <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-blue-50 text-blue-600">
-            {vis === 'coach' ? 'Solo coach' : 'Pubblicato'}
+            {stato === 'bozza' ? 'Bozza' : vis === 'coach' ? 'Solo coach' : 'Pubblicato'}
           </span>
         </div>
         <PianoCard piano={{ titolo: titolo || 'Allenamento', righe }} />
         {ok && <p className="text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2 mb-3">{ok}</p>}
         <button onClick={() => setModifica(true)} className="w-full font-bold text-blue-600 bg-blue-50 rounded-2xl py-3 mb-3">✏️ Modifica</button>
-        <div className="text-right">
-          <Link to={`/risultati?data=${giorno}`} className="text-sm font-semibold text-blue-600">
-            Entra nella registrazione risultati per ogni atleta →
-          </Link>
-        </div>
+        {stato === 'pubblicato' && (
+          <div className="text-right">
+            <Link to={`/risultati?data=${giorno}`} className="text-sm font-semibold text-blue-600">
+              Entra nella registrazione risultati per ogni atleta →
+            </Link>
+          </div>
+        )}
       </>
     )
   }
@@ -132,45 +200,23 @@ export default function EditorAllenamento({ squadra, giorno }) {
       <div className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">
         <div className="flex items-center justify-between mb-3">
           <p className="font-bold">Allenamento di {squadra.nome}</p>
-          <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-blue-50 text-blue-600">{STATO[stato]}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-blue-50 text-blue-600">{STATO[stato]}</span>
+            <button onClick={esci} className="text-xs font-bold px-3 py-1 rounded-full bg-gray-100 text-gray-600 active:scale-95 transition">✕ Esci</button>
+          </div>
         </div>
         <label className="block text-xs text-gray-500 mb-1">Titolo (facoltativo)</label>
         <input value={titolo} onChange={(e) => setTitolo(e.target.value)} placeholder="Es. Resistenza aerobica" className={CAMPO} />
       </div>
 
-      {righe.map((r, i) => (
-        <div key={i} className="bg-white border border-gray-100 rounded-3xl p-4 mb-3 shadow-sm">
-          <div className="grid grid-cols-2 gap-2 mb-2">
-            <select value={r.tipo_lavoro} onChange={(e) => cambiaTipo(i, e.target.value)} className={CAMPO}>
-              {[...TIPI_COACH, ...TIPI_LAVORO].map((t) => <option key={t}>{t}</option>)}
-            </select>
-            <select value={r.stile} onChange={(e) => cambia(i, 'stile', e.target.value)} className={CAMPO}>
-              {STILI.map((s) => <option key={s}>{s}</option>)}
-            </select>
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">Ripetizioni</label>
-              <input type="number" min="1" max="50" value={r.ripetizioni} onChange={(e) => cambia(i, 'ripetizioni', e.target.value)} className={CAMPO} />
-            </div>
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">Distanza (m)</label>
-              <input type="number" min="25" step="25" value={r.distanza} onChange={(e) => cambia(i, 'distanza', e.target.value)} className={CAMPO} />
-            </div>
-          </div>
-          <label className="block text-xs text-gray-500 mb-1">Note (facoltative: recupero, ritmo...)</label>
-          <input value={r.note} onChange={(e) => cambia(i, 'note', e.target.value)} placeholder="Es. rec 20&quot;, gambe veloci" className={CAMPO} />
-          <div className="flex items-center justify-between mt-2">
-            <div className="flex gap-2">
-              <button onClick={() => sposta(i, -1)} disabled={i === 0} aria-label="Sposta su"
-                className="w-9 h-9 rounded-full bg-gray-100 text-gray-600 font-bold disabled:opacity-30">↑</button>
-              <button onClick={() => sposta(i, 1)} disabled={i === righe.length - 1} aria-label="Sposta giù"
-                className="w-9 h-9 rounded-full bg-gray-100 text-gray-600 font-bold disabled:opacity-30">↓</button>
-            </div>
-            {righe.length > 1 && (
-              <button onClick={() => setRighe(righe.filter((_, k) => k !== i))} className="text-xs text-red-500">Togli lavoro</button>
-            )}
-          </div>
-        </div>
-      ))}
+      <Reorder.Group as="div" axis="y" values={righe} onReorder={setRighe}>
+        <AnimatePresence initial={false}>
+          {righe.map((r, i) => (
+            <RigaLavoro key={r._id} r={r} i={i} totale={righe.length}
+              cambia={cambia} cambiaTipo={cambiaTipo} sposta={sposta} togli={togli} />
+          ))}
+        </AnimatePresence>
+      </Reorder.Group>
       <div className="bg-white border border-gray-100 rounded-3xl p-4 mb-3 shadow-sm">
         <button onClick={() => aggiungiLavoro()}
           className="w-full text-blue-600 font-bold bg-blue-50 rounded-2xl py-3 mb-3">+ Aggiungi Lavoro</button>
@@ -213,6 +259,7 @@ export default function EditorAllenamento({ squadra, giorno }) {
           {vis === 'squadra' ? 'Pubblica' : 'Salva'}
         </button>
       </div>
+      <button onClick={esci} className="w-full font-bold text-gray-600 bg-gray-100 rounded-2xl py-3 mt-2 active:scale-[0.98] transition">✕ Esci senza salvare</button>
       {stato !== 'nuovo' && (
         <button onClick={elimina} className="w-full text-sm text-red-500 mt-3 py-2">Elimina allenamento di questo giorno</button>
       )}
