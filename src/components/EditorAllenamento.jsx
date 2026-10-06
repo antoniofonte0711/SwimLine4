@@ -14,6 +14,8 @@ const STATO = { nuovo: 'Nuovo', bozza: 'Bozza', pubblicato: 'Pubblicato' }
 
 const nuovaRiga = (extra = {}) => ({ ...RIGA_VUOTA, ...extra, _id: crypto.randomUUID() })
 const conId = (lista) => lista.map((r) => ({ ...r, _id: r._id || crypto.randomUUID() }))
+// Stato del form in forma confrontabile, per capire se ci sono modifiche non salvate
+const fotografia = (titolo, righe, vis) => JSON.stringify({ titolo, vis, righe: righe.map(({ _id, ...r }) => r) })
 
 // Una riga di lavoro: si trascina dalla maniglia ⠿ oppure con le frecce, e si muove con un'animazione
 function RigaLavoro({ r, i, totale, cambia, cambiaTipo, sposta, togli }) {
@@ -77,12 +79,17 @@ export default function EditorAllenamento({ squadra, giorno }) {
   const [ok, setOk] = useState('')
   // Dopo la pubblicazione si vede la vista compatta; "Modifica" riapre l'editor
   const [modifica, setModifica] = useState(true)
+  const [salvato, setSalvato] = useState(() => fotografia('', righe, 'squadra'))
 
   async function carica() {
     const { data } = await supabase.from('allenamenti_squadra').select('*').eq('squadra_id', squadra.id).eq('data', giorno).maybeSingle()
-    setTitolo(data?.titolo || '')
-    setRighe(data?.righe?.length ? conId(data.righe) : [nuovaRiga()])
-    setVis(data?.visibilita || 'squadra')
+    const t = data?.titolo || ''
+    const r = data?.righe?.length ? conId(data.righe) : [nuovaRiga()]
+    const v = data?.visibilita || 'squadra'
+    setTitolo(t)
+    setRighe(r)
+    setVis(v)
+    setSalvato(fotografia(t, r, v))
     setStato(data ? (data.pubblicato ? 'pubblicato' : 'bozza') : 'nuovo')
     return data
   }
@@ -97,8 +104,11 @@ export default function EditorAllenamento({ squadra, giorno }) {
     return () => { attivo = false }
   }, [giorno, squadra.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Esce dalla modifica scartando ciò che non hai salvato
+  const modificato = extra.length > 0 || fotografia(titolo, righe, vis) !== salvato
+
+  // Esce dalla modifica scartando ciò che non hai salvato (chiede conferma se c'è qualcosa da perdere)
   async function esci() {
+    if (modificato && !window.confirm('Ci sono modifiche non salvate. Uscire senza salvare?')) return
     setErrore('')
     setOk('')
     setExtra([])
@@ -155,6 +165,7 @@ export default function EditorAllenamento({ squadra, giorno }) {
     )
     if (error) return setErrore('Non sono riuscito a salvare: ' + error.message)
     setStato(pubblica ? 'pubblicato' : 'bozza')
+    setSalvato(fotografia(titolo, righe, vis))
     setModifica(!pubblica)
     setExtra([])
     setOk(pubblica
@@ -165,8 +176,10 @@ export default function EditorAllenamento({ squadra, giorno }) {
   async function elimina() {
     const { error } = await supabase.from('allenamenti_squadra').delete().eq('squadra_id', squadra.id).eq('data', giorno)
     if (error) return setErrore('Non sono riuscito a eliminare: ' + error.message)
+    const vuote = [nuovaRiga()]
     setTitolo('')
-    setRighe([nuovaRiga()])
+    setRighe(vuote)
+    setSalvato(fotografia('', vuote, vis))
     setStato('nuovo')
     setModifica(true)
     setOk('Allenamento eliminato.')
@@ -198,11 +211,11 @@ export default function EditorAllenamento({ squadra, giorno }) {
   return (
     <>
       <div className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
           <p className="font-bold">Allenamento di {squadra.nome}</p>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 whitespace-nowrap">
             <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-blue-50 text-blue-600">{STATO[stato]}</span>
-            <button onClick={esci} className="text-xs font-bold px-3 py-1 rounded-full bg-gray-100 text-gray-600 active:scale-95 transition">✕ Esci</button>
+            <button onClick={esci} className="text-xs font-bold px-3 py-1 rounded-full bg-gray-100 text-gray-600 active:scale-95 transition">✕ Esci senza salvare</button>
           </div>
         </div>
         <label className="block text-xs text-gray-500 mb-1">Titolo (facoltativo)</label>
