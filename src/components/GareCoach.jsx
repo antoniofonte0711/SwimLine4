@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Reorder, AnimatePresence, useDragControls } from 'framer-motion'
 import { supabase } from '../lib/supabaseClient'
 import AppShell from './AppShell'
 import InputTempo from './InputTempo'
@@ -14,7 +15,8 @@ import { useMiaSquadra } from '../lib/pianoSquadra'
 const CAMPO = 'w-full border border-gray-200 bg-gray-50 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400'
 const CARD = 'bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm'
 const DISTANZE = ['25', '50', '100', '200', '400', '800', '1500']
-const MSG_MIGRAZIONE = 'Manca una colonna nel database: esegui migrazione_fase6_gare_coach.sql su Supabase.'
+const MSG_MIGRAZIONE = 'Manca una colonna nel database: esegui migrazione_fase10_punti_gare.sql su Supabase.'
+const nuovaGara = (x = {}) => ({ distanza: '100', stile: 'Stile libero', ...x, _id: crypto.randomUUID() })
 
 const dataIt = (s) => (s ? new Date(s + 'T12:00:00').toLocaleDateString('it-IT') : '')
 const nomeGara = (g) => `${g.distanza} m ${g.stile}`
@@ -147,6 +149,41 @@ function SchedaRisultato({ g, onSalvato }) {
   )
 }
 
+// Una gara del programma del trofeo: si trascina dalla maniglia ⠿ o con le frecce
+function RigaGara({ g, i, totale, cambia, sposta, togli }) {
+  const controlli = useDragControls()
+  return (
+    <Reorder.Item as="div" value={g} dragListener={false} dragControls={controlli}
+      initial={{ opacity: 0, y: 14, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.15 } }}
+      whileDrag={{ scale: 1.03, boxShadow: '0 18px 40px rgba(37,99,235,0.25)', zIndex: 20 }}
+      transition={{ type: 'spring', stiffness: 500, damping: 38 }}
+      className="relative bg-gray-50 border border-gray-100 rounded-2xl p-3 mb-2">
+      <div className="flex items-center justify-between mb-2">
+        <div onPointerDown={(e) => controlli.start(e)} style={{ touchAction: 'none' }}
+          className="flex items-center gap-2 cursor-grab active:cursor-grabbing select-none text-gray-400 text-sm font-semibold">
+          <span className="text-xl leading-none">⠿</span> Gara {i + 1}
+        </div>
+        <div className="flex gap-2">
+          <button onClick={() => sposta(i, -1)} disabled={i === 0} aria-label="Sposta su"
+            className="w-8 h-8 rounded-full bg-white text-gray-600 font-bold disabled:opacity-30 active:scale-90 transition">↑</button>
+          <button onClick={() => sposta(i, 1)} disabled={i === totale - 1} aria-label="Sposta giù"
+            className="w-8 h-8 rounded-full bg-white text-gray-600 font-bold disabled:opacity-30 active:scale-90 transition">↓</button>
+          {totale > 1 && <button onClick={() => togli(i)} aria-label="Togli gara" className="w-8 h-8 rounded-full bg-white text-red-500 font-bold active:scale-90 transition">×</button>}
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <select value={g.distanza} onChange={(e) => cambia(i, { distanza: e.target.value })} className={CAMPO}>
+          {DISTANZE.map((x) => <option key={x} value={x}>{x} m</option>)}
+        </select>
+        <select value={g.stile} onChange={(e) => cambia(i, { stile: e.target.value })} className={CAMPO}>
+          {STILI.map((x) => <option key={x}>{x}</option>)}
+        </select>
+      </div>
+    </Reorder.Item>
+  )
+}
+
 // Gare del coach: assegna la gara a più atleti, poi inserisci i risultati
 export default function GareCoach() {
   const { squadra, pronto } = useMiaSquadra()
@@ -158,8 +195,7 @@ export default function GareCoach() {
   const [nome, setNome] = useState('')
   const [data, setData] = useState(dataLocale())
   const [orario, setOrario] = useState('')
-  const [distanza, setDistanza] = useState('100')
-  const [stile, setStile] = useState('Stile libero')
+  const [programma, setProgramma] = useState(() => [nuovaGara()]) // gare del trofeo, in ordine
   const [righe, setRighe] = useState({}) // { idAtleta: { incluso, iscr } }
   const [errore, setErrore] = useState('')
   const [ok, setOk] = useState('')
@@ -183,6 +219,14 @@ export default function GareCoach() {
       .then(({ data: a }) => { setAtleti(a || []); caricaGare(a || []) })
   }, [squadra?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  const cambiaGara = (i, patch) => setProgramma(programma.map((g, k) => (k === i ? { ...g, ...patch } : g)))
+  const spostaGara = (i, verso) => {
+    const j = i + verso
+    if (j < 0 || j >= programma.length) return
+    const c = [...programma]
+    ;[c[i], c[j]] = [c[j], c[i]]
+    setProgramma(c)
+  }
   const riga = (id) => righe[id] || { incluso: false, iscr: '' }
   const cambia = (id, patch) => setRighe((r) => ({ ...r, [id]: { ...(r[id] || { incluso: false, iscr: '' }), ...patch } }))
   const nSelezionati = atleti.filter((a) => riga(a.id).incluso).length
@@ -204,17 +248,20 @@ export default function GareCoach() {
     for (const a of scelti) {
       const iscr = normalizzaTempo(riga(a.id).iscr)
       if (iscr && !tempoValido(iscr)) return setErrore(`${a.nome}, tempo di iscrizione: ${ERRORE_TEMPO_BREVE}`)
-      records.push({
-        atleta_id: a.id, nome_gara: nome.trim(), distanza: Number(distanza), stile,
-        data_gara: data, orario: orario || null, tempo: null, passaggi: [],
-        ...(iscr ? { tempo_iscrizione: iscr } : {}),
+      // il tempo di iscrizione vale per la prima gara del programma
+      programma.forEach((g, k) => {
+        records.push({
+          atleta_id: a.id, nome_gara: nome.trim(), distanza: Number(g.distanza), stile: g.stile,
+          data_gara: data, orario: orario || null, tempo: null, passaggi: [], ordine: k,
+          ...(iscr && k === 0 ? { tempo_iscrizione: iscr } : {}),
+        })
       })
     }
     setInvio(true)
     const { error } = await supabase.from('gare').insert(records)
     setInvio(false)
     if (error) {
-      return setErrore(/tempo_iscrizione|orario|null value/.test(error.message)
+      return setErrore(/tempo_iscrizione|orario|ordine|null value/.test(error.message)
         ? MSG_MIGRAZIONE : 'Non sono riuscito a salvare: ' + error.message)
     }
     setOk(`Gara assegnata a ${records.length} atleta/i. I tempi si inseriscono da "Risultati".`)
@@ -229,6 +276,7 @@ export default function GareCoach() {
     return [...m.values()]
   }, [gare])
   const delTrofeo = gare.filter((g) => `${g.nome_gara}||${g.data_gara}` === trofeo)
+    .sort((a, b) => (a.ordine ?? 0) - (b.ordine ?? 0))
   const gareDelTrofeo = [...new Set(delTrofeo.map(nomeGara))]
   const risultati = delTrofeo.filter((g) => !garaSel || nomeGara(g) === garaSel)
 
@@ -266,20 +314,17 @@ export default function GareCoach() {
                       <input type="time" value={orario} onChange={(e) => setOrario(e.target.value)} className={CAMPO} />
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs text-gray-500 mb-1">Distanza (m)</label>
-                      <select value={distanza} onChange={(e) => setDistanza(e.target.value)} className={CAMPO}>
-                        {DISTANZE.map((x) => <option key={x}>{x}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs text-gray-500 mb-1">Stile</label>
-                      <select value={stile} onChange={(e) => setStile(e.target.value)} className={CAMPO}>
-                        {STILI.map((s) => <option key={s}>{s}</option>)}
-                      </select>
-                    </div>
-                  </div>
+                  <p className="text-sm font-bold mb-2">Gare del trofeo</p>
+                  <Reorder.Group as="div" axis="y" values={programma} onReorder={setProgramma}>
+                    <AnimatePresence initial={false}>
+                      {programma.map((g, i) => (
+                        <RigaGara key={g._id} g={g} i={i} totale={programma.length} cambia={cambiaGara} sposta={spostaGara}
+                          togli={(k) => setProgramma(programma.filter((_, n) => n !== k))} />
+                      ))}
+                    </AnimatePresence>
+                  </Reorder.Group>
+                  <button onClick={() => setProgramma([...programma, nuovaGara()])}
+                    className="w-full text-blue-600 font-bold bg-blue-50 rounded-2xl py-2.5 text-sm active:scale-[0.98] transition">+ Aggiungi gara al trofeo</button>
                 </div>
 
                 <div className={CARD}>

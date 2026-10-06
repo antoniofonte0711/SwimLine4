@@ -14,6 +14,7 @@ const FUNZIONI = [
   ['/archivio', '📋', 'Archivio gare'],
   ['/squadra', '👥', 'Squadra'],
   ['/calendario', '🗓', 'Calendario'],
+  ['/punti', '⭐', 'Punti'],
   ['/impostazioni', '⚙️', 'Impostazioni'],
 ]
 

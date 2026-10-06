@@ -20,6 +20,7 @@ import InArrivo from './pages/InArrivo'
 import AdminPanel from './pages/AdminPanel'
 import Impostazioni from './pages/Impostazioni'
 import Calendario from './pages/Calendario'
+import Punti from './pages/Punti'
 import RisultatiAllenamento from './pages/RisultatiAllenamento'
 import PresenzeAtleta from './pages/PresenzeAtleta'
 
@@ -52,6 +53,7 @@ export default function App() {
             <Route path="/record" element={<ProtectedRoute><Record /></ProtectedRoute>} />
             <Route path="/presenze" element={<ProtectedRoute requireCoach><Presenze /></ProtectedRoute>} />
 
+            <Route path="/punti" element={<ProtectedRoute><Punti /></ProtectedRoute>} />
             <Route path="/calendario" element={<ProtectedRoute><Calendario /></ProtectedRoute>} />
             <Route path="/impostazioni" element={<ProtectedRoute requireCoach><Impostazioni /></ProtectedRoute>} />
             <Route path="/risultati" element={<ProtectedRoute requireCoach><RisultatiAllenamento /></ProtectedRoute>} />

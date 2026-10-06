@@ -9,6 +9,7 @@ import { STATI } from '../lib/presenze'
 import { puoModificare } from '../lib/permessi'
 import PianoCard, { SenzaSquadra } from '../components/PianoCard'
 import EditorAllenamento from '../components/EditorAllenamento'
+import CardPunti from '../components/CardPunti'
 import { useMiaSquadra } from '../lib/pianoSquadra'
 
 const COLORE_STATO = {
@@ -69,6 +70,8 @@ function HomeAtleta() {
           <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${COLORE_STATO[presenza]}`}>{STATI[presenza]}</span>
         )}
       </div>
+
+      {ruolo !== 'genitore' && <CardPunti />}
 
       <PianoCard piano={piano} />
 
