@@ -7,7 +7,7 @@ import { nomeRuolo } from '../lib/permessi'
 
 const VOCI = [
   ['home', '/dashboard', '🏠', 'Home'],
-  ['riepilogo', '/riepilogo', '📊', 'Dashboard'],
+  ['riepilogo', '/riepilogo', '📊', 'Riepilogo'],
   ['funzioni', '/funzioni', '🔲', 'Funzioni'],
   ['profilo', '/profilo', '👤', 'Profilo'],
 ]
