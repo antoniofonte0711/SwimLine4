@@ -5,6 +5,7 @@ import AppShell from '../components/AppShell'
 import SelettoreData from '../components/SelettoreData'
 import { dataLocale } from '../lib/lavori'
 import { STATI, GIORNI_ALLENAMENTO } from '../lib/presenze'
+import { useMiaSquadra } from '../lib/pianoSquadra'
 
 const COLORI = {
   presente: 'bg-green-600 text-white',
@@ -15,23 +16,27 @@ const COLORI = {
 // Solo il coach (e l'admin) segna le presenze. L'assenza non penale è per festività e simili.
 export default function Presenze() {
   const { user } = useAuth()
+  const { squadra, pronto } = useMiaSquadra()
   const [giorno, setGiorno] = useState(dataLocale())
   const [atleti, setAtleti] = useState([])
   const [stati, setStati] = useState({})
   const [errore, setErrore] = useState('')
 
   const carica = useCallback(async () => {
+    // Solo gli atleti della squadra attuale (per l'admin: quella in cui è entrato)
+    let q = supabase.from('profiles').select('id, nome, cognome').in('role', ['atleta', 'admin'])
+    if (squadra) q = q.eq('squadra_id', squadra.id)
     const [{ data: a }, { data: p }] = await Promise.all([
-      supabase.from('profiles').select('id, nome, cognome').in('role', ['atleta', 'admin']).order('cognome'),
+      q.order('cognome'),
       supabase.from('presenze').select('atleta_id, stato').eq('data', giorno),
     ])
     setAtleti(a || [])
     setStati(Object.fromEntries((p || []).map((r) => [r.atleta_id, r.stato])))
-  }, [giorno])
+  }, [giorno, squadra?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    carica()
-  }, [carica])
+    if (pronto) carica()
+  }, [carica, pronto])
 
   async function segna(atletaId, stato) {
     setErrore('')

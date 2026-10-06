@@ -18,7 +18,7 @@ const LETTERE = ['D', 'L', 'M', 'M', 'G', 'V', 'S']
 // indietro: percorso a cui torna il tasto "Indietro" (facoltativo)
 // giorno + onGiorno: se presenti, mostrano la striscia dei giorni
 export default function AppShell({ titolo, attiva, indietro, giorno, onGiorno, children }) {
-  const { profile, ruolo, staVedendoCome, cambiaVista } = useAuth()
+  const { profile, ruolo, staVedendoCome, cambiaVista, squadraGestita } = useAuth()
   const voci = VOCI.filter(([chiave]) => !(ruolo === 'ospite' && chiave === 'riepilogo'))
   const iniziale = (profile?.nome || 'A').charAt(0).toUpperCase()
   const [calAperto, setCalAperto] = useState(false)
@@ -43,7 +43,10 @@ export default function AppShell({ titolo, attiva, indietro, giorno, onGiorno, c
     <div className="min-h-screen bg-slate-50">
       {staVedendoCome && (
         <div className="sticky top-0 z-50 bg-amber-400 text-black text-sm px-4 py-2 flex items-center justify-between gap-3 pt-[max(env(safe-area-inset-top),0.5rem)]">
-          <span>👁 Stai vedendo l'app come: <b>{nomeRuolo(ruolo)}</b></span>
+          <span>
+            👁 Stai vedendo l'app come: <b>{nomeRuolo(ruolo)}</b>
+            {squadraGestita && <> · squadra <b>{squadraGestita.nome}</b></>}
+          </span>
           <button onClick={() => cambiaVista('admin')} className="font-bold bg-black text-white rounded-full px-3 py-1">Torna admin</button>
         </div>
       )}

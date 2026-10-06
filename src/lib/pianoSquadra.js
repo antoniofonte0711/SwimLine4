@@ -31,15 +31,23 @@ export const addGiorni = (s, n) => {
   return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10)
 }
 
-// Squadra del coach (o, per l'admin che "vede come coach", la sua squadra)
+// Squadra del coach (o, per l'admin, quella in cui è entrato; altrimenti la sua squadra)
 export function useMiaSquadra() {
-  const { user, profile } = useAuth()
+  const { user, profile, squadraGestita } = useAuth()
   const [squadra, setSquadra] = useState(null)
   const [pronto, setPronto] = useState(false)
 
   useEffect(() => {
     let attivo = true
     async function carica() {
+      if (squadraGestita) {
+        // ricarico il nome dal database: potrebbe essere cambiato dopo l'ingresso
+        const { data } = await supabase.from('squadre').select('id, nome').eq('id', squadraGestita.id).limit(1)
+        if (!attivo) return
+        setSquadra(data?.[0] || squadraGestita)
+        setPronto(true)
+        return
+      }
       let { data } = await supabase.from('squadre').select('id, nome').eq('coach_id', user.id).limit(1)
       if (!data?.length && profile?.squadra_id) {
         ;({ data } = await supabase.from('squadre').select('id, nome').eq('id', profile.squadra_id).limit(1))
@@ -50,7 +58,7 @@ export function useMiaSquadra() {
     }
     carica()
     return () => { attivo = false }
-  }, [user.id, profile?.squadra_id])
+  }, [user.id, profile?.squadra_id, squadraGestita?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return { squadra, pronto }
 }

@@ -19,6 +19,7 @@ const dataIt = (s) => (s ? new Date(s + 'T12:00:00').toLocaleDateString('it-IT')
 // Atleta: vede le gare dei compagni. Coach (e admin): vede anche gli allenamenti dei suoi atleti.
 export default function Squadra() {
   const { user, profile, isCoach } = useAuth()
+  const { squadra: squadraCoach, pronto } = useMiaSquadra()
   const [nomeSquadra, setNomeSquadra] = useState('')
   const [atleti, setAtleti] = useState([])
   const [scelto, setScelto] = useState('')
@@ -29,9 +30,11 @@ export default function Squadra() {
 
   useEffect(() => {
     async function carica() {
-      // nome della squadra: quella in cui sono, oppure quella che alleno
-      let nome = ''
-      if (profile?.squadra_id) {
+      if (isCoach && !pronto) return
+      // nome della squadra: per il coach quella che allena (per l'admin quella in cui è entrato),
+      // altrimenti quella in cui sono
+      let nome = isCoach ? squadraCoach?.nome || '' : ''
+      if (!nome && profile?.squadra_id) {
         const { data } = await supabase.from('squadre').select('nome').eq('id', profile.squadra_id).maybeSingle()
         nome = data?.nome || ''
       }
@@ -41,14 +44,16 @@ export default function Squadra() {
       }
       setNomeSquadra(nome)
 
-      const { data } = isCoach
-        ? await supabase.from('profiles').select('id, nome, cognome').in('role', ['atleta', 'admin']).order('cognome')
-        : await supabase.from('compagni_squadra').select('id, nome, cognome').order('cognome')
+      let q = isCoach
+        ? supabase.from('profiles').select('id, nome, cognome').in('role', ['atleta', 'admin'])
+        : supabase.from('compagni_squadra').select('id, nome, cognome')
+      if (isCoach && squadraCoach) q = q.eq('squadra_id', squadraCoach.id)
+      const { data } = await q.order('cognome')
       setAtleti(data || [])
-      setScelto((s) => s || data?.[0]?.id || '')
+      setScelto((s) => (data || []).some((a) => a.id === s) ? s : data?.[0]?.id || '')
     }
     carica()
-  }, [user.id, profile?.squadra_id, isCoach])
+  }, [user.id, profile?.squadra_id, isCoach, pronto, squadraCoach?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!scelto) {
