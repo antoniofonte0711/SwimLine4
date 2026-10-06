@@ -5,6 +5,7 @@ import { RUOLI_VISTA, nomeRuolo } from '../lib/permessi'
 import AppShell from '../components/AppShell'
 import BoxSquadra from '../components/BoxSquadra'
 import SquadreAdmin from '../components/SquadreAdmin'
+import RichiesteSquadra from '../components/RichiesteSquadra'
 
 // Il ruolo (atleta, coach, genitore) si sceglie solo alla registrazione: qui non si cambia.
 // Solo l'admin può "vedere come" un altro ruolo, per controllare cosa vedrebbe.
@@ -32,9 +33,11 @@ export default function Profilo() {
         <p className="text-sm text-gray-400 capitalize">{profile?.role}</p>
       </div>
 
+      {/* L'admin è anche atleta: entra in una squadra accettando l'invito del coach (non creandone una sua) */}
+      {adminReale && <RichiesteSquadra completo />}
       {adminReale && <SquadreAdmin />}
 
-      {['atleta', 'genitore', 'coach', 'admin'].includes(profile?.role) && <BoxSquadra />}
+      {['atleta', 'genitore', 'coach'].includes(profile?.role) && <BoxSquadra />}
 
       {adminReale && (
         <div className="bg-white border border-gray-100 rounded-3xl p-5 shadow-sm mb-3">

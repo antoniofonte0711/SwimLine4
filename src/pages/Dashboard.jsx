@@ -11,6 +11,7 @@ import PianoCard, { SenzaSquadra } from '../components/PianoCard'
 import EditorAllenamento from '../components/EditorAllenamento'
 import CardPunti from '../components/CardPunti'
 import { useMiaSquadra } from '../lib/pianoSquadra'
+import RichiesteSquadra from '../components/RichiesteSquadra'
 
 const COLORE_STATO = {
   presente: 'bg-green-100 text-green-700',
@@ -20,19 +21,24 @@ const COLORE_STATO = {
 
 // Home: i giorni e, sotto, gli allenamenti del giorno scelto
 function HomeAtleta() {
-  const { user, ruolo } = useAuth()
+  const { user, ruolo, profile, adminReale } = useAuth()
   const [giorno, setGiorno] = useState(dataLocale())
   const [righe, setRighe] = useState([])
   const [presenza, setPresenza] = useState(null)
   const [piano, setPiano] = useState(null)
 
-  // Allenamento pubblicato dal coach per questo giorno
+  // Allenamento pubblicato dal coach per questo giorno, della mia squadra
+  // (il filtro serve all'admin, che per i permessi vedrebbe i piani di tutte le squadre)
   useEffect(() => {
     let attivo = true
-    supabase.from('allenamenti_squadra').select('*').eq('data', giorno).limit(1)
+    if (!profile?.squadra_id) {
+      setPiano(null)
+      return
+    }
+    supabase.from('allenamenti_squadra').select('*').eq('data', giorno).eq('squadra_id', profile.squadra_id).limit(1)
       .then(({ data }) => { if (attivo) setPiano(data?.[0] || null) })
     return () => { attivo = false }
-  }, [giorno])
+  }, [giorno, profile?.squadra_id])
 
   useEffect(() => {
     let attivo = true
@@ -70,6 +76,8 @@ function HomeAtleta() {
           <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${COLORE_STATO[presenza]}`}>{STATI[presenza]}</span>
         )}
       </div>
+
+      {adminReale && <RichiesteSquadra />}
 
       {ruolo !== 'genitore' && <CardPunti />}
 
