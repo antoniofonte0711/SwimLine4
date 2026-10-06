@@ -4,7 +4,6 @@ import { Reorder, AnimatePresence, useDragControls } from 'framer-motion'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { TIPI_LAVORO, STILI, distanzaDaTipo } from '../lib/lavori'
-import { GIORNI_ALLENAMENTO } from '../lib/presenze'
 import { RIGA_VUOTA, TIPI_COACH, addGiorni, metriPiano } from '../lib/pianoSquadra'
 import PianoCard from './PianoCard'
 
@@ -134,10 +133,8 @@ export default function EditorAllenamento({ squadra, giorno }) {
     setRighe([...righe, nuovaRiga({ ...(tipo ? { tipo_lavoro: tipo } : {}), ...(d ? { distanza: d } : {}) })])
   }
   const togli = (i) => setRighe(righe.filter((_, k) => k !== i))
-  // Solo giorni di allenamento (lunedì-venerdì): i prossimi 10 dopo la data scelta
-  const prossimi = Array.from({ length: 21 }, (_, i) => addGiorni(giorno, i + 1))
-    .filter((d) => GIORNI_ALLENAMENTO.includes(new Date(d + 'T12:00:00').getDay()))
-    .slice(0, 10)
+  // Tutti i giorni, weekend compreso: le due settimane dopo la data scelta
+  const prossimi = Array.from({ length: 14 }, (_, i) => addGiorni(giorno, i + 1))
   const toggleExtra = (d) => setExtra(extra.includes(d) ? extra.filter((x) => x !== d) : [...extra, d])
 
   async function salva(pubblica) {
