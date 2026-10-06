@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { TIPI_LAVORO, STILI, distanzaDaTipo } from '../lib/lavori'
 import { RIGA_VUOTA, TIPI_COACH, addGiorni, metriPiano, minutiPiano } from '../lib/pianoSquadra'
+import { normalizzaRipartenza, ripartenzaValida } from '../lib/tempo'
 import PianoCard from './PianoCard'
 
 const CAMPO = 'w-full border border-gray-200 bg-gray-50 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400'
@@ -54,10 +55,17 @@ function RigaLavoro({ r, i, totale, cambia, cambiaTipo, sposta, togli }) {
           <input type="number" min="25" step="25" value={r.distanza} onChange={(e) => cambia(i, 'distanza', e.target.value)} className={CAMPO} />
         </div>
       </div>
-      <div className="grid grid-cols-[1fr_6.5rem] gap-2">
-        <div>
+      <div className="grid grid-cols-2 lg:grid-cols-[1fr_7rem_7rem] lg:items-end gap-2">
+        <div className="col-span-2 lg:col-span-1">
           <label className="block text-xs text-gray-500 mb-1">Note (facoltative: recupero, ritmo...)</label>
           <input value={r.note} onChange={(e) => cambia(i, 'note', e.target.value)} placeholder={'Es. rec 20", gambe veloci'} className={CAMPO} />
+        </div>
+        <div>
+          <label className="block text-xs text-gray-500 mb-1">Ripartenza</label>
+          <input value={r.ripartenza ?? ''} placeholder={`Es. 1'30"`} inputMode="decimal" autoComplete="off"
+            onChange={(e) => cambia(i, 'ripartenza', e.target.value)}
+            onBlur={(e) => cambia(i, 'ripartenza', normalizzaRipartenza(e.target.value))}
+            className={`${CAMPO} ${ripartenzaValida(r.ripartenza) ? '' : 'border-red-400'}`} />
         </div>
         <div>
           <label className="block text-xs text-gray-500 mb-1">Tempo (min)</label>
@@ -154,6 +162,11 @@ export default function EditorAllenamento({ squadra, giorno }) {
       setErrore(`Riga ${storta + 1}: scrivi la distanza (da 25 metri in su) nel campo "Distanza (m)".`)
       return
     }
+    const ripStorta = righe.findIndex((r) => !ripartenzaValida(normalizzaRipartenza(r.ripartenza)))
+    if (ripStorta >= 0) {
+      setErrore(`Riga ${ripStorta + 1}: scrivi la ripartenza come 1'30" (oppure 45" sotto il minuto), o lasciala vuota.`)
+      return
+    }
     const pulite = righe.map((r) => ({
       tipo_lavoro: r.tipo_lavoro,
       distanza: Number(r.distanza),
@@ -161,6 +174,7 @@ export default function EditorAllenamento({ squadra, giorno }) {
       stile: r.stile,
       note: r.note || '',
       minuti: Number(r.minuti) > 0 ? Number(r.minuti) : null,
+      ripartenza: normalizzaRipartenza(r.ripartenza) || null,
     }))
     const giorni = [giorno, ...extra]
     const { error } = await supabase.from('allenamenti_squadra').upsert(

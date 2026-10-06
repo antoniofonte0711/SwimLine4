@@ -45,6 +45,24 @@ export function normalizzaTempo(t) {
   return costruisci(m, sec, cent)
 }
 
+// Tempo di ripartenza di una serie (minuti e secondi, senza centesimi): 1'30" oppure 45" sotto il minuto.
+// Capisce 130, 1:30, 1.30, 1'30, 90 (secondi) e lo porta al formato standard; vuoto resta vuoto.
+// Se non riesce a capirlo restituisce il testo pulito, che ripartenzaValida poi rifiuta.
+export function normalizzaRipartenza(t) {
+  const s = (t || '').trim().replace(/[’‘′`´]/g, "'").replace(/[”“″]/g, '"').replace(/\s+/g, '')
+  if (!s) return ''
+  let m, sec, x
+  if (/^\d{1,2}$/.test(s) || /^\d{1,2}"$/.test(s)) { m = 0; sec = parseInt(s) }
+  else if (/^\d{3,4}$/.test(s)) { m = Number(s.slice(0, -2)); sec = Number(s.slice(-2)) }
+  else if ((x = s.match(/^(\d{1,2})[:'.,](\d{1,2})"?$/))) { m = Number(x[1]); sec = Number(x[2]) }
+  else return s
+  if (m === 0 && sec >= 60) { m = Math.floor(sec / 60); sec %= 60 }
+  if (sec > 59 || m + sec === 0) return s
+  return m > 0 ? `${m}'${String(sec).padStart(2, '0')}"` : `${sec}"`
+}
+
+export const ripartenzaValida = (t) => !t || /^(\d{1,2}'[0-5]\d|[1-5]?\d)"$/.test(t)
+
 // Passaggi cumulativi di una gara: devono crescere e restare sotto il tempo finale
 export function passaggiCoerenti(passaggi, finale) {
   let prec = 0

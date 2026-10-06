@@ -105,6 +105,7 @@ export default function RisultatiAtleta({ piano, atletaId, giorno }) {
           <div key={i} className="bg-white border border-gray-100 rounded-3xl p-4 mb-3 shadow-sm">
             <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${coloreLavoro(r.tipo_lavoro)}`}>{r.tipo_lavoro}</span>
             <span className="text-sm text-gray-600 ml-2">{n}×{r.distanza} m {r.stile}</span>
+            {r.ripartenza && <span className="text-xs text-gray-500 ml-2">↻ ripartenza {r.ripartenza}</span>}
             {r.note && <p className="text-xs text-gray-400 mt-1">{r.note}</p>}
             <div className="grid grid-cols-2 gap-3 mt-3">
               {Array.from({ length: n }, (_, j) => (
