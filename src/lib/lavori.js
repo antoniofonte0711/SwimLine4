@@ -1,6 +1,6 @@
 // Lavori e stili tra cui scegliere in SwimLine4
 export const TIPI_LAVORO = [
-  'A2', 'B1', 'B2', 'C1', 'C2',
+  'A2', 'B1', 'B2', 'C1', 'C2', 'C3',
   'Passo gara 50', 'Passo gara 100', 'Passo gara 200', 'Passo gara 400',
 ]
 export const STILI = ['Stile libero', 'Dorso', 'Rana', 'Farfalla', 'Misti']
@@ -11,6 +11,7 @@ const COLORI = {
   B2: 'bg-orange-100 text-orange-700',
   C1: 'bg-red-100 text-red-700',
   C2: 'bg-purple-100 text-purple-700',
+  C3: 'bg-pink-100 text-pink-700',
 }
 export const coloreLavoro = (t = '') =>
   t.startsWith('Passo gara') ? 'bg-slate-800 text-white' : COLORI[t] || 'bg-gray-100 text-gray-700'
