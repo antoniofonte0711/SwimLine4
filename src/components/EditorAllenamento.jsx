@@ -65,7 +65,7 @@ function RigaLavoro({ r, i, totale, cambia, cambiaTipo, sposta, togli }) {
           <input value={r.ripartenza ?? ''} placeholder={`Es. 1'30"`} inputMode="decimal" autoComplete="off"
             onChange={(e) => cambia(i, 'ripartenza', e.target.value)}
             onBlur={(e) => cambia(i, 'ripartenza', normalizzaRipartenza(e.target.value))}
-            className={`${CAMPO} ${ripartenzaValida(r.ripartenza) ? '' : 'border-red-400'}`} />
+            className={`${CAMPO} ${ripartenzaValida(normalizzaRipartenza(r.ripartenza)) ? '' : 'border-red-400'}`} />
         </div>
         <div>
           <label className="block text-xs text-gray-500 mb-1">Tempo (min)</label>
@@ -162,19 +162,21 @@ export default function EditorAllenamento({ squadra, giorno }) {
       setErrore(`Riga ${storta + 1}: scrivi la distanza (da 25 metri in su) nel campo "Distanza (m)".`)
       return
     }
-    const ripStorta = righe.findIndex((r) => !ripartenzaValida(normalizzaRipartenza(r.ripartenza)))
+    // La ripartenza si salva (e si mostra) sempre nel formato standard, anche se non sei uscito dal campo
+    const ordinate = righe.map((r) => ({ ...r, ripartenza: normalizzaRipartenza(r.ripartenza) }))
+    const ripStorta = ordinate.findIndex((r) => !ripartenzaValida(r.ripartenza))
     if (ripStorta >= 0) {
       setErrore(`Riga ${ripStorta + 1}: scrivi la ripartenza come 1'30" (oppure 45" sotto il minuto), o lasciala vuota.`)
       return
     }
-    const pulite = righe.map((r) => ({
+    const pulite = ordinate.map((r) => ({
       tipo_lavoro: r.tipo_lavoro,
       distanza: Number(r.distanza),
       ripetizioni: Number(r.ripetizioni) || 1,
       stile: r.stile,
       note: r.note || '',
       minuti: Number(r.minuti) > 0 ? Number(r.minuti) : null,
-      ripartenza: normalizzaRipartenza(r.ripartenza) || null,
+      ripartenza: r.ripartenza || null,
     }))
     const giorni = [giorno, ...extra]
     const { error } = await supabase.from('allenamenti_squadra').upsert(
@@ -186,7 +188,8 @@ export default function EditorAllenamento({ squadra, giorno }) {
     )
     if (error) return setErrore('Non sono riuscito a salvare: ' + error.message)
     setStato(pubblica ? 'pubblicato' : 'bozza')
-    setSalvato(fotografia(titolo, righe, vis))
+    setRighe(ordinate)
+    setSalvato(fotografia(titolo, ordinate, vis))
     setModifica(!pubblica)
     setExtra([])
     setOk(pubblica
