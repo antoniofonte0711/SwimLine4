@@ -48,7 +48,7 @@ export default function AppShell({ titolo, attiva, indietro, giorno, onGiorno, c
         </div>
       )}
       <header className="bg-blue-600 text-white px-5 pt-[max(env(safe-area-inset-top),1rem)] pb-10">
-        <div className="max-w-md mx-auto">
+        <div className="max-w-md lg:max-w-[900px] mx-auto">
           <div className="flex items-center justify-between">
             <span className="text-2xl font-bold tracking-tight">
               Swim<span className="font-light">Line4</span>
@@ -93,7 +93,7 @@ export default function AppShell({ titolo, attiva, indietro, giorno, onGiorno, c
       {calAperto && <CalendarioFoglio valore={giorno} onScegli={onGiorno} onChiudi={() => setCalAperto(false)} />}
 
       <main className="-mt-6 rounded-t-[28px] bg-slate-50 px-4 pt-5 pb-32">
-        <div className="max-w-md mx-auto">
+        <div className="max-w-md lg:max-w-[900px] mx-auto">
           {indietro && (
             <Link to={indietro}
               className="inline-block mb-4 text-sm font-semibold text-blue-600 bg-blue-50 rounded-full px-4 py-2">

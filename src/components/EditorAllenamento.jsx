@@ -38,7 +38,7 @@ function RigaLavoro({ r, i, totale, cambia, cambiaTipo, sposta, togli }) {
             className="w-9 h-9 rounded-full bg-gray-100 text-gray-600 font-bold disabled:opacity-30 active:scale-90 transition">↓</button>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-2 mb-2">
+      <div className="grid grid-cols-2 lg:grid-cols-4 lg:items-end gap-2 mb-2">
         <select value={r.tipo_lavoro} onChange={(e) => cambiaTipo(i, e.target.value)} className={CAMPO}>
           {[...TIPI_COACH, ...TIPI_LAVORO].map((t) => <option key={t}>{t}</option>)}
         </select>
