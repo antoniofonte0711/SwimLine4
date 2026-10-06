@@ -3,8 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Reorder, AnimatePresence, useDragControls } from 'framer-motion'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
-import { TIPI_LAVORO, STILI, distanzaDaTipo } from '../lib/lavori'
-import { RIGA_VUOTA, TIPI_COACH, addGiorni, metriPiano, minutiPiano } from '../lib/pianoSquadra'
+import { TIPI_LAVORO, distanzaDaTipo } from '../lib/lavori'
+import { RIGA_VUOTA, STILI_COACH, TIPI_COACH, addGiorni, metriPiano, minutiPiano } from '../lib/pianoSquadra'
 import { normalizzaRipartenza, ripartenzaValida } from '../lib/tempo'
 import PianoCard from './PianoCard'
 
@@ -17,9 +17,30 @@ const conId = (lista) => lista.map((r) => ({ ...r, _id: r._id || crypto.randomUU
 // Stato del form in forma confrontabile, per capire se ci sono modifiche non salvate
 const fotografia = (titolo, righe, vis) => JSON.stringify({ titolo, vis, righe: righe.map(({ _id, ...r }) => r) })
 
+// Campo ripartenza: si scrive come si vuole (130, 1:30...) e uscendo diventa 1'30"; rosso solo se non si capisce
+function InputRipartenza({ value, onChange, etichetta, placeholder = `Es. 1'30"` }) {
+  return (
+    <div>
+      <label className="block text-xs text-gray-500 mb-1">{etichetta}</label>
+      <input value={value ?? ''} placeholder={placeholder} inputMode="decimal" autoComplete="off"
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={(e) => onChange(normalizzaRipartenza(e.target.value))}
+        className={`${CAMPO} ${ripartenzaValida(normalizzaRipartenza(value)) ? '' : 'border-red-400'}`} />
+    </div>
+  )
+}
+
 // Una riga di lavoro: si trascina dalla maniglia ⠿ oppure con le frecce, e si muove con un'animazione
 function RigaLavoro({ r, i, totale, cambia, cambiaTipo, sposta, togli }) {
   const controlli = useDragControls()
+  const n = Math.min(50, Math.max(1, Number(r.ripetizioni) || 1))
+  // Ripartenze personalizzate: una casella per ogni ripetizione (vuota = usa la ripartenza generale)
+  const personali = Array.isArray(r.ripartenze)
+  const cambiaRipartenza = (j, v) => {
+    const lista = Array.from({ length: n }, (_, k) => r.ripartenze?.[k] ?? '')
+    lista[j] = v
+    cambia(i, 'ripartenze', lista)
+  }
   return (
     <Reorder.Item as="div" value={r} dragListener={false} dragControls={controlli}
       initial={{ opacity: 0, y: 16, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -44,7 +65,7 @@ function RigaLavoro({ r, i, totale, cambia, cambiaTipo, sposta, togli }) {
           {[...TIPI_COACH, ...TIPI_LAVORO].map((t) => <option key={t}>{t}</option>)}
         </select>
         <select value={r.stile} onChange={(e) => cambia(i, 'stile', e.target.value)} className={CAMPO}>
-          {STILI.map((s) => <option key={s}>{s}</option>)}
+          {STILI_COACH.map((s) => <option key={s}>{s}</option>)}
         </select>
         <div>
           <label className="block text-xs text-gray-500 mb-1">Ripetizioni</label>
@@ -60,22 +81,34 @@ function RigaLavoro({ r, i, totale, cambia, cambiaTipo, sposta, togli }) {
           <label className="block text-xs text-gray-500 mb-1">Note (facoltative: recupero, ritmo...)</label>
           <input value={r.note} onChange={(e) => cambia(i, 'note', e.target.value)} placeholder={'Es. rec 20", gambe veloci'} className={CAMPO} />
         </div>
-        <div>
-          <label className="block text-xs text-gray-500 mb-1">Ripartenza</label>
-          <input value={r.ripartenza ?? ''} placeholder={`Es. 1'30"`} inputMode="decimal" autoComplete="off"
-            onChange={(e) => cambia(i, 'ripartenza', e.target.value)}
-            onBlur={(e) => cambia(i, 'ripartenza', normalizzaRipartenza(e.target.value))}
-            className={`${CAMPO} ${ripartenzaValida(normalizzaRipartenza(r.ripartenza)) ? '' : 'border-red-400'}`} />
-        </div>
+        <InputRipartenza etichetta="Ripartenza" value={r.ripartenza} onChange={(v) => cambia(i, 'ripartenza', v)} />
         <div>
           <label className="block text-xs text-gray-500 mb-1">Tempo (min)</label>
           <input type="number" min="1" step="1" inputMode="numeric" value={r.minuti ?? ''} placeholder="Es. 10"
             onChange={(e) => cambia(i, 'minuti', e.target.value)} className={CAMPO} />
         </div>
       </div>
-      {totale > 1 && (
-        <div className="text-right mt-2">
-          <button onClick={() => togli(i)} className="text-xs text-red-500">Togli lavoro</button>
+      {personali && n > 1 && (
+        <div className="bg-gray-50 rounded-2xl p-3 mt-3">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold text-gray-600">Ripartenza di ogni ripetizione</p>
+            <button onClick={() => cambia(i, 'ripartenze', undefined)} className="text-xs text-red-500">Togli</button>
+          </div>
+          <p className="text-xs text-gray-400 mb-2">Le caselle vuote usano la ripartenza generale.</p>
+          <div className="grid grid-cols-3 lg:grid-cols-6 gap-2">
+            {Array.from({ length: n }, (_, j) => (
+              <InputRipartenza key={j} etichetta={`${j + 1}° ${r.distanza || ''}`} value={r.ripartenze[j]}
+                placeholder={r.ripartenza || `1'30"`} onChange={(v) => cambiaRipartenza(j, v)} />
+            ))}
+          </div>
+        </div>
+      )}
+      {((!personali && n > 1) || totale > 1) && (
+        <div className="flex items-center justify-between gap-2 mt-2">
+          {!personali && n > 1
+            ? <button onClick={() => cambia(i, 'ripartenze', [])} className="text-xs font-semibold text-blue-600">+ Ripartenza diversa per ogni ripetizione</button>
+            : <span />}
+          {totale > 1 && <button onClick={() => togli(i)} className="text-xs text-red-500">Togli lavoro</button>}
         </div>
       )}
     </Reorder.Item>
@@ -163,11 +196,30 @@ export default function EditorAllenamento({ squadra, giorno }) {
       return
     }
     // La ripartenza si salva (e si mostra) sempre nel formato standard, anche se non sei uscito dal campo
-    const ordinate = righe.map((r) => ({ ...r, ripartenza: normalizzaRipartenza(r.ripartenza) }))
+    const ordinate = righe.map((r) => ({
+      ...r,
+      ripartenza: normalizzaRipartenza(r.ripartenza),
+      ...(Array.isArray(r.ripartenze) && {
+        ripartenze: Array.from({ length: Math.min(50, Math.max(1, Number(r.ripetizioni) || 1)) }, (_, k) => normalizzaRipartenza(r.ripartenze[k])),
+      }),
+    }))
     const ripStorta = ordinate.findIndex((r) => !ripartenzaValida(r.ripartenza))
     if (ripStorta >= 0) {
       setErrore(`Riga ${ripStorta + 1}: scrivi la ripartenza come 1'30" (oppure 45" sotto il minuto), o lasciala vuota.`)
       return
+    }
+    for (let k = 0; k < ordinate.length; k++) {
+      const j = (ordinate[k].ripartenze || []).findIndex((x) => !ripartenzaValida(x))
+      if (j >= 0) {
+        setErrore(`Riga ${k + 1}, ripetizione ${j + 1}: scrivi la ripartenza come 1'30" (oppure 45" sotto il minuto), o lasciala vuota.`)
+        return
+      }
+    }
+    // Delle ripartenze personalizzate si tengono solo quelle scritte (i vuoti in fondo non servono)
+    const soloScritte = (lista = []) => {
+      const l = [...lista]
+      while (l.length && !l[l.length - 1]) l.pop()
+      return l.length ? l : null
     }
     const pulite = ordinate.map((r) => ({
       tipo_lavoro: r.tipo_lavoro,
@@ -177,6 +229,7 @@ export default function EditorAllenamento({ squadra, giorno }) {
       note: r.note || '',
       minuti: Number(r.minuti) > 0 ? Number(r.minuti) : null,
       ripartenza: r.ripartenza || null,
+      ripartenze: Number(r.ripetizioni) > 1 ? soloScritte(r.ripartenze) : null,
     }))
     const giorni = [giorno, ...extra]
     const { error } = await supabase.from('allenamenti_squadra').upsert(

@@ -1,5 +1,5 @@
 import { coloreLavoro } from '../lib/lavori'
-import { metriPiano, minutiPiano } from '../lib/pianoSquadra'
+import { metriPiano, minutiPiano, ripartenzeDiRiga } from '../lib/pianoSquadra'
 
 // Allenamento del coach in sola lettura (lo vedono gli atleti)
 export default function PianoCard({ piano }) {
@@ -17,7 +17,7 @@ export default function PianoCard({ piano }) {
         <div key={i} className={`py-2 ${i ? 'border-t border-gray-100' : ''}`}>
           <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${coloreLavoro(r.tipo_lavoro)}`}>{r.tipo_lavoro}</span>
           <span className="text-sm text-gray-600 ml-2">{r.ripetizioni}×{r.distanza} m {r.stile}</span>
-          {r.ripartenza && <span className="text-xs text-gray-500 ml-2">↻ ripartenza {r.ripartenza}</span>}
+          {ripartenzeDiRiga(r).length > 0 && <span className="text-xs text-gray-500 ml-2">↻ ripartenza {ripartenzeDiRiga(r).join(' · ')}</span>}
           {Number(r.minuti) > 0 && <span className="text-xs text-gray-400 ml-2">⏱ {Number(r.minuti)} min</span>}
           {r.note && <p className="text-xs text-gray-400 mt-1">{r.note}</p>}
         </div>

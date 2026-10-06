@@ -2,8 +2,21 @@ import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
 import { useAuth } from '../context/AuthContext'
 
-export const TIPI_COACH = ['Riscaldamento', 'Tecnica', 'Gambe', 'Defaticamento']
+import { STILI } from './lavori'
+
+export const TIPI_COACH = ['Riscaldamento', 'Tecnica', 'Gambe', 'Sciolto', 'Defaticamento']
+// Il coach può anche lasciare che ognuno nuoti il proprio stile (non vale per i lavori inseriti dagli atleti)
+export const STILI_COACH = [...STILI, 'Proprio stile']
 export const RIGA_VUOTA = { tipo_lavoro: 'A2', distanza: 100, ripetizioni: 4, stile: 'Stile libero', note: '', minuti: '', ripartenza: '' }
+
+// Ripartenze da mostrare per una riga: se il coach le ha personalizzate, una per ripetizione
+// (le caselle vuote usano la ripartenza generale), altrimenti solo quella generale. [] se non ce n'è nessuna.
+export function ripartenzeDiRiga(r) {
+  const n = Math.max(1, Number(r.ripetizioni) || 1)
+  const lista = Array.isArray(r.ripartenze) ? r.ripartenze.slice(0, n) : []
+  if (!lista.some(Boolean)) return r.ripartenza ? [r.ripartenza] : []
+  return Array.from({ length: n }, (_, k) => lista[k] || r.ripartenza || '–')
+}
 
 // Minuti totali di un piano (somma del tempo stimato dal coach per ogni riga; le righe senza tempo non contano)
 export const minutiPiano = (righe = []) => righe.reduce((s, r) => s + (Number(r.minuti) || 0), 0)
