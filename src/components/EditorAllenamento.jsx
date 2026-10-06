@@ -4,7 +4,7 @@ import { Reorder, AnimatePresence, useDragControls } from 'framer-motion'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { TIPI_LAVORO, STILI, distanzaDaTipo } from '../lib/lavori'
-import { RIGA_VUOTA, TIPI_COACH, addGiorni, metriPiano } from '../lib/pianoSquadra'
+import { RIGA_VUOTA, TIPI_COACH, addGiorni, metriPiano, minutiPiano } from '../lib/pianoSquadra'
 import PianoCard from './PianoCard'
 
 const CAMPO = 'w-full border border-gray-200 bg-gray-50 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400'
@@ -54,8 +54,17 @@ function RigaLavoro({ r, i, totale, cambia, cambiaTipo, sposta, togli }) {
           <input type="number" min="25" step="25" value={r.distanza} onChange={(e) => cambia(i, 'distanza', e.target.value)} className={CAMPO} />
         </div>
       </div>
-      <label className="block text-xs text-gray-500 mb-1">Note (facoltative: recupero, ritmo...)</label>
-      <input value={r.note} onChange={(e) => cambia(i, 'note', e.target.value)} placeholder={'Es. rec 20", gambe veloci'} className={CAMPO} />
+      <div className="grid grid-cols-[1fr_6.5rem] gap-2">
+        <div>
+          <label className="block text-xs text-gray-500 mb-1">Note (facoltative: recupero, ritmo...)</label>
+          <input value={r.note} onChange={(e) => cambia(i, 'note', e.target.value)} placeholder={'Es. rec 20", gambe veloci'} className={CAMPO} />
+        </div>
+        <div>
+          <label className="block text-xs text-gray-500 mb-1">Tempo (min)</label>
+          <input type="number" min="1" step="1" inputMode="numeric" value={r.minuti ?? ''} placeholder="Es. 10"
+            onChange={(e) => cambia(i, 'minuti', e.target.value)} className={CAMPO} />
+        </div>
+      </div>
       {totale > 1 && (
         <div className="text-right mt-2">
           <button onClick={() => togli(i)} className="text-xs text-red-500">Togli lavoro</button>
@@ -151,6 +160,7 @@ export default function EditorAllenamento({ squadra, giorno }) {
       ripetizioni: Number(r.ripetizioni) || 1,
       stile: r.stile,
       note: r.note || '',
+      minuti: Number(r.minuti) > 0 ? Number(r.minuti) : null,
     }))
     const giorni = [giorno, ...extra]
     const { error } = await supabase.from('allenamenti_squadra').upsert(
@@ -257,7 +267,10 @@ export default function EditorAllenamento({ squadra, giorno }) {
           ))}
         </div>
         {extra.length > 0 && <p className="text-xs text-amber-700 mt-2">Se in quei giorni c'è già un allenamento, verrà sostituito.</p>}
-        <p className="text-xs text-gray-400 mt-3">Totale: {(metriPiano(righe) / 1000).toFixed(1).replace('.', ',')} km</p>
+        <p className="text-xs text-gray-400 mt-3">
+          Totale: {(metriPiano(righe) / 1000).toFixed(1).replace('.', ',')} km
+          {minutiPiano(righe) > 0 && ` · ${minutiPiano(righe)} min`}
+        </p>
       </div>
 
       {errore && <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mb-3">{errore}</p>}

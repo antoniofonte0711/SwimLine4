@@ -3,7 +3,10 @@ import { supabase } from './supabaseClient'
 import { useAuth } from '../context/AuthContext'
 
 export const TIPI_COACH = ['Riscaldamento', 'Tecnica', 'Gambe', 'Defaticamento']
-export const RIGA_VUOTA = { tipo_lavoro: 'A2', distanza: 100, ripetizioni: 4, stile: 'Stile libero', note: '' }
+export const RIGA_VUOTA = { tipo_lavoro: 'A2', distanza: 100, ripetizioni: 4, stile: 'Stile libero', note: '', minuti: '' }
+
+// Minuti totali di un piano (somma del tempo stimato dal coach per ogni riga; le righe senza tempo non contano)
+export const minutiPiano = (righe = []) => righe.reduce((s, r) => s + (Number(r.minuti) || 0), 0)
 
 // Metri totali di un piano (distanza × ripetizioni di ogni riga)
 export const metriPiano = (righe = []) =>
