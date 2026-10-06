@@ -22,11 +22,15 @@ export default function AppShell({ titolo, attiva, indietro, giorno, onGiorno, c
   const voci = VOCI.filter(([chiave]) => !(ruolo === 'ospite' && chiave === 'riepilogo'))
   const iniziale = (profile?.nome || 'A').charAt(0).toUpperCase()
   const [calAperto, setCalAperto] = useState(false)
-  // La striscia è centrata sul giorno scelto: con le frecce si scorre di una settimana, col calendario si va ovunque
-  const centro = new Date((giorno || dataLocale()) + 'T12:00:00')
+  // La striscia mostra la settimana (lunedì-domenica) del giorno scelto: con le frecce si passa alla settimana
+  // precedente/successiva, col calendario si va ovunque
+  const oggi = dataLocale()
+  const centro = new Date((giorno || oggi) + 'T12:00:00')
+  const lunedi = new Date(centro)
+  lunedi.setDate(lunedi.getDate() - ((centro.getDay() + 6) % 7))
   const giorni = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(centro)
-    d.setDate(d.getDate() - 3 + i)
+    const d = new Date(lunedi)
+    d.setDate(d.getDate() + i)
     return d
   })
   const sposta = (n) => {
@@ -70,10 +74,11 @@ export default function AppShell({ titolo, attiva, indietro, giorno, onGiorno, c
               {giorni.map((d) => {
                 const valore = dataLocale(d)
                 const scelto = valore === giorno
+                const eOggi = valore === oggi
                 return (
-                  <button key={valore} onClick={() => onGiorno(valore)}
+                  <button key={valore} onClick={() => onGiorno(valore)} aria-current={eOggi ? 'date' : undefined}
                     className={`w-[13.5%] py-2 rounded-2xl text-xs flex flex-col items-center gap-1 transition ${
-                      scelto ? 'bg-white text-blue-600' : 'text-white'
+                      scelto ? 'bg-white text-blue-600' : eOggi ? 'text-white ring-2 ring-inset ring-white' : 'text-white'
                     }`}>
                     {LETTERE[d.getDay()]}
                     <span className="text-base font-semibold">{d.getDate()}</span>
