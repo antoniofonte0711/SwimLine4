@@ -86,6 +86,18 @@ export function tempoValido(t) {
   return false
 }
 
+// Un tempo è plausibile se non è più veloce di 9" ogni 25 m (i record del mondo stanno sopra i 10" a vasca).
+// Blocca gli errori di battitura tipo 3"67 su un 100 invece di 1'03"67. Senza distanza non si controlla.
+const SECONDI_MINIMI_OGNI_25 = 9
+export function tempoPlausibile(t, distanza) {
+  const sec = tempoInSecondi(t)
+  const d = Number(distanza)
+  if (sec === null || !(d > 0)) return true
+  return sec >= (d / 25) * SECONDI_MINIMI_OGNI_25
+}
+export const erroreTempoImpossibile = (distanza) =>
+  `Tempo troppo veloce per ${distanza} m: controlla di averlo scritto bene (es. 1'03"67, non 3"67).`
+
 // Accetta sia il formato nuovo sia quello vecchio, così i dati già salvati restano nel grafico
 export function tempoInSecondi(t) {
   const s = (t || '').trim()

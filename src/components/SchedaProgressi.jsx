@@ -1,13 +1,27 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { supabase } from '../lib/supabaseClient'
 import InputTempo from './InputTempo'
 import SelettoreData from './SelettoreData'
 import { STILI, TIPI_LAVORO, dataLocale } from '../lib/lavori'
-import { tempoInSecondi, secondiInTempo, formattaData, normalizzaTempo, tempoValido, ERRORE_TEMPO_BREVE } from '../lib/tempo'
+import { tempoInSecondi, secondiInTempo, formattaData, normalizzaTempo, tempoValido, tempoPlausibile, erroreTempoImpossibile, ERRORE_TEMPO_BREVE } from '../lib/tempo'
+import { STILI_COACH } from '../lib/pianoSquadra'
 
 const CAMPO = 'w-full border border-gray-200 bg-gray-50 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400'
 const FONTI = ['Allenamenti e gare', 'Solo allenamenti', 'Solo gare']
+const TUTTI = 'Tutti gli stili'
+
+// Distanza e stile con più tempi (a parità, quella nuotata più di recente): da lì si vede subito il grafico
+function piuFrequente(lista) {
+  const gruppi = {}
+  lista.forEach((p) => {
+    const g = (gruppi[`${p.distanza}|${p.stile}`] ||= { distanza: p.distanza, stile: p.stile, n: 0, ultima: '' })
+    g.n++
+    if (String(p.data) > g.ultima) g.ultima = String(p.data)
+  })
+  const migliore = Object.values(gruppi).sort((x, y) => y.n - x.n || y.ultima.localeCompare(x.ultima))[0]
+  return migliore ? { distanza: String(migliore.distanza), stile: migliore.stile || TUTTI } : { distanza: '', stile: TUTTI }
+}
 
 // Scheda di un atleta: tutti i suoi tempi (gare + lavori), filtrabili a scelta.
 // Il coach può anche aggiungere o togliere tempi (coach = true).
@@ -15,12 +29,16 @@ export default function SchedaProgressi({ atletaId, coach = false }) {
   const [punti, setPunti] = useState([])
   const [fonte, setFonte] = useState(FONTI[0])
   const [distanza, setDistanza] = useState('')
-  const [stile, setStile] = useState('Tutti gli stili')
+  const [stile, setStile] = useState(TUTTI)
   const [dal, setDal] = useState('')
   const [al, setAl] = useState('')
   const [aperto, setAperto] = useState(false)
+  // Scelta attuale, letta da carica() per capire se dopo un'eliminazione ha ancora tempi da mostrare
+  const scelta = useRef(null)
+  useEffect(() => { scelta.current = scelta.current && { distanza, stile } }, [distanza, stile])
 
-  const carica = useCallback(async () => {
+  // nuova: { distanza, stile } del tempo appena aggiunto, da mostrare subito
+  const carica = useCallback(async (nuova) => {
     const [{ data: a }, { data: g }] = await Promise.all([
       supabase.from('allenamenti').select('*').eq('atleta_id', atletaId).limit(1000),
       supabase.from('gare').select('*').eq('atleta_id', atletaId).limit(1000),
@@ -41,18 +59,34 @@ export default function SchedaProgressi({ atletaId, coach = false }) {
       lista.push({ id: r.id, tabella: 'gare', fonte: 'Gara', data: r.data_gara, distanza: r.distanza, stile: r.stile, sec, nome: r.nome_gara })
     })
     setPunti(lista)
-    const d = [...new Set(lista.map((p) => p.distanza))].sort((x, y) => x - y)
-    setDistanza((cur) => (cur && d.map(String).includes(cur) ? cur : String(d[0] || '')))
+    let prossima
+    if (nuova) {
+      // Il tempo appena aggiunto deve vedersi: niente filtri che lo nascondano
+      prossima = { distanza: String(nuova.distanza), stile: nuova.stile }
+      setFonte(FONTI[0])
+      setDal('')
+      setAl('')
+    } else {
+      const cur = scelta.current
+      const haTempi = cur && lista.some((p) => String(p.distanza) === cur.distanza && (cur.stile === TUTTI || p.stile === cur.stile))
+      // Al primo caricamento (o se la scelta è rimasta vuota) si parte dalla distanza e dallo stile con più tempi
+      prossima = haTempi ? cur : piuFrequente(lista)
+    }
+    scelta.current = prossima
+    setDistanza(prossima.distanza)
+    setStile(prossima.stile)
   }, [atletaId])
 
   useEffect(() => { carica() }, [carica])
 
   const distanze = useMemo(() => [...new Set(punti.map((p) => p.distanza))].sort((x, y) => x - y), [punti])
+  // Stili standard + "Proprio stile" + eventuali altri stili presenti nei tempi salvati
+  const stili = useMemo(() => [...new Set([...STILI_COACH, ...punti.map((p) => p.stile).filter(Boolean)])], [punti])
   const filtrati = useMemo(
     () =>
       punti
         .filter((p) => String(p.distanza) === distanza)
-        .filter((p) => stile === 'Tutti gli stili' || p.stile === stile)
+        .filter((p) => stile === TUTTI || p.stile === stile)
         .filter((p) => fonte === FONTI[0] || (fonte === FONTI[1] ? p.fonte === 'Allenamento' : p.fonte === 'Gara'))
         .filter((p) => (!dal || p.data >= dal) && (!al || p.data <= al))
         .sort((x, y) => String(x.data).localeCompare(String(y.data))),
@@ -75,7 +109,7 @@ export default function SchedaProgressi({ atletaId, coach = false }) {
           <button onClick={() => setAperto(!aperto)} className="w-full font-bold text-white bg-blue-600 rounded-2xl py-3.5 mb-3">
             {aperto ? 'Chiudi' : '+ Aggiungi tempo a questo atleta'}
           </button>
-          {aperto && <NuovoTempo atletaId={atletaId} onSalvato={() => { carica(); setAperto(false) }} />}
+          {aperto && <NuovoTempo atletaId={atletaId} onSalvato={(nuova) => { carica(nuova); setAperto(false) }} />}
         </>
       )}
 
@@ -91,8 +125,8 @@ export default function SchedaProgressi({ atletaId, coach = false }) {
           <div>
             <label className="block text-xs text-gray-500 mb-1">Stile</label>
             <select value={stile} onChange={(e) => setStile(e.target.value)} className={CAMPO}>
-              <option>Tutti gli stili</option>
-              {STILI.map((s) => <option key={s}>{s}</option>)}
+              <option>{TUTTI}</option>
+              {stili.map((s) => <option key={s}>{s}</option>)}
             </select>
           </div>
         </div>
@@ -175,6 +209,7 @@ function NuovoTempo({ atletaId, onSalvato }) {
     const t = normalizzaTempo(tempo)
     if (!tempoValido(t)) return setErrore(ERRORE_TEMPO_BREVE)
     if (!(Number(distanza) >= 25)) return setErrore('La distanza deve essere da 25 metri in su.')
+    if (!tempoPlausibile(t, distanza)) return setErrore(erroreTempoImpossibile(distanza))
     if (tipo === 'gara' && !nome.trim()) return setErrore('Scrivi il nome della gara.')
     setInvio(true)
     const { error } = tipo === 'gara'
@@ -182,7 +217,7 @@ function NuovoTempo({ atletaId, onSalvato }) {
       : await supabase.from('allenamenti').insert({ atleta_id: atletaId, tipo_lavoro: lavoro, distanza: Number(distanza), ripetizioni: 1, stile, tempo_totale: t, data_allenamento: data })
     setInvio(false)
     if (error) return setErrore('Non sono riuscito a salvare: ' + error.message)
-    onSalvato()
+    onSalvato({ distanza: Number(distanza), stile })
   }
 
   return (

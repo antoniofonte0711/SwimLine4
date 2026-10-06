@@ -8,7 +8,7 @@ import { SenzaSquadra } from './PianoCard'
 import { STILI, dataLocale } from '../lib/lavori'
 import {
   normalizzaTempo, tempoValido, tempoInSecondi, secondiInTempo,
-  passaggiCoerenti, ERRORE_TEMPO_BREVE,
+  passaggiCoerenti, tempoPlausibile, erroreTempoImpossibile, ERRORE_TEMPO_BREVE,
 } from '../lib/tempo'
 import { useMiaSquadra } from '../lib/pianoSquadra'
 
@@ -87,11 +87,13 @@ function SchedaRisultato({ g, onSalvato }) {
     setErrore('')
     const t = normalizzaTempo(tempo)
     if (!tempoValido(t)) return setErrore(ERRORE_TEMPO_BREVE)
+    if (!tempoPlausibile(t, d)) return setErrore(erroreTempoImpossibile(d))
     const p = []
     for (let i = 0; i < nPassaggi; i++) {
       const x = normalizzaTempo(passaggi[i])
       if (!x) continue
       if (!tempoValido(x)) return setErrore(`Passaggio ai ${(i + 1) * passo} m: ${ERRORE_TEMPO_BREVE}`)
+      if (!tempoPlausibile(x, (i + 1) * passo)) return setErrore(`Passaggio ai ${(i + 1) * passo} m: ${erroreTempoImpossibile((i + 1) * passo)}`)
       p.push(x)
     }
     const incoerente = passaggiCoerenti(p, t)
@@ -248,6 +250,7 @@ export default function GareCoach() {
     for (const a of scelti) {
       const iscr = normalizzaTempo(riga(a.id).iscr)
       if (iscr && !tempoValido(iscr)) return setErrore(`${a.nome}, tempo di iscrizione: ${ERRORE_TEMPO_BREVE}`)
+      if (iscr && !tempoPlausibile(iscr, programma[0]?.distanza)) return setErrore(`${a.nome}, tempo di iscrizione: ${erroreTempoImpossibile(programma[0].distanza)}`)
       // il tempo di iscrizione vale per la prima gara del programma
       programma.forEach((g, k) => {
         records.push({

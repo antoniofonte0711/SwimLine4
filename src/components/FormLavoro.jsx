@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useCarrello, filePerLavoro } from '../context/CarrelloContext'
 import { TIPI_LAVORO, STILI, distanzaDaTipo } from '../lib/lavori'
 import InputTempo from './InputTempo'
-import { ERRORE_TEMPO, normalizzaTempo, tempoValido } from '../lib/tempo'
+import { ERRORE_TEMPO, erroreTempoImpossibile, normalizzaTempo, tempoPlausibile, tempoValido } from '../lib/tempo'
 
 const CAMPO = 'w-full border border-gray-200 bg-gray-50 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400'
 const INIZIALE = { tipo_lavoro: 'C1', distanza: 75, ripetizioni: 4, stile: 'Stile libero', passaggi: [], file: null }
@@ -42,6 +42,10 @@ export default function FormLavoro() {
       if (!t) continue
       if (!tempoValido(t)) {
         setErrore(`Passaggio ${i + 1}: ${ERRORE_TEMPO}`)
+        return
+      }
+      if (!tempoPlausibile(t, f.distanza)) {
+        setErrore(`Passaggio ${i + 1}: ${erroreTempoImpossibile(f.distanza)}`)
         return
       }
       passaggi.push(t)

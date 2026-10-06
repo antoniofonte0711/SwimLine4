@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabaseClient'
 import InputTempo from './InputTempo'
 import { coloreLavoro } from '../lib/lavori'
 import { ripartenzeDiRiga } from '../lib/pianoSquadra'
-import { ERRORE_TEMPO_BREVE, normalizzaTempo, tempoValido } from '../lib/tempo'
+import { ERRORE_TEMPO_BREVE, erroreTempoImpossibile, normalizzaTempo, tempoPlausibile, tempoValido } from '../lib/tempo'
 
 const chiaveRiga = (r) => [r.tipo_lavoro, Number(r.distanza), r.stile, Number(r.ripetizioni) || 1].join('|')
 
@@ -56,6 +56,7 @@ export default function RisultatiAtleta({ piano, atletaId, giorno }) {
         const t = normalizzaTempo(valori[i]?.[j] || '')
         if (!t) { pulito.push(''); continue }
         if (!tempoValido(t)) return setErrore(`Lavoro ${i + 1}, passaggio ${j + 1}: ${ERRORE_TEMPO_BREVE}`)
+        if (!tempoPlausibile(t, righe[i].distanza)) return setErrore(`Lavoro ${i + 1}, passaggio ${j + 1}: ${erroreTempoImpossibile(righe[i].distanza)}`)
         pulito.push(t)
       }
       // i vuoti in fondo non servono

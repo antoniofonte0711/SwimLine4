@@ -6,7 +6,7 @@ import { STILI, dataLocale } from '../lib/lavori'
 import { puoModificare } from '../lib/permessi'
 import InputTempo from '../components/InputTempo'
 import GareCoach from '../components/GareCoach'
-import { ERRORE_TEMPO, normalizzaTempo, tempoValido, passaggiCoerenti } from '../lib/tempo'
+import { ERRORE_TEMPO, erroreTempoImpossibile, normalizzaTempo, tempoPlausibile, tempoValido, passaggiCoerenti } from '../lib/tempo'
 import {
   leggiCoda, aggiungiInCoda, rimuoviDaCoda, sincronizza,
   salvaCache, leggiCache, erroreDiRete, useOnline,
@@ -75,12 +75,20 @@ function GareAtleta() {
       setErrore(ERRORE_TEMPO)
       return
     }
+    if (!tempoPlausibile(tempo, d)) {
+      setErrore(erroreTempoImpossibile(d))
+      return
+    }
     const passaggi = []
     for (let i = 0; i < nPassaggi; i++) {
       const t = normalizzaTempo(form.passaggi[i])
       if (!t) continue
       if (!tempoValido(t)) {
         setErrore(`Passaggio ai ${(i + 1) * passo} m: ${ERRORE_TEMPO}`)
+        return
+      }
+      if (!tempoPlausibile(t, (i + 1) * passo)) {
+        setErrore(`Passaggio ai ${(i + 1) * passo} m: ${erroreTempoImpossibile((i + 1) * passo)}`)
         return
       }
       passaggi.push(t)

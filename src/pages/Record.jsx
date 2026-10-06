@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import AppShell from '../components/AppShell'
 import { STILI } from '../lib/lavori'
-import { tempoInSecondi, secondiInTempo, normalizzaTempo, tempoValido, ERRORE_TEMPO_BREVE } from '../lib/tempo'
+import { tempoInSecondi, secondiInTempo, normalizzaTempo, tempoValido, tempoPlausibile, erroreTempoImpossibile, ERRORE_TEMPO_BREVE } from '../lib/tempo'
 import InputTempo from '../components/InputTempo'
 
 const CAMPO = 'w-full border border-gray-200 bg-gray-50 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400'
@@ -152,6 +152,7 @@ function DettaglioRecord({ voce, nome, stile, allenamenti, onChiudi, onFatto }) 
     setErrore('')
     const t = normalizzaTempo(nuovo)
     if (!tempoValido(t)) return setErrore(ERRORE_TEMPO_BREVE)
+    if (!tempoPlausibile(t, voce.distanza)) return setErrore(erroreTempoImpossibile(voce.distanza))
     setLavoro(true)
     let q
     if (voce.tabella === 'gare') q = supabase.from('gare').update({ tempo: t }).eq('id', voce.id)
