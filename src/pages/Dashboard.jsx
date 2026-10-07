@@ -12,6 +12,7 @@ import EditorAllenamento from '../components/EditorAllenamento'
 import CardPunti from '../components/CardPunti'
 import { useMiaSquadra } from '../lib/pianoSquadra'
 import RichiesteSquadra from '../components/RichiesteSquadra'
+import DomandeIngresso from '../components/DomandeIngresso'
 
 const COLORE_STATO = {
   presente: 'bg-green-100 text-green-700',
@@ -77,7 +78,17 @@ function HomeAtleta() {
         )}
       </div>
 
-      {adminReale && <RichiesteSquadra />}
+      {ruolo === 'coach_in_attesa' && (
+        <div className="bg-amber-50 border border-amber-200 rounded-3xl p-5 mb-3">
+          <p className="font-bold text-amber-800 mb-1">⏳ Account coach in attesa</p>
+          <p className="text-sm text-amber-800">
+            L'amministratore deve approvare il tuo profilo coach. Appena lo approva nasce la tua squadra
+            e trovi qui tutte le funzioni da coach. Intanto puoi usare l'app come atleta.
+          </p>
+        </div>
+      )}
+
+      {(adminReale || ['atleta', 'genitore'].includes(profile?.role)) && <RichiesteSquadra />}
 
       {ruolo !== 'genitore' && <CardPunti />}
 
@@ -129,7 +140,7 @@ function HomeCoach() {
       <p className="text-sm font-semibold text-gray-500 capitalize mb-3 px-1">{formattaGiorno(giorno)}</p>
       {!pronto ? <p className="text-center text-gray-400 py-8">Carico…</p>
         : !squadra ? <SenzaSquadra />
-        : <EditorAllenamento squadra={squadra} giorno={giorno} />}
+        : <><DomandeIngresso squadra={squadra} /><EditorAllenamento squadra={squadra} giorno={giorno} /></>}
     </AppShell>
   )
 }

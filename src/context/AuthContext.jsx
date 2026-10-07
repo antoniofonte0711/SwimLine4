@@ -37,7 +37,13 @@ export function AuthProvider({ children }) {
       else setLoading(false)
     })
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      // Link "Password dimenticata" arrivato su un'altra pagina (es. se Supabase usa l'indirizzo principale):
+      // si va comunque a scegliere la nuova password
+      if (event === 'PASSWORD_RECOVERY' && window.location.pathname !== '/nuova-password') {
+        window.location.replace('/nuova-password')
+        return
+      }
       setUser(session?.user ?? null)
       if (session?.user) loadProfile(session.user.id)
       else {

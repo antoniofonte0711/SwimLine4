@@ -45,7 +45,7 @@ export default function Registrati() {
     }
 
     setSuccess(true)
-    setTimeout(() => navigate('/login'), 2000)
+    setTimeout(() => navigate('/login'), 5000)
   }
 
   if (success) {
@@ -55,6 +55,12 @@ export default function Registrati() {
           <div className="text-4xl mb-3">✅</div>
           <p className="text-lg font-bold">Registrazione completata!</p>
           <p className="text-sm text-blue-100 mt-2">Controlla la tua email per confermare l'account.</p>
+          {role === 'coach' && (
+            <p className="text-sm text-blue-100 mt-2">Il profilo coach si attiva quando l'amministratore lo approva: fino ad allora entri come atleta.</p>
+          )}
+          {role !== 'coach' && squadraScelta && (
+            <p className="text-sm text-blue-100 mt-2">Il coach della squadra riceve la tua richiesta: entri quando la approva.</p>
+          )}
         </div>
       </div>
     )
@@ -96,11 +102,12 @@ export default function Registrati() {
             <label className="block text-sm font-medium text-blue-50 mb-1">Nome della tua squadra</label>
             <input value={nomeSquadra} onChange={(e) => setNomeSquadra(e.target.value)}
               placeholder="Es. Delfini Nuoto Club"
-              className="w-full border border-white/30 bg-white/90 rounded-xl px-4 py-2.5 mb-4 focus:outline-none focus:ring-2 focus:ring-white transition" />
+              className="w-full border border-white/30 bg-white/90 rounded-xl px-4 py-2.5 mb-1 focus:outline-none focus:ring-2 focus:ring-white transition" />
+            <p className="text-xs text-blue-100 mb-4">L'account coach va approvato dall'amministratore: dopo l'approvazione nasce la tua squadra.</p>
           </>
         ) : (
           <>
-            <label className="block text-sm font-medium text-blue-50 mb-1">Squadra (facoltativo)</label>
+            <label className="block text-sm font-medium text-blue-50 mb-1">Chiedi di entrare in una squadra (facoltativo)</label>
             <select value={squadraScelta} onChange={(e) => setSquadraScelta(e.target.value)}
               className="w-full border border-white/30 bg-white/90 rounded-xl px-4 py-2.5 mb-4 focus:outline-none focus:ring-2 focus:ring-white transition">
               <option value="">Nessuna squadra per ora</option>
@@ -108,6 +115,7 @@ export default function Registrati() {
                 <option key={s.id} value={s.id}>{s.nome}</option>
               ))}
             </select>
+            {squadraScelta && <p className="text-xs text-blue-100 -mt-3 mb-4">Entri quando il coach approva la richiesta.</p>}
           </>
         )}
 

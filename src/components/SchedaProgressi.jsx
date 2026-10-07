@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { supabase } from '../lib/supabaseClient'
+import { caricaTutto } from '../lib/caricaTutto'
 import InputTempo from './InputTempo'
 import SelettoreData from './SelettoreData'
 import { STILI, TIPI_LAVORO, dataLocale } from '../lib/lavori'
@@ -40,8 +41,8 @@ export default function SchedaProgressi({ atletaId, coach = false }) {
   // nuova: { distanza, stile } del tempo appena aggiunto, da mostrare subito
   const carica = useCallback(async (nuova) => {
     const [{ data: a }, { data: g }] = await Promise.all([
-      supabase.from('allenamenti').select('*').eq('atleta_id', atletaId).limit(1000),
-      supabase.from('gare').select('*').eq('atleta_id', atletaId).limit(1000),
+      caricaTutto(() => supabase.from('allenamenti').select('*').eq('atleta_id', atletaId)),
+      caricaTutto(() => supabase.from('gare').select('*').eq('atleta_id', atletaId)),
     ])
     const lista = []
     ;(a || []).forEach((r) => {

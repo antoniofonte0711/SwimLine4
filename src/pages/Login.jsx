@@ -21,7 +21,8 @@ export default function Login() {
       setError('Inserisci la tua email qui sopra, poi premi di nuovo su "Password dimenticata".')
       return
     }
-    const { error } = await supabase.auth.resetPasswordForEmail(email)
+    // il link dell'email porta alla pagina dove si sceglie la nuova password
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/nuova-password` })
     if (error) setError('Errore nell\'invio dell\'email di recupero.')
     else setError('Ti abbiamo inviato una email per reimpostare la password.')
   }

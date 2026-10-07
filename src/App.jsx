@@ -23,6 +23,7 @@ import Calendario from './pages/Calendario'
 import Punti from './pages/Punti'
 import RisultatiAllenamento from './pages/RisultatiAllenamento'
 import PresenzeAtleta from './pages/PresenzeAtleta'
+import NuovaPassword from './pages/NuovaPassword'
 
 // Sezioni che arrivano nella fase 2
 const PROSSIMAMENTE = [
@@ -39,6 +40,7 @@ export default function App() {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/registrati" element={<Registrati />} />
+            <Route path="/nuova-password" element={<NuovaPassword />} />
 
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/riepilogo" element={<ProtectedRoute><Riepilogo /></ProtectedRoute>} />

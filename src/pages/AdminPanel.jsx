@@ -9,11 +9,36 @@ export default function AdminPanel() {
   const [apertura, setApertura] = useState(null) // { utente, link } oppure { utente, errore }
   const [lavoro, setLavoro] = useState('')
 
+  const [inAttesa, setInAttesa] = useState([])     // coach registrati che aspettano l'approvazione
+  const [nomiSquadra, setNomiSquadra] = useState({}) // nome squadra modificabile prima di approvare
+  const [esito, setEsito] = useState('')
+
   useEffect(() => {
     loadUsers()
     supabase.auth.getUser().then(({ data }) => setIo(data.user?.id || null))
     caricaAccessi()
+    caricaInAttesa()
   }, [])
+
+  async function caricaInAttesa() {
+    const { data, error } = await supabase.rpc('coach_da_approvare')
+    if (error) return
+    setInAttesa(data || [])
+    setNomiSquadra(Object.fromEntries((data || []).map((c) => [c.id, c.nome_squadra || ''])))
+  }
+
+  async function decidiCoach(c, accetta) {
+    const chi = `${c.nome || ''} ${c.cognome || ''}`.trim() || c.email
+    if (!accetta && !window.confirm(`Rifiutare ${chi} come coach? Resterà nell'app come atleta.`)) return
+    setLavoro(c.id)
+    setEsito('')
+    const { data, error } = await supabase.rpc('approva_coach', { p_persona: c.id, p_accetta: accetta, p_nome_squadra: nomiSquadra[c.id] || null })
+    setLavoro('')
+    if (error) return setEsito('Errore: ' + error.message)
+    setEsito(accetta ? `${chi} ora è coach della squadra "${data}".` : `${chi} è stato rifiutato come coach.`)
+    caricaInAttesa()
+    loadUsers()
+  }
 
   async function caricaAccessi() {
     const { data } = await supabase.from('accessi_admin').select('id, admin_id, target_id, created_at').order('created_at', { ascending: false }).limit(10)
@@ -58,6 +83,29 @@ export default function AdminPanel() {
       <h1 className="text-2xl font-bold text-black mb-4">Pannello amministratore</h1>
       <p className="text-gray-600 mb-6">Qui vedi e gestisci tutti gli utenti della piattaforma.</p>
 
+      {(inAttesa.length > 0 || esito) && (
+        <div className="border-2 border-amber-300 bg-amber-50 rounded-2xl p-4 mb-6">
+          <h2 className="font-bold mb-1">Coach da approvare{inAttesa.length > 0 && ` (${inAttesa.length})`}</h2>
+          <p className="text-sm text-gray-600 mb-3">Approvando nasce la loro squadra e diventano coach con tutti i permessi su di essa.</p>
+          {inAttesa.map((c) => (
+            <div key={c.id} className="bg-white rounded-xl p-3 mb-2">
+              <p className="font-semibold">{c.nome} {c.cognome} <span className="text-sm font-normal text-gray-500">· {c.email}</span></p>
+              <p className="text-xs text-gray-500 mb-2">Registrato il {new Date(c.created_at).toLocaleString('it-IT')}</p>
+              <label className="block text-xs text-gray-500 mb-1">Nome della squadra</label>
+              <input value={nomiSquadra[c.id] || ''} onChange={(e) => setNomiSquadra({ ...nomiSquadra, [c.id]: e.target.value })}
+                placeholder={`Squadra di ${c.nome || 'nuovo coach'}`} className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-2" />
+              <div className="flex gap-2">
+                <button onClick={() => decidiCoach(c, true)} disabled={lavoro === c.id}
+                  className="flex-1 font-bold text-white bg-blue-600 rounded-lg py-2 disabled:opacity-60">{lavoro === c.id ? '…' : 'Approva'}</button>
+                <button onClick={() => decidiCoach(c, false)} disabled={lavoro === c.id}
+                  className="flex-1 font-bold text-gray-700 bg-gray-100 rounded-lg py-2 disabled:opacity-60">Rifiuta</button>
+              </div>
+            </div>
+          ))}
+          {esito && <p className="text-sm bg-white rounded-lg px-3 py-2">{esito}</p>}
+        </div>
+      )}
+
       {loading ? (
         <p>Caricamento...</p>
       ) : (
@@ -85,6 +133,7 @@ export default function AdminPanel() {
                   >
                     <option value="atleta">Atleta</option>
                     <option value="coach">Coach</option>
+                    {u.role === 'coach_in_attesa' && <option value="coach_in_attesa">Coach in attesa</option>}
                     <option value="genitore">Genitore</option>
                     <option value="admin">Admin</option>
                   </select>

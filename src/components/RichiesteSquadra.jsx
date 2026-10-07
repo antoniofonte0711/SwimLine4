@@ -5,8 +5,9 @@ import { useAuth } from '../context/AuthContext'
 const MIGRAZIONE = 'Manca un aggiornamento del database: esegui supabase/migrazione_fase12_richieste_admin.sql.'
 const messaggio = (error) => (/function|schema cache/i.test(error.message) ? MIGRAZIONE : error.message)
 
-// Solo per gli account admin, che sono anche atleti: entrano in una squadra solo accettando la richiesta del coach.
-// completo = riquadro del Profilo (squadra attuale, richieste, uscita); altrimenti solo le richieste (Home), se ce ne sono.
+// Richieste di squadra di chi non è coach: gli inviti dei coach (per gli admin, che entrano solo accettando)
+// e le domande di ingresso fatte dall'atleta, in attesa che il coach le approvi.
+// completo = riquadro del Profilo per l'admin (squadra attuale, richieste, uscita); altrimenti solo le richieste (Home), se ce ne sono.
 export default function RichiesteSquadra({ completo = false }) {
   const { user, profile, ricaricaProfilo } = useAuth()
   const [richieste, setRichieste] = useState([])
@@ -57,6 +58,10 @@ export default function RichiesteSquadra({ completo = false }) {
     await ricaricaProfilo()
   }
 
+  // inviti dei coach da accettare, e domande fatte da me che aspettano il coach
+  const inviti = richieste.filter((r) => (r.tipo || 'invito') === 'invito')
+  const domande = richieste.filter((r) => r.tipo === 'domanda')
+
   // In Home si vede solo se c'è qualcosa: una richiesta, o l'esito di quella appena gestita
   if (!completo && richieste.length === 0 && !ok && !errore) return null
 
@@ -73,7 +78,12 @@ export default function RichiesteSquadra({ completo = false }) {
           </p>
         </>
       )}
-      {richieste.map((r) => (
+      {domande.map((r) => (
+        <div key={r.id} className="bg-amber-50 rounded-2xl p-3 mb-2">
+          <p className="text-sm">⏳ Hai chiesto di entrare in <b>{r.squadra_nome}</b>: aspetta che {r.coach_nome ? <b>{r.coach_nome}</b> : 'il coach'} approvi.</p>
+        </div>
+      ))}
+      {inviti.map((r) => (
         <div key={r.id} className="bg-blue-50 rounded-2xl p-3 mb-2">
           <p className="text-sm">
             📩 {r.coach_nome ? <><b>{r.coach_nome}</b> ti invita</> : 'Sei invitato'} nella squadra <b>{r.squadra_nome}</b>

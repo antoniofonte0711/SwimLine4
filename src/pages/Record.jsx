@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import { caricaTutto } from '../lib/caricaTutto'
 import { useAuth } from '../context/AuthContext'
 import AppShell from '../components/AppShell'
 import { STILI } from '../lib/lavori'
@@ -35,8 +36,8 @@ export default function Record() {
       setNomi(mappa)
 
       const [g, a] = await Promise.all([
-        supabase.from('gare').select('id, atleta_id, distanza, stile, tempo, nome_gara, data_gara, created_at').limit(2000),
-        supabase.from('allenamenti').select('id, atleta_id, tipo_lavoro, distanza, stile, tempo_totale, passaggi, data_allenamento, created_at').limit(2000),
+        caricaTutto(() => supabase.from('gare').select('id, atleta_id, distanza, stile, tempo, nome_gara, data_gara, created_at')),
+        caricaTutto(() => supabase.from('allenamenti').select('id, atleta_id, tipo_lavoro, distanza, stile, tempo_totale, passaggi, data_allenamento, created_at')),
       ])
       setGare(g.data || [])
       setAllenamenti(a.data || [])

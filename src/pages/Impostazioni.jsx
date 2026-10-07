@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import AppShell from '../components/AppShell'
 import { SenzaSquadra } from '../components/PianoCard'
 import { useMiaSquadra } from '../lib/pianoSquadra'
+import DomandeIngresso from '../components/DomandeIngresso'
 
 const CAMPO = 'w-full border border-gray-200 bg-gray-50 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400'
 // L'admin è prima di tutto un atleta: in squadra compare come tale
@@ -88,6 +89,8 @@ export default function Impostazioni() {
           <>
             {errore && <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mb-3">{errore}</p>}
             {ok && <p className="text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2 mb-3">{ok}</p>}
+
+            <DomandeIngresso squadra={squadra} onCambio={caricaMembri} />
 
             <form onSubmit={trova} className="bg-white border border-gray-100 rounded-3xl p-5 shadow-sm mb-3">
               <p className="font-bold">Aggiungi una persona a {squadra.nome}</p>
