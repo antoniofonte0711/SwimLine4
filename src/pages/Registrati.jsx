@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
+import InputPassword from '../components/InputPassword'
 
 export default function Registrati() {
   const [nome, setNome] = useState('')
@@ -124,8 +125,8 @@ export default function Registrati() {
           className="w-full border border-white/30 bg-white/90 rounded-xl px-4 py-2.5 mb-4 focus:outline-none focus:ring-2 focus:ring-white transition" required />
 
         <label className="block text-sm font-medium text-blue-50 mb-1">Password</label>
-        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-          className="w-full border border-white/30 bg-white/90 rounded-xl px-4 py-2.5 mb-4 focus:outline-none focus:ring-2 focus:ring-white transition" required />
+        <InputPassword value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password"
+          className="w-full border border-white/30 bg-white/90 rounded-xl px-4 py-2.5 mb-4 focus:outline-none focus:ring-2 focus:ring-white transition" />
 
         {error && <p className="text-sm text-white bg-red-500/80 rounded-lg px-3 py-2 mb-4">{error}</p>}
 

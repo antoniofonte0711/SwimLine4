@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
+import InputPassword from '../components/InputPassword'
 
 const CAMPO = 'w-full border border-white/30 bg-white/90 rounded-xl px-4 py-2.5 mb-4 focus:outline-none focus:ring-2 focus:ring-white transition'
 
@@ -65,11 +66,11 @@ export default function NuovaPassword() {
           <form onSubmit={salva}>
             <p className="text-sm text-blue-100 text-center mb-6">Scegli la nuova password per il tuo account.</p>
             <label className="block text-sm font-medium text-blue-50 mb-1">Nuova password</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-              autoComplete="new-password" className={`${CAMPO} text-gray-900`} required />
+            <InputPassword value={password} onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password" className={`${CAMPO} text-gray-900`} />
             <label className="block text-sm font-medium text-blue-50 mb-1">Ripeti la password</label>
-            <input type="password" value={ripeti} onChange={(e) => setRipeti(e.target.value)}
-              autoComplete="new-password" className={`${CAMPO} text-gray-900`} required />
+            <InputPassword value={ripeti} onChange={(e) => setRipeti(e.target.value)}
+              autoComplete="new-password" className={`${CAMPO} text-gray-900`} />
             {errore && <p className="text-sm text-white bg-red-500/80 rounded-lg px-3 py-2 mb-4">{errore}</p>}
             <button type="submit" disabled={salvo}
               className="w-full bg-white text-blue-600 font-bold rounded-xl py-3 disabled:opacity-60 active:scale-[0.98] transition shadow-lg">

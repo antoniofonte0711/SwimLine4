@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
+import InputPassword from '../components/InputPassword'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -51,12 +52,10 @@ export default function Login() {
         />
 
         <label className="block text-sm font-medium text-blue-50 mb-1">Password</label>
-        <input
-          type="password"
+        <InputPassword
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className="w-full border border-white/30 bg-white/90 rounded-xl px-4 py-2.5 mb-2 focus:outline-none focus:ring-2 focus:ring-white transition"
-          required
         />
 
         <button
