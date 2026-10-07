@@ -24,7 +24,8 @@ const conId = (lista) => lista.map((r) => ({ ...r, _id: r._id || crypto.randomUU
 // Stato del form in forma confrontabile, per capire se ci sono modifiche non salvate
 const fotografia = (titolo, righe, vis) => JSON.stringify({ titolo, vis, righe: righe.map(({ _id, ...r }) => r) })
 // Chiave di un blocco (riga singola o serie a giri) per riordinarli
-const chiaveBlocco = (b) => (b.serie ? 's:' + b.serie.id : b.riga._id)
+// (per la serie si usa la sua prima riga: unica anche se due pezzi avessero lo stesso id di serie)
+const chiaveBlocco = (b) => (b.serie ? 's:' + b.righe[0].riga._id : b.riga._id)
 
 // Campo ripartenza: si scrive come si vuole (130, 1:30...) e uscendo diventa 1'30"; rosso solo se non si capisce
 function InputRipartenza({ value, onChange, etichetta, placeholder = `Es. 1'30"` }) {
@@ -413,7 +414,7 @@ export default function EditorAllenamento({ squadra, giorno }) {
   const togli = (i) => setRighe(righe.filter((_, k) => k !== i))
   // Tutti i giorni, weekend compreso: le due settimane dopo la data scelta
   const prossimi = Array.from({ length: 14 }, (_, i) => addGiorni(giorno, i + 1))
-  const toggleExtra = (d) => setExtra(extra.includes(d) ? extra.filter((x) => x !== d) : [...extra, d])
+  const toggleExtra = (d) => setExtra((e) => (e.includes(d) ? e.filter((x) => x !== d) : [...e, d]))
 
   // Righe come si salvano: nelle serie le ripetizioni diventano il totale di tutti i giri
   const righeSalvate = (lista) => lista.map((r) => {
@@ -428,6 +429,11 @@ export default function EditorAllenamento({ squadra, giorno }) {
     const storta = righe.findIndex((r) => !(Number(r.distanza) >= 25))
     if (storta >= 0) {
       setErrore(`Riga ${storta + 1}: scrivi la distanza (da 25 metri in su) nel campo "Distanza (m)".`)
+      return
+    }
+    const ripTroppe = righe.findIndex((r) => { const n = Number(r.ripetizioni); return !(Number.isInteger(n) && n >= 1 && n <= 50) })
+    if (ripTroppe >= 0) {
+      setErrore(`Riga ${ripTroppe + 1}: le ripetizioni vanno da 1 a 50.`)
       return
     }
     // La ripartenza si salva (e si mostra) sempre nel formato standard, anche se non sei uscito dal campo
