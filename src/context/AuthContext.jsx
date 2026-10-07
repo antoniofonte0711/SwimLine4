@@ -31,6 +31,12 @@ export function AuthProvider({ children }) {
   const [squadraScelta, setSquadraScelta] = useState(leggiSquadraGestita) // { id, nome } oppure null
 
   useEffect(() => {
+    // Link di un'email scaduto o già usato (Supabase rimanda qui con #error_code=...):
+    // invece di una pagina muta si va al login con la spiegazione
+    if (/error_code=|error=access_denied/.test(window.location.hash) && window.location.pathname !== '/login') {
+      window.location.replace('/login?link=scaduto')
+      return
+    }
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
       if (session?.user) loadProfile(session.user.id)

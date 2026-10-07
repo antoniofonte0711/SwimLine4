@@ -5,7 +5,10 @@ import { supabase } from '../lib/supabaseClient'
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  // arrivo da un link email scaduto o già usato (vedi AuthContext)
+  const [error, setError] = useState(() => (new URLSearchParams(window.location.search).get('link') === 'scaduto'
+    ? 'Il link dell\'email è scaduto o è già stato usato. Ogni nuova richiesta annulla i link precedenti: scrivi la tua email e premi "Password dimenticata" per riceverne uno nuovo, poi apri l\'email più recente.'
+    : ''))
   const navigate = useNavigate()
 
   async function handleLogin(e) {
