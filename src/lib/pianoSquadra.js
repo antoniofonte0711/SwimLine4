@@ -18,8 +18,27 @@ export function ripartenzeDiRiga(r) {
   return Array.from({ length: n }, (_, k) => lista[k] || r.ripartenza || '–')
 }
 
-// Minuti totali di un piano (somma del tempo stimato dal coach per ogni riga; le righe senza tempo non contano)
-export const minutiPiano = (righe = []) => righe.reduce((s, r) => s + (Number(r.minuti) || 0), 0)
+// Serie a giri: righe consecutive con lo stesso serie.id si ripetono in sequenza per serie.giri volte
+// (es. 3 giri di 400-300-200). Su ogni riga "ripetizioni" è il totale (per giro × giri), così metri
+// e risultati restano come per le righe normali; il passaggio k del giro g sta in posizione g × perGiro + k.
+export const giriSerie = (r) => (r?.serie ? Math.max(1, Number(r.serie.giri) || 1) : 1)
+export const perGiro = (r) => Math.max(1, Math.round((Number(r.ripetizioni) || 1) / giriSerie(r)))
+
+// Raggruppa le righe del piano in blocchi: { riga, indice } oppure { serie, righe: [{ riga, indice }] }
+export function blocchiPiano(righe = []) {
+  const blocchi = []
+  righe.forEach((riga, indice) => {
+    const ultimo = blocchi[blocchi.length - 1]
+    if (riga.serie && ultimo?.serie?.id === riga.serie.id) ultimo.righe.push({ riga, indice })
+    else if (riga.serie) blocchi.push({ serie: riga.serie, righe: [{ riga, indice }] })
+    else blocchi.push({ riga, indice })
+  })
+  return blocchi
+}
+
+// Minuti totali di un piano (somma del tempo stimato dal coach per ogni riga o serie; quelle senza tempo non contano)
+export const minutiPiano = (righe = []) =>
+  blocchiPiano(righe).reduce((s, b) => s + (Number(b.serie ? b.serie.minuti : b.riga.minuti) || 0), 0)
 
 // Metri totali di un piano (distanza × ripetizioni di ogni riga)
 export const metriPiano = (righe = []) =>

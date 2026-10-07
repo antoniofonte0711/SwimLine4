@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import InputTempo from './InputTempo'
 import { coloreLavoro } from '../lib/lavori'
-import { ripartenzeDiRiga } from '../lib/pianoSquadra'
+import { blocchiPiano, giriSerie, perGiro, ripartenzeDiRiga } from '../lib/pianoSquadra'
 import { ERRORE_TEMPO_BREVE, erroreTempoImpossibile, normalizzaTempo, tempoPlausibile, tempoValido } from '../lib/tempo'
 
 const chiaveRiga = (r) => [r.tipo_lavoro, Number(r.distanza), r.stile, Number(r.ripetizioni) || 1].join('|')
@@ -101,7 +101,40 @@ export default function RisultatiAtleta({ piano, atletaId, giorno }) {
   return (
     <>
       <p className="text-sm text-gray-500 mb-2 px-1">📋 {piano.titolo || 'Allenamento del giorno'}</p>
-      {righe.map((r, i) => {
+      {blocchiPiano(righe).map((b) => {
+        if (b.serie) {
+          // Serie a giri: i tempi si scrivono giro per giro, nell'ordine in cui si nuotano
+          const giri = giriSerie(b.righe[0].riga)
+          return (
+            <div key={b.righe[0].indice} className="bg-white border border-blue-100 rounded-3xl p-4 mb-3 shadow-sm">
+              <p className="text-sm font-bold text-blue-700">
+                🔁 {giri} giri
+                {b.serie.recupero && <span className="text-xs font-normal text-gray-500 ml-2">rec {b.serie.recupero} tra i giri</span>}
+              </p>
+              {b.righe.map(({ riga: r }, k) => (
+                <p key={k} className="text-xs text-gray-500 mt-1">
+                  {perGiro(r) > 1 && `${perGiro(r)}×`}{r.distanza} m {r.stile} · {r.tipo_lavoro}
+                  {r.ripartenza && ` · ↻ ${r.ripartenza}`}{r.note && ` · ${r.note}`}
+                </p>
+              ))}
+              {Array.from({ length: giri }, (_, g) => (
+                <div key={g} className="bg-gray-50 rounded-2xl p-3 mt-3">
+                  <p className="text-xs font-bold text-gray-600 mb-2">Giro {g + 1}</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {b.righe.flatMap(({ riga: r, indice: i }) => Array.from({ length: perGiro(r) }, (_, k) => {
+                      const j = g * perGiro(r) + k
+                      return (
+                        <InputTempo key={`${i}-${j}`} etichetta={`${r.distanza} m${perGiro(r) > 1 ? ` (${k + 1})` : ''}`}
+                          value={valori[i]?.[j] || ''} vuotoOk onChange={(v) => cambia(i, j, v)} />
+                      )
+                    }))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        }
+        const { riga: r, indice: i } = b
         const n = Math.min(30, Number(r.ripetizioni) || 1)
         return (
           <div key={i} className="bg-white border border-gray-100 rounded-3xl p-4 mb-3 shadow-sm">
