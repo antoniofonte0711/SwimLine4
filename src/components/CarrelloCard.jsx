@@ -109,7 +109,7 @@ export default function CarrelloCard({ giorno, onSalvato }) {
           className="flex items-start justify-between gap-2 border-t border-gray-100 py-3 text-sm">
           <div>
             <p className="font-semibold">{v.tipo_lavoro} · {v.ripetizioni}×{v.distanza} m {v.stile} {v.conVideo && '🎥'}</p>
-            {v.passaggi.length > 0 && <p className="text-xs text-gray-400">{v.passaggi.join(' · ')}</p>}
+            {v.passaggi.length > 0 && <p className="text-xs text-gray-400">{v.passaggi.map((p) => p || '–').join(' · ')}</p>}
           </div>
           <div className="flex items-center gap-1 shrink-0">
             <button onClick={() => sposta(v.id, -1)} disabled={idx === 0} aria-label="Sposta su" className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 font-bold disabled:opacity-30">↑</button>

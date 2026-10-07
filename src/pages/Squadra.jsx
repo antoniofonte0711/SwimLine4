@@ -133,7 +133,7 @@ export default function Squadra() {
                 </div>
                 <p className="text-xl font-extrabold text-blue-600">{g.tempo}</p>
               </div>
-              {g.passaggi?.length > 0 && <p className="text-xs text-gray-400 mt-2">Passaggi: {g.passaggi.join(' · ')}</p>}
+              {g.passaggi?.length > 0 && <p className="text-xs text-gray-400 mt-2">Passaggi: {g.passaggi.map((p) => p || '–').join(' · ')}</p>}
             </div>
           ))}
         </>
@@ -148,7 +148,7 @@ export default function Squadra() {
               <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${coloreLavoro(r.tipo_lavoro)}`}>{r.tipo_lavoro}</span>
               <span className="text-sm text-gray-600 ml-2">{r.ripetizioni ? `${r.ripetizioni}×` : ''}{r.distanza} m {r.stile || ''}</span>
               {r.passaggi?.length > 0 ? (
-                <p className="text-xs text-gray-400 mt-1">{r.passaggi.join(' · ')}</p>
+                <p className="text-xs text-gray-400 mt-1">{r.passaggi.map((p) => p || '–').join(' · ')}</p>
               ) : (
                 r.tempo_totale && <p className="text-xs text-gray-400 mt-1">{r.tempo_totale}</p>
               )}

@@ -24,6 +24,24 @@ export function ripartenzeDiRiga(r) {
 export const giriSerie = (r) => (r?.serie ? Math.max(1, Number(r.serie.giri) || 1) : 1)
 export const perGiro = (r) => Math.max(1, Math.round((Number(r.ripetizioni) || 1) / giriSerie(r)))
 
+// Collega una riga del piano ai tempi già registrati di un atleta (senza le ripetizioni,
+// così i tempi restano agganciati anche se il coach cambia il numero di giri)
+export const chiaveRisultato = (r) => [r.tipo_lavoro, Number(r.distanza), r.stile].join('|')
+
+// Per ogni atleta, i tempi registrati abbinati alle righe del piano in ordine: { atleta: [riga registrata | undefined] }
+export function abbinaTempi(righe = [], registrati = []) {
+  const perAtleta = {}
+  registrati.forEach((e) => (perAtleta[e.atleta_id] ||= []).push(e))
+  return Object.fromEntries(Object.entries(perAtleta).map(([atleta, lista]) => {
+    const usati = new Set()
+    return [atleta, righe.map((r) => {
+      const trovata = lista.find((e) => !usati.has(e) && chiaveRisultato(e) === chiaveRisultato(r))
+      if (trovata) usati.add(trovata)
+      return trovata
+    })]
+  }))
+}
+
 // Raggruppa le righe del piano in blocchi: { riga, indice } oppure { serie, righe: [{ riga, indice }] }
 export function blocchiPiano(righe = []) {
   const blocchi = []

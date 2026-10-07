@@ -3,7 +3,8 @@ import { blocchiPiano, giriSerie, metriPiano, minutiPiano, perGiro, ripartenzeDi
 
 // Una riga del piano; dentro una serie a giri mostra le ripetizioni di un solo giro
 function RigaPiano({ r, inSerie }) {
-  const rip = inSerie ? (r.ripartenza ? [r.ripartenza] : []) : ripartenzeDiRiga(r)
+  // In una serie: una ripartenza per giro se il coach le ha cambiate, altrimenti quella generale
+  const rip = ripartenzeDiRiga(r)
   const n = inSerie ? perGiro(r) : r.ripetizioni
   return (
     <>

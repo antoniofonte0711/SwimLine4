@@ -97,7 +97,7 @@ function HomeAtleta() {
                 {r.ripetizioni ? `${r.ripetizioni}×` : ''}{r.distanza} m {r.stile || ''}
               </span>
               {r.passaggi?.length > 0 ? (
-                <p className="text-xs text-gray-400 mt-1">{r.passaggi.join(' · ')}</p>
+                <p className="text-xs text-gray-400 mt-1">{r.passaggi.map((p) => p || '–').join(' · ')}</p>
               ) : (
                 r.tempo_totale && <p className="text-xs text-gray-400 mt-1">{r.tempo_totale}</p>
               )}

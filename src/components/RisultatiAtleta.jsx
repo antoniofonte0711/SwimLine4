@@ -2,10 +2,8 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import InputTempo from './InputTempo'
 import { coloreLavoro } from '../lib/lavori'
-import { blocchiPiano, giriSerie, perGiro, ripartenzeDiRiga } from '../lib/pianoSquadra'
+import { blocchiPiano, chiaveRisultato as chiaveRiga, giriSerie, perGiro, ripartenzeDiRiga } from '../lib/pianoSquadra'
 import { ERRORE_TEMPO_BREVE, erroreTempoImpossibile, normalizzaTempo, tempoPlausibile, tempoValido } from '../lib/tempo'
-
-const chiaveRiga = (r) => [r.tipo_lavoro, Number(r.distanza), r.stile, Number(r.ripetizioni) || 1].join('|')
 
 // Il coach vede il piano del giorno e scrive i risultati di ogni passaggio per un atleta.
 // Funziona anche se l'atleta non ha ancora nessun tempo: si parte dalle righe del piano.
@@ -71,10 +69,11 @@ export default function RisultatiAtleta({ piano, atletaId, giorno }) {
       const k = chiaveRiga(r)
       const trovata = esistenti.find((e) => !usati.has(e.id) && chiaveRiga(e) === k)
       if (trovata) usati.add(trovata.id)
-      const passaggi = lavori[i].filter(Boolean)
-      if (!passaggi.length && !trovata) continue // niente da salvare per questa riga
+      // I vuoti in mezzo restano (''), così ogni tempo resta nel suo passaggio o nel suo giro
+      const passaggi = lavori[i]
+      if (!passaggi.some(Boolean) && !trovata) continue // niente da salvare per questa riga
       const { error } = trovata
-        ? await supabase.from('allenamenti').update({ passaggi }).eq('id', trovata.id)
+        ? await supabase.from('allenamenti').update({ passaggi, ripetizioni: Number(r.ripetizioni) || 1 }).eq('id', trovata.id)
         : await supabase.from('allenamenti').insert({
             atleta_id: atletaId, tipo_lavoro: r.tipo_lavoro, distanza: Number(r.distanza),
             ripetizioni: Number(r.ripetizioni) || 1, stile: r.stile, passaggi, data_allenamento: giorno,
@@ -123,8 +122,10 @@ export default function RisultatiAtleta({ piano, atletaId, giorno }) {
                   <div className="grid grid-cols-2 gap-3">
                     {b.righe.flatMap(({ riga: r, indice: i }) => Array.from({ length: perGiro(r) }, (_, k) => {
                       const j = g * perGiro(r) + k
+                      // ripartenza di questo giro, se il coach l'ha cambiata rispetto a quella generale
+                      const rip = r.ripartenze?.[j] && r.ripartenze[j] !== r.ripartenza ? ` ↻ ${r.ripartenze[j]}` : ''
                       return (
-                        <InputTempo key={`${i}-${j}`} etichetta={`${r.distanza} m${perGiro(r) > 1 ? ` (${k + 1})` : ''}`}
+                        <InputTempo key={`${i}-${j}`} etichetta={`${r.distanza} m${perGiro(r) > 1 ? ` (${k + 1})` : ''}${rip}`}
                           value={valori[i]?.[j] || ''} vuotoOk onChange={(v) => cambia(i, j, v)} />
                       )
                     }))}

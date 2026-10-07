@@ -73,7 +73,7 @@ export default function StoricoAllenamenti() {
             </span>
             {r.inAttesa && <span className="text-xs text-yellow-700 bg-yellow-100 px-2 py-0.5 rounded-full ml-2">⏳ da inviare</span>}
             {r.passaggi?.length > 0 ? (
-              <p className="text-xs text-gray-400 mt-1">{r.passaggi.join(' · ')}</p>
+              <p className="text-xs text-gray-400 mt-1">{r.passaggi.map((p) => p || '–').join(' · ')}</p>
             ) : (
               r.tempo_totale && <p className="text-xs text-gray-400 mt-1">{r.tempo_totale}</p>
             )}

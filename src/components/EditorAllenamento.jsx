@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Reorder, AnimatePresence, useDragControls } from 'framer-motion'
+import { Reorder, AnimatePresence, motion, useDragControls } from 'framer-motion'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { TIPI_LAVORO, distanzaDaTipo } from '../lib/lavori'
-import { RIGA_VUOTA, STILI_COACH, TIPI_COACH, addGiorni, blocchiPiano, metriPiano, minutiPiano, perGiro } from '../lib/pianoSquadra'
+import { RIGA_VUOTA, STILI_COACH, TIPI_COACH, abbinaTempi, addGiorni, blocchiPiano, metriPiano, minutiPiano, perGiro } from '../lib/pianoSquadra'
 import { normalizzaRipartenza, ripartenzaValida } from '../lib/tempo'
 import PianoCard from './PianoCard'
 
@@ -138,9 +138,52 @@ function RigaLavoro({ chiave, r, i, primo, ultimo, puoiTogliere, cambia, cambiaT
   )
 }
 
-// Serie a giri: un gruppo di lavori nuotati in sequenza e ripetuti N volte (es. 3 giri di 400-300-200)
-function SerieGiri({ chiave, serie, righe, primo, ultimo, cambia, cambiaTipo, cambiaSerie, sposta, spostaInSerie, togli, aggiungiInSerie, sciogli }) {
+// Riquadro di conferma al centro dello schermo, con lo sfondo scurito
+function Conferma({ titolo, testo, si, no }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={no}>
+      <div role="alertdialog" aria-modal="true" onClick={(e) => e.stopPropagation()}
+        className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl text-center">
+        <p className="text-3xl mb-2">⚠️</p>
+        <p className="font-bold text-lg mb-2">{titolo}</p>
+        <p className="text-sm text-gray-600 mb-5">{testo}</p>
+        <div className="grid grid-cols-2 gap-2">
+          <button onClick={no} className="font-bold text-gray-600 bg-gray-100 rounded-2xl py-3">Annulla</button>
+          <button onClick={si} className="font-bold text-white bg-red-500 rounded-2xl py-3">Sì, togli</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Numero di giri: si scrive o si usano − e +; vale quando esci dal campo
+function CampoGiri({ giri, annulli, onGiri }) {
+  const [testo, setTesto] = useState(String(giri))
+  useEffect(() => setTesto(String(giri)), [giri, annulli])
+  const conferma = () => {
+    const n = Math.round(Number(testo))
+    if (n >= 1 && n <= 20 && n !== giri) onGiri(n)
+    else setTesto(String(giri))
+  }
+  const tasto = 'w-10 shrink-0 rounded-xl bg-white border border-gray-200 text-blue-600 font-bold text-lg disabled:opacity-30 active:scale-90 transition'
+  return (
+    <div>
+      <label className="block text-xs text-gray-500 mb-1">Giri</label>
+      <div className="flex gap-1">
+        <button onClick={() => onGiri(giri - 1)} disabled={giri <= 1} aria-label="Togli un giro" className={tasto}>−</button>
+        <input type="number" min="1" max="20" inputMode="numeric" value={testo} onChange={(e) => setTesto(e.target.value)}
+          onBlur={conferma} onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} className={`${CAMPO} text-center px-1`} />
+        <button onClick={() => onGiri(giri + 1)} disabled={giri >= 20} aria-label="Aggiungi un giro" className={tasto}>+</button>
+      </div>
+    </div>
+  )
+}
+
+// Serie a giri: un gruppo di lavori nuotati in sequenza e ripetuti N volte (es. 3 giri di 400-300-200).
+// Il Giro 1 definisce i lavori; ogni altro giro ha la sua casella, dove si può cambiare la ripartenza.
+function SerieGiri({ chiave, serie, righe, primo, ultimo, annulli, cambia, cambiaTipo, cambiaSerie, cambiaGiri, cambiaRipGiro, sposta, spostaInSerie, togli, aggiungiInSerie, sciogli }) {
   const controlli = useDragControls()
+  const giri = Math.max(1, Number(serie.giri) || 1)
   return (
     <Reorder.Item as="div" value={chiave} dragListener={false} dragControls={controlli} {...ANIMA}
       className="relative bg-blue-50/60 border-2 border-blue-200 rounded-3xl p-3 mb-3 shadow-sm">
@@ -151,11 +194,8 @@ function SerieGiri({ chiave, serie, righe, primo, ultimo, cambia, cambiaTipo, ca
         </div>
         <Frecce su={() => sposta(chiave, -1)} giu={() => sposta(chiave, 1)} primo={primo} ultimo={ultimo} />
       </div>
-      <div className="grid grid-cols-3 gap-2 mb-1 px-1">
-        <div>
-          <label className="block text-xs text-gray-500 mb-1">Giri</label>
-          <input type="number" min="1" max="20" value={serie.giri} onChange={(e) => cambiaSerie(serie.id, 'giri', e.target.value)} className={CAMPO} />
-        </div>
+      <div className="grid grid-cols-[8.5rem_1fr_1fr] gap-2 mb-1 px-1">
+        <CampoGiri giri={giri} annulli={annulli} onGiri={(n) => cambiaGiri(serie.id, n)} />
         <InputRipartenza etichetta="Recupero tra i giri" placeholder={'Es. 20"'} value={serie.recupero}
           onChange={(v) => cambiaSerie(serie.id, 'recupero', v)} />
         <div>
@@ -167,6 +207,7 @@ function SerieGiri({ chiave, serie, righe, primo, ultimo, cambia, cambiaTipo, ca
       <p className="text-xs text-blue-700/70 mb-3 px-1">
         Ogni giro: {righe.map(({ riga }) => `${Number(riga.ripetizioni) > 1 ? riga.ripetizioni + '×' : ''}${riga.distanza}`).join(' – ')}
       </p>
+      <p className="text-sm font-bold text-blue-700 px-1 mb-2">Giro 1</p>
       {righe.map(({ riga, indice }, k) => (
         <div key={riga._id} className="bg-white border border-gray-100 rounded-2xl p-3 mb-2">
           <div className="flex items-center justify-between mb-2">
@@ -179,10 +220,43 @@ function SerieGiri({ chiave, serie, righe, primo, ultimo, cambia, cambiaTipo, ca
           </div>
         </div>
       ))}
-      <div className="flex items-center justify-between gap-2 px-1 pt-1">
+      <div className="flex items-center justify-between gap-2 px-1 pt-1 mb-3">
         <button onClick={() => aggiungiInSerie(serie.id)} className="text-xs font-semibold text-blue-600">+ Lavoro nella serie</button>
         <button onClick={() => sciogli(serie.id)} className="text-xs text-gray-500">Sciogli serie</button>
       </div>
+      <AnimatePresence initial={false}>
+        {Array.from({ length: giri - 1 }, (_, x) => x + 1).map((g) => (
+          <motion.div key={g} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden">
+            <div className="bg-white border border-blue-100 rounded-2xl p-3 mb-2">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-sm font-bold text-blue-700">Giro {g + 1}</p>
+                {g === giri - 1 && (
+                  <button onClick={() => cambiaGiri(serie.id, giri - 1)} className="text-xs text-red-500">✕ Togli giro</button>
+                )}
+              </div>
+              <p className="text-xs text-gray-400 mb-2">Stessi lavori del Giro 1. Cambia la ripartenza solo se in questo giro è diversa.</p>
+              {righe.map(({ riga, indice }) => Array.from({ length: perGiro(riga) }, (_, k) => {
+                const j = g * perGiro(riga) + k
+                return (
+                  <div key={`${riga._id}-${k}`} className="grid grid-cols-[1fr_7rem] items-end gap-2 mb-1">
+                    <p className="text-sm text-gray-600 pb-2.5">
+                      {riga.distanza} m {riga.stile}{perGiro(riga) > 1 ? ` (${k + 1})` : ''}
+                      <span className="text-xs text-gray-400"> · {riga.tipo_lavoro}</span>
+                    </p>
+                    <InputRipartenza etichetta="Ripartenza" placeholder={riga.ripartenza || 'Es. 1\'30"'}
+                      value={riga.ripartenze?.[j]} onChange={(v) => cambiaRipGiro(indice, j, v)} />
+                  </div>
+                )
+              }))}
+            </div>
+          </motion.div>
+        ))}
+      </AnimatePresence>
+      <button onClick={() => cambiaGiri(serie.id, giri + 1)} disabled={giri >= 20}
+        className="w-full text-sm font-bold text-blue-600 bg-white border border-dashed border-blue-300 rounded-2xl py-2.5 disabled:opacity-40">
+        + Aggiungi giro
+      </button>
     </Reorder.Item>
   )
 }
@@ -201,8 +275,21 @@ export default function EditorAllenamento({ squadra, giorno }) {
   // Dopo la pubblicazione si vede la vista compatta; "Modifica" riapre l'editor
   const [modifica, setModifica] = useState(true)
   const [salvato, setSalvato] = useState(() => fotografia('', righe, 'squadra'))
+  const [tempi, setTempi] = useState([])         // tempi già registrati dagli atleti in questo giorno
+  const [conferma, setConferma] = useState(null) // { id, giri, titolo, testo } quando togliere giri chiede conferma
+  const [annulli, setAnnulli] = useState(0)      // riporta il campo Giri al valore di prima dopo "Annulla"
+
+  async function caricaTempi() {
+    const { data: atleti } = await supabase.from('profiles').select('id').eq('squadra_id', squadra.id)
+    const ids = (atleti || []).map((a) => a.id)
+    if (!ids.length) return setTempi([])
+    const { data } = await supabase.from('allenamenti').select('atleta_id, tipo_lavoro, distanza, stile, passaggi')
+      .in('atleta_id', ids).eq('data_allenamento', giorno).order('created_at')
+    setTempi(data || [])
+  }
 
   async function carica() {
+    caricaTempi()
     const { data } = await supabase.from('allenamenti_squadra').select('*').eq('squadra_id', squadra.id).eq('data', giorno).maybeSingle()
     const t = data?.titolo || ''
     const r = data?.righe?.length ? conId(data.righe) : [nuovaRiga()]
@@ -269,6 +356,40 @@ export default function EditorAllenamento({ squadra, giorno }) {
   }
   const cambiaSerie = (id, campo, v) =>
     setRighe(righe.map((r) => (r.serie?.id === id ? { ...r, serie: { ...r.serie, [campo]: v } } : r)))
+  // Ripartenza di una ripetizione in un giro (posizione j = giro × per giro + k)
+  const cambiaRipGiro = (i, j, v) => setRighe(righe.map((r, k) => {
+    if (k !== i) return r
+    const lista = Array.from({ length: Math.max(j + 1, r.ripartenze?.length || 0) }, (_, x) => r.ripartenze?.[x] ?? '')
+    lista[j] = v
+    return { ...r, ripartenze: lista }
+  }))
+  // Cambia il numero di giri: le caselle si aggiungono in fondo e si tolgono dall'ultima
+  const applicaGiri = (id, n) => setRighe(righe.map((r) => {
+    if (r.serie?.id !== id) return r
+    const ripartenze = Array.isArray(r.ripartenze) ? r.ripartenze.slice(0, perGiro(r) * n) : r.ripartenze
+    return { ...r, ripartenze, serie: { ...r.serie, giri: n } }
+  }))
+  const cambiaGiri = (id, n) => {
+    const nella = righe.map((r, i) => ({ r, i })).filter(({ r }) => r.serie?.id === id)
+    const prima = Math.max(1, Number(nella[0]?.r.serie.giri) || 1)
+    if (n >= prima) return applicaGiri(id, n)
+    // Giri che spariscono: hanno già tempi degli atleti o ripartenze cambiate?
+    const abbinati = Object.values(abbinaTempi(righe, tempi))
+    const atleti = abbinati.filter((lista) => nella.some(({ r, i }) =>
+      (lista[i]?.passaggi || []).slice(perGiro(r) * n).some(Boolean))).length
+    const ripCambiate = nella.some(({ r }) => (r.ripartenze || []).slice(perGiro(r) * n).some(Boolean))
+    if (!atleti && !ripCambiate) return applicaGiri(id, n)
+    const quali = prima - n === 1 ? `il giro ${prima}` : `i giri dal ${n + 1} al ${prima}`
+    const dati = [
+      atleti && `${atleti === 1 ? '1 atleta ha' : `${atleti} atleti hanno`} già inserito i tempi`,
+      ripCambiate && 'ci sono ripartenze già scritte',
+    ].filter(Boolean).join(' e ')
+    setConferma({
+      id, giri: n,
+      titolo: prima - n === 1 ? 'Togliere questo giro?' : 'Togliere questi giri?',
+      testo: `Sei sicuro di voler togliere ${quali}? È già compilato: ${dati}. Togliendolo, quei dati non verranno più mostrati.`,
+    })
+  }
   const aggiungiLavoro = (tipo) => {
     const d = tipo ? distanzaDaTipo(tipo) : null
     setRighe([...righe, nuovaRiga({ ...(tipo ? { tipo_lavoro: tipo } : {}), ...(d ? { distanza: d } : {}) })])
@@ -314,7 +435,9 @@ export default function EditorAllenamento({ squadra, giorno }) {
       ...r,
       ripartenza: normalizzaRipartenza(r.ripartenza),
       ...(Array.isArray(r.ripartenze) && {
-        ripartenze: Array.from({ length: Math.min(50, Math.max(1, Number(r.ripetizioni) || 1)) }, (_, k) => normalizzaRipartenza(r.ripartenze[k])),
+        // in una serie ce n'è una per ogni ripetizione di ogni giro
+        ripartenze: Array.from({ length: Math.min(50, Math.max(1, Number(r.ripetizioni) || 1)) * (r.serie ? Math.max(1, Number(r.serie.giri) || 1) : 1) },
+          (_, k) => normalizzaRipartenza(r.ripartenze[k])),
       }),
       ...(r.serie && { serie: { ...r.serie, recupero: normalizzaRipartenza(r.serie.recupero) } }),
     }))
@@ -336,8 +459,8 @@ export default function EditorAllenamento({ squadra, giorno }) {
       return
     }
     // Delle ripartenze personalizzate si tengono solo quelle scritte (i vuoti in fondo non servono)
-    const soloScritte = (lista = []) => {
-      const l = [...lista]
+    const soloScritte = (lista) => {
+      const l = [...(lista || [])]
       while (l.length && !l[l.length - 1]) l.pop()
       return l.length ? l : null
     }
@@ -349,7 +472,7 @@ export default function EditorAllenamento({ squadra, giorno }) {
       note: r.note || '',
       minuti: !r.serie && Number(r.minuti) > 0 ? Number(r.minuti) : null,
       ripartenza: r.ripartenza || null,
-      ripartenze: !r.serie && Number(r.ripetizioni) > 1 ? soloScritte(r.ripartenze) : null,
+      ripartenze: Number(r.ripetizioni) > 1 ? soloScritte(r.ripartenze) : null,
       ...(r.serie && {
         serie: {
           id: r.serie.id, giri: r.serie.giri, recupero: r.serie.recupero || null,
@@ -431,7 +554,8 @@ export default function EditorAllenamento({ squadra, giorno }) {
             const chiave = chiaveBlocco(b)
             const comuni = { chiave, primo: k === 0, ultimo: k === blocchi.length - 1, cambia, cambiaTipo, sposta, togli }
             return b.serie
-              ? <SerieGiri key={chiave} {...comuni} serie={b.serie} righe={b.righe} cambiaSerie={cambiaSerie}
+              ? <SerieGiri key={chiave} {...comuni} serie={b.serie} righe={b.righe} annulli={annulli} cambiaSerie={cambiaSerie}
+                  cambiaGiri={cambiaGiri} cambiaRipGiro={cambiaRipGiro}
                   spostaInSerie={spostaInSerie} aggiungiInSerie={aggiungiInSerie} sciogli={sciogli} />
               : <RigaLavoro key={chiave} {...comuni} r={b.riga} i={b.indice} puoiTogliere={righe.length > 1} />
           })}
@@ -489,6 +613,11 @@ export default function EditorAllenamento({ squadra, giorno }) {
       <button onClick={esci} className="w-full font-bold text-gray-600 bg-gray-100 rounded-2xl py-3 mt-2 active:scale-[0.98] transition">✕ Esci senza salvare</button>
       {stato !== 'nuovo' && (
         <button onClick={elimina} className="w-full text-sm text-red-500 mt-3 py-2">Elimina allenamento di questo giorno</button>
+      )}
+      {conferma && (
+        <Conferma titolo={conferma.titolo} testo={conferma.testo}
+          si={() => { applicaGiri(conferma.id, conferma.giri); setConferma(null) }}
+          no={() => { setConferma(null); setAnnulli((x) => x + 1) }} />
       )}
     </>
   )

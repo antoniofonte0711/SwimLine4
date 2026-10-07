@@ -169,7 +169,7 @@ export default function Calendario() {
                 <div key={r.id} className={`py-2 ${i ? 'border-t border-gray-100' : ''}`}>
                   <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${coloreLavoro(r.tipo_lavoro)}`}>{r.tipo_lavoro}</span>
                   <span className="text-sm text-gray-600 ml-2">{r.ripetizioni ? `${r.ripetizioni}×` : ''}{r.distanza} m {r.stile || ''}</span>
-                  {r.passaggi?.length > 0 && <p className="text-xs text-gray-400 mt-1">{r.passaggi.join(' · ')}</p>}
+                  {r.passaggi?.length > 0 && <p className="text-xs text-gray-400 mt-1">{r.passaggi.map((p) => p || '–').join(' · ')}</p>}
                 </div>
               ))}
             </div>
