@@ -7,6 +7,7 @@ import { TIPI_LAVORO, distanzaDaTipo } from '../lib/lavori'
 import { RIGA_VUOTA, STILI_COACH, TIPI_COACH, abbinaTempi, addGiorni, blocchiPiano, metriPiano, minutiPiano, perGiro } from '../lib/pianoSquadra'
 import { normalizzaRipartenza, ripartenzaValida } from '../lib/tempo'
 import PianoCard from './PianoCard'
+import Difficolta from './Difficolta'
 
 const CAMPO = 'w-full border border-gray-200 bg-gray-50 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400'
 const GG = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab']
@@ -605,6 +606,7 @@ export default function EditorAllenamento({ squadra, giorno }) {
           Totale: {(metriPiano(righeSalvate(righe)) / 1000).toFixed(1).replace('.', ',')} km
           {minutiPiano(righe) > 0 && ` · ${minutiPiano(righe)} min`}
         </p>
+        <div className="mt-2"><Difficolta righe={righeSalvate(righe)} /></div>
       </div>
 
       {errore && <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mb-3">{errore}</p>}

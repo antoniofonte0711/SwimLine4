@@ -1,4 +1,5 @@
 import { coloreLavoro } from '../lib/lavori'
+import Difficolta from './Difficolta'
 import { blocchiPiano, giriSerie, metriPiano, minutiPiano, perGiro, ripartenzeDiRiga } from '../lib/pianoSquadra'
 
 // Una riga del piano; dentro una serie a giri mostra le ripetizioni di un solo giro
@@ -29,6 +30,7 @@ export default function PianoCard({ piano }) {
           {minutiPiano(piano.righe) > 0 && ` · ${minutiPiano(piano.righe)} min`}
         </span>
       </div>
+      <Difficolta righe={piano.righe} />
       {blocchiPiano(piano.righe).map((b, i) => (
         <div key={i} className={`py-2 ${i ? 'border-t border-gray-100' : ''}`}>
           {b.serie ? (
