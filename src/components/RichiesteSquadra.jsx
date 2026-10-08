@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 
-const MIGRAZIONE = 'Manca un aggiornamento del database: esegui supabase/migrazione_fase12_richieste_admin.sql.'
+const MIGRAZIONE = 'Manca un aggiornamento del database: esegui supabase/12_migrazione_fase12_richieste_admin.sql.'
 const messaggio = (error) => (/function|schema cache/i.test(error.message) ? MIGRAZIONE : error.message)
 
 // Richieste di squadra di chi non è coach: gli inviti dei coach (per gli admin, che entrano solo accettando)

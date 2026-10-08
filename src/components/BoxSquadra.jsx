@@ -38,7 +38,7 @@ export default function BoxSquadra() {
     if (error) {
       setErrore(!coach && error.message.includes('Nessuna squadra')
         ? 'Non trovo nessuna squadra con questo nome. Chiedi al coach il nome esatto.'
-        : /function|schema cache/i.test(error.message) ? 'Funzione mancante: esegui prima migrazione_approvazioni.sql su Supabase.'
+        : /function|schema cache/i.test(error.message) ? 'Funzione mancante: esegui prima 14_migrazione_approvazioni.sql su Supabase.'
         : error.message)
       return
     }

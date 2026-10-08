@@ -1,41 +1,50 @@
 # SwimLine4
 
-## Cosa contiene
-- Login / Registrazione con ruoli (atleta, coach, genitore, admin)
-- Dashboard con accesso ad Allenamenti e Gare
-- Sezione Allenamenti: inserimento tempi con parziali, tipo di lavoro, video/foto, commento
-- Sezione Gare: storico gare con tempo ed esito
-- Pannello Admin riservato: visibile e accessibile solo a chi ha `role = 'admin'`
+App (PWA) per nuotatori, coach e genitori: piani di allenamento della squadra, tempi con parziali,
+presenze, gare, record, progressi e punti. Funziona anche offline: i tempi inseriti senza rete
+partono appena torna la connessione.
 
-## 1. Installa le dipendenze
-```
-npm install
-```
+Tecnologie: React 18 + Vite 5 + Tailwind, Supabase (database, login, storage), Vercel.
 
-## 2. Crea un progetto Supabase (gratuito)
-1. Vai su https://supabase.com e crea un account/progetto
-2. Vai su SQL Editor e incolla tutto il contenuto di `supabase/schema.sql`, poi esegui
-3. Vai su Storage e crea un bucket chiamato `video-allenamenti` (privato)
-4. Vai su Project Settings > API e copia URL e chiave "anon public"
+## Ruoli
+- **admin**: vede tutto, può "vedere l'app come" un altro ruolo ed entrare in una squadra
+- **coach**: gestisce la sua squadra (piani, presenze, impostazioni, richieste d'ingresso)
+- **atleta**: inserisce i suoi tempi e vede piani, gare e progressi
+- **genitore**: guarda soltanto
+- **ospite**: vede solo le informazioni pubbliche della squadra
 
-## 3. Configura le variabili d'ambiente
-Copia `.env.example` in un nuovo file `.env` e incolla i valori copiati al punto 2
+Chi vede cosa è deciso in un unico file: `src/lib/permessi.js`.
 
-## 4. Avvia il progetto
-```
-npm run dev
-```
+## Avvio in locale
+1. `npm install`
+2. Copia `.env.example` in `.env` e metti URL e chiave "anon public" del progetto Supabase
+   (Project Settings > API)
+3. `npm run dev` e apri http://localhost:5173
 
-## 5. Diventare admin (solo la prima volta)
-Registrati normalmente dall'app, poi su Supabase, Table Editor, tabella `profiles`,
-cambia manualmente `role` in `admin` sulla tua riga.
+> Attenzione: se `.env` punta al progetto Supabase di produzione, quello che fai in locale
+> finisce sui dati veri.
 
-## 6. Portarlo su GitHub
-```
-git init
-git add .
-git commit -m "Prima versione SwimLine4"
-git branch -M main
-git remote add origin <link-del-tuo-repository-github>
-git push -u origin main
-```
+## Database (Supabase)
+Su un progetto nuovo esegui nell'SQL Editor, **in ordine di numero**, tutti i file in `supabase/`:
+da `00_schema.sql` a quello col numero più alto. Ogni file si può rieseguire senza rompere nulla.
+Le modifiche nuove vanno in un file col numero successivo.
+
+Poi:
+- Storage: crea il bucket privato `video-allenamenti`
+- Edge Function: pubblica `supabase/functions/accedi-come` (serve all'admin per "Accedi come")
+- Per diventare admin la prima volta: registrati dall'app, poi in Table Editor > `profiles`
+  cambia `role` in `admin` sulla tua riga
+
+## Comandi
+| Comando | A cosa serve |
+|---|---|
+| `npm run dev` | app in locale con ricarica automatica |
+| `npm run build` | versione da pubblicare in `dist/` |
+| `npm test` | test automatici (tempi, punti, permessi) |
+| `npm run lint` | controllo automatico del codice |
+
+## Pubblicazione
+- Branch `anteprima` → anteprima su Vercel (in alto compare la scritta ANTEPRIMA)
+- Branch `main` → sito vero
+
+Le sezioni ancora "in arrivo" (Video, Archivio gare) si vedono solo in locale e in anteprima.

@@ -9,7 +9,7 @@ import DomandeIngresso from '../components/DomandeIngresso'
 const CAMPO = 'w-full border border-gray-200 bg-gray-50 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400'
 // L'admin è prima di tutto un atleta: in squadra compare come tale
 const RUOLI = { atleta: 'Atleta', genitore: 'Genitore', coach: 'Coach', admin: 'Atleta (admin)' }
-const MIGRAZIONE = 'Manca un aggiornamento del database: esegui supabase/migrazione_fase11_gestione_squadra.sql e migrazione_fase12_richieste_admin.sql nell\'SQL Editor di Supabase.'
+const MIGRAZIONE = 'Manca un aggiornamento del database: esegui supabase/11_migrazione_fase11_gestione_squadra.sql e 12_migrazione_fase12_richieste_admin.sql nell\'SQL Editor di Supabase.'
 const messaggio = (error) => (/function|schema cache/i.test(error.message) ? MIGRAZIONE : error.message)
 
 // Impostazioni della squadra: visibili solo ad admin e coach.
@@ -28,7 +28,7 @@ export default function Impostazioni() {
     const { data } = await supabase.from('profiles').select('id, nome, cognome, role')
       .eq('squadra_id', squadra.id).order('cognome')
     setMembri(data || [])
-  }, [squadra?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [squadra?.id])
 
   useEffect(() => { if (squadra) caricaMembri() }, [squadra?.id, caricaMembri]) // eslint-disable-line react-hooks/exhaustive-deps
 

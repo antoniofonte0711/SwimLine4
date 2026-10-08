@@ -1,4 +1,4 @@
--- Approvazioni (decise il 7 ottobre 2026), da eseguire dopo migrazione_sicurezza.sql
+-- Approvazioni (decise il 7 ottobre 2026), da eseguire dopo 13_migrazione_sicurezza.sql
 --  A. Chi si registra come coach resta "coach_in_attesa" finché l'admin non lo approva:
 --     solo allora nasce la sua squadra e diventa coach con tutti i permessi su di essa.
 --  B. Un atleta o genitore non entra più in una squadra da solo: manda una domanda

@@ -15,7 +15,7 @@ import { useMiaSquadra } from '../lib/pianoSquadra'
 const CAMPO = 'w-full border border-gray-200 bg-gray-50 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400'
 const CARD = 'bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm'
 const DISTANZE = ['25', '50', '100', '200', '400', '800', '1500']
-const MSG_MIGRAZIONE = 'Manca una colonna nel database: esegui migrazione_fase10_punti_gare.sql su Supabase.'
+const MSG_MIGRAZIONE = 'Manca una colonna nel database: esegui 10_migrazione_fase10_punti_gare.sql su Supabase.'
 const nuovaGara = (x = {}) => ({ distanza: '100', stile: 'Stile libero', ...x, _id: crypto.randomUUID() })
 
 const dataIt = (s) => (s ? new Date(s + 'T12:00:00').toLocaleDateString('it-IT') : '')
