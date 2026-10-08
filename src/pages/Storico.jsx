@@ -20,9 +20,9 @@ function StoricoCoach() {
       .then(({ data }) => setPiani(data || []))
   }, [squadra?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (!pronto || (squadra && piani === null)) return <p className="text-center text-gray-400 py-8">Carico…</p>
+  if (!pronto || (squadra && piani === null)) return <p className="text-center text-gray-500 py-8">Carico…</p>
   if (!squadra) return <SenzaSquadra />
-  if (piani.length === 0) return <p className="text-center text-gray-300 py-8">Nessun allenamento ancora 🏊</p>
+  if (piani.length === 0) return <p className="text-center text-gray-500 py-8">Nessun allenamento ancora 🏊</p>
 
   return piani.map((p) => (
     <div key={p.id} className="mb-1">

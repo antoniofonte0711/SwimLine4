@@ -106,9 +106,9 @@ export default function Record() {
         </select>
       </div>
 
-      {carico && <p className="text-center text-gray-300 py-6">Carico i record…</p>}
+      {carico && <p className="text-center text-gray-500 py-6">Carico i record…</p>}
       {!carico && classifiche.length === 0 && (
-        <p className="text-center text-gray-300 py-6">Nessun tempo per questo stile 🏅</p>
+        <p className="text-center text-gray-500 py-6">Nessun tempo per questo stile 🏅</p>
       )}
 
       {classifiche.map(([distanza, righe]) => (
@@ -121,7 +121,7 @@ export default function Record() {
                 <span className={`w-6 h-6 shrink-0 rounded-full text-xs font-bold flex items-center justify-center ${i === 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-500'}`}>{i + 1}</span>
                 <span className="truncate">
                   {ambito === 'Squadra' ? nomi[r.atleta] || 'Atleta' : r.extra || (fonte === 'Gare' ? 'Gara' : 'Allenamento')}
-                  {r.quando && <span className="text-xs text-gray-400"> · {data(r.quando)}</span>}
+                  {r.quando && <span className="text-xs text-gray-500"> · {data(r.quando)}</span>}
                 </span>
               </span>
               <b className="text-blue-600 shrink-0">{secondiInTempo(r.sec)}</b>
@@ -182,11 +182,11 @@ function DettaglioRecord({ voce, nome, stile, allenamenti, onChiudi, onFatto }) 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40" onClick={onChiudi}>
       <div className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <p className="text-xs text-gray-400">{voce.tabella === 'gare' ? 'Record di gara' : 'Record di allenamento'}</p>
+        <p className="text-xs text-gray-500">{voce.tabella === 'gare' ? 'Record di gara' : 'Record di allenamento'}</p>
         <p className="text-xl font-bold">{nome || 'Atleta'}</p>
         <p className="text-sm text-gray-500 mb-4">{voce.distanza} m {stile}{voce.extra ? ` · ${voce.extra}` : ''}</p>
         <p className="text-sm"><b>Realizzato il</b> {dataIt}</p>
-        {inserito && <p className="text-xs text-gray-400 mb-4">Registrato il {inserito}</p>}
+        {inserito && <p className="text-xs text-gray-500 mb-4">Registrato il {inserito}</p>}
         <InputTempo etichetta="Tempo" value={nuovo} onChange={setNuovo} />
         {errore && <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mt-3">{errore}</p>}
         <div className="grid grid-cols-2 gap-2 mt-4">

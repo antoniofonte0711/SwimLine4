@@ -39,7 +39,7 @@ export default function SquadreAdmin() {
   return (
     <div className="bg-white border border-gray-100 rounded-3xl p-5 shadow-sm mb-3">
       <p className="font-bold mb-1">🏊 Squadre (admin)</p>
-      <p className="text-xs text-gray-400 mb-3">
+      <p className="text-xs text-gray-500 mb-3">
         Entra in una squadra per vederla e gestirla come il suo coach: allenamenti, presenze, progressi, persone.
       </p>
       {squadraGestita && (
@@ -48,13 +48,13 @@ export default function SquadreAdmin() {
           <button onClick={() => cambiaVista('admin')} className="font-bold text-amber-900 underline">Esci</button>
         </div>
       )}
-      {squadre === null && <p className="text-sm text-gray-400 py-2">Carico…</p>}
-      {squadre?.length === 0 && <p className="text-sm text-gray-400 py-2">Non c'è ancora nessuna squadra.</p>}
+      {squadre === null && <p className="text-sm text-gray-500 py-2">Carico…</p>}
+      {squadre?.length === 0 && <p className="text-sm text-gray-500 py-2">Non c'è ancora nessuna squadra.</p>}
       {squadre?.map((s, i) => (
         <div key={s.id} className={`flex items-center justify-between gap-3 py-3 ${i ? 'border-t border-gray-100' : ''}`}>
           <div className="min-w-0">
             <p className="font-semibold truncate">{s.nome}</p>
-            <p className="text-xs text-gray-400 truncate">
+            <p className="text-xs text-gray-500 truncate">
               {s.coach ? `Coach: ${s.coach}` : 'Senza coach'} · {s.membri} {s.membri === 1 ? 'persona' : 'persone'}
             </p>
           </div>

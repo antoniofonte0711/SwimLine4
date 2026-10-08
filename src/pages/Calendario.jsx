@@ -114,7 +114,7 @@ export default function Calendario() {
           <button onClick={() => vaiMese(1)} aria-label="Mese successivo" className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 text-xl font-bold active:scale-90 transition">›</button>
         </div>
 
-        <div className="grid grid-cols-7 text-center text-xs text-gray-400 mb-1">
+        <div className="grid grid-cols-7 text-center text-xs text-gray-500 mb-1">
           {INTEST.map((l, i) => <span key={i}>{l}</span>)}
         </div>
         <div className="grid grid-cols-7 gap-1">
@@ -135,13 +135,13 @@ export default function Calendario() {
                   {!isCoach && x?.stato && <span className={`w-1.5 h-1.5 rounded-full ${PRES[x.stato]}`} />}
                 </span>
                 {isCoach && nAtleti > 0 && x && (x.presenti > 0 || x.piano) && (
-                  <span className={`absolute -bottom-0.5 text-[9px] font-bold ${sel ? 'text-blue-100' : 'text-gray-400'}`}>{x.presenti}/{nAtleti}</span>
+                  <span className={`absolute -bottom-0.5 text-[9px] font-bold ${sel ? 'text-blue-100' : 'text-gray-500'}`}>{x.presenti}/{nAtleti}</span>
                 )}
               </button>
             )
           })}
         </div>
-        <p className="text-[11px] text-gray-400 mt-3">● allenamento · 🏆 gara{isCoach ? ' · 12/15 = presenti su atleti' : ' · pallino verde/rosso = tua presenza'}</p>
+        <p className="text-xs text-gray-500 mt-3">● allenamento · 🏆 gara{isCoach ? ' · 12/15 = presenti su atleti' : ' · pallino verde/rosso = tua presenza'}</p>
       </div>
 
       <AnimatePresence mode="wait" initial={false}>
@@ -153,7 +153,7 @@ export default function Calendario() {
                 {isCoach && !info.piano.pubblicato && <p className="text-xs font-bold text-amber-700 mb-1 px-1">Bozza, non ancora pubblicata</p>}
                 <PianoCard piano={info.piano} />
               </>
-            : <p className="text-sm text-gray-400 bg-white border border-gray-100 rounded-3xl p-5 text-center shadow-sm mb-3">Nessun allenamento in questo giorno.</p>}
+            : <p className="text-sm text-gray-500 bg-white border border-gray-100 rounded-3xl p-5 text-center shadow-sm mb-3">Nessun allenamento in questo giorno.</p>}
 
           {isCoach && (
             <div className="flex gap-2 mb-3">
@@ -169,7 +169,7 @@ export default function Calendario() {
                 <div key={r.id} className={`py-2 ${i ? 'border-t border-gray-100' : ''}`}>
                   <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${coloreLavoro(r.tipo_lavoro)}`}>{r.tipo_lavoro}</span>
                   <span className="text-sm text-gray-600 ml-2">{r.ripetizioni ? `${r.ripetizioni}×` : ''}{r.distanza} m {r.stile || ''}</span>
-                  {r.passaggi?.length > 0 && <p className="text-xs text-gray-400 mt-1">{r.passaggi.map((p) => p || '–').join(' · ')}</p>}
+                  {r.passaggi?.length > 0 && <p className="text-xs text-gray-500 mt-1">{r.passaggi.map((p) => p || '–').join(' · ')}</p>}
                 </div>
               ))}
             </div>
@@ -180,7 +180,7 @@ export default function Calendario() {
               <p className="font-bold mb-1">🏆 Gare</p>
               {gareGiorno.map((g, i) => (
                 <p key={g.nome} className={`text-sm py-2 ${i ? 'border-t border-gray-100' : ''}`}>
-                  {g.nome} <span className="text-gray-400">· {g.atleti.size} {g.atleti.size === 1 ? 'atleta' : 'atleti'}</span>
+                  {g.nome} <span className="text-gray-500">· {g.atleti.size} {g.atleti.size === 1 ? 'atleta' : 'atleti'}</span>
                 </p>
               ))}
             </div>

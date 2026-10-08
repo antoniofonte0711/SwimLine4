@@ -70,7 +70,7 @@ export default function RichiesteSquadra({ completo = false }) {
       {completo && (
         <>
           <p className="font-bold mb-1">🏊 La mia squadra (da atleta)</p>
-          <p className="text-xs text-gray-400 mb-3">
+          <p className="text-xs text-gray-500 mb-3">
             Sei admin ma anche atleta: i coach ti trovano e ti invitano, e tu entri nella loro squadra solo se accetti.
           </p>
           <p className="text-sm mb-3">

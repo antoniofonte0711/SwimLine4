@@ -13,7 +13,7 @@ export default function CardPunti({ dettaglio = true }) {
 
   if (!pronto) return null
   if (!profile?.squadra_id) {
-    return <p className="text-xs text-gray-400 bg-white border border-gray-100 rounded-3xl p-4 mb-3 text-center shadow-sm">Entra in una squadra per accumulare punti e vincere premi.</p>
+    return <p className="text-xs text-gray-500 bg-white border border-gray-100 rounded-3xl p-4 mb-3 text-center shadow-sm">Entra in una squadra per accumulare punti e vincere premi.</p>
   }
   if (errore) return null
 
@@ -38,11 +38,11 @@ export default function CardPunti({ dettaglio = true }) {
           <p className={`font-bold ${livello.colore}`}>Livello {livello.nome}</p>
           {dettaglio && <Link to="/punti" className="text-xs font-semibold text-blue-600">Movimenti e premi ›</Link>}
         </div>
-        <p className="text-3xl font-extrabold mt-1">{dentro}<span className="text-gray-300">/{soglia}</span> <span className="text-sm font-semibold text-gray-500">punti al prossimo premio</span></p>
+        <p className="text-3xl font-extrabold mt-1">{dentro}<span className="text-gray-500">/{soglia}</span> <span className="text-sm font-semibold text-gray-500">punti al prossimo premio</span></p>
         <div className="h-3 rounded-full bg-gray-100 overflow-hidden mt-3">
           <motion.div className={`h-full rounded-full ${livello.barra}`} initial={{ width: 0 }} animate={{ width: `${perc}%` }} transition={{ duration: 0.8, ease: 'easeOut' }} />
         </div>
-        <p className="text-xs text-gray-400 mt-2">{tot} punti totali · ti mancano {soglia - dentro} punti per un premio a sorpresa</p>
+        <p className="text-xs text-gray-500 mt-2">{tot} punti totali · ti mancano {soglia - dentro} punti per un premio a sorpresa</p>
         {daAprire > 0 && (
           <motion.button onClick={apri} whileTap={{ scale: 0.96 }} animate={{ scale: [1, 1.04, 1] }} transition={{ repeat: Infinity, duration: 1.6 }}
             className="w-full mt-4 font-bold text-white bg-gradient-to-r from-blue-600 to-sky-500 rounded-2xl py-3.5 shadow-lg shadow-blue-200">
@@ -61,9 +61,9 @@ export default function CardPunti({ dettaglio = true }) {
               {apertura.stato === 'ok' && (
                 <>
                   <motion.p initial={{ scale: 0 }} animate={{ scale: [0, 1.4, 1] }} transition={{ duration: 0.6 }} className="text-6xl mb-3">🎉</motion.p>
-                  <p className="text-sm text-gray-400">Hai vinto</p>
+                  <p className="text-sm text-gray-500">Hai vinto</p>
                   <p className="text-xl font-extrabold text-blue-600 mt-1">{apertura.testo}</p>
-                  <p className="text-xs text-gray-400 mt-3">Mostralo al coach per usarlo.</p>
+                  <p className="text-xs text-gray-500 mt-3">Mostralo al coach per usarlo.</p>
                 </>
               )}
               {apertura.stato === 'errore' && <p className="text-sm text-red-600">{apertura.testo}</p>}

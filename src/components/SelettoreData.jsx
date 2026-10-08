@@ -33,7 +33,7 @@ export function CalendarioFoglio({ valore, onScegli, onChiudi }) {
           <p className="font-bold">{MESI[mese]} {anno}</p>
           <button onClick={() => vaiMese(1)} aria-label="Mese successivo" className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 text-xl font-bold">›</button>
         </div>
-        <div className="grid grid-cols-7 text-center text-xs text-gray-400 mb-1">
+        <div className="grid grid-cols-7 text-center text-xs text-gray-500 mb-1">
           {INTEST.map((l, i) => <span key={i}>{l}</span>)}
         </div>
         <div className="grid grid-cols-7 gap-1 text-center">

@@ -106,7 +106,7 @@ function RigaLavoro({ chiave, r, i, primo, ultimo, puoiTogliere, cambia, cambiaT
       className="relative bg-white border border-gray-100 rounded-3xl p-4 mb-3 shadow-sm">
       <div className="flex items-center justify-between mb-3">
         <div onPointerDown={(e) => controlli.start(e)} style={{ touchAction: 'none' }}
-          className="flex items-center gap-2 cursor-grab active:cursor-grabbing select-none text-gray-400 text-sm font-semibold">
+          className="flex items-center gap-2 cursor-grab active:cursor-grabbing select-none text-gray-500 text-sm font-semibold">
           <span className="text-xl leading-none">⠿</span> Lavoro {i + 1}
         </div>
         <Frecce su={() => sposta(chiave, -1)} giu={() => sposta(chiave, 1)} primo={primo} ultimo={ultimo} />
@@ -118,7 +118,7 @@ function RigaLavoro({ chiave, r, i, primo, ultimo, puoiTogliere, cambia, cambiaT
             <p className="text-xs font-semibold text-gray-600">Ripartenza di ogni ripetizione</p>
             <button onClick={() => cambia(i, 'ripartenze', undefined)} className="text-xs text-red-500">Togli</button>
           </div>
-          <p className="text-xs text-gray-400 mb-2">Le caselle vuote usano la ripartenza generale.</p>
+          <p className="text-xs text-gray-500 mb-2">Le caselle vuote usano la ripartenza generale.</p>
           <div className="grid grid-cols-3 lg:grid-cols-6 gap-2">
             {Array.from({ length: n }, (_, j) => (
               <InputRipartenza key={j} etichetta={`${j + 1}° ${r.distanza || ''}`} value={r.ripartenze[j]}
@@ -236,14 +236,14 @@ function SerieGiri({ chiave, serie, righe, primo, ultimo, annulli, cambia, cambi
                   <button onClick={() => cambiaGiri(serie.id, giri - 1)} className="text-xs text-red-500">✕ Togli giro</button>
                 )}
               </div>
-              <p className="text-xs text-gray-400 mb-2">Stessi lavori del Giro 1. Cambia la ripartenza solo se in questo giro è diversa.</p>
+              <p className="text-xs text-gray-500 mb-2">Stessi lavori del Giro 1. Cambia la ripartenza solo se in questo giro è diversa.</p>
               {righe.map(({ riga, indice }) => Array.from({ length: perGiro(riga) }, (_, k) => {
                 const j = g * perGiro(riga) + k
                 return (
                   <div key={`${riga._id}-${k}`} className="grid grid-cols-[1fr_7rem] items-end gap-2 mb-1">
                     <p className="text-sm text-gray-600 pb-2.5">
                       {riga.distanza} m {riga.stile}{perGiro(riga) > 1 ? ` (${k + 1})` : ''}
-                      <span className="text-xs text-gray-400"> · {riga.tipo_lavoro}</span>
+                      <span className="text-xs text-gray-500"> · {riga.tipo_lavoro}</span>
                     </p>
                     <InputRipartenza etichetta="Ripartenza" placeholder={riga.ripartenza || 'Es. 1\'30"'}
                       value={riga.ripartenze?.[j]} onChange={(v) => cambiaRipGiro(indice, j, v)} />
@@ -574,7 +574,7 @@ export default function EditorAllenamento({ squadra, giorno }) {
           <button onClick={aggiungiSerie}
             className="text-blue-600 font-bold bg-blue-50 rounded-2xl py-3">+ Serie a giri 🔁</button>
         </div>
-        <p className="text-xs text-gray-400 mb-2">Oppure scegli subito il tipo di lavoro:</p>
+        <p className="text-xs text-gray-500 mb-2">Oppure scegli subito il tipo di lavoro:</p>
         <div className="flex flex-wrap gap-2">
           {[...TIPI_COACH, ...TIPI_LAVORO].map((t) => (
             <button key={t} onClick={() => aggiungiLavoro(t)}
@@ -601,7 +601,7 @@ export default function EditorAllenamento({ squadra, giorno }) {
           ))}
         </div>
         {extra.length > 0 && <p className="text-xs text-amber-700 mt-2">Se in quei giorni c'è già un allenamento, verrà sostituito.</p>}
-        <p className="text-xs text-gray-400 mt-3">
+        <p className="text-xs text-gray-500 mt-3">
           Totale: {(metriPiano(righeSalvate(righe)) / 1000).toFixed(1).replace('.', ',')} km
           {minutiPiano(righe) > 0 && ` · ${minutiPiano(righe)} min`}
         </p>

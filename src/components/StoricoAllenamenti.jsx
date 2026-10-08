@@ -58,7 +58,7 @@ export default function StoricoAllenamenti() {
   const giorni = Object.keys(perGiorno).sort().reverse()
 
   if (giorni.length === 0) {
-    return <p className="text-center text-gray-300 py-8">Nessun allenamento ancora 🏊</p>
+    return <p className="text-center text-gray-500 py-8">Nessun allenamento ancora 🏊</p>
   }
 
   return giorni.map((g) => (
@@ -73,13 +73,13 @@ export default function StoricoAllenamenti() {
             </span>
             {r.inAttesa && <span className="text-xs text-yellow-700 bg-yellow-100 px-2 py-0.5 rounded-full ml-2">⏳ da inviare</span>}
             {r.passaggi?.length > 0 ? (
-              <p className="text-xs text-gray-400 mt-1">{r.passaggi.map((p) => p || '–').join(' · ')}</p>
+              <p className="text-xs text-gray-500 mt-1">{r.passaggi.map((p) => p || '–').join(' · ')}</p>
             ) : (
-              r.tempo_totale && <p className="text-xs text-gray-400 mt-1">{r.tempo_totale}</p>
+              r.tempo_totale && <p className="text-xs text-gray-500 mt-1">{r.tempo_totale}</p>
             )}
             {r.video_url && <a href={r.video_url} target="_blank" rel="noreferrer" className="text-xs text-blue-600">🎥 Guarda il video</a>}
           </div>
-          <button onClick={() => elimina(r)} title="Elimina" className="text-gray-300 hover:text-red-500 transition">🗑️</button>
+          <button onClick={() => elimina(r)} title="Elimina" aria-label="Elimina" className="text-gray-500 hover:text-red-500 transition">🗑️</button>
         </div>
       ))}
     </div>

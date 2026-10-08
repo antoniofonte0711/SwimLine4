@@ -72,7 +72,7 @@ function RiepilogoAtleta() {
           <Pallino valore={righe.length} colore="bg-amber-600" etichetta="Lavori svolti" />
         </div>
       </div>
-      <p className="text-xs text-gray-400 mt-3 px-2">
+      <p className="text-xs text-gray-500 mt-3 px-2">
         Record e prossima gara arrivano con le sezioni Record e Calendario.
       </p>
     </AppShell>

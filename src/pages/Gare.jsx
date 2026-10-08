@@ -257,23 +257,23 @@ function GareAtleta() {
 
       {vista === 'Le mie gare' && (
         <>
-          {tutte.length === 0 && <p className="text-center text-gray-300 py-8">Nessuna gara ancora 🏆</p>}
+          {tutte.length === 0 && <p className="text-center text-gray-500 py-8">Nessuna gara ancora 🏆</p>}
           {tutte.map((g) => (
             <div key={g.id} className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <p className="font-bold">{g.nome_gara}</p>
-                  <p className="text-sm text-gray-400">
+                  <p className="text-sm text-gray-500">
                     {formattaDataGara(g.data_gara)} · {g.distanza} m {g.stile}
                     {g.inAttesa && <span className="ml-2 text-xs text-yellow-700 bg-yellow-100 px-2 py-0.5 rounded-full">⏳ da inviare</span>}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
                   <p className="text-xl font-extrabold text-blue-600">{g.tempo}</p>
-                  <button onClick={() => elimina(g)} title="Elimina" className="text-gray-300 hover:text-red-500 transition">🗑️</button>
+                  <button onClick={() => elimina(g)} title="Elimina" aria-label="Elimina" className="text-gray-500 hover:text-red-500 transition">🗑️</button>
                 </div>
               </div>
-              {g.passaggi?.length > 0 && <p className="text-xs text-gray-400 mt-2">Passaggi: {g.passaggi.join(' · ')}</p>}
+              {g.passaggi?.length > 0 && <p className="text-xs text-gray-500 mt-2">Passaggi: {g.passaggi.join(' · ')}</p>}
             </div>
           ))}
         </>

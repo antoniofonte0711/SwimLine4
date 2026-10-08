@@ -6,11 +6,18 @@ import { dataLocale } from '../lib/lavori'
 import { nomeRuolo } from '../lib/permessi'
 
 const VOCI = [
-  ['home', '/dashboard', '🏠', 'Home'],
-  ['riepilogo', '/riepilogo', '📊', 'Riepilogo'],
-  ['funzioni', '/funzioni', '🔲', 'Funzioni'],
-  ['profilo', '/profilo', '👤', 'Profilo'],
+  ['home', '/dashboard', 'casa', 'Home'],
+  ['riepilogo', '/riepilogo', 'grafico', 'Riepilogo'],
+  ['funzioni', '/funzioni', 'griglia', 'Funzioni'],
+  ['profilo', '/profilo', 'persona', 'Profilo'],
 ]
+// Icone disegnate (le emoji cambiano aspetto da un telefono all'altro)
+const ICONE = {
+  casa: <><path d="M3 10.5 12 3l9 7.5" /><path d="M5 9v11h14V9" /><path d="M10 20v-6h4v6" /></>,
+  grafico: <><path d="M4 20V10" /><path d="M10 20V4" /><path d="M16 20v-7" /><path d="M22 20H2" /></>,
+  griglia: <><rect x="4" y="4" width="6" height="6" rx="1.5" /><rect x="14" y="4" width="6" height="6" rx="1.5" /><rect x="4" y="14" width="6" height="6" rx="1.5" /><rect x="14" y="14" width="6" height="6" rx="1.5" /></>,
+  persona: <><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" /></>,
+}
 const LETTERE = ['D', 'L', 'M', 'M', 'G', 'V', 'S']
 
 // Struttura comune di tutte le schermate: testata blu, area contenuti arrotondata e barra in basso.
@@ -113,11 +120,14 @@ export default function AppShell({ titolo, attiva, indietro, giorno, onGiorno, c
 
       <nav className="fixed bottom-3 left-1/2 -translate-x-1/2 w-[calc(100%-1.5rem)] max-w-md bg-white border border-gray-200 rounded-full shadow-xl flex p-1.5 mb-[env(safe-area-inset-bottom)]">
         {voci.map(([chiave, percorso, icona, nome]) => (
-          <Link key={chiave} to={percorso}
-            className={`flex-1 text-center text-[11px] py-2 rounded-full transition ${
-              attiva === chiave ? 'bg-blue-600 text-white' : 'text-gray-500'
+          <Link key={chiave} to={percorso} aria-current={attiva === chiave ? 'page' : undefined}
+            className={`flex-1 flex flex-col items-center gap-0.5 text-xs font-medium py-2 rounded-full transition ${
+              attiva === chiave ? 'bg-blue-600 text-white' : 'text-gray-600'
             }`}>
-            <span className="block text-xl leading-none">{icona}</span>
+            <svg aria-hidden="true" viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor"
+              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              {ICONE[icona]}
+            </svg>
             {nome}
           </Link>
         ))}

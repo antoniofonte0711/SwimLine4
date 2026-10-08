@@ -30,7 +30,7 @@ export default function Profilo() {
           {(profile?.nome || 'A').charAt(0).toUpperCase()}
         </div>
         <p className="text-xl font-bold">{profile?.nome} {profile?.cognome}</p>
-        <p className="text-sm text-gray-400 capitalize">{profile?.role}</p>
+        <p className="text-sm text-gray-500 capitalize">{profile?.role}</p>
       </div>
 
       {/* L'admin è anche atleta: entra in una squadra accettando l'invito del coach (non creandone una sua) */}
@@ -42,7 +42,7 @@ export default function Profilo() {
       {adminReale && (
         <div className="bg-white border border-gray-100 rounded-3xl p-5 shadow-sm mb-3">
           <p className="font-bold mb-1">👁 Vedi l'app come</p>
-          <p className="text-xs text-gray-400 mb-3">
+          <p className="text-xs text-gray-500 mb-3">
             Cambia solo cosa si vede sullo schermo e cosa si può fare. I dati restano i tuoi.
           </p>
           <div className="grid grid-cols-2 gap-2">
@@ -55,7 +55,7 @@ export default function Profilo() {
               </button>
             ))}
           </div>
-          <p className="text-xs text-gray-400 mt-3">Ora stai vedendo come: <b>{nomeRuolo(ruolo)}</b></p>
+          <p className="text-xs text-gray-500 mt-3">Ora stai vedendo come: <b>{nomeRuolo(ruolo)}</b></p>
         </div>
       )}
 

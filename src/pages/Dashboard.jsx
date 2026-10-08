@@ -63,7 +63,7 @@ function HomeAtleta() {
         <div className="bg-white border border-gray-100 rounded-3xl p-8 text-center shadow-sm">
           <p className="text-4xl mb-2">👋</p>
           <p className="font-bold mb-1">Benvenuto in SwimLine4</p>
-          <p className="text-sm text-gray-400">Da ospite puoi vedere la squadra e il calendario gare.</p>
+          <p className="text-sm text-gray-500">Da ospite puoi vedere la squadra e il calendario gare.</p>
         </div>
       </AppShell>
     )
@@ -95,7 +95,7 @@ function HomeAtleta() {
       <PianoCard piano={piano} />
 
       {righe.length === 0 ? (
-        <div className="bg-white border border-gray-100 rounded-3xl p-8 text-center text-gray-400 shadow-sm mb-3">
+        <div className="bg-white border border-gray-100 rounded-3xl p-8 text-center text-gray-500 shadow-sm mb-3">
           <p className="text-4xl mb-2">🏊</p>
           <p>Nessun allenamento in questo giorno.</p>
         </div>
@@ -108,9 +108,9 @@ function HomeAtleta() {
                 {r.ripetizioni ? `${r.ripetizioni}×` : ''}{r.distanza} m {r.stile || ''}
               </span>
               {r.passaggi?.length > 0 ? (
-                <p className="text-xs text-gray-400 mt-1">{r.passaggi.map((p) => p || '–').join(' · ')}</p>
+                <p className="text-xs text-gray-500 mt-1">{r.passaggi.map((p) => p || '–').join(' · ')}</p>
               ) : (
-                r.tempo_totale && <p className="text-xs text-gray-400 mt-1">{r.tempo_totale}</p>
+                r.tempo_totale && <p className="text-xs text-gray-500 mt-1">{r.tempo_totale}</p>
               )}
             </div>
           ))}
@@ -118,7 +118,7 @@ function HomeAtleta() {
       )}
 
       {ruolo === 'genitore' && (
-        <p className="text-xs text-gray-400 text-center mb-3 px-2">Vista genitore, in sola lettura. Il collegamento con i tempi di tuo figlio arriva con la fase Genitori.</p>
+        <p className="text-xs text-gray-500 text-center mb-3 px-2">Vista genitore, in sola lettura. Il collegamento con i tempi di tuo figlio arriva con la fase Genitori.</p>
       )}
 
       {puoModificare(ruolo) && (
@@ -138,7 +138,7 @@ function HomeCoach() {
   return (
     <AppShell titolo="Home" attiva="home" giorno={giorno} onGiorno={setGiorno}>
       <p className="text-sm font-semibold text-gray-500 capitalize mb-3 px-1">{formattaGiorno(giorno)}</p>
-      {!pronto ? <p className="text-center text-gray-400 py-8">Carico…</p>
+      {!pronto ? <p className="text-center text-gray-500 py-8">Carico…</p>
         : !squadra ? <SenzaSquadra />
         : <><DomandeIngresso squadra={squadra} /><EditorAllenamento squadra={squadra} giorno={giorno} /></>}
     </AppShell>

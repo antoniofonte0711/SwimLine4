@@ -91,7 +91,7 @@ export default function RisultatiAtleta({ piano, atletaId, giorno }) {
 
   if (!piano) {
     return (
-      <p className="text-sm text-gray-400 bg-white border border-gray-100 rounded-3xl p-6 text-center shadow-sm">
+      <p className="text-sm text-gray-500 bg-white border border-gray-100 rounded-3xl p-6 text-center shadow-sm">
         Nessun allenamento in questo giorno. Preparalo da Allenamenti.
       </p>
     )
@@ -142,7 +142,7 @@ export default function RisultatiAtleta({ piano, atletaId, giorno }) {
             <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${coloreLavoro(r.tipo_lavoro)}`}>{r.tipo_lavoro}</span>
             <span className="text-sm text-gray-600 ml-2">{n}×{r.distanza} m {r.stile}</span>
             {ripartenzeDiRiga(r).length > 0 && <span className="text-xs text-gray-500 ml-2">↻ ripartenza {ripartenzeDiRiga(r).join(' · ')}</span>}
-            {r.note && <p className="text-xs text-gray-400 mt-1">{r.note}</p>}
+            {r.note && <p className="text-xs text-gray-500 mt-1">{r.note}</p>}
             <div className="grid grid-cols-2 gap-3 mt-3">
               {Array.from({ length: n }, (_, j) => (
                 <InputTempo key={j} etichetta={`Passaggio ${j + 1}`} value={valori[i]?.[j] || ''} vuotoOk

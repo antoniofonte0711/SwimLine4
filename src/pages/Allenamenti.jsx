@@ -55,7 +55,7 @@ function AllenamentiCoach() {
       <div className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">
         <SelettoreData etichetta="Data dell'allenamento" valore={giorno} onChange={setGiorno} />
       </div>
-      {!pronto ? <p className="text-center text-gray-400 py-8">Carico…</p>
+      {!pronto ? <p className="text-center text-gray-500 py-8">Carico…</p>
         : !squadra ? <SenzaSquadra />
         : <EditorAllenamento squadra={squadra} giorno={giorno} />}
     </AppShell>

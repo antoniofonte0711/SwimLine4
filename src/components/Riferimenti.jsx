@@ -79,10 +79,10 @@ export default function Riferimenti({ atletaId }) {
     <>
       <div className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm text-sm">
         <p className="font-bold mb-2">Anagrafica</p>
-        <p><span className="text-gray-400">Nome e cognome:</span> {profilo?.nome} {profilo?.cognome}</p>
-        <p><span className="text-gray-400">Data di nascita:</span> {dataIt(profilo?.data_nascita)}</p>
-        <p><span className="text-gray-400">Anno di nascita:</span> {anno}</p>
-        <p><span className="text-gray-400">Assenze totali:</span> {nAssenze}</p>
+        <p><span className="text-gray-500">Nome e cognome:</span> {profilo?.nome} {profilo?.cognome}</p>
+        <p><span className="text-gray-500">Data di nascita:</span> {dataIt(profilo?.data_nascita)}</p>
+        <p><span className="text-gray-500">Anno di nascita:</span> {anno}</p>
+        <p><span className="text-gray-500">Assenze totali:</span> {nAssenze}</p>
         <label className="block text-xs text-gray-500 mt-3 mb-1">Categoria</label>
         <input value={r.categoria || ''} onChange={campo('categoria')} placeholder="Es. Ragazzi, Juniores" className={CAMPO} />
       </div>
@@ -111,7 +111,7 @@ export default function Riferimenti({ atletaId }) {
         <label className="block text-xs text-gray-500 mt-3 mb-1">File del certificato</label>
         <input type="file" accept="image/*,application/pdf" className="w-full text-sm" onChange={(e) => carico('certificato', e.target.files[0])} />
         {r.certificato_path && <button onClick={() => apri(r.certificato_path)} className="text-xs font-semibold text-blue-600 mt-2">Apri certificato</button>}
-        <p className="text-xs text-gray-400 mt-3">I documenti sono privati: li vedono solo i coach della squadra.</p>
+        <p className="text-xs text-gray-500 mt-3">I documenti sono privati: li vedono solo i coach della squadra.</p>
       </div>
 
       <div className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">

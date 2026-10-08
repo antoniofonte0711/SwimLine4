@@ -40,7 +40,7 @@ export default function PresenzeAtleta() {
 
       <div className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">
         <p className="font-bold mb-3">Percentuale per mese</p>
-        {grafico.length === 0 ? <p className="text-sm text-gray-400">Nessuna presenza segnata.</p> : (
+        {grafico.length === 0 ? <p className="text-sm text-gray-500">Nessuna presenza segnata.</p> : (
           <div style={{ width: '100%', height: 200 }}>
             <ResponsiveContainer>
               <BarChart data={grafico}>
@@ -56,11 +56,11 @@ export default function PresenzeAtleta() {
 
       <div className="bg-white border border-gray-100 rounded-3xl p-5 shadow-sm">
         <p className="font-bold mb-2">Assenze</p>
-        {assenze.length === 0 && <p className="text-sm text-gray-400">Nessuna assenza.</p>}
+        {assenze.length === 0 && <p className="text-sm text-gray-500">Nessuna assenza.</p>}
         {assenze.map((r, i) => (
           <div key={r.data} className={`flex justify-between py-2 text-sm ${i ? 'border-t border-gray-100' : ''}`}>
             <span>{new Date(r.data + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
-            <span className="text-gray-400">{STATI[r.stato]}</span>
+            <span className="text-gray-500">{STATI[r.stato]}</span>
           </div>
         ))}
       </div>

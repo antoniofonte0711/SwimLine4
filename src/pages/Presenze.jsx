@@ -72,7 +72,7 @@ export default function Presenze() {
       {errore && <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mb-3">{errore}</p>}
 
       {atleti.length === 0 && (
-        <p className="text-sm text-gray-400 text-center py-8">
+        <p className="text-sm text-gray-500 text-center py-8">
           Nessun atleta nella tua squadra: compaiono qui quando scelgono la tua squadra in registrazione.
         </p>
       )}

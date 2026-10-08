@@ -38,7 +38,7 @@ export default function RisultatiAllenamento() {
 
   return (
     <AppShell titolo="Risultati" attiva="funzioni" indietro={`/allenamenti?data=${giorno}`}>
-      {!pronto ? <p className="text-center text-gray-400 py-8">Carico…</p>
+      {!pronto ? <p className="text-center text-gray-500 py-8">Carico…</p>
         : !squadra ? <SenzaSquadra />
         : (
           <>

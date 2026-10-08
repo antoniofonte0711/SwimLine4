@@ -35,7 +35,7 @@ export default function DomandeIngresso({ squadra, onCambio }) {
   return (
     <div className="bg-white border border-blue-200 rounded-3xl p-5 shadow-sm mb-3">
       <p className="font-bold mb-1">📩 Richieste di ingresso{domande.length > 0 && ` (${domande.length})`}</p>
-      <p className="text-xs text-gray-400 mb-2">Queste persone hanno chiesto di entrare in {squadra.nome}: entrano solo se approvi.</p>
+      <p className="text-xs text-gray-500 mb-2">Queste persone hanno chiesto di entrare in {squadra.nome}: entrano solo se approvi.</p>
       {domande.map((d) => (
         <div key={d.id} className="bg-blue-50 rounded-2xl p-3 mb-2">
           <p className="text-sm font-semibold">{d.nome} {d.cognome}</p>

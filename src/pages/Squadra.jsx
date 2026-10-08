@@ -82,7 +82,7 @@ export default function Squadra() {
   return (
     <AppShell titolo="Squadra" attiva="funzioni" indietro="/funzioni">
       <div className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">
-        <p className="text-xs text-gray-400">Squadra</p>
+        <p className="text-xs text-gray-500">Squadra</p>
         <p className="text-xl font-bold mb-3">{nomeSquadra || (isCoach ? 'Tutte le squadre' : 'Non sei ancora in una squadra')}</p>
 
         {atleti.length > 0 ? (
@@ -97,7 +97,7 @@ export default function Squadra() {
             </select>
           </>
         ) : (
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-gray-500">
             {isCoach
               ? 'Nessun atleta nella tua squadra: compaiono quando scelgono la tua squadra in registrazione.'
               : 'Quando entri in una squadra qui vedrai i tempi dei compagni.'}
@@ -123,17 +123,17 @@ export default function Squadra() {
               ))}
             </div>
           )}
-          {gare.length === 0 && <p className="text-center text-gray-300 py-6">Nessuna gara ancora 🏆</p>}
+          {gare.length === 0 && <p className="text-center text-gray-500 py-6">Nessuna gara ancora 🏆</p>}
           {gare.map((g) => (
             <div key={g.id} className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">
               <div className="flex justify-between gap-2">
                 <div>
                   <p className="font-bold">{g.nome_gara}</p>
-                  <p className="text-sm text-gray-400">{dataIt(g.data_gara)} · {g.distanza} m {g.stile}</p>
+                  <p className="text-sm text-gray-500">{dataIt(g.data_gara)} · {g.distanza} m {g.stile}</p>
                 </div>
                 <p className="text-xl font-extrabold text-blue-600">{g.tempo}</p>
               </div>
-              {g.passaggi?.length > 0 && <p className="text-xs text-gray-400 mt-2">Passaggi: {g.passaggi.map((p) => p || '–').join(' · ')}</p>}
+              {g.passaggi?.length > 0 && <p className="text-xs text-gray-500 mt-2">Passaggi: {g.passaggi.map((p) => p || '–').join(' · ')}</p>}
             </div>
           ))}
         </>
@@ -141,16 +141,16 @@ export default function Squadra() {
 
       {scelto && vista === 'Allenamenti' && (
         <>
-          {allenamenti.length === 0 && <p className="text-center text-gray-300 py-6">Nessun allenamento ancora 🏊</p>}
+          {allenamenti.length === 0 && <p className="text-center text-gray-500 py-6">Nessun allenamento ancora 🏊</p>}
           {allenamenti.map((r) => (
             <div key={r.id} className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">
-              <p className="text-xs text-gray-400 capitalize mb-1">{formattaGiorno(r.data_allenamento || (r.created_at || '').slice(0, 10))}</p>
+              <p className="text-xs text-gray-500 capitalize mb-1">{formattaGiorno(r.data_allenamento || (r.created_at || '').slice(0, 10))}</p>
               <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${coloreLavoro(r.tipo_lavoro)}`}>{r.tipo_lavoro}</span>
               <span className="text-sm text-gray-600 ml-2">{r.ripetizioni ? `${r.ripetizioni}×` : ''}{r.distanza} m {r.stile || ''}</span>
               {r.passaggi?.length > 0 ? (
-                <p className="text-xs text-gray-400 mt-1">{r.passaggi.map((p) => p || '–').join(' · ')}</p>
+                <p className="text-xs text-gray-500 mt-1">{r.passaggi.map((p) => p || '–').join(' · ')}</p>
               ) : (
-                r.tempo_totale && <p className="text-xs text-gray-400 mt-1">{r.tempo_totale}</p>
+                r.tempo_totale && <p className="text-xs text-gray-500 mt-1">{r.tempo_totale}</p>
               )}
             </div>
           ))}
@@ -172,7 +172,7 @@ function OggiAtleta({ atletaId }) {
       .then(({ data }) => setPiano(data || null))
   }, [squadra?.id, oggi]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (piano === undefined) return <p className="text-center text-gray-400 py-6">Carico…</p>
+  if (piano === undefined) return <p className="text-center text-gray-500 py-6">Carico…</p>
   return <RisultatiAtleta piano={piano} atletaId={atletaId} giorno={oggi} />
 }
 
@@ -191,11 +191,11 @@ function PresenzeBreve({ atletaId }) {
         <p className="text-sm text-gray-500">Presenze</p>
         <p className="text-3xl font-extrabold text-blue-600">{tot.percentuale === null ? '—' : `${tot.percentuale}%`}</p>
         <p className="font-bold mt-4 mb-1 text-sm">Assenze</p>
-        {assenze.length === 0 && <p className="text-sm text-gray-400">Nessuna assenza.</p>}
+        {assenze.length === 0 && <p className="text-sm text-gray-500">Nessuna assenza.</p>}
         {assenze.map((r, i) => (
           <div key={r.data} className={`flex justify-between py-2 text-sm ${i ? 'border-t border-gray-100' : ''}`}>
             <span>{new Date(r.data + 'T12:00:00').toLocaleDateString('it-IT')}</span>
-            <span className="text-gray-400">{STATI[r.stato]}</span>
+            <span className="text-gray-500">{STATI[r.stato]}</span>
           </div>
         ))}
       </div>

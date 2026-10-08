@@ -111,7 +111,7 @@ function SchedaRisultato({ g, onSalvato }) {
       <button onClick={() => setAperta(!aperta)} className="w-full flex items-center justify-between gap-2 text-left">
         <span className="min-w-0">
           <span className="font-semibold block truncate">{g.atleta?.nome} {g.atleta?.cognome}</span>
-          <span className="text-xs text-gray-400">
+          <span className="text-xs text-gray-500">
             {g.tempo_iscrizione ? `Iscrizione ${g.tempo_iscrizione}` : 'Senza tempo di iscrizione'}
           </span>
         </span>
@@ -163,7 +163,7 @@ function RigaGara({ g, i, totale, cambia, sposta, togli }) {
       className="relative bg-gray-50 border border-gray-100 rounded-2xl p-3 mb-2">
       <div className="flex items-center justify-between mb-2">
         <div onPointerDown={(e) => controlli.start(e)} style={{ touchAction: 'none' }}
-          className="flex items-center gap-2 cursor-grab active:cursor-grabbing select-none text-gray-400 text-sm font-semibold">
+          className="flex items-center gap-2 cursor-grab active:cursor-grabbing select-none text-gray-500 text-sm font-semibold">
           <span className="text-xl leading-none">⠿</span> Gara {i + 1}
         </div>
         <div className="flex gap-2">
@@ -294,7 +294,7 @@ export default function GareCoach() {
 
   return (
     <AppShell titolo="Gare" attiva="funzioni" indietro="/funzioni">
-      {!pronto ? <p className="text-center text-gray-400 py-8">Carico…</p>
+      {!pronto ? <p className="text-center text-gray-500 py-8">Carico…</p>
         : !squadra ? <SenzaSquadra />
         : (
           <>
@@ -339,8 +339,8 @@ export default function GareCoach() {
                       </button>
                     )}
                   </div>
-                  <p className="text-xs text-gray-400 mb-2">Tocca gli atleti. Il tempo di iscrizione è facoltativo; il risultato lo scrivi dopo la gara.</p>
-                  {atleti.length === 0 && <p className="text-sm text-gray-400 py-3">Nessun atleta nella squadra.</p>}
+                  <p className="text-xs text-gray-500 mb-2">Tocca gli atleti. Il tempo di iscrizione è facoltativo; il risultato lo scrivi dopo la gara.</p>
+                  {atleti.length === 0 && <p className="text-sm text-gray-500 py-3">Nessun atleta nella squadra.</p>}
                   {atleti.map((a, i) => {
                     const r = riga(a.id)
                     return (
@@ -386,17 +386,17 @@ export default function GareCoach() {
                   )}
                 </div>
 
-                {trofei.length === 0 && <p className="text-center text-gray-400 py-8">Nessuna gara assegnata ancora 🏆</p>}
+                {trofei.length === 0 && <p className="text-center text-gray-500 py-8">Nessuna gara assegnata ancora 🏆</p>}
                 {trofeo && (
                   <div className={CARD}>
                     <div className="flex items-center justify-between mb-1">
                       <p className="font-bold">{garaSel || 'Tutte le gare'}</p>
                       <button onClick={eliminaGara} aria-label="Elimina" className="text-red-500 text-lg">🗑</button>
                     </div>
-                    {risultati[0]?.orario && <p className="text-xs text-gray-400 mb-1">Orario {risultati[0].orario.slice(0, 5)}</p>}
+                    {risultati[0]?.orario && <p className="text-xs text-gray-500 mb-1">Orario {risultati[0].orario.slice(0, 5)}</p>}
                     {risultati.map((g) => (
                       <div key={g.id}>
-                        {!garaSel && <p className="text-xs font-bold text-gray-400 mt-2">{nomeGara(g)}</p>}
+                        {!garaSel && <p className="text-xs font-bold text-gray-500 mt-2">{nomeGara(g)}</p>}
                         <SchedaRisultato g={g} onSalvato={() => caricaGare(atleti)} />
                       </div>
                     ))}

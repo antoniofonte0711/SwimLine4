@@ -29,12 +29,12 @@ function PuntiAtleta() {
 
       <div className={CARD}>
         <p className="font-bold mb-1">I tuoi premi</p>
-        {pronto && premi.length === 0 && <p className="text-sm text-gray-400">Ancora nessun premio: continua ad accumulare punti.</p>}
+        {pronto && premi.length === 0 && <p className="text-sm text-gray-500">Ancora nessun premio: continua ad accumulare punti.</p>}
         {premi.map((p, i) => (
           <div key={p.id} className={`flex items-center justify-between py-2.5 ${i ? 'border-t border-gray-100' : ''}`}>
             <div>
               <p className="font-semibold text-sm">🎁 {p.premio_nome}</p>
-              <p className="text-xs text-gray-400">{dataIt(p.ottenuto_il)}</p>
+              <p className="text-xs text-gray-500">{dataIt(p.ottenuto_il)}</p>
             </div>
             <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${p.usato ? 'bg-gray-100 text-gray-500' : 'bg-green-100 text-green-700'}`}>{p.usato ? 'Usato' : 'Da usare'}</span>
           </div>
@@ -43,12 +43,12 @@ function PuntiAtleta() {
 
       <div className={CARD}>
         <p className="font-bold mb-1">Movimenti</p>
-        {pronto && movimenti.length === 0 && <p className="text-sm text-gray-400">Nessun movimento ancora.</p>}
+        {pronto && movimenti.length === 0 && <p className="text-sm text-gray-500">Nessun movimento ancora.</p>}
         {movimenti.map((m, i) => (
           <div key={m.id} className={`flex items-center justify-between py-2.5 ${i ? 'border-t border-gray-100' : ''}`}>
             <div>
               <p className="text-sm font-semibold">{m.motivo}</p>
-              <p className="text-xs text-gray-400">{dataIt(m.data)}</p>
+              <p className="text-xs text-gray-500">{dataIt(m.data)}</p>
             </div>
             <b className={m.punti >= 0 ? 'text-green-600' : 'text-red-500'}>{m.punti > 0 ? '+' : ''}{m.punti} punti</b>
           </div>
@@ -120,7 +120,7 @@ function PuntiCoach() {
     carica()
   }
 
-  if (!pronto) return <p className="text-center text-gray-400 py-8">Carico…</p>
+  if (!pronto) return <p className="text-center text-gray-500 py-8">Carico…</p>
   if (!squadra) return <SenzaSquadra />
 
   return (
@@ -129,7 +129,7 @@ function PuntiCoach() {
 
       <div className={CARD}>
         <p className="font-bold mb-1">Premi da confermare</p>
-        {vinti.length === 0 && <p className="text-sm text-gray-400">Nessun premio in attesa.</p>}
+        {vinti.length === 0 && <p className="text-sm text-gray-500">Nessun premio in attesa.</p>}
         {vinti.map((p, i) => (
           <div key={p.id} className={`flex items-center justify-between gap-2 py-2.5 ${i ? 'border-t border-gray-100' : ''}`}>
             <div className="min-w-0">
@@ -153,12 +153,12 @@ function PuntiCoach() {
         </div>
         {ok && <p className="text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2 mt-3">{ok}</p>}
         <button onClick={salvaConfig} className="w-full mt-3 font-bold text-white bg-blue-600 rounded-2xl py-3">Salva punti</button>
-        <p className="text-xs text-gray-400 mt-2">I punti arrivano da soli: presenza segnata, risultati scritti, tempo di gara inserito. Il miglioramento scatta se batti il tuo miglior tempo sulla stessa gara.</p>
+        <p className="text-xs text-gray-500 mt-2">I punti arrivano da soli: presenza segnata, risultati scritti, tempo di gara inserito. Il miglioramento scatta se batti il tuo miglior tempo sulla stessa gara.</p>
       </div>
 
       <div className={CARD}>
         <p className="font-bold mb-1">Premi in palio</p>
-        <p className="text-xs text-gray-400 mb-2">Quando un atleta raggiunge la soglia, il premio viene estratto a caso. "Comune" esce più spesso di "Raro".</p>
+        <p className="text-xs text-gray-500 mb-2">Quando un atleta raggiunge la soglia, il premio viene estratto a caso. "Comune" esce più spesso di "Raro".</p>
         {catalogo.length === 0 && (
           <button onClick={() => aggiungiPremi(ESEMPI.map((nome) => ({ nome, peso: 3 })))} className="w-full text-blue-600 font-bold bg-blue-50 rounded-2xl py-2.5 text-sm mb-3">Aggiungi i premi di esempio</button>
         )}

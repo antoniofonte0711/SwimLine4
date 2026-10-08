@@ -54,7 +54,7 @@ export default function BoxSquadra() {
   return (
     <div className="bg-white border border-gray-100 rounded-3xl p-5 shadow-sm mb-3">
       <p className="font-bold mb-1">👥 {coach ? 'La tua squadra' : 'Squadra'}</p>
-      <p className="text-xs text-gray-400 mb-3">
+      <p className="text-xs text-gray-500 mb-3">
         {coach
           ? 'Il nome della tua squadra: gli atleti e i genitori lo useranno per chiedere di entrare.'
           : 'Scrivi il nome della squadra (te lo dà il coach) per chiedere di entrare: il coach deve approvare.'}
@@ -67,7 +67,7 @@ export default function BoxSquadra() {
         className="w-full font-bold text-white bg-blue-600 disabled:bg-gray-300 rounded-2xl py-3">
         {invio ? 'Salvo…' : coach ? 'Cambia nome' : 'Chiedi di entrare'}
       </button>
-      {attuale && <p className="text-xs text-gray-400 mt-3">Squadra attuale: <b>{attuale}</b></p>}
+      {attuale && <p className="text-xs text-gray-500 mt-3">Squadra attuale: <b>{attuale}</b></p>}
     </div>
   )
 }

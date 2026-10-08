@@ -150,7 +150,7 @@ export default function SchedaProgressi({ atletaId, coach = false }) {
       <div className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">
         {migliore !== null && (
           <>
-            <p className="text-xs text-gray-400">Migliore in questo periodo</p>
+            <p className="text-xs text-gray-500">Migliore in questo periodo</p>
             <p className="text-3xl font-extrabold text-blue-600 mb-2">{secondiInTempo(migliore)}</p>
           </>
         )}
@@ -166,19 +166,19 @@ export default function SchedaProgressi({ atletaId, coach = false }) {
             </ResponsiveContainer>
           </div>
         ) : (
-          <p className="text-sm text-gray-400 text-center py-8">Servono almeno due tempi con questi filtri<br />per mostrare il grafico.</p>
+          <p className="text-sm text-gray-500 text-center py-8">Servono almeno due tempi con questi filtri<br />per mostrare il grafico.</p>
         )}
-        <p className="text-xs text-gray-400 mt-1">Più la linea scende, più è veloce.</p>
+        <p className="text-xs text-gray-500 mt-1">Più la linea scende, più è veloce.</p>
       </div>
 
       <div className="bg-white border border-gray-100 rounded-3xl p-5 shadow-sm">
         <p className="text-sm text-gray-500 mb-2">Tempi dal più vecchio al più nuovo</p>
-        {filtrati.length === 0 && <p className="text-sm text-gray-300 py-3">Nessun tempo con questi filtri.</p>}
+        {filtrati.length === 0 && <p className="text-sm text-gray-500 py-3">Nessun tempo con questi filtri.</p>}
         {filtrati.map((p) => (
           <div key={p.tabella + p.id} className="flex items-center justify-between border-t border-gray-100 py-3 text-sm gap-2">
             <div className="min-w-0">
               <p className="font-semibold truncate">{p.nome}</p>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-gray-500">
                 {new Date(p.data + 'T12:00:00').toLocaleDateString('it-IT')} · {p.fonte} {p.stile ? `· ${p.stile}` : ''}
               </p>
             </div>
