@@ -12,6 +12,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev", "--", "--port", "5174", "--strictPort"],
       "port": 5174
+    },
+    {
+      "name": "swimline4-finto-db",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "--config", "strumenti/finto-db/vite.config.js"],
+      "port": 5175
     }
   ]
 }

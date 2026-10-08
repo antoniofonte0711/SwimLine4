@@ -1,52 +1,80 @@
 import { coloreLavoro } from '../lib/lavori'
-import Difficolta from './Difficolta'
 import { blocchiPiano, giriSerie, metriPiano, minutiPiano, perGiro, ripartenzeDiRiga } from '../lib/pianoSquadra'
+import Difficolta from './Difficolta'
+
+const BREVE = { 'Stile libero': 'SL', 'Proprio stile': 'PS' }
+// Sigla della zona sul blocco colorato (Riscaldamento -> RIS, Passo gara 200 -> PG 200)
+export const siglaLavoro = (t = '') =>
+  t.startsWith('Passo gara') ? 'PG ' + t.split(' ').pop() : t.length <= 3 ? t : t.slice(0, 3).toUpperCase()
+const metri = (n) => n.toLocaleString('it-IT')
+
+export function ChipZona({ tipo }) {
+  return (
+    <span title={tipo} className={`inline-flex items-center justify-center min-w-[52px] h-7 px-1.5 rounded-[10px] text-xs font-extrabold ${coloreLavoro(tipo)}`}>
+      {siglaLavoro(tipo)}
+    </span>
+  )
+}
 
 // Una riga del piano; dentro una serie a giri mostra le ripetizioni di un solo giro
 function RigaPiano({ r, inSerie }) {
   // In una serie: una ripartenza per giro se il coach le ha cambiate, altrimenti quella generale
   const rip = ripartenzeDiRiga(r)
   const n = inSerie ? perGiro(r) : r.ripetizioni
+  const dettagli = [
+    rip.length > 0 && `↻ ${rip.join(' · ')}`,
+    !inSerie && Number(r.minuti) > 0 && `⏱ ${Number(r.minuti)} min`,
+  ].filter(Boolean).join('  ')
   return (
-    <>
-      <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${coloreLavoro(r.tipo_lavoro)}`}>{r.tipo_lavoro}</span>
-      <span className="text-sm text-gray-600 ml-2">{inSerie && n === 1 ? '' : `${n}×`}{r.distanza} m {r.stile}</span>
-      {rip.length > 0 && <span className="text-xs text-gray-500 ml-2">↻ ripartenza {rip.join(' · ')}</span>}
-      {!inSerie && Number(r.minuti) > 0 && <span className="text-xs text-gray-500 ml-2">⏱ {Number(r.minuti)} min</span>}
-      {r.note && <p className="text-xs text-gray-500 mt-1">{r.note}</p>}
-    </>
+    <div className="grid grid-cols-[52px_minmax(0,1fr)_auto] gap-3 items-center">
+      <ChipZona tipo={r.tipo_lavoro} />
+      <span className="min-w-0">
+        <b className="text-[15px] text-abisso">{n > 1 ? `${n}×` : ''}{r.distanza} {BREVE[r.stile] || r.stile}</b>
+        {(r.note || dettagli) && (
+          <span className="block text-[13px] text-slate-500 leading-snug">{[r.note, dettagli].filter(Boolean).join(' · ')}</span>
+        )}
+      </span>
+      {!inSerie && <span className="text-[13px] font-bold text-slate-500">{metri(r.distanza * r.ripetizioni)}</span>}
+    </div>
   )
 }
 
 // Allenamento del coach in sola lettura (lo vedono gli atleti)
-export default function PianoCard({ piano }) {
+export default function PianoCard({ piano, senzaTesta = false }) {
   if (!piano) return null
+  const min = minutiPiano(piano.righe)
   return (
-    <div className="bg-white border border-blue-100 rounded-3xl p-5 shadow-sm mb-3">
-      <div className="flex items-center justify-between mb-2">
-        <p className="font-bold">📋 {piano.titolo || 'Allenamento del coach'}</p>
-        <span className="text-xs text-gray-500">
-          {(metriPiano(piano.righe) / 1000).toFixed(1).replace('.', ',')} km
-          {minutiPiano(piano.righe) > 0 && ` · ${minutiPiano(piano.righe)} min`}
-        </span>
-      </div>
-      <Difficolta righe={piano.righe} />
-      {blocchiPiano(piano.righe).map((b, i) => (
-        <div key={i} className={`py-2 ${i ? 'border-t border-gray-100' : ''}`}>
-          {b.serie ? (
-            <>
-              <p className="text-sm font-bold text-blue-700">
-                🔁 {giriSerie(b.righe[0].riga)} giri
-                {b.serie.recupero && <span className="text-xs font-normal text-gray-500 ml-2">rec {b.serie.recupero} tra i giri</span>}
-                {Number(b.serie.minuti) > 0 && <span className="text-xs font-normal text-gray-500 ml-2">⏱ {Number(b.serie.minuti)} min</span>}
-              </p>
-              <div className="border-l-4 border-blue-100 pl-3 mt-1">
-                {b.righe.map(({ riga }, k) => <div key={k} className="py-1"><RigaPiano r={riga} inSerie /></div>)}
-              </div>
-            </>
-          ) : <RigaPiano r={b.riga} />}
+    <div className="mb-3">
+      {!senzaTesta && (
+        <div className="bg-white rounded-3xl p-4 mb-2">
+          <div className="flex items-baseline justify-between gap-2 mb-2">
+            <p className="font-display font-extrabold text-lg">{piano.titolo || 'Allenamento del coach'}</p>
+            <span className="text-[13px] font-semibold text-slate-500 whitespace-nowrap">
+              {(metriPiano(piano.righe) / 1000).toFixed(1).replace('.', ',')} km{min > 0 && ` · ${min} min`}
+            </span>
+          </div>
+          <Difficolta righe={piano.righe} />
         </div>
-      ))}
+      )}
+      <div className="flex flex-col gap-2">
+        {blocchiPiano(piano.righe).map((b, i) => b.serie ? (
+          <div key={i} className="bg-white rounded-[20px] px-3.5 py-3">
+            <p className="flex justify-between text-sm font-extrabold text-blue-600 mb-2">
+              <span>
+                {giriSerie(b.righe[0].riga)} giri
+                {b.serie.recupero && <span className="font-semibold text-slate-500"> · rec {b.serie.recupero}</span>}
+                {Number(b.serie.minuti) > 0 && <span className="font-semibold text-slate-500"> · {Number(b.serie.minuti)} min</span>}
+              </span>
+              <span className="text-slate-500">{metri(b.righe.reduce((s, { riga }) => s + riga.distanza * riga.ripetizioni, 0))}</span>
+            </p>
+            <div className="flex flex-col gap-2">
+              {b.righe.map(({ riga }, k) => <RigaPiano key={k} r={riga} inSerie />)}
+            </div>
+          </div>
+        ) : (
+          <div key={i} className="bg-white rounded-[20px] px-3.5 py-3"><RigaPiano r={b.riga} /></div>
+        ))}
+      </div>
     </div>
   )
 }

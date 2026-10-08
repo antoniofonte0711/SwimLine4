@@ -5,16 +5,17 @@ export const TIPI_LAVORO = [
 ]
 export const STILI = ['Stile libero', 'Dorso', 'Rana', 'Farfalla', 'Misti']
 
+// Ogni zona ha il suo colore pieno, uguale in tutta l'app (layout Limpida)
 const COLORI = {
-  A2: 'bg-blue-100 text-blue-700',
-  B1: 'bg-yellow-100 text-yellow-700',
-  B2: 'bg-orange-100 text-orange-700',
-  C1: 'bg-red-100 text-red-700',
-  C2: 'bg-purple-100 text-purple-700',
-  C3: 'bg-pink-100 text-pink-700',
+  A2: 'bg-[#0b4fd9] text-white',
+  B1: 'bg-[#f2b705] text-[#0a1a2f]',
+  B2: 'bg-[#e8711a] text-[#0a1a2f]',
+  C1: 'bg-[#c42b20] text-white',
+  C2: 'bg-[#6d28c9] text-white',
+  C3: 'bg-[#c2309f] text-white',
 }
 export const coloreLavoro = (t = '') =>
-  t.startsWith('Passo gara') ? 'bg-slate-800 text-white' : COLORI[t] || 'bg-gray-100 text-gray-700'
+  t.startsWith('Passo gara') ? 'bg-[#0a1a2f] text-white' : COLORI[t] || 'bg-[#d9efff] text-[#0a3a5c]'
 
 // "Passo gara 100" -> 100 (per le altre scelte non c'è una distanza fissa)
 export const distanzaDaTipo = (t = '') =>

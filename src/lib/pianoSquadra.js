@@ -3,6 +3,7 @@ import { supabase } from './supabaseClient'
 import { useAuth } from '../context/AuthContext'
 
 import { STILI } from './lavori'
+import { difficoltaPiano } from './difficolta'
 
 export const TIPI_COACH = ['Riscaldamento', 'Tecnica', 'Gambe', 'Sciolto', 'Defaticamento']
 // Il coach può anche lasciare che ognuno nuoti il proprio stile (non vale per i lavori inseriti dagli atleti)
@@ -66,6 +67,38 @@ export const addGiorni = (s, n) => {
   const d = new Date(s + 'T12:00:00')
   d.setDate(d.getDate() + n)
   return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10)
+}
+
+// Lunedì e domenica della settimana di un giorno ('2026-10-08' -> ['2026-10-05', '2026-10-11'])
+export function settimanaDi(giorno) {
+  const d = new Date(giorno + 'T12:00:00')
+  const lun = addGiorni(giorno, -((d.getDay() + 6) % 7))
+  return [lun, addGiorni(lun, 6)]
+}
+
+// Allenamenti pubblicati della squadra nella settimana del giorno scelto:
+// { voti: { data: difficoltà }, metri: totale della settimana, giorni: numero di allenamenti }
+export function useSettimanaSquadra(squadraId, giorno) {
+  const [dati, setDati] = useState({ voti: {}, metri: 0, giorni: 0 })
+  const [lun, dom] = settimanaDi(giorno)
+  useEffect(() => {
+    let attivo = true
+    if (!squadraId) return setDati({ voti: {}, metri: 0, giorni: 0 })
+    supabase.from('allenamenti_squadra').select('data, righe').eq('squadra_id', squadraId).eq('pubblicato', true)
+      .gte('data', lun).lte('data', dom)
+      .then(({ data }) => {
+        if (!attivo) return
+        const voti = {}
+        let metri = 0
+        ;(data || []).forEach((a) => {
+          const d = difficoltaPiano(a.righe || [])
+          if (d) { voti[a.data] = d.voto; metri += d.metri }
+        })
+        setDati({ voti, metri, giorni: Object.keys(voti).length })
+      })
+    return () => { attivo = false }
+  }, [squadraId, lun, dom])
+  return dati
 }
 
 // Squadra del coach (o, per l'admin, quella in cui è entrato; altrimenti la sua squadra)

@@ -12,8 +12,8 @@ describe('lavori', () => {
     expect(distanzaDaTipo()).toBeNull()
   })
   it('colore di riserva per i tipi sconosciuti', () => {
-    expect(coloreLavoro('Passo gara 50')).toContain('slate')
-    expect(coloreLavoro('???')).toContain('gray')
+    expect(coloreLavoro('Passo gara 50')).toContain('#0a1a2f')
+    expect(coloreLavoro('???')).toContain('#d9efff')
   })
   it('dataLocale formatta AAAA-MM-GG', () => {
     expect(dataLocale(new Date(2026, 0, 5, 23, 30))).toBe('2026-01-05')
