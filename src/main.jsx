@@ -25,7 +25,7 @@ window.addEventListener('vite:preloadError', (e) => {
   window.location.reload()
 })
 window.addEventListener('load', () => {
-  setTimeout(() => { try { sessionStorage.removeItem('ricaricato') } catch {} }, 10000)
+  setTimeout(() => { try { sessionStorage.removeItem('ricaricato') } catch { /* non disponibile */ } }, 10000)
 })
 
 if ('serviceWorker' in navigator && import.meta.env.PROD) {

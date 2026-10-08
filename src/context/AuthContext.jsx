@@ -60,7 +60,7 @@ export function AuthProvider({ children }) {
     })
 
     return () => listener.subscription.unsubscribe()
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps -- solo all'avvio
 
   async function loadProfile(userId) {
     const { data } = await supabase
