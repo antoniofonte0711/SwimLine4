@@ -14,6 +14,20 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   </React.StrictMode>
 )
 
+// Dopo un nuovo rilascio i file delle pagine cambiano nome: se una pagina
+// non si carica (app rimasta aperta), ricarico una volta per prendere la versione nuova
+window.addEventListener('vite:preloadError', (e) => {
+  try {
+    if (sessionStorage.getItem('ricaricato')) return
+    sessionStorage.setItem('ricaricato', '1')
+  } catch { return }
+  e.preventDefault()
+  window.location.reload()
+})
+window.addEventListener('load', () => {
+  setTimeout(() => { try { sessionStorage.removeItem('ricaricato') } catch {} }, 10000)
+})
+
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').catch(() => {})

@@ -1,29 +1,33 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { CarrelloProvider } from './context/CarrelloContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import Home from './pages/Home'
 import Login from './pages/Login'
-import Registrati from './pages/Registrati'
-import Dashboard from './pages/Dashboard'
-import Riepilogo from './pages/Riepilogo'
-import Funzioni from './pages/Funzioni'
-import Profilo from './pages/Profilo'
-import Allenamenti from './pages/Allenamenti'
-import Gare from './pages/Gare'
-import Storico from './pages/Storico'
-import Progressi from './pages/Progressi'
-import Presenze from './pages/Presenze'
-import Squadra from './pages/Squadra'
-import Record from './pages/Record'
-import InArrivo from './pages/InArrivo'
-import AdminPanel from './pages/AdminPanel'
-import Impostazioni from './pages/Impostazioni'
-import Calendario from './pages/Calendario'
-import Punti from './pages/Punti'
-import RisultatiAllenamento from './pages/RisultatiAllenamento'
-import PresenzeAtleta from './pages/PresenzeAtleta'
-import NuovaPassword from './pages/NuovaPassword'
+
+// Le altre pagine si scaricano solo quando servono (bundle iniziale più leggero).
+// Dashboard è lazy anche lei: porta con sé framer-motion (~120 KB).
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const Registrati = lazy(() => import('./pages/Registrati'))
+const Riepilogo = lazy(() => import('./pages/Riepilogo'))
+const Funzioni = lazy(() => import('./pages/Funzioni'))
+const Profilo = lazy(() => import('./pages/Profilo'))
+const Allenamenti = lazy(() => import('./pages/Allenamenti'))
+const Gare = lazy(() => import('./pages/Gare'))
+const Storico = lazy(() => import('./pages/Storico'))
+const Progressi = lazy(() => import('./pages/Progressi'))
+const Presenze = lazy(() => import('./pages/Presenze'))
+const Squadra = lazy(() => import('./pages/Squadra'))
+const Record = lazy(() => import('./pages/Record'))
+const InArrivo = lazy(() => import('./pages/InArrivo'))
+const AdminPanel = lazy(() => import('./pages/AdminPanel'))
+const Impostazioni = lazy(() => import('./pages/Impostazioni'))
+const Calendario = lazy(() => import('./pages/Calendario'))
+const Punti = lazy(() => import('./pages/Punti'))
+const RisultatiAllenamento = lazy(() => import('./pages/RisultatiAllenamento'))
+const PresenzeAtleta = lazy(() => import('./pages/PresenzeAtleta'))
+const NuovaPassword = lazy(() => import('./pages/NuovaPassword'))
 
 // Sezioni che arrivano nella fase 2
 const PROSSIMAMENTE = [
@@ -36,39 +40,41 @@ export default function App() {
     <AuthProvider>
       <CarrelloProvider>
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/registrati" element={<Registrati />} />
-            <Route path="/nuova-password" element={<NuovaPassword />} />
+          <Suspense fallback={<div className="p-6 text-center text-gray-500">Carico…</div>}>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/registrati" element={<Registrati />} />
+              <Route path="/nuova-password" element={<NuovaPassword />} />
 
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/riepilogo" element={<ProtectedRoute><Riepilogo /></ProtectedRoute>} />
-            <Route path="/funzioni" element={<ProtectedRoute><Funzioni /></ProtectedRoute>} />
-            <Route path="/profilo" element={<ProtectedRoute><Profilo /></ProtectedRoute>} />
-            <Route path="/allenamenti" element={<ProtectedRoute><Allenamenti /></ProtectedRoute>} />
-            <Route path="/gare" element={<ProtectedRoute><Gare /></ProtectedRoute>} />
+              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/riepilogo" element={<ProtectedRoute><Riepilogo /></ProtectedRoute>} />
+              <Route path="/funzioni" element={<ProtectedRoute><Funzioni /></ProtectedRoute>} />
+              <Route path="/profilo" element={<ProtectedRoute><Profilo /></ProtectedRoute>} />
+              <Route path="/allenamenti" element={<ProtectedRoute><Allenamenti /></ProtectedRoute>} />
+              <Route path="/gare" element={<ProtectedRoute><Gare /></ProtectedRoute>} />
 
-            <Route path="/storico" element={<ProtectedRoute><Storico /></ProtectedRoute>} />
-            <Route path="/progressi" element={<ProtectedRoute><Progressi /></ProtectedRoute>} />
-            <Route path="/squadra" element={<ProtectedRoute><Squadra /></ProtectedRoute>} />
-            <Route path="/record" element={<ProtectedRoute><Record /></ProtectedRoute>} />
-            <Route path="/presenze" element={<ProtectedRoute requireCoach><Presenze /></ProtectedRoute>} />
+              <Route path="/storico" element={<ProtectedRoute><Storico /></ProtectedRoute>} />
+              <Route path="/progressi" element={<ProtectedRoute><Progressi /></ProtectedRoute>} />
+              <Route path="/squadra" element={<ProtectedRoute><Squadra /></ProtectedRoute>} />
+              <Route path="/record" element={<ProtectedRoute><Record /></ProtectedRoute>} />
+              <Route path="/presenze" element={<ProtectedRoute requireCoach><Presenze /></ProtectedRoute>} />
 
-            <Route path="/punti" element={<ProtectedRoute><Punti /></ProtectedRoute>} />
-            <Route path="/calendario" element={<ProtectedRoute><Calendario /></ProtectedRoute>} />
-            <Route path="/impostazioni" element={<ProtectedRoute requireCoach><Impostazioni /></ProtectedRoute>} />
-            <Route path="/risultati" element={<ProtectedRoute requireCoach><RisultatiAllenamento /></ProtectedRoute>} />
-            <Route path="/squadra/presenze/:id" element={<ProtectedRoute requireCoach><PresenzeAtleta /></ProtectedRoute>} />
+              <Route path="/punti" element={<ProtectedRoute><Punti /></ProtectedRoute>} />
+              <Route path="/calendario" element={<ProtectedRoute><Calendario /></ProtectedRoute>} />
+              <Route path="/impostazioni" element={<ProtectedRoute requireCoach><Impostazioni /></ProtectedRoute>} />
+              <Route path="/risultati" element={<ProtectedRoute requireCoach><RisultatiAllenamento /></ProtectedRoute>} />
+              <Route path="/squadra/presenze/:id" element={<ProtectedRoute requireCoach><PresenzeAtleta /></ProtectedRoute>} />
 
-            {PROSSIMAMENTE.map(([percorso, titolo]) => (
-              <Route key={percorso} path={percorso}
-                element={<ProtectedRoute><InArrivo titolo={titolo} /></ProtectedRoute>} />
-            ))}
+              {PROSSIMAMENTE.map(([percorso, titolo]) => (
+                <Route key={percorso} path={percorso}
+                  element={<ProtectedRoute><InArrivo titolo={titolo} /></ProtectedRoute>} />
+              ))}
 
-            {/* Sezione riservata: solo account con role = 'admin' */}
-            <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminPanel /></ProtectedRoute>} />
-          </Routes>
+              {/* Sezione riservata: solo account con role = 'admin' */}
+              <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminPanel /></ProtectedRoute>} />
+            </Routes>
+          </Suspense>
         </BrowserRouter>
       </CarrelloProvider>
     </AuthProvider>
