@@ -25,7 +25,11 @@ const PERMESSI = {
   ospite: ['/squadra', '/calendario'],
 }
 
-export const nomeRuolo = (r) => (RUOLI_VISTA.find(([k]) => k === r) || [, r])[1]
+// Sezioni non ancora pronte: si vedono in sviluppo e nell'anteprima Vercel, non agli utenti veri
+export const IN_ARRIVO = ['/video', '/archivio']
+export const mostraInArrivo = import.meta.env.DEV || import.meta.env.VITE_VERCEL_ENV === 'preview'
+
+export const nomeRuolo = (r) => RUOLI_VISTA.find(([k]) => k === r)?.[1] ?? r
 
 // Chi può inserire o modificare dati (tempi, gare, video)
 export const puoModificare = (ruolo) => ['admin', 'coach', 'atleta'].includes(ruolo)

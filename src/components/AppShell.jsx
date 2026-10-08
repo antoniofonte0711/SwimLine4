@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { CalendarioFoglio } from './SelettoreData'
 import { useAuth } from '../context/AuthContext'
 import { dataLocale } from '../lib/lavori'
@@ -15,13 +15,17 @@ const LETTERE = ['D', 'L', 'M', 'M', 'G', 'V', 'S']
 
 // Struttura comune di tutte le schermate: testata blu, area contenuti arrotondata e barra in basso.
 // attiva: 'home' | 'riepilogo' | 'funzioni' | 'profilo'
-// indietro: percorso a cui torna il tasto "Indietro" (facoltativo)
+// indietro: percorso di riserva del tasto "Indietro" (facoltativo)
 // giorno + onGiorno: se presenti, mostrano la striscia dei giorni
 export default function AppShell({ titolo, attiva, indietro, giorno, onGiorno, children }) {
   const { profile, ruolo, staVedendoCome, cambiaVista, squadraGestita } = useAuth()
   const voci = VOCI.filter(([chiave]) => !(ruolo === 'ospite' && chiave === 'riepilogo'))
   const iniziale = (profile?.nome || 'A').charAt(0).toUpperCase()
   const [calAperto, setCalAperto] = useState(false)
+  const navigate = useNavigate()
+  // "Indietro" torna alla pagina precedente dell'app; se si è entrati da un link diretto
+  // (nessuna pagina precedente) va al percorso indicato
+  const tornaIndietro = () => (window.history.state?.idx > 0 ? navigate(-1) : navigate(indietro))
   // La striscia mostra la settimana (lunedì-domenica) del giorno scelto: con le frecce si passa alla settimana
   // precedente/successiva, col calendario si va ovunque
   const oggi = dataLocale()
@@ -98,10 +102,10 @@ export default function AppShell({ titolo, attiva, indietro, giorno, onGiorno, c
       <main className="-mt-6 rounded-t-[28px] bg-slate-50 px-4 pt-5 pb-32">
         <div className="max-w-md lg:max-w-[900px] mx-auto">
           {indietro && (
-            <Link to={indietro}
+            <button type="button" onClick={tornaIndietro}
               className="inline-block mb-4 text-sm font-semibold text-blue-600 bg-blue-50 rounded-full px-4 py-2">
               ← Indietro
-            </Link>
+            </button>
           )}
           {children}
         </div>

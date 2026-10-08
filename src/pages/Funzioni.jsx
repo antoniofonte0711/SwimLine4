@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { funzioniConsentite } from '../lib/permessi'
+import { funzioniConsentite, IN_ARRIVO, mostraInArrivo } from '../lib/permessi'
 import AppShell from '../components/AppShell'
 
 const FUNZIONI = [
@@ -21,7 +21,8 @@ const FUNZIONI = [
 export default function Funzioni() {
   const { ruolo } = useAuth()
   const consentite = funzioniConsentite(ruolo)
-  const voci = FUNZIONI.filter(([percorso]) => consentite.includes(percorso))
+  const voci = FUNZIONI.filter(([percorso]) =>
+    consentite.includes(percorso) && (mostraInArrivo || !IN_ARRIVO.includes(percorso)))
 
   return (
     <AppShell titolo="Funzioni" attiva="funzioni">

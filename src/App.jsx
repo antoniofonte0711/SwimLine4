@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { CarrelloProvider } from './context/CarrelloContext'
 import ProtectedRoute from './components/ProtectedRoute'
+import { mostraInArrivo } from './lib/permessi'
 import Home from './pages/Home'
 import Login from './pages/Login'
 
@@ -28,8 +29,9 @@ const Punti = lazy(() => import('./pages/Punti'))
 const RisultatiAllenamento = lazy(() => import('./pages/RisultatiAllenamento'))
 const PresenzeAtleta = lazy(() => import('./pages/PresenzeAtleta'))
 const NuovaPassword = lazy(() => import('./pages/NuovaPassword'))
+const NonTrovata = lazy(() => import('./pages/NonTrovata'))
 
-// Sezioni che arrivano nella fase 2
+// Sezioni che arrivano nella fase 2 (visibili solo in sviluppo e anteprima)
 const PROSSIMAMENTE = [
   ['/video', 'Video'],
   ['/archivio', 'Archivio gare'],
@@ -66,13 +68,15 @@ export default function App() {
               <Route path="/risultati" element={<ProtectedRoute requireCoach><RisultatiAllenamento /></ProtectedRoute>} />
               <Route path="/squadra/presenze/:id" element={<ProtectedRoute requireCoach><PresenzeAtleta /></ProtectedRoute>} />
 
-              {PROSSIMAMENTE.map(([percorso, titolo]) => (
+              {mostraInArrivo && PROSSIMAMENTE.map(([percorso, titolo]) => (
                 <Route key={percorso} path={percorso}
                   element={<ProtectedRoute><InArrivo titolo={titolo} /></ProtectedRoute>} />
               ))}
 
               {/* Sezione riservata: solo account con role = 'admin' */}
               <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminPanel /></ProtectedRoute>} />
+
+              <Route path="*" element={<NonTrovata />} />
             </Routes>
           </Suspense>
         </BrowserRouter>
