@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { CarrelloProvider } from './context/CarrelloContext'
 import ProtectedRoute from './components/ProtectedRoute'
+import AvvisoErrore from './components/AvvisoErrore'
 import { mostraInArrivo } from './lib/permessi'
 import Home from './pages/Home'
 import Login from './pages/Login'
@@ -42,6 +43,7 @@ export default function App() {
     <AuthProvider>
       <CarrelloProvider>
         <BrowserRouter>
+          <AvvisoErrore />
           <Suspense fallback={<div className="p-6 text-center text-gray-500">Carico…</div>}>
             <Routes>
               <Route path="/" element={<Home />} />
