@@ -125,23 +125,28 @@ export default function Calendario() {
             const sel = d === scelto
             return (
               <button key={d} onClick={() => setScelto(d)}
-                className={`relative aspect-square rounded-2xl flex flex-col items-center justify-center text-sm transition active:scale-90 ${
+                className={`aspect-square rounded-2xl flex flex-col items-center justify-center gap-0.5 text-sm transition active:scale-90 ${
                   sel ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : d === oggi ? 'bg-blue-50 text-blue-700 font-bold ring-2 ring-blue-300' : 'text-gray-700'
                 }`}>
                 <span className="font-semibold">{g}</span>
-                <span className="flex items-center gap-0.5 h-3">
-                  {x?.piano && <span className={`w-1.5 h-1.5 rounded-full ${sel ? 'bg-white' : 'bg-blue-500'}`} />}
-                  {x?.gare.length > 0 && <span className="text-[9px] leading-none">🏆</span>}
-                  {!isCoach && x?.stato && <span className={`w-1.5 h-1.5 rounded-full ${PRES[x.stato]}`} />}
-                </span>
-                {isCoach && nAtleti > 0 && x && (x.presenti > 0 || x.piano) && (
-                  <span className={`absolute -bottom-0.5 text-[9px] font-bold ${sel ? 'text-blue-100' : 'text-gray-500'}`}>{x.presenti}/{nAtleti}</span>
+                {isCoach && nAtleti > 0 && x && (x.presenti > 0 || x.piano) ? (
+                  // coach: il conteggio presenti prende il posto del pallino (che lo copriva)
+                  <span className={`flex items-center gap-0.5 text-[9px] leading-none font-bold ${sel ? 'text-blue-100' : 'text-blue-600'}`}>
+                    {x.presenti}/{nAtleti}
+                    {x.gare.length > 0 && <span>🏆</span>}
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-0.5 h-2.5">
+                    {x?.piano && <span className={`w-1.5 h-1.5 rounded-full ${sel ? 'bg-white' : 'bg-blue-500'}`} />}
+                    {x?.gare.length > 0 && <span className="text-[9px] leading-none">🏆</span>}
+                    {!isCoach && x?.stato && <span className={`w-1.5 h-1.5 rounded-full ${PRES[x.stato]}`} />}
+                  </span>
                 )}
               </button>
             )
           })}
         </div>
-        <p className="text-xs text-gray-500 mt-3">● allenamento · 🏆 gara{isCoach ? ' · 12/15 = presenti su atleti' : ' · pallino verde/rosso = tua presenza'}</p>
+        <p className="text-xs text-gray-500 mt-3">{isCoach ? '12/15 = allenamento, presenti su atleti · 🏆 gara' : '● allenamento · 🏆 gara'}{isCoach ? '' : ' · pallino verde/rosso = tua presenza'}</p>
       </div>
 
       <AnimatePresence mode="wait" initial={false}>

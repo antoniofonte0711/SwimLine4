@@ -48,7 +48,7 @@ function RiepilogoAtleta() {
   const previsti = ALLENAMENTI_SETTIMANA - questaSettimana.nonPenale
 
   return (
-    <AppShell titolo="Dashboard" attiva="riepilogo">
+    <AppShell titolo="Riepilogo" attiva="riepilogo">
       <div className="bg-blue-600 text-white rounded-3xl p-5 mb-3 shadow-lg shadow-blue-200">
         <p className="text-sm text-blue-100">Presenze agli allenamenti</p>
         <p className="text-4xl font-extrabold mt-1">
@@ -72,9 +72,6 @@ function RiepilogoAtleta() {
           <Pallino valore={righe.length} colore="bg-amber-600" etichetta="Lavori svolti" />
         </div>
       </div>
-      <p className="text-xs text-gray-500 mt-3 px-2">
-        Record e prossima gara arrivano con le sezioni Record e Calendario.
-      </p>
     </AppShell>
   )
 }
