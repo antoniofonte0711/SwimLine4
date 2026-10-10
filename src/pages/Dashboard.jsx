@@ -87,7 +87,11 @@ function EroeAllenamento({ piano, oggi, squadra, puoRegistrare, onVasca }) {
 // Home: i giorni e, sotto, gli allenamenti del giorno scelto
 function HomeAtleta() {
   const { user, ruolo, profile, adminReale } = useAuth()
-  const [giorno, setGiorno] = useState(dataLocale())
+  // ?giorno=2026-10-12 arriva toccando una notifica "Nuovo allenamento"
+  const [giorno, setGiorno] = useState(() => {
+    const g = new URLSearchParams(window.location.search).get('giorno')
+    return /^\d{4}-\d{2}-\d{2}$/.test(g || '') ? g : dataLocale()
+  })
   const [righe, setRighe] = useState([])
   const [presenza, setPresenza] = useState(null)
   const [piano, setPiano] = useState(null)

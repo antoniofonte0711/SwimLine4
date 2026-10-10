@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { coloreLavoro } from '../lib/lavori'
 import { blocchiPiano, perGiro, ripartenzeDiRiga } from '../lib/pianoSquadra'
 import { siglaLavoro } from './PianoCard'
+import { usePreferenze } from '../lib/preferenze'
 
 const BREVE = { 'Stile libero': 'SL', 'Proprio stile': 'PS' }
 const stile = (s) => BREVE[s] || s
@@ -31,13 +32,19 @@ function passi(righe) {
 export default function ModalitaVasca({ righe, onChiudi }) {
   const lista = passi(righe)
   const [i, setI] = useState(0)
-  // Lo schermo resta acceso mentre si nuota (se il telefono lo permette)
+  const [pref] = usePreferenze()
+  // "Fatto" fa vibrare il telefono (se il telefono lo permette e se non è stato spento in Profilo)
+  const avanti = () => {
+    if (pref.vibrazione) navigator.vibrate?.(40)
+    setI(i + 1)
+  }
+  // Lo schermo resta acceso mentre si nuota (se il telefono lo permette e se non è stato spento in Profilo)
   useEffect(() => {
     let blocco
-    navigator.wakeLock?.request('screen').then((b) => { blocco = b }).catch(() => {})
+    if (pref.schermoAcceso) navigator.wakeLock?.request('screen').then((b) => { blocco = b }).catch(() => {})
     document.body.style.overflow = 'hidden'
     return () => { blocco?.release?.(); document.body.style.overflow = '' }
-  }, [])
+  }, [pref.schermoAcceso])
 
   const fatti = lista.slice(0, i).reduce((s, p) => s + p.metri, 0)
   const km = (m) => (m / 1000).toFixed(1).replace('.', ',')
@@ -106,7 +113,7 @@ export default function ModalitaVasca({ righe, onChiudi }) {
             className="h-[84px] rounded-[26px] bg-schiuma text-blue-600 flex items-center justify-center disabled:opacity-40">
             <svg viewBox="0 0 24 24" className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
           </button>
-          <button onClick={() => setI(i + 1)} className="h-[84px] rounded-[26px] bg-blue-600 text-white font-display text-[26px] font-extrabold flex items-center justify-center gap-3">
+          <button onClick={avanti} className="h-[84px] rounded-[26px] bg-blue-600 text-white font-display text-[26px] font-extrabold flex items-center justify-center gap-3">
             <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
             {dopo ? 'Fatto' : 'Finito!'}
           </button>

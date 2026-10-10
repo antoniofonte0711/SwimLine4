@@ -21,6 +21,51 @@ button:focus-visible {
   outline-offset: 2px;
 }
 
+/* Testo più grande (Profilo → Aspetto): le misure in rem crescono tutte insieme */
+html.testo-grande { font-size: 112.5%; }
+
+/* Tema scuro (Profilo → Aspetto). Le pagine usano i colori chiari di Limpida: qui si rimappano
+   fondi, testi e bordi neutri. I bottoni blu col testo bianco restano uguali. */
+html.scuro { color-scheme: dark; }
+html.scuro body,
+html.scuro .bg-bordo { background-color: #0a1626; color: #e6eef8; }
+html.scuro .bg-white,
+html.scuro .bg-white\/95 { background-color: #13233a; }
+html.scuro .bg-blue-600 .bg-white { background-color: #ffffff; }
+html.scuro .bg-gray-50,
+html.scuro .bg-gray-100,
+html.scuro .bg-slate-200,
+html.scuro .bg-gray-300 { background-color: #1c3150; }
+html.scuro .bg-schiuma,
+html.scuro .bg-blue-50,
+html.scuro .bg-blue-100,
+html.scuro .bg-blue-50\/60 { background-color: #142f5c; }
+html.scuro .bg-abisso { background-color: #e6eef8; color: #0a1a2f; }
+html.scuro .text-abisso,
+html.scuro .text-gray-900,
+html.scuro .text-gray-700 { color: #e6eef8; }
+html.scuro .text-gray-600,
+html.scuro .text-slate-600 { color: #b4c3d6; }
+html.scuro .text-gray-500,
+html.scuro .text-slate-500,
+html.scuro .text-slate-400 { color: #94a6bd; }
+html.scuro .text-blue-600,
+html.scuro .text-blue-700 { color: #8cb8ff; }
+html.scuro .bg-blue-600 .text-blue-600,
+html.scuro .bg-white\/90 .text-blue-600 { color: #0b4fd9; }
+html.scuro .border-gray-100,
+html.scuro .border-gray-200,
+html.scuro .border-gray-300,
+html.scuro .border-slate-200,
+html.scuro .border-blue-100,
+html.scuro .border-blue-200 { border-color: #24395a; }
+html.scuro .shadow-sm,
+html.scuro .shadow-blue-200,
+html.scuro .shadow-blue-300 { --tw-shadow-color: transparent; box-shadow: none; }
+html.scuro input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+html.scuro select,
+html.scuro textarea { background-color: #1c3150; color: #e6eef8; border-color: #24395a; }
+
 /* Chi ha chiesto meno animazioni al telefono non le vede */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

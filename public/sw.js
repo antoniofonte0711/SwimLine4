@@ -1,6 +1,6 @@
 // Service worker SwimLine4: salva in cache i file dell'app (non i dati).
 // I dati di Supabase passano sempre dalla rete.
-const VERSIONE = 'v2'
+const VERSIONE = 'v3'
 const CACHE = `swimline4-${VERSIONE}`           // guscio dell'app (fisso)
 const RUNTIME = `swimline4-runtime-${VERSIONE}` // JS/CSS/icone scaricati usando l'app
 const MAX_RUNTIME = 60 // oltre questo numero tolgo i file più vecchi (es. JS di rilasci precedenti)
@@ -34,6 +34,31 @@ async function salva(req, res) {
   await cache.put(req, res)
   await limita(RUNTIME, MAX_RUNTIME)
 }
+
+// Notifiche push (es. "Nuovo allenamento"): le manda la funzione "notifiche" di Supabase
+self.addEventListener('push', (event) => {
+  let dati = {}
+  try { dati = event.data?.json() || {} } catch { dati = { body: event.data?.text() } }
+  event.waitUntil(self.registration.showNotification(dati.title || 'SwimLine4', {
+    body: dati.body || '',
+    icon: '/icons/icon-192.png',
+    badge: '/icons/icon-192.png',
+    data: { url: dati.url || '/dashboard' },
+  }))
+})
+
+// Tocco sulla notifica: apre l'app (o la porta davanti se è già aperta) sulla pagina giusta
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  const url = event.notification.data?.url || '/dashboard'
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((finestre) => {
+      const aperta = finestre.find((f) => new URL(f.url).origin === self.location.origin)
+      if (aperta) return aperta.navigate(url).then((f) => (f || aperta).focus())
+      return self.clients.openWindow(url)
+    })
+  )
+})
 
 self.addEventListener('fetch', (event) => {
   const req = event.request

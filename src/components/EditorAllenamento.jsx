@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { TIPI_LAVORO, distanzaDaTipo } from '../lib/lavori'
 import { RIGA_VUOTA, STILI_COACH, TIPI_COACH, abbinaTempi, addGiorni, blocchiPiano, metriPiano, minutiPiano, perGiro } from '../lib/pianoSquadra'
 import { normalizzaRipartenza, ripartenzaValida } from '../lib/tempo'
+import { avvisaSquadra } from '../lib/notifiche'
 import PianoCard from './PianoCard'
 import Difficolta from './Difficolta'
 
@@ -496,6 +497,8 @@ export default function EditorAllenamento({ squadra, giorno }) {
       { onConflict: 'squadra_id,data' }
     )
     if (error) return setErrore('Non sono riuscito a salvare: ' + error.message)
+    // Notifica alla squadra solo alla prima pubblicazione (non a ogni correzione)
+    if (pubblica && vis === 'squadra' && stato !== 'pubblicato') avvisaSquadra(squadra.id, giorni)
     setStato(pubblica ? 'pubblicato' : 'bozza')
     setRighe(ordinate)
     setSalvato(fotografia(titolo, ordinate, vis))

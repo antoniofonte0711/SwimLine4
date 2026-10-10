@@ -146,7 +146,17 @@ export default function Calendario() {
             )
           })}
         </div>
-        <p className="text-xs text-gray-500 mt-3">{isCoach ? '12/15 = allenamento, presenti su atleti · 🏆 gara' : '● allenamento · 🏆 gara'}{isCoach ? '' : ' · pallino verde/rosso = tua presenza'}</p>
+        {isCoach ? (
+          <p className="text-xs text-gray-500 mt-3">12/15 = allenamento, presenti su atleti · 🏆 gara</p>
+        ) : (
+          <ul className="text-xs text-gray-500 mt-3 flex flex-wrap gap-x-3 gap-y-1.5" aria-label="Legenda">
+            <li className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-blue-500" />allenamento</li>
+            <li className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-green-500" />presente</li>
+            <li className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-500" />assente</li>
+            <li className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-400" />assenza non penale</li>
+            <li className="flex items-center gap-1.5"><span>🏆</span>gara</li>
+          </ul>
+        )}
       </div>
 
       <AnimatePresence mode="wait" initial={false}>

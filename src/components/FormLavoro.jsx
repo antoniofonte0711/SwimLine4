@@ -2,15 +2,28 @@ import { useState } from 'react'
 import { useCarrello, filePerLavoro } from '../context/CarrelloContext'
 import { TIPI_LAVORO, STILI, distanzaDaTipo } from '../lib/lavori'
 import InputTempo from './InputTempo'
+import { leggiPreferenze } from '../lib/preferenze'
 import { ERRORE_TEMPO, erroreTempoImpossibile, normalizzaTempo, tempoPlausibile, tempoValido } from '../lib/tempo'
 
 const CAMPO = 'w-full border border-gray-200 bg-gray-50 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400'
-const INIZIALE = { tipo_lavoro: 'C1', distanza: 75, ripetizioni: 4, stile: 'Stile libero', passaggi: [], file: null }
+const BASE = { tipo_lavoro: 'C1', distanza: 75, ripetizioni: 4, stile: 'Stile libero', passaggi: [], file: null }
+
+// Tipo di lavoro e stile partono da quelli preferiti (Profilo → Allenamento)
+function iniziale() {
+  const p = leggiPreferenze()
+  const tipo = TIPI_LAVORO.includes(p.tipoLavoro) ? p.tipoLavoro : BASE.tipo_lavoro
+  return {
+    ...BASE,
+    tipo_lavoro: tipo,
+    distanza: distanzaDaTipo(tipo) ?? BASE.distanza,
+    stile: STILI.includes(p.stile) ? p.stile : BASE.stile,
+  }
+}
 
 // Scegli il lavoro, la distanza, quanti passaggi fai e scrivi il risultato di ognuno
 export default function FormLavoro() {
   const { aggiungi } = useCarrello()
-  const [f, setF] = useState(INIZIALE)
+  const [f, setF] = useState(iniziale)
   const [fileKey, setFileKey] = useState(0)
   const [errore, setErrore] = useState('')
 
@@ -62,7 +75,7 @@ export default function FormLavoro() {
       passaggi,
       conVideo: !!f.file,
     })
-    setF({ ...INIZIALE, tipo_lavoro: f.tipo_lavoro, distanza: f.distanza, ripetizioni: f.ripetizioni, stile: f.stile })
+    setF({ ...BASE, tipo_lavoro: f.tipo_lavoro, distanza: f.distanza, ripetizioni: f.ripetizioni, stile: f.stile })
     setFileKey((k) => k + 1)
   }
 

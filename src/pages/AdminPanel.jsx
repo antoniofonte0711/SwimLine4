@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import SegnalazioniAdmin from '../components/SegnalazioniAdmin'
 
 export default function AdminPanel() {
   const [users, setUsers] = useState([])
@@ -105,6 +106,8 @@ export default function AdminPanel() {
           {esito && <p className="text-sm bg-white rounded-lg px-3 py-2">{esito}</p>}
         </div>
       )}
+
+      <SegnalazioniAdmin />
 
       {loading ? (
         <p>Caricamento...</p>

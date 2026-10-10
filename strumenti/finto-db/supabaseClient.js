@@ -35,20 +35,31 @@ function query(nome) {
     if (azione === 'del') { tabelle[nome] = t.filter((r) => !righe.includes(r)); return { data: null, error: null } }
     if (ordine) righe = [...righe].sort((a, b) => (a[ordine[0]] > b[ordine[0]] ? 1 : -1) * (ordine[1] ? 1 : -1))
     if (limite) righe = righe.slice(0, limite)
+    righe = structuredClone(righe) // come il vero Supabase: ogni lettura dà oggetti nuovi
     if (modo !== 'lista') return { data: righe[0] ?? null, error: null }
     return { data: righe, error: null, count: righe.length }
   }
   return q
 }
 
+// Funzioni del database usate dal Profilo: imitate in memoria
+const RPC = {
+  aggiorna_mio_profilo({ p_nome, p_cognome, p_tempi_visibili }) {
+    const p = (tabelle.profiles || []).find((r) => r.id === utente.id)
+    if (p) Object.assign(p, { nome: p_nome.trim(), cognome: p_cognome?.trim() || null }, p_tempi_visibili == null ? {} : { tempi_visibili: p_tempi_visibili })
+  },
+}
+
 export const supabase = {
   from: query,
-  rpc: async () => ({ data: null, error: null }),
+  rpc: async (nome, args) => { RPC[nome]?.(args); return { data: null, error: null } },
+  functions: { invoke: async () => ({ data: { publicKey: null }, error: { message: 'finto-db: niente funzioni' } }) },
   auth: {
     getSession: async () => ({ data: { session: { user: utente } } }),
     getUser: async () => ({ data: { user: utente } }),
     onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
     signOut: async () => ({ error: null }),
+    updateUser: async () => ({ data: { user: utente }, error: null }),
   },
   storage: { from: () => ({ getPublicUrl: () => ({ data: { publicUrl: '' } }), upload: async () => ({ error: null }) }) },
   channel: () => ({ on() { return this }, subscribe() { return this } }),
