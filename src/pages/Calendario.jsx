@@ -104,7 +104,7 @@ export default function Calendario() {
 
   return (
     <AppShell titolo="Calendario" attiva="funzioni" indietro="/funzioni">
-      <div className="bg-white border border-gray-100 rounded-3xl p-4 mb-3 shadow-sm">
+      <div className="bg-white rounded-3xl p-4 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
         <div className="flex items-center justify-between mb-3">
           <button onClick={() => vaiMese(-1)} aria-label="Mese precedente" className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 text-xl font-bold active:scale-90 transition">‹</button>
           <AnimatePresence mode="wait" initial={false}>
@@ -114,7 +114,7 @@ export default function Calendario() {
           <button onClick={() => vaiMese(1)} aria-label="Mese successivo" className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 text-xl font-bold active:scale-90 transition">›</button>
         </div>
 
-        <div className="grid grid-cols-7 text-center text-xs text-gray-500 mb-1">
+        <div className="grid grid-cols-7 text-center text-xs text-slate-500 mb-1">
           {INTEST.map((l, i) => <span key={i}>{l}</span>)}
         </div>
         <div className="grid grid-cols-7 gap-1">
@@ -147,9 +147,9 @@ export default function Calendario() {
           })}
         </div>
         {isCoach ? (
-          <p className="text-xs text-gray-500 mt-3">12/15 = allenamento, presenti su atleti · 🏆 gara</p>
+          <p className="text-xs text-slate-500 mt-3">12/15 = allenamento, presenti su atleti · 🏆 gara</p>
         ) : (
-          <ul className="text-xs text-gray-500 mt-3 flex flex-wrap gap-x-3 gap-y-1.5" aria-label="Legenda">
+          <ul className="text-xs text-slate-500 mt-3 flex flex-wrap gap-x-3 gap-y-1.5" aria-label="Legenda">
             <li className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-blue-500" />allenamento</li>
             <li className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-green-500" />presente</li>
             <li className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-500" />assente</li>
@@ -161,14 +161,14 @@ export default function Calendario() {
 
       <AnimatePresence mode="wait" initial={false}>
         <motion.div key={scelto} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}>
-          <p className="text-sm font-semibold text-gray-500 capitalize mb-2 px-1">{scelto === oggi ? 'Oggi · ' : ''}{formattaGiorno(scelto)}</p>
+          <p className="text-sm font-semibold text-slate-500 capitalize mb-2 px-1">{scelto === oggi ? 'Oggi · ' : ''}{formattaGiorno(scelto)}</p>
 
           {info.piano
             ? <>
                 {isCoach && !info.piano.pubblicato && <p className="text-xs font-bold text-amber-700 mb-1 px-1">Bozza, non ancora pubblicata</p>}
                 <PianoCard piano={info.piano} />
               </>
-            : <p className="text-sm text-gray-500 bg-white border border-gray-100 rounded-3xl p-5 text-center shadow-sm mb-3">Nessun allenamento in questo giorno.</p>}
+            : <p className="text-sm text-slate-500 bg-white rounded-3xl p-5 text-center shadow-[0_1px_2px_rgba(10,26,47,0.05)] mb-3">Nessun allenamento in questo giorno.</p>}
 
           {isCoach && (
             <div className="flex gap-2 mb-3">
@@ -178,24 +178,24 @@ export default function Calendario() {
           )}
 
           {!isCoach && miei.length > 0 && (
-            <div className="bg-white border border-gray-100 rounded-3xl p-5 shadow-sm mb-3">
+            <div className="bg-white rounded-3xl p-5 shadow-[0_1px_2px_rgba(10,26,47,0.05)] mb-3">
               <p className="font-bold mb-1">I tuoi lavori</p>
               {miei.map((r, i) => (
                 <div key={r.id} className={`py-2 ${i ? 'border-t border-gray-100' : ''}`}>
                   <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${coloreLavoro(r.tipo_lavoro)}`}>{r.tipo_lavoro}</span>
-                  <span className="text-sm text-gray-600 ml-2">{r.ripetizioni ? `${r.ripetizioni}×` : ''}{r.distanza} m {r.stile || ''}</span>
-                  {r.passaggi?.length > 0 && <p className="text-xs text-gray-500 mt-1">{r.passaggi.map((p) => p || '–').join(' · ')}</p>}
+                  <span className="text-sm text-slate-600 ml-2">{r.ripetizioni ? `${r.ripetizioni}×` : ''}{r.distanza} m {r.stile || ''}</span>
+                  {r.passaggi?.length > 0 && <p className="text-xs text-slate-500 mt-1">{r.passaggi.map((p) => p || '–').join(' · ')}</p>}
                 </div>
               ))}
             </div>
           )}
 
           {gareGiorno.length > 0 && (
-            <div className="bg-white border border-gray-100 rounded-3xl p-5 shadow-sm mb-3">
+            <div className="bg-white rounded-3xl p-5 shadow-[0_1px_2px_rgba(10,26,47,0.05)] mb-3">
               <p className="font-bold mb-1">🏆 Gare</p>
               {gareGiorno.map((g, i) => (
                 <p key={g.nome} className={`text-sm py-2 ${i ? 'border-t border-gray-100' : ''}`}>
-                  {g.nome} <span className="text-gray-500">· {g.atleti.size} {g.atleti.size === 1 ? 'atleta' : 'atleti'}</span>
+                  {g.nome} <span className="text-slate-500">· {g.atleti.size} {g.atleti.size === 1 ? 'atleta' : 'atleti'}</span>
                 </p>
               ))}
             </div>

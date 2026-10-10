@@ -13,7 +13,7 @@ const CICLO = [null, 'presente', 'assente', 'non_penale']
 const SIGLA = { presente: 'P', assente: 'A', non_penale: 'F' }
 const COLORE = {
   presente: 'bg-green-600 text-white', assente: 'bg-red-600 text-white',
-  non_penale: 'bg-amber-500 text-white', vuoto: 'bg-gray-100 text-gray-500',
+  non_penale: 'bg-amber-500 text-white', vuoto: 'bg-gray-100 text-slate-500',
 }
 
 // Dashboard del coach: bollettino presenze, chilometri della settimana, lavori svolti
@@ -65,7 +65,7 @@ export default function RiepilogoCoach() {
     .filter((p) => p.data >= giorni[0] && p.data <= oggi)
     .reduce((s, p) => s + metriPiano(p.righe), 0) / 1000
 
-  if (!pronto) return <AppShell titolo="Riepilogo" attiva="riepilogo"><p className="text-center text-gray-500 py-8">Carico…</p></AppShell>
+  if (!pronto) return <AppShell titolo="Riepilogo" attiva="riepilogo"><p className="text-center text-slate-500 py-8">Carico…</p></AppShell>
   if (!squadra) return <AppShell titolo="Riepilogo" attiva="riepilogo"><SenzaSquadra /></AppShell>
 
   return (
@@ -76,15 +76,15 @@ export default function RiepilogoCoach() {
         <p className="text-sm text-blue-100">{squadra.nome}</p>
       </div>
 
-      <div className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">
+      <div className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
         <p className="font-bold mb-1">Bollettino giorni</p>
-        <p className="text-xs text-gray-500 mb-3">Tocca per cambiare: P presente · A assente · F festa (non penale)</p>
+        <p className="text-xs text-slate-500 mb-3">Tocca per cambiare: P presente · A assente · F festa (non penale)</p>
         {errore && <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mb-3">{errore}</p>}
         {atleti.length === 0 ? (
-          <p className="text-sm text-gray-500">Nessun atleta nella squadra: compaiono quando la scelgono in registrazione.</p>
+          <p className="text-sm text-slate-500">Nessun atleta nella squadra: compaiono quando la scelgono in registrazione.</p>
         ) : (
           <table className="w-full text-xs">
-            <thead><tr><th />{GG.map((g, i) => <th key={g} className="pb-2 font-semibold text-gray-500">{g}<br />{Number(giorni[i].slice(8))}</th>)}</tr></thead>
+            <thead><tr><th />{GG.map((g, i) => <th key={g} className="pb-2 font-semibold text-slate-500">{g}<br />{Number(giorni[i].slice(8))}</th>)}</tr></thead>
             <tbody>
               {atleti.map((a) => (
                 <tr key={a.id}>
@@ -105,14 +105,14 @@ export default function RiepilogoCoach() {
         )}
       </div>
 
-      <div className="bg-white border border-gray-100 rounded-3xl p-5 shadow-sm">
+      <div className="bg-white rounded-3xl p-5 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
         <p className="font-bold mb-2">Lavori svolti</p>
-        {piani.length === 0 && <p className="text-sm text-gray-500">Nessun allenamento negli ultimi 14 giorni.</p>}
+        {piani.length === 0 && <p className="text-sm text-slate-500">Nessun allenamento negli ultimi 14 giorni.</p>}
         {piani.map((p, i) => (
           <div key={p.id} className={`flex items-center justify-between py-3 ${i ? 'border-t border-gray-100' : ''}`}>
             <div>
               <p className="text-sm font-semibold capitalize">{formattaGiorno(p.data)}</p>
-              <p className="text-xs text-gray-500">{p.titolo || 'Allenamento'} · {(metriPiano(p.righe) / 1000).toFixed(1).replace('.', ',')} km</p>
+              <p className="text-xs text-slate-500">{p.titolo || 'Allenamento'} · {(metriPiano(p.righe) / 1000).toFixed(1).replace('.', ',')} km</p>
             </div>
             <Link to={`/allenamenti?data=${p.data}`}
               className="text-xs font-bold px-3 py-1.5 rounded-full bg-blue-50 text-blue-600 active:scale-95">

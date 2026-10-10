@@ -8,7 +8,7 @@ import { SenzaSquadra } from '../components/PianoCard'
 import { dataLocale } from '../lib/lavori'
 import { useMiaSquadra } from '../lib/pianoSquadra'
 
-const CAMPO = 'w-full border border-gray-200 bg-gray-50 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400'
+const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white'
 
 // Coach: registrazione dei risultati dell'allenamento, un atleta alla volta
 export default function RisultatiAllenamento() {
@@ -38,13 +38,13 @@ export default function RisultatiAllenamento() {
 
   return (
     <AppShell titolo="Risultati" attiva="funzioni" indietro={`/allenamenti?data=${giorno}`}>
-      {!pronto ? <p className="text-center text-gray-500 py-8">Carico…</p>
+      {!pronto ? <p className="text-center text-slate-500 py-8">Carico…</p>
         : !squadra ? <SenzaSquadra />
         : (
           <>
-            <div className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">
+            <div className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
               <SelettoreData etichetta="Data dell'allenamento" valore={giorno} onChange={setGiorno} />
-              <label className="block text-xs text-gray-500 mt-3 mb-1">Atleta</label>
+              <label className="block text-xs text-slate-500 mt-3 mb-1">Atleta</label>
               <select value={atleta} onChange={(e) => setAtleta(e.target.value)} className={CAMPO}>
                 {atleti.length === 0 && <option value="">Nessun atleta nella squadra</option>}
                 {atleti.map((a) => <option key={a.id} value={a.id}>{a.nome} {a.cognome}</option>)}

@@ -58,28 +58,28 @@ export default function StoricoAllenamenti() {
   const giorni = Object.keys(perGiorno).sort().reverse()
 
   if (giorni.length === 0) {
-    return <p className="text-center text-gray-500 py-8">Nessun allenamento ancora 🏊</p>
+    return <p className="text-center text-slate-500 py-8">Nessun allenamento ancora 🏊</p>
   }
 
   return giorni.map((g) => (
-    <div key={g} className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">
-      <p className="text-sm font-semibold text-gray-500 capitalize mb-2">{formattaGiorno(g)}</p>
+    <div key={g} className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+      <p className="text-sm font-semibold text-slate-500 capitalize mb-2">{formattaGiorno(g)}</p>
       {perGiorno[g].map((r) => (
         <div key={r.id} className="flex items-start justify-between gap-2 border-t border-gray-100 py-3">
           <div>
             <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${coloreLavoro(r.tipo_lavoro)}`}>{r.tipo_lavoro}</span>
-            <span className="text-sm text-gray-600 ml-2">
+            <span className="text-sm text-slate-600 ml-2">
               {r.ripetizioni ? `${r.ripetizioni}×` : ''}{r.distanza} m {r.stile || ''}
             </span>
             {r.inAttesa && <span className="text-xs text-yellow-700 bg-yellow-100 px-2 py-0.5 rounded-full ml-2">⏳ da inviare</span>}
             {r.passaggi?.length > 0 ? (
-              <p className="text-xs text-gray-500 mt-1">{r.passaggi.map((p) => p || '–').join(' · ')}</p>
+              <p className="text-xs text-slate-500 mt-1">{r.passaggi.map((p) => p || '–').join(' · ')}</p>
             ) : (
-              r.tempo_totale && <p className="text-xs text-gray-500 mt-1">{r.tempo_totale}</p>
+              r.tempo_totale && <p className="text-xs text-slate-500 mt-1">{r.tempo_totale}</p>
             )}
             {r.video_url && <a href={r.video_url} target="_blank" rel="noreferrer" className="text-xs text-blue-600">🎥 Guarda il video</a>}
           </div>
-          <button onClick={() => elimina(r)} title="Elimina" aria-label="Elimina" className="text-gray-500 hover:text-red-500 transition">🗑️</button>
+          <button onClick={() => elimina(r)} title="Elimina" aria-label="Elimina" className="text-slate-500 hover:text-red-500 transition">🗑️</button>
         </div>
       ))}
     </div>

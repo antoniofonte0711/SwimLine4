@@ -89,7 +89,8 @@ export const supabase = {
   rpc: async (nome, args) => ({ data: RPC[nome]?.(args) ?? null, error: null }),
   functions: { invoke: async () => ({ data: { publicKey: null }, error: { message: 'finto-db: niente funzioni' } }) },
   auth: {
-    getSession: async () => ({ data: { session: { user: utente } } }),
+    // mock-utente = 'nessuno': nessuno è entrato (per vedere la schermata d'ingresso)
+    getSession: async () => ({ data: { session: chi === 'nessuno' ? null : { user: utente } } }),
     getUser: async () => ({ data: { user: utente } }),
     onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
     signOut: async () => ({ error: null }),

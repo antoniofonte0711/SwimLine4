@@ -33,7 +33,7 @@ export function CalendarioFoglio({ valore, onScegli, onChiudi }) {
           <p className="font-bold">{MESI[mese]} {anno}</p>
           <button onClick={() => vaiMese(1)} aria-label="Mese successivo" className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 text-xl font-bold">›</button>
         </div>
-        <div className="grid grid-cols-7 text-center text-xs text-gray-500 mb-1">
+        <div className="grid grid-cols-7 text-center text-xs text-slate-500 mb-1">
           {INTEST.map((l, i) => <span key={i}>{l}</span>)}
         </div>
         <div className="grid grid-cols-7 gap-1 text-center">
@@ -51,7 +51,7 @@ export function CalendarioFoglio({ valore, onScegli, onChiudi }) {
         </div>
         <div className="grid grid-cols-2 gap-2 mt-4">
           <button onClick={() => { onScegli(oggi); onChiudi() }} className="font-bold text-blue-600 bg-blue-50 rounded-2xl py-3">Oggi</button>
-          <button onClick={onChiudi} className="font-bold text-gray-600 bg-gray-100 rounded-2xl py-3">Chiudi</button>
+          <button onClick={onChiudi} className="font-bold text-slate-600 bg-gray-100 rounded-2xl py-3">Chiudi</button>
         </div>
       </div>
     </div>,
@@ -64,7 +64,7 @@ export default function SelettoreData({ valore, onChange, etichetta = 'Data' }) 
   const [aperto, setAperto] = useState(false)
   return (
     <>
-      <label className="block text-xs text-gray-500 mb-1">{etichetta}</label>
+      <label className="block text-xs text-slate-500 mb-1">{etichetta}</label>
       <button type="button" onClick={() => setAperto(true)}
         className="w-full flex items-center justify-between border border-gray-200 bg-gray-50 rounded-xl px-3 py-2.5 text-left">
         <span className="capitalize">{formattaGiorno(valore)}</span>

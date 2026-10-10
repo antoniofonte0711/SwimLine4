@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
+import SfondoVasca from '../components/SfondoVasca'
 import InputPassword from '../components/InputPassword'
 
-const CAMPO = 'w-full border border-white/30 bg-white/90 rounded-xl px-4 py-2.5 mb-4 focus:outline-none focus:ring-2 focus:ring-white transition'
+const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white transition mb-4'
 
 // Si arriva qui dal link "Password dimenticata" dell'email: il link apre una sessione temporanea
 // con cui si può solo scegliere la nuova password.
@@ -45,35 +46,36 @@ export default function NuovaPassword() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-blue-50 to-white px-4">
-      <div className="w-full max-w-sm bg-gradient-to-br from-blue-500 to-blue-600 rounded-3xl shadow-2xl shadow-blue-300 p-8 text-white">
+    <div className="min-h-screen relative overflow-hidden flex items-center justify-center bg-[#0a3fbf] px-4 py-8">
+      <SfondoVasca />
+      <div className="w-full max-w-sm relative bg-white rounded-[28px] shadow-[0_24px_60px_rgba(4,26,77,0.35)] p-7 text-abisso">
         <div className="flex justify-center mb-4">
-          <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center text-3xl">🔑</div>
+          <div className="w-16 h-16 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-3xl">🔑</div>
         </div>
-        <h1 className="text-2xl font-extrabold mb-1 text-center tracking-tight">Nuova password</h1>
+        <h1 className="font-display text-[28px] font-extrabold mb-1 text-center">Nuova password</h1>
 
         {fatto ? (
-          <p className="text-center text-blue-50 mt-4">✅ Password cambiata. Ti porto alla Home…</p>
+          <p className="text-center text-emerald-700 font-semibold mt-4">✅ Password cambiata. Ti porto alla Home…</p>
         ) : pronto === null ? (
-          <p className="text-center text-blue-100 mt-4">Controllo il link…</p>
+          <p className="text-center text-slate-500 mt-4">Controllo il link…</p>
         ) : pronto === false ? (
           <>
-            <p className="text-center text-blue-50 mt-4">Il link non è valido o è scaduto.</p>
-            <p className="text-center text-sm text-blue-100 mt-2">Torna al login, scrivi la tua email e premi di nuovo "Password dimenticata".</p>
-            <Link to="/login" className="block text-center w-full bg-white text-blue-600 font-bold rounded-xl py-3 mt-6">Vai al login</Link>
+            <p className="text-center font-semibold mt-4">Il link non è valido o è scaduto.</p>
+            <p className="text-center text-sm text-slate-600 mt-2">Torna al login, scrivi la tua email e premi di nuovo "Password dimenticata".</p>
+            <Link to="/login" className="block text-center w-full bg-blue-600 text-white font-bold rounded-2xl py-3 mt-6">Vai al login</Link>
           </>
         ) : (
           <form onSubmit={salva}>
-            <p className="text-sm text-blue-100 text-center mb-6">Scegli la nuova password per il tuo account.</p>
-            <label className="block text-sm font-medium text-blue-50 mb-1">Nuova password</label>
+            <p className="text-sm text-slate-500 text-center mb-6">Scegli la nuova password per il tuo account.</p>
+            <label className="block text-sm font-semibold text-slate-600 mb-1">Nuova password</label>
             <InputPassword value={password} onChange={(e) => setPassword(e.target.value)}
               autoComplete="new-password" className={`${CAMPO} text-gray-900`} />
-            <label className="block text-sm font-medium text-blue-50 mb-1">Ripeti la password</label>
+            <label className="block text-sm font-semibold text-slate-600 mb-1">Ripeti la password</label>
             <InputPassword value={ripeti} onChange={(e) => setRipeti(e.target.value)}
               autoComplete="new-password" className={`${CAMPO} text-gray-900`} />
-            {errore && <p className="text-sm text-white bg-red-500/80 rounded-lg px-3 py-2 mb-4">{errore}</p>}
+            {errore && <p className="text-sm text-white bg-red-600 rounded-xl px-3 py-2 mb-4">{errore}</p>}
             <button type="submit" disabled={salvo}
-              className="w-full bg-white text-blue-600 font-bold rounded-xl py-3 disabled:opacity-60 active:scale-[0.98] transition shadow-lg">
+              className="w-full min-h-[52px] bg-blue-600 text-white font-display font-extrabold text-lg rounded-2xl disabled:opacity-60 active:scale-[0.98] transition">
               {salvo ? 'Salvo…' : 'Salva la nuova password'}
             </button>
           </form>

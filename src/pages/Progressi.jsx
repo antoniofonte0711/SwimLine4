@@ -29,13 +29,13 @@ function ProgressiCoach() {
 
   return (
     <AppShell titolo="Progressi" attiva="funzioni" indietro="/funzioni">
-      {!pronto ? <p className="text-center text-gray-500 py-8">Carico…</p>
+      {!pronto ? <p className="text-center text-slate-500 py-8">Carico…</p>
         : !squadra ? <SenzaSquadra />
         : (
-          <div className="bg-white border border-gray-100 rounded-3xl p-5 shadow-sm">
+          <div className="bg-white rounded-3xl p-5 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
             <p className="font-bold mb-1">Atleti di {squadra.nome}</p>
-            <p className="text-xs text-gray-500 mb-2">Tocca la freccia per aprire la scheda: gare e lavori di quell'atleta, a tua scelta.</p>
-            {atleti.length === 0 && <p className="text-sm text-gray-500 py-3">Nessun atleta nella squadra.</p>}
+            <p className="text-xs text-slate-500 mb-2">Tocca la freccia per aprire la scheda: gare e lavori di quell'atleta, a tua scelta.</p>
+            {atleti.length === 0 && <p className="text-sm text-slate-500 py-3">Nessun atleta nella squadra.</p>}
             {atleti.map((a, i) => (
               <div key={a.id} className={`flex items-center justify-between py-3 ${i ? 'border-t border-gray-100' : ''}`}>
                 <p className="font-semibold">{a.nome} {a.cognome}</p>

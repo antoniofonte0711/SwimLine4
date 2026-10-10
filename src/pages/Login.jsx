@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
+import SfondoVasca from '../components/SfondoVasca'
+import Icona from '../components/Icona'
 import InputPassword from '../components/InputPassword'
 
 export default function Login() {
@@ -32,52 +34,53 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-blue-50 to-white px-4">
-      <form onSubmit={handleLogin} className="w-full max-w-sm bg-gradient-to-br from-blue-500 to-blue-600 rounded-3xl shadow-2xl shadow-blue-300 p-8">
+    <div className="min-h-screen relative overflow-hidden flex items-center justify-center bg-[#0a3fbf] px-4 py-8">
+      <SfondoVasca />
+      <form onSubmit={handleLogin} className="w-full max-w-sm relative bg-white rounded-[28px] shadow-[0_24px_60px_rgba(4,26,77,0.35)] p-7">
         <div className="flex justify-center mb-4">
-          <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center text-3xl">
-            🏊
+          <div className="w-16 h-16 rounded-2xl bg-blue-600 text-white flex items-center justify-center">
+            <Icona nome="onde" className="w-8 h-8" />
           </div>
         </div>
-        <h1 className="text-2xl font-extrabold text-white mb-1 text-center tracking-tight">SwimLine4</h1>
-        <p className="text-sm text-blue-100 text-center mb-6">Bentornato, accedi al tuo account</p>
+        <h1 className="font-display text-[28px] font-extrabold text-abisso mb-1 text-center">SwimLine4</h1>
+        <p className="text-sm text-slate-500 text-center mb-6">Bentornato, accedi al tuo account</p>
 
-        <label className="block text-sm font-medium text-blue-50 mb-1">Email</label>
+        <label className="block text-sm font-semibold text-slate-600 mb-1">Email</label>
         <input
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full border border-white/30 bg-white/90 rounded-xl px-4 py-2.5 mb-4 focus:outline-none focus:ring-2 focus:ring-white transition"
+          className="w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white transition mb-4"
           required
         />
 
-        <label className="block text-sm font-medium text-blue-50 mb-1">Password</label>
+        <label className="block text-sm font-semibold text-slate-600 mb-1">Password</label>
         <InputPassword
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full border border-white/30 bg-white/90 rounded-xl px-4 py-2.5 mb-2 focus:outline-none focus:ring-2 focus:ring-white transition"
+          className="w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white transition mb-2"
         />
 
         <button
           type="button"
           onClick={handleResetPassword}
-          className="text-sm text-blue-100 hover:text-white underline mb-4 block transition"
+          className="text-sm font-semibold text-blue-600 underline mb-4 block transition"
         >
           Password dimenticata?
         </button>
 
-        {error && <p className="text-sm text-white bg-red-500/80 rounded-lg px-3 py-2 mb-4">{error}</p>}
+        {error && <p className="text-sm text-white bg-red-600 rounded-xl px-3 py-2 mb-4">{error}</p>}
 
         <button
           type="submit"
-          className="w-full bg-white text-blue-600 font-bold rounded-xl py-3 hover:bg-blue-50 active:scale-[0.98] transition shadow-lg"
+          className="w-full min-h-[52px] bg-blue-600 text-white font-display font-extrabold text-lg rounded-2xl hover:bg-blue-700 active:scale-[0.98] transition"
         >
           Accedi
         </button>
 
-        <p className="text-sm text-blue-100 text-center mt-5">
+        <p className="text-sm text-slate-500 text-center mt-5">
           Non hai un account?{' '}
-          <Link to="/registrati" className="text-white font-semibold hover:underline">Registrati</Link>
+          <Link to="/registrati" className="text-blue-600 font-bold hover:underline">Registrati</Link>
         </p>
       </form>
     </div>

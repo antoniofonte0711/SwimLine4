@@ -35,18 +35,18 @@ export default function DomandeIngresso({ squadra, onCambio }) {
   return (
     <div className="bg-white border border-blue-200 rounded-3xl p-5 shadow-sm mb-3">
       <p className="font-bold mb-1">📩 Richieste di ingresso{domande.length > 0 && ` (${domande.length})`}</p>
-      <p className="text-xs text-gray-500 mb-2">Queste persone hanno chiesto di entrare in {squadra.nome}: entrano solo se approvi.</p>
+      <p className="text-xs text-slate-500 mb-2">Queste persone hanno chiesto di entrare in {squadra.nome}: entrano solo se approvi.</p>
       {domande.map((d) => (
         <div key={d.id} className="bg-blue-50 rounded-2xl p-3 mb-2">
           <p className="text-sm font-semibold">{d.nome} {d.cognome}</p>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-slate-500">
             {RUOLI[d.ruolo] || d.ruolo}{d.squadra_attuale ? ` · ora in ${d.squadra_attuale}` : ''} · {new Date(d.created_at).toLocaleDateString('it-IT')}
           </p>
           <div className="grid grid-cols-2 gap-2 mt-2">
             <button onClick={() => rispondi(d, true)} disabled={!!invio}
               className="font-bold text-white bg-blue-600 disabled:opacity-60 rounded-xl py-2">{invio === d.id ? '…' : 'Approva'}</button>
             <button onClick={() => rispondi(d, false)} disabled={!!invio}
-              className="font-bold text-gray-600 bg-white disabled:opacity-60 rounded-xl py-2">Rifiuta</button>
+              className="font-bold text-slate-600 bg-white disabled:opacity-60 rounded-xl py-2">Rifiuta</button>
           </div>
         </div>
       ))}

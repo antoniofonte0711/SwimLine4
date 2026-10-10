@@ -5,7 +5,7 @@ import InputTempo from './InputTempo'
 import { leggiPreferenze } from '../lib/preferenze'
 import { ERRORE_TEMPO, erroreTempoImpossibile, normalizzaTempo, tempoPlausibile, tempoValido } from '../lib/tempo'
 
-const CAMPO = 'w-full border border-gray-200 bg-gray-50 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400'
+const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white'
 const BASE = { tipo_lavoro: 'C1', distanza: 75, ripetizioni: 4, stile: 'Stile libero', passaggi: [], file: null }
 
 // Tipo di lavoro e stile partono da quelli preferiti (Profilo → Allenamento)
@@ -80,33 +80,33 @@ export default function FormLavoro() {
   }
 
   return (
-    <form onSubmit={aggiungiAlCarrello} className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">
-      <p className="text-sm text-gray-500 mb-3">Scegli il tuo lavoro</p>
+    <form onSubmit={aggiungiAlCarrello} className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+      <p className="text-sm text-slate-500 mb-3">Scegli il tuo lavoro</p>
 
-      <label className="block text-xs text-gray-500 mb-1">Tipo di lavoro</label>
+      <label className="block text-xs text-slate-500 mb-1">Tipo di lavoro</label>
       <select value={f.tipo_lavoro} onChange={(e) => cambiaTipo(e.target.value)} className={CAMPO + ' mb-3'}>
         {TIPI_LAVORO.map((t) => <option key={t}>{t}</option>)}
       </select>
 
       <div className="grid grid-cols-2 gap-3 mb-3">
         <div>
-          <label className="block text-xs text-gray-500 mb-1">Distanza (m, da 25 in su)</label>
+          <label className="block text-xs text-slate-500 mb-1">Distanza (m, da 25 in su)</label>
           <input type="number" min="25" step="25" inputMode="numeric" value={f.distanza}
             onChange={(e) => setF({ ...f, distanza: e.target.value })} className={CAMPO} />
         </div>
         <div>
-          <label className="block text-xs text-gray-500 mb-1">Passaggi</label>
+          <label className="block text-xs text-slate-500 mb-1">Passaggi</label>
           <input type="number" min="1" max="30" inputMode="numeric" value={f.ripetizioni}
             onChange={(e) => setF({ ...f, ripetizioni: e.target.value })} className={CAMPO} />
         </div>
       </div>
 
-      <label className="block text-xs text-gray-500 mb-1">Stile</label>
+      <label className="block text-xs text-slate-500 mb-1">Stile</label>
       <select value={f.stile} onChange={(e) => setF({ ...f, stile: e.target.value })} className={CAMPO + ' mb-4'}>
         {STILI.map((s) => <option key={s}>{s}</option>)}
       </select>
 
-      <p className="text-sm text-gray-500 mb-2">Risultato di ogni passaggio</p>
+      <p className="text-sm text-slate-500 mb-2">Risultato di ogni passaggio</p>
       <div className="grid grid-cols-2 gap-3 mb-4">
         {Array.from({ length: n }, (_, i) => (
           <div key={i}>
@@ -116,7 +116,7 @@ export default function FormLavoro() {
         ))}
       </div>
 
-      <label className="block text-xs text-gray-500 mb-1">Video (facoltativo, finisce anche nella sezione Video)</label>
+      <label className="block text-xs text-slate-500 mb-1">Video (facoltativo, finisce anche nella sezione Video)</label>
       <input key={fileKey} type="file" accept="video/*" className="w-full text-sm mb-4"
         onChange={(e) => setF({ ...f, file: e.target.files[0] || null })} />
 

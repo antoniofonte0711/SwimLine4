@@ -6,7 +6,7 @@ import { SenzaSquadra } from '../components/PianoCard'
 import { useMiaSquadra } from '../lib/pianoSquadra'
 import DomandeIngresso from '../components/DomandeIngresso'
 
-const CAMPO = 'w-full border border-gray-200 bg-gray-50 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400'
+const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white'
 // L'admin è prima di tutto un atleta: in squadra compare come tale
 const RUOLI = { atleta: 'Atleta', genitore: 'Genitore', coach: 'Coach', admin: 'Atleta (admin)' }
 const MIGRAZIONE = 'Manca un aggiornamento del database: esegui supabase/11_migrazione_fase11_gestione_squadra.sql e 12_migrazione_fase12_richieste_admin.sql nell\'SQL Editor di Supabase.'
@@ -83,7 +83,7 @@ export default function Impostazioni() {
 
   return (
     <AppShell titolo="Impostazioni" attiva="funzioni" indietro="/funzioni">
-      {!pronto ? <p className="text-center text-gray-500 py-8">Carico…</p>
+      {!pronto ? <p className="text-center text-slate-500 py-8">Carico…</p>
         : !squadra ? <SenzaSquadra />
         : (
           <>
@@ -92,9 +92,9 @@ export default function Impostazioni() {
 
             <DomandeIngresso squadra={squadra} onCambio={caricaMembri} />
 
-            <form onSubmit={trova} className="bg-white border border-gray-100 rounded-3xl p-5 shadow-sm mb-3">
+            <form onSubmit={trova} className="bg-white rounded-3xl p-5 shadow-[0_1px_2px_rgba(10,26,47,0.05)] mb-3">
               <p className="font-bold">Aggiungi una persona a {squadra.nome}</p>
-              <p className="text-xs text-gray-500 mb-3">
+              <p className="text-xs text-slate-500 mb-3">
                 Cerca per nome o cognome, oppure scrivi l'email completa con cui si è registrata. Puoi aggiungere atleti e genitori;
                 agli account admin (che sono anche atleti) arriva una richiesta da accettare.
               </p>
@@ -107,7 +107,7 @@ export default function Impostazioni() {
                 </button>
               </div>
               {risultati?.length === 0 && (
-                <p className="text-sm text-gray-500 pt-3">Nessuno trovato. Se è già in un'altra squadra, cercalo con l'email completa.</p>
+                <p className="text-sm text-slate-500 pt-3">Nessuno trovato. Se è già in un'altra squadra, cercalo con l'email completa.</p>
               )}
               {risultati?.map((p) => {
                 const qui = p.squadra_id === squadra.id
@@ -116,7 +116,7 @@ export default function Impostazioni() {
                   <div key={p.id} className="flex items-center justify-between gap-3 py-3 border-t border-gray-100 mt-3 first-of-type:mt-3">
                     <div className="min-w-0">
                       <p className="font-semibold truncate">{p.nome} {p.cognome}{p.id === user.id && <span className="text-xs font-bold text-blue-600"> (tu)</span>}</p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-slate-500">
                         {RUOLI[p.ruolo] || p.ruolo}{p.squadra_id && !qui ? ` · ora in ${p.squadra_nome || 'un\'altra squadra'}` : ''}
                         {serveRichiesta && !qui ? ' · entra solo se accetta' : ''}
                       </p>
@@ -139,15 +139,15 @@ export default function Impostazioni() {
               })}
             </form>
 
-            <div className="bg-white border border-gray-100 rounded-3xl p-5 shadow-sm">
+            <div className="bg-white rounded-3xl p-5 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
               <p className="font-bold mb-1">Persone in {squadra.nome}</p>
-              <p className="text-xs text-gray-500 mb-2">{membri.length} {membri.length === 1 ? 'persona' : 'persone'}. Togliendo qualcuno dalla squadra i suoi tempi restano salvati.</p>
-              {membri.length === 0 && <p className="text-sm text-gray-500 py-3">Nessuno in squadra per ora.</p>}
+              <p className="text-xs text-slate-500 mb-2">{membri.length} {membri.length === 1 ? 'persona' : 'persone'}. Togliendo qualcuno dalla squadra i suoi tempi restano salvati.</p>
+              {membri.length === 0 && <p className="text-sm text-slate-500 py-3">Nessuno in squadra per ora.</p>}
               {membri.map((p, i) => (
                 <div key={p.id} className={`flex items-center justify-between gap-3 py-3 ${i ? 'border-t border-gray-100' : ''}`}>
                   <div className="min-w-0">
                     <p className="font-semibold truncate">{p.nome} {p.cognome}{p.id === user.id && <span className="text-xs font-bold text-blue-600"> (tu)</span>}</p>
-                    <p className="text-xs text-gray-500">{RUOLI[p.role] || p.role}</p>
+                    <p className="text-xs text-slate-500">{RUOLI[p.role] || p.role}</p>
                   </div>
                   {p.role !== 'coach' && (
                     <button onClick={() => togli(p)} disabled={invio === p.id}

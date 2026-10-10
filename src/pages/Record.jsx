@@ -7,7 +7,7 @@ import { STILI } from '../lib/lavori'
 import { tempoInSecondi, secondiInTempo, normalizzaTempo, tempoValido, tempoPlausibile, erroreTempoImpossibile, ERRORE_TEMPO_BREVE } from '../lib/tempo'
 import InputTempo from '../components/InputTempo'
 
-const CAMPO = 'w-full border border-gray-200 bg-gray-50 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400'
+const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white'
 
 // Record: classifica dei migliori tempi per stile e distanza.
 // Fonte: Gare oppure Allenamenti. Ambito: i miei oppure la squadra.
@@ -83,45 +83,45 @@ export default function Record() {
 
   return (
     <AppShell titolo="Record" attiva="funzioni" indietro="/funzioni">
-      <div className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">
+      <div className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
         <div className="grid grid-cols-2 gap-3 mb-3">
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Fonte</label>
+            <label className="block text-xs text-slate-500 mb-1">Fonte</label>
             <select value={fonte} onChange={(e) => setFonte(e.target.value)} className={CAMPO}>
               <option>Gare</option>
               <option>Allenamenti</option>
             </select>
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Di chi</label>
+            <label className="block text-xs text-slate-500 mb-1">Di chi</label>
             <select value={ambito} onChange={(e) => setAmbito(e.target.value)} className={CAMPO}>
               <option>I miei</option>
               <option>Squadra</option>
             </select>
           </div>
         </div>
-        <label className="block text-xs text-gray-500 mb-1">Stile</label>
+        <label className="block text-xs text-slate-500 mb-1">Stile</label>
         <select value={stile} onChange={(e) => setStile(e.target.value)} className={CAMPO}>
           {STILI.map((s) => <option key={s}>{s}</option>)}
         </select>
       </div>
 
-      {carico && <p className="text-center text-gray-500 py-6">Carico i record…</p>}
+      {carico && <p className="text-center text-slate-500 py-6">Carico i record…</p>}
       {!carico && classifiche.length === 0 && (
-        <p className="text-center text-gray-500 py-6">Nessun tempo per questo stile 🏅</p>
+        <p className="text-center text-slate-500 py-6">Nessun tempo per questo stile 🏅</p>
       )}
 
       {classifiche.map(([distanza, righe]) => (
-        <div key={distanza} className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">
+        <div key={distanza} className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
           <p className="font-bold mb-2">{distanza} m {stile}</p>
           {righe.map((r, i) => (
             <div key={r.atleta} onClick={() => isCoach && setDettaglio(r)}
               className={`flex items-center justify-between border-t border-gray-100 py-2.5 text-sm gap-2 ${isCoach ? 'cursor-pointer active:bg-gray-50' : ''}`}>
               <span className="flex items-center gap-2 min-w-0">
-                <span className={`w-6 h-6 shrink-0 rounded-full text-xs font-bold flex items-center justify-center ${i === 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-500'}`}>{i + 1}</span>
+                <span className={`w-6 h-6 shrink-0 rounded-full text-xs font-bold flex items-center justify-center ${i === 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-slate-500'}`}>{i + 1}</span>
                 <span className="truncate">
                   {ambito === 'Squadra' ? nomi[r.atleta] || 'Atleta' : r.extra || (fonte === 'Gare' ? 'Gara' : 'Allenamento')}
-                  {r.quando && <span className="text-xs text-gray-500"> · {data(r.quando)}</span>}
+                  {r.quando && <span className="text-xs text-slate-500"> · {data(r.quando)}</span>}
                 </span>
               </span>
               <b className="text-blue-600 shrink-0">{secondiInTempo(r.sec)}</b>
@@ -182,18 +182,18 @@ function DettaglioRecord({ voce, nome, stile, allenamenti, onChiudi, onFatto }) 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40" onClick={onChiudi}>
       <div className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <p className="text-xs text-gray-500">{voce.tabella === 'gare' ? 'Record di gara' : 'Record di allenamento'}</p>
+        <p className="text-xs text-slate-500">{voce.tabella === 'gare' ? 'Record di gara' : 'Record di allenamento'}</p>
         <p className="text-xl font-bold">{nome || 'Atleta'}</p>
-        <p className="text-sm text-gray-500 mb-4">{voce.distanza} m {stile}{voce.extra ? ` · ${voce.extra}` : ''}</p>
+        <p className="text-sm text-slate-500 mb-4">{voce.distanza} m {stile}{voce.extra ? ` · ${voce.extra}` : ''}</p>
         <p className="text-sm"><b>Realizzato il</b> {dataIt}</p>
-        {inserito && <p className="text-xs text-gray-500 mb-4">Registrato il {inserito}</p>}
+        {inserito && <p className="text-xs text-slate-500 mb-4">Registrato il {inserito}</p>}
         <InputTempo etichetta="Tempo" value={nuovo} onChange={setNuovo} />
         {errore && <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mt-3">{errore}</p>}
         <div className="grid grid-cols-2 gap-2 mt-4">
           <button onClick={salva} disabled={lavoro} className="font-bold text-white bg-blue-600 disabled:opacity-60 rounded-2xl py-3">Cambia tempo</button>
           <button onClick={elimina} disabled={lavoro} className="font-bold text-red-600 bg-red-50 disabled:opacity-60 rounded-2xl py-3">Elimina</button>
         </div>
-        <button onClick={onChiudi} className="w-full text-sm text-gray-500 mt-3 py-2">Chiudi</button>
+        <button onClick={onChiudi} className="w-full text-sm text-slate-500 mt-3 py-2">Chiudi</button>
       </div>
     </div>
   )

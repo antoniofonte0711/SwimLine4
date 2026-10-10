@@ -8,7 +8,7 @@ export default function ProtectedRoute({ children, requireAdmin = false, require
   const { pathname } = useLocation()
   const { puo, pronto } = useRegole()
 
-  if (loading) return <div className="p-6 text-center text-gray-500">Caricamento...</div>
+  if (loading) return <div className="p-6 text-center text-slate-500">Caricamento...</div>
 
   if (!user) return <Navigate to="/login" replace />
   if (requireAdmin && !isAdmin) return <Navigate to="/dashboard" replace />

@@ -16,7 +16,7 @@ export default function InputTempo({ value, onChange, etichetta, ariaLabel, vuot
 
   return (
     <div>
-      {etichetta && <label className="block text-xs text-gray-500 mb-1">{etichetta}</label>}
+      {etichetta && <label className="block text-xs text-slate-500 mb-1">{etichetta}</label>}
       <input value={value || ''} placeholder={ESEMPIO_TEMPO} aria-label={ariaLabel || etichetta}
         inputMode="decimal" autoComplete="off"
         onChange={(e) => { setErrore(false); onChange(e.target.value) }} onBlur={alUscire}

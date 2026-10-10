@@ -11,7 +11,7 @@ import { useRegole } from '../lib/regole'
 import PianoCard from './PianoCard'
 import Difficolta from './Difficolta'
 
-const CAMPO = 'w-full border border-gray-200 bg-gray-50 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400'
+const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white'
 const GG = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab']
 const STATO = { nuovo: 'Nuovo', bozza: 'Bozza', pubblicato: 'Pubblicato' }
 const ANIMA = {
@@ -34,7 +34,7 @@ const chiaveBlocco = (b) => (b.serie ? 's:' + b.righe[0].riga._id : b.riga._id)
 function InputRipartenza({ value, onChange, etichetta, placeholder = `Es. 1'30"` }) {
   return (
     <div>
-      <label className="block text-xs text-gray-500 mb-1">{etichetta}</label>
+      <label className="block text-xs text-slate-500 mb-1">{etichetta}</label>
       <input value={value ?? ''} placeholder={placeholder} inputMode="decimal" autoComplete="off"
         onChange={(e) => onChange(e.target.value)}
         onBlur={(e) => onChange(normalizzaRipartenza(e.target.value))}
@@ -47,9 +47,9 @@ function Frecce({ su, giu, primo, ultimo }) {
   return (
     <div className="flex gap-2">
       <button onClick={su} disabled={primo} aria-label="Sposta su"
-        className="w-9 h-9 rounded-full bg-gray-100 text-gray-600 font-bold disabled:opacity-30 active:scale-90 transition">↑</button>
+        className="w-9 h-9 rounded-full bg-gray-100 text-slate-600 font-bold disabled:opacity-30 active:scale-90 transition">↑</button>
       <button onClick={giu} disabled={ultimo} aria-label="Sposta giù"
-        className="w-9 h-9 rounded-full bg-gray-100 text-gray-600 font-bold disabled:opacity-30 active:scale-90 transition">↓</button>
+        className="w-9 h-9 rounded-full bg-gray-100 text-slate-600 font-bold disabled:opacity-30 active:scale-90 transition">↓</button>
     </div>
   )
 }
@@ -67,23 +67,23 @@ function CampiRiga({ r, i, inSerie, cambia, cambiaTipo }) {
           {STILI_COACH.map((s) => <option key={s}>{s}</option>)}
         </select>
         <div>
-          <label className="block text-xs text-gray-500 mb-1">{inSerie ? 'Ripetizioni per giro' : 'Ripetizioni'}</label>
+          <label className="block text-xs text-slate-500 mb-1">{inSerie ? 'Ripetizioni per giro' : 'Ripetizioni'}</label>
           <input type="number" min="1" max="50" value={r.ripetizioni} onChange={(e) => cambia(i, 'ripetizioni', e.target.value)} className={CAMPO} />
         </div>
         <div>
-          <label className="block text-xs text-gray-500 mb-1">Distanza (m)</label>
+          <label className="block text-xs text-slate-500 mb-1">Distanza (m)</label>
           <input type="number" min="25" step="25" value={r.distanza} onChange={(e) => cambia(i, 'distanza', e.target.value)} className={CAMPO} />
         </div>
       </div>
       <div className={`grid grid-cols-2 gap-2 lg:items-end ${inSerie ? 'lg:grid-cols-[1fr_7rem]' : 'lg:grid-cols-[1fr_7rem_7rem]'}`}>
         <div className="col-span-2 lg:col-span-1">
-          <label className="block text-xs text-gray-500 mb-1">Note (facoltative: recupero, ritmo...)</label>
+          <label className="block text-xs text-slate-500 mb-1">Note (facoltative: recupero, ritmo...)</label>
           <input value={r.note} onChange={(e) => cambia(i, 'note', e.target.value)} placeholder={'Es. rec 20", gambe veloci'} className={CAMPO} />
         </div>
         <InputRipartenza etichetta="Ripartenza" value={r.ripartenza} onChange={(v) => cambia(i, 'ripartenza', v)} />
         {!inSerie && (
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Tempo (min)</label>
+            <label className="block text-xs text-slate-500 mb-1">Tempo (min)</label>
             <input type="number" min="1" step="1" inputMode="numeric" value={r.minuti ?? ''} placeholder="Es. 10"
               onChange={(e) => cambia(i, 'minuti', e.target.value)} className={CAMPO} />
           </div>
@@ -106,10 +106,10 @@ function RigaLavoro({ chiave, r, i, primo, ultimo, puoiTogliere, cambia, cambiaT
   }
   return (
     <Reorder.Item as="div" value={chiave} dragListener={false} dragControls={controlli} {...ANIMA}
-      className="relative bg-white border border-gray-100 rounded-3xl p-4 mb-3 shadow-sm">
+      className="relative bg-white rounded-3xl p-4 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
       <div className="flex items-center justify-between mb-3">
         <div onPointerDown={(e) => controlli.start(e)} style={{ touchAction: 'none' }}
-          className="flex items-center gap-2 cursor-grab active:cursor-grabbing select-none text-gray-500 text-sm font-semibold">
+          className="flex items-center gap-2 cursor-grab active:cursor-grabbing select-none text-slate-500 text-sm font-semibold">
           <span className="text-xl leading-none">⠿</span> Lavoro {i + 1}
         </div>
         <Frecce su={() => sposta(chiave, -1)} giu={() => sposta(chiave, 1)} primo={primo} ultimo={ultimo} />
@@ -118,10 +118,10 @@ function RigaLavoro({ chiave, r, i, primo, ultimo, puoiTogliere, cambia, cambiaT
       {personali && n > 1 && (
         <div className="bg-gray-50 rounded-2xl p-3 mt-3">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-gray-600">Ripartenza di ogni ripetizione</p>
+            <p className="text-xs font-semibold text-slate-600">Ripartenza di ogni ripetizione</p>
             <button onClick={() => cambia(i, 'ripartenze', undefined)} className="text-xs text-red-500">Togli</button>
           </div>
-          <p className="text-xs text-gray-500 mb-2">Le caselle vuote usano la ripartenza generale.</p>
+          <p className="text-xs text-slate-500 mb-2">Le caselle vuote usano la ripartenza generale.</p>
           <div className="grid grid-cols-3 lg:grid-cols-6 gap-2">
             {Array.from({ length: n }, (_, j) => (
               <InputRipartenza key={j} etichetta={`${j + 1}° ${r.distanza || ''}`} value={r.ripartenze[j]}
@@ -150,9 +150,9 @@ function Conferma({ titolo, testo, si, no }) {
         className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl text-center">
         <p className="text-3xl mb-2">⚠️</p>
         <p className="font-bold text-lg mb-2">{titolo}</p>
-        <p className="text-sm text-gray-600 mb-5">{testo}</p>
+        <p className="text-sm text-slate-600 mb-5">{testo}</p>
         <div className="grid grid-cols-2 gap-2">
-          <button onClick={no} className="font-bold text-gray-600 bg-gray-100 rounded-2xl py-3">Annulla</button>
+          <button onClick={no} className="font-bold text-slate-600 bg-gray-100 rounded-2xl py-3">Annulla</button>
           <button onClick={si} className="font-bold text-white bg-red-500 rounded-2xl py-3">Sì, togli</button>
         </div>
       </div>
@@ -172,7 +172,7 @@ function CampoGiri({ giri, annulli, onGiri }) {
   const tasto = 'w-10 shrink-0 rounded-xl bg-white border border-gray-200 text-blue-600 font-bold text-lg disabled:opacity-30 active:scale-90 transition'
   return (
     <div>
-      <label className="block text-xs text-gray-500 mb-1">Giri</label>
+      <label className="block text-xs text-slate-500 mb-1">Giri</label>
       <div className="flex gap-1">
         <button onClick={() => onGiri(giri - 1)} disabled={giri <= 1} aria-label="Togli un giro" className={tasto}>−</button>
         <input type="number" min="1" max="20" inputMode="numeric" value={testo} onChange={(e) => setTesto(e.target.value)}
@@ -203,7 +203,7 @@ function SerieGiri({ chiave, serie, righe, primo, ultimo, annulli, cambia, cambi
         <InputRipartenza etichetta="Recupero tra i giri" placeholder={'Es. 20"'} value={serie.recupero}
           onChange={(v) => cambiaSerie(serie.id, 'recupero', v)} />
         <div>
-          <label className="block text-xs text-gray-500 mb-1">Tempo (min)</label>
+          <label className="block text-xs text-slate-500 mb-1">Tempo (min)</label>
           <input type="number" min="1" step="1" inputMode="numeric" value={serie.minuti ?? ''} placeholder="Es. 45"
             onChange={(e) => cambiaSerie(serie.id, 'minuti', e.target.value)} className={CAMPO} />
         </div>
@@ -215,7 +215,7 @@ function SerieGiri({ chiave, serie, righe, primo, ultimo, annulli, cambia, cambi
       {righe.map(({ riga, indice }, k) => (
         <div key={riga._id} className="bg-white border border-gray-100 rounded-2xl p-3 mb-2">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-semibold text-gray-500">{k + 1}° della serie</p>
+            <p className="text-sm font-semibold text-slate-500">{k + 1}° della serie</p>
             <Frecce su={() => spostaInSerie(indice, -1)} giu={() => spostaInSerie(indice, 1)} primo={k === 0} ultimo={k === righe.length - 1} />
           </div>
           <CampiRiga r={riga} i={indice} inSerie cambia={cambia} cambiaTipo={cambiaTipo} />
@@ -226,7 +226,7 @@ function SerieGiri({ chiave, serie, righe, primo, ultimo, annulli, cambia, cambi
       ))}
       <div className="flex items-center justify-between gap-2 px-1 pt-1 mb-3">
         <button onClick={() => aggiungiInSerie(serie.id)} className="text-xs font-semibold text-blue-600">+ Lavoro nella serie</button>
-        <button onClick={() => sciogli(serie.id)} className="text-xs text-gray-500">Sciogli serie</button>
+        <button onClick={() => sciogli(serie.id)} className="text-xs text-slate-500">Sciogli serie</button>
       </div>
       <AnimatePresence initial={false}>
         {Array.from({ length: giri - 1 }, (_, x) => x + 1).map((g) => (
@@ -239,14 +239,14 @@ function SerieGiri({ chiave, serie, righe, primo, ultimo, annulli, cambia, cambi
                   <button onClick={() => cambiaGiri(serie.id, giri - 1)} className="text-xs text-red-500">✕ Togli giro</button>
                 )}
               </div>
-              <p className="text-xs text-gray-500 mb-2">Stessi lavori del Giro 1. Cambia la ripartenza solo se in questo giro è diversa.</p>
+              <p className="text-xs text-slate-500 mb-2">Stessi lavori del Giro 1. Cambia la ripartenza solo se in questo giro è diversa.</p>
               {righe.map(({ riga, indice }) => Array.from({ length: perGiro(riga) }, (_, k) => {
                 const j = g * perGiro(riga) + k
                 return (
                   <div key={`${riga._id}-${k}`} className="grid grid-cols-[1fr_7rem] items-end gap-2 mb-1">
-                    <p className="text-sm text-gray-600 pb-2.5">
+                    <p className="text-sm text-slate-600 pb-2.5">
                       {riga.distanza} m {riga.stile}{perGiro(riga) > 1 ? ` (${k + 1})` : ''}
-                      <span className="text-xs text-gray-500"> · {riga.tipo_lavoro}</span>
+                      <span className="text-xs text-slate-500"> · {riga.tipo_lavoro}</span>
                     </p>
                     <InputRipartenza etichetta="Ripartenza" placeholder={riga.ripartenza || 'Es. 1\'30"'}
                       value={riga.ripartenze?.[j]} onChange={(v) => cambiaRipGiro(indice, j, v)} />
@@ -548,15 +548,15 @@ export default function EditorAllenamento({ squadra, giorno }) {
 
   return (
     <>
-      <div className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">
+      <div className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
           <p className="font-bold">Allenamento di {squadra.nome}</p>
           <div className="flex items-center gap-2 whitespace-nowrap">
             <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-blue-50 text-blue-600">{STATO[stato]}</span>
-            <button onClick={esci} className="text-xs font-bold px-3 py-1 rounded-full bg-gray-100 text-gray-600 active:scale-95 transition">✕ Esci senza salvare</button>
+            <button onClick={esci} className="text-xs font-bold px-3 py-1 rounded-full bg-gray-100 text-slate-600 active:scale-95 transition">✕ Esci senza salvare</button>
           </div>
         </div>
-        <label className="block text-xs text-gray-500 mb-1">Titolo (facoltativo)</label>
+        <label className="block text-xs text-slate-500 mb-1">Titolo (facoltativo)</label>
         <input value={titolo} onChange={(e) => setTitolo(e.target.value)} placeholder="Es. Resistenza aerobica" className={CAMPO} />
       </div>
 
@@ -573,41 +573,41 @@ export default function EditorAllenamento({ squadra, giorno }) {
           })}
         </AnimatePresence>
       </Reorder.Group>
-      <div className="bg-white border border-gray-100 rounded-3xl p-4 mb-3 shadow-sm">
+      <div className="bg-white rounded-3xl p-4 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
         <div className="grid grid-cols-2 gap-2 mb-3">
           <button onClick={() => aggiungiLavoro()}
             className="text-blue-600 font-bold bg-blue-50 rounded-2xl py-3">+ Aggiungi Lavoro</button>
           <button onClick={aggiungiSerie}
             className="text-blue-600 font-bold bg-blue-50 rounded-2xl py-3">+ Serie a giri 🔁</button>
         </div>
-        <p className="text-xs text-gray-500 mb-2">Oppure scegli subito il tipo di lavoro:</p>
+        <p className="text-xs text-slate-500 mb-2">Oppure scegli subito il tipo di lavoro:</p>
         <div className="flex flex-wrap gap-2">
           {[...TIPI_COACH, ...TIPI_LAVORO].map((t) => (
             <button key={t} onClick={() => aggiungiLavoro(t)}
-              className="text-xs font-semibold rounded-full px-3 py-1.5 bg-gray-100 text-gray-600 active:scale-95">+ {t}</button>
+              className="text-xs font-semibold rounded-full px-3 py-1.5 bg-gray-100 text-slate-600 active:scale-95">+ {t}</button>
           ))}
         </div>
       </div>
 
-      <div className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">
+      <div className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
         <p className="text-sm font-bold mb-2">Chi lo vede</p>
         <div className="grid grid-cols-2 gap-2 mb-4">
           {[['coach', '🔒 Solo coach'], ['squadra', '👥 Tutta la squadra']].map(([k, n]) => (
             <button key={k} onClick={() => setVis(k)}
-              className={`rounded-xl py-2.5 text-sm font-semibold ${vis === k ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'}`}>{n}</button>
+              className={`rounded-xl py-2.5 text-sm font-semibold ${vis === k ? 'bg-blue-600 text-white' : 'bg-gray-100 text-slate-600'}`}>{n}</button>
           ))}
         </div>
         <p className="text-sm font-bold mb-2">Copia anche su altri giorni</p>
         <div className="flex flex-wrap gap-2">
           {prossimi.map((d) => (
             <button key={d} onClick={() => toggleExtra(d)}
-              className={`text-xs font-semibold rounded-full px-3 py-1.5 ${extra.includes(d) ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'}`}>
+              className={`text-xs font-semibold rounded-full px-3 py-1.5 ${extra.includes(d) ? 'bg-blue-600 text-white' : 'bg-gray-100 text-slate-600'}`}>
               {GG[new Date(d + 'T12:00:00').getDay()]} {Number(d.slice(8))}
             </button>
           ))}
         </div>
         {extra.length > 0 && <p className="text-xs text-amber-700 mt-2">Se in quei giorni c'è già un allenamento, verrà sostituito.</p>}
-        <p className="text-xs text-gray-500 mt-3">
+        <p className="text-xs text-slate-500 mt-3">
           Totale: {(metriPiano(righeSalvate(righe)) / 1000).toFixed(1).replace('.', ',')} km
           {minutiPiano(righe) > 0 && ` · ${minutiPiano(righe)} min`}
         </p>
@@ -627,7 +627,7 @@ export default function EditorAllenamento({ squadra, giorno }) {
       ) : (
         <p className="text-sm text-amber-800 bg-amber-50 rounded-2xl px-4 py-3">La pubblicazione degli allenamenti è bloccata dall'amministratore per questa squadra.</p>
       )}
-      <button onClick={esci} className="w-full font-bold text-gray-600 bg-gray-100 rounded-2xl py-3 mt-2 active:scale-[0.98] transition">✕ Esci senza salvare</button>
+      <button onClick={esci} className="w-full font-bold text-slate-600 bg-gray-100 rounded-2xl py-3 mt-2 active:scale-[0.98] transition">✕ Esci senza salvare</button>
       {stato !== 'nuovo' && (
         <button onClick={elimina} className="w-full text-sm text-red-500 mt-3 py-2">Elimina allenamento di questo giorno</button>
       )}

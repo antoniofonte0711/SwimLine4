@@ -86,17 +86,17 @@ export default function CarrelloCard({ giorno, onSalvato }) {
 
   return (
     <div className={`bg-white rounded-3xl p-5 mb-3 shadow-sm border-2 ${n ? 'border-blue-500' : 'border-gray-100'}`}>
-      <p className="text-sm text-gray-500 mb-2">Il tuo carrello di oggi</p>
+      <p className="text-sm text-slate-500 mb-2">Il tuo carrello di oggi</p>
 
       <div className="flex items-center gap-3 mb-2">
-        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${n ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500'}`}>
+        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${n ? 'bg-blue-600 text-white' : 'bg-gray-100 text-slate-500'}`}>
           {n}
         </div>
         <div>
           <p className="font-bold text-sm">
             {n === 0 ? 'Nessun lavoro ancora' : n === 1 ? '1 lavoro aggiunto oggi' : `${n} lavori aggiunti oggi`}
           </p>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-slate-500">
             {n === 0 ? 'Aggiungine uno qui sopra' : 'Puoi aggiungerne altri, poi salvi tutto insieme'}
           </p>
         </div>
@@ -109,12 +109,12 @@ export default function CarrelloCard({ giorno, onSalvato }) {
           className="flex items-start justify-between gap-2 border-t border-gray-100 py-3 text-sm">
           <div>
             <p className="font-semibold">{v.tipo_lavoro} · {v.ripetizioni}×{v.distanza} m {v.stile} {v.conVideo && '🎥'}</p>
-            {v.passaggi.length > 0 && <p className="text-xs text-gray-500">{v.passaggi.map((p) => p || '–').join(' · ')}</p>}
+            {v.passaggi.length > 0 && <p className="text-xs text-slate-500">{v.passaggi.map((p) => p || '–').join(' · ')}</p>}
           </div>
           <div className="flex items-center gap-1 shrink-0">
-            <button onClick={() => sposta(v.id, -1)} disabled={idx === 0} aria-label="Sposta su" className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 font-bold disabled:opacity-30">↑</button>
-            <button onClick={() => sposta(v.id, 1)} disabled={idx === voci.length - 1} aria-label="Sposta giù" className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 font-bold disabled:opacity-30">↓</button>
-            <button onClick={() => rimuovi(v.id)} aria-label="Rimuovi" className="text-gray-500 hover:text-red-500 text-xl leading-none px-1">×</button>
+            <button onClick={() => sposta(v.id, -1)} disabled={idx === 0} aria-label="Sposta su" className="w-8 h-8 rounded-full bg-gray-100 text-slate-600 font-bold disabled:opacity-30">↑</button>
+            <button onClick={() => sposta(v.id, 1)} disabled={idx === voci.length - 1} aria-label="Sposta giù" className="w-8 h-8 rounded-full bg-gray-100 text-slate-600 font-bold disabled:opacity-30">↓</button>
+            <button onClick={() => rimuovi(v.id)} aria-label="Rimuovi" className="text-slate-500 hover:text-red-500 text-xl leading-none px-1">×</button>
           </div>
         </motion.div>
       ))}

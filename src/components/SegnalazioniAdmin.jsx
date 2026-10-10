@@ -26,15 +26,15 @@ export default function SegnalazioniAdmin() {
   return (
     <div className="border border-gray-200 rounded-2xl p-4 mb-6">
       <h2 className="font-bold mb-1">Segnalazioni{lista.length > 0 && ` (${lista.length})`}</h2>
-      <p className="text-sm text-gray-600 mb-3">Problemi scritti dagli utenti dal loro Profilo. Quando l'hai sistemato, segnalo come risolto.</p>
-      {lista.length === 0 && <p className="text-sm text-gray-500">Nessuna segnalazione.</p>}
+      <p className="text-sm text-slate-600 mb-3">Problemi scritti dagli utenti dal loro Profilo. Quando l'hai sistemato, segnalo come risolto.</p>
+      {lista.length === 0 && <p className="text-sm text-slate-500">Nessuna segnalazione.</p>}
       {lista.map((s) => (
         <div key={s.id} className="bg-gray-50 rounded-xl p-3 mb-2">
-          <p className="text-xs text-gray-500 mb-1">
+          <p className="text-xs text-slate-500 mb-1">
             {nomi[s.autore_id] || 'Account eliminato'} · {new Date(s.created_at).toLocaleString('it-IT')}
           </p>
           <p className="whitespace-pre-wrap mb-2">{s.testo}</p>
-          {s.dispositivo && <p className="text-[11px] text-gray-400 mb-2 break-all">{s.dispositivo}</p>}
+          {s.dispositivo && <p className="text-[11px] text-slate-400 mb-2 break-all">{s.dispositivo}</p>}
           <button onClick={() => risolta(s.id)} className="text-sm font-bold text-blue-600">Risolto, togli dalla lista</button>
         </div>
       ))}

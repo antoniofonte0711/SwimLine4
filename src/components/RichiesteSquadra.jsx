@@ -70,7 +70,7 @@ export default function RichiesteSquadra({ completo = false }) {
       {completo && (
         <>
           <p className="font-bold mb-1">🏊 La mia squadra (da atleta)</p>
-          <p className="text-xs text-gray-500 mb-3">
+          <p className="text-xs text-slate-500 mb-3">
             Sei admin ma anche atleta: i coach ti trovano e ti invitano, e tu entri nella loro squadra solo se accetti.
           </p>
           <p className="text-sm mb-3">
@@ -92,7 +92,7 @@ export default function RichiesteSquadra({ completo = false }) {
             <button onClick={() => rispondi(r, true)} disabled={!!invio}
               className="font-bold text-white bg-blue-600 disabled:opacity-60 rounded-xl py-2">{invio === r.id ? '…' : 'Accetta'}</button>
             <button onClick={() => rispondi(r, false)} disabled={!!invio}
-              className="font-bold text-gray-600 bg-white disabled:opacity-60 rounded-xl py-2">Rifiuta</button>
+              className="font-bold text-slate-600 bg-white disabled:opacity-60 rounded-xl py-2">Rifiuta</button>
           </div>
         </div>
       ))}

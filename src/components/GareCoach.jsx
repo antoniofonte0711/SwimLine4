@@ -12,9 +12,10 @@ import {
 } from '../lib/tempo'
 import { useMiaSquadra } from '../lib/pianoSquadra'
 import { useRegole } from '../lib/regole'
+import Schede from './Schede'
 
-const CAMPO = 'w-full border border-gray-200 bg-gray-50 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400'
-const CARD = 'bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm'
+const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white'
+const CARD = 'bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]'
 const DISTANZE = ['25', '50', '100', '200', '400', '800', '1500']
 const MSG_MIGRAZIONE = 'Manca una colonna nel database: esegui 10_migrazione_fase10_punti_gare.sql su Supabase.'
 const nuovaGara = (x = {}) => ({ distanza: '100', stile: 'Stile libero', ...x, _id: crypto.randomUUID() })
@@ -28,7 +29,7 @@ function differenza(iscr, finale) {
   const b = tempoInSecondi(finale)
   if (a === null || b === null) return null
   const diff = Math.round((b - a) * 100) / 100
-  if (diff === 0) return { testo: '=', classe: 'text-gray-500 bg-gray-100' }
+  if (diff === 0) return { testo: '=', classe: 'text-slate-500 bg-gray-100' }
   const testo = (diff < 0 ? '-' : '+') + secondiInTempo(Math.abs(diff))
   return { testo, classe: diff < 0 ? 'text-green-700 bg-green-100' : 'text-red-600 bg-red-100' }
 }
@@ -65,7 +66,7 @@ function Parziali({ passaggi, finale, passo, distanza }) {
       <p className="text-xs font-bold text-blue-700 mb-1">Parziali calcolati</p>
       {lista.map((x) => (
         <div key={x.da} className="flex justify-between text-sm py-0.5">
-          <span className="text-gray-600">{x.da}–{x.a} m</span>
+          <span className="text-slate-600">{x.da}–{x.a} m</span>
           <b className="text-blue-700">{secondiInTempo(x.sec)}</b>
         </div>
       ))}
@@ -112,7 +113,7 @@ function SchedaRisultato({ g, onSalvato }) {
       <button onClick={() => setAperta(!aperta)} className="w-full flex items-center justify-between gap-2 text-left">
         <span className="min-w-0">
           <span className="font-semibold block truncate">{g.atleta?.nome} {g.atleta?.cognome}</span>
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-slate-500">
             {g.tempo_iscrizione ? `Iscrizione ${g.tempo_iscrizione}` : 'Senza tempo di iscrizione'}
           </span>
         </span>
@@ -127,11 +128,11 @@ function SchedaRisultato({ g, onSalvato }) {
         <div className="mt-3">
           <InputTempo etichetta="Tempo effettivo" value={tempo} onChange={setTempo} />
           {tempo && g.tempo_iscrizione && (
-            <p className="text-sm text-gray-500 mt-2">Rispetto all'iscrizione: <Differenziale iscr={g.tempo_iscrizione} finale={normalizzaTempo(tempo)} /></p>
+            <p className="text-sm text-slate-500 mt-2">Rispetto all'iscrizione: <Differenziale iscr={g.tempo_iscrizione} finale={normalizzaTempo(tempo)} /></p>
           )}
           {nPassaggi > 0 && (
             <>
-              <p className="text-sm text-gray-500 mt-3 mb-2">Scrivi il passaggio (tempo totale a quel punto): i parziali li calcolo io</p>
+              <p className="text-sm text-slate-500 mt-3 mb-2">Scrivi il passaggio (tempo totale a quel punto): i parziali li calcolo io</p>
               <div className="grid grid-cols-2 gap-3">
                 {Array.from({ length: nPassaggi }, (_, i) => (
                   <InputTempo key={i} etichetta={`Ai ${(i + 1) * passo} m`} vuotoOk value={passaggi[i] || ''}
@@ -179,7 +180,7 @@ function ModificaTrofeo({ righe, onSalvato }) {
     return (
       <div className="mb-3">
         {(g.luogo || g.note) && (
-          <p className="text-xs text-gray-500 mb-2">{[g.luogo && `📍 ${g.luogo}`, g.note].filter(Boolean).join(' · ')}</p>
+          <p className="text-xs text-slate-500 mb-2">{[g.luogo && `📍 ${g.luogo}`, g.note].filter(Boolean).join(' · ')}</p>
         )}
         <button onClick={apri} className="text-sm font-bold text-blue-600 bg-blue-50 rounded-full px-4 py-2">✏️ Modifica gara</button>
       </div>
@@ -187,23 +188,23 @@ function ModificaTrofeo({ righe, onSalvato }) {
   }
   return (
     <div className="bg-gray-50 rounded-2xl p-3 mb-3">
-      <label className="block text-xs text-gray-500 mb-1">Nome gara / trofeo</label>
+      <label className="block text-xs text-slate-500 mb-1">Nome gara / trofeo</label>
       <input value={f.nome} onChange={(e) => setF({ ...f, nome: e.target.value })} className={CAMPO + ' mb-2'} />
       <div className="grid grid-cols-2 gap-2 mb-2">
         <SelettoreData etichetta="Data" valore={f.data} onChange={(v) => setF({ ...f, data: v })} />
         <div>
-          <label className="block text-xs text-gray-500 mb-1">Orario</label>
+          <label className="block text-xs text-slate-500 mb-1">Orario</label>
           <input type="time" value={f.orario} onChange={(e) => setF({ ...f, orario: e.target.value })} className={CAMPO} />
         </div>
       </div>
-      <label className="block text-xs text-gray-500 mb-1">Luogo</label>
+      <label className="block text-xs text-slate-500 mb-1">Luogo</label>
       <input value={f.luogo} onChange={(e) => setF({ ...f, luogo: e.target.value })} className={CAMPO + ' mb-2'} />
-      <label className="block text-xs text-gray-500 mb-1">Note</label>
+      <label className="block text-xs text-slate-500 mb-1">Note</label>
       <textarea value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} rows={2} className={CAMPO + ' mb-2 resize-none'} />
       {errore && <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mb-2">{errore}</p>}
-      <p className="text-xs text-gray-500 mb-2">Salvando, atleti e genitori ricevono l'avviso "Gara modificata".</p>
+      <p className="text-xs text-slate-500 mb-2">Salvando, atleti e genitori ricevono l'avviso "Gara modificata".</p>
       <div className="grid grid-cols-2 gap-2">
-        <button onClick={() => setAperta(false)} className="font-bold text-gray-600 bg-white rounded-2xl py-2.5">Annulla</button>
+        <button onClick={() => setAperta(false)} className="font-bold text-slate-600 bg-white rounded-2xl py-2.5">Annulla</button>
         <button onClick={salva} className="font-bold text-white bg-blue-600 rounded-2xl py-2.5">Salva modifiche</button>
       </div>
     </div>
@@ -222,14 +223,14 @@ function RigaGara({ g, i, totale, cambia, sposta, togli }) {
       className="relative bg-gray-50 border border-gray-100 rounded-2xl p-3 mb-2">
       <div className="flex items-center justify-between mb-2">
         <div onPointerDown={(e) => controlli.start(e)} style={{ touchAction: 'none' }}
-          className="flex items-center gap-2 cursor-grab active:cursor-grabbing select-none text-gray-500 text-sm font-semibold">
+          className="flex items-center gap-2 cursor-grab active:cursor-grabbing select-none text-slate-500 text-sm font-semibold">
           <span className="text-xl leading-none">⠿</span> Gara {i + 1}
         </div>
         <div className="flex gap-2">
           <button onClick={() => sposta(i, -1)} disabled={i === 0} aria-label="Sposta su"
-            className="w-8 h-8 rounded-full bg-white text-gray-600 font-bold disabled:opacity-30 active:scale-90 transition">↑</button>
+            className="w-8 h-8 rounded-full bg-white text-slate-600 font-bold disabled:opacity-30 active:scale-90 transition">↑</button>
           <button onClick={() => sposta(i, 1)} disabled={i === totale - 1} aria-label="Sposta giù"
-            className="w-8 h-8 rounded-full bg-white text-gray-600 font-bold disabled:opacity-30 active:scale-90 transition">↓</button>
+            className="w-8 h-8 rounded-full bg-white text-slate-600 font-bold disabled:opacity-30 active:scale-90 transition">↓</button>
           {totale > 1 && <button onClick={() => togli(i)} aria-label="Togli gara" className="w-8 h-8 rounded-full bg-white text-red-500 font-bold active:scale-90 transition">×</button>}
         </div>
       </div>
@@ -359,32 +360,30 @@ export default function GareCoach() {
 
   return (
     <AppShell titolo="Gare" attiva="funzioni" indietro="/funzioni">
-      {!pronto ? <p className="text-center text-gray-500 py-8">Carico…</p>
+      {!pronto ? <p className="text-center text-slate-500 py-8">Carico…</p>
         : !squadra ? <SenzaSquadra />
         : (
           <>
-            <div className="grid grid-cols-2 gap-2 mb-3">
-              {[['nuova', '+ Nuova gara'], ['risultati', 'Risultati']].filter(([k]) => assegna || k === 'risultati').map(([k, n]) => (
-                <button key={k} onClick={() => setModo(k)}
-                  className={`rounded-xl py-2.5 text-sm font-semibold ${modo === k ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 border border-gray-200'}`}>{n}</button>
-              ))}
-            </div>
+            {assegna && (
+              <Schede etichetta="Gare" valore={modo === 'nuova' ? '+ Nuova gara' : 'Risultati'} opzioni={['+ Nuova gara', 'Risultati']}
+                onCambia={(v) => setModo(v === 'Risultati' ? 'risultati' : 'nuova')} />
+            )}
 
             {modo === 'nuova' ? (
               <>
                 <div className={CARD}>
-                  <label className="block text-xs text-gray-500 mb-1">Nome gara / trofeo</label>
+                  <label className="block text-xs text-slate-500 mb-1">Nome gara / trofeo</label>
                   <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Es. Trofeo d'Autunno" className={CAMPO + ' mb-3'} />
                   <div className="grid grid-cols-2 gap-3 mb-3">
                     <SelettoreData etichetta="Data" valore={data} onChange={setData} />
                     <div>
-                      <label className="block text-xs text-gray-500 mb-1">Orario</label>
+                      <label className="block text-xs text-slate-500 mb-1">Orario</label>
                       <input type="time" value={orario} onChange={(e) => setOrario(e.target.value)} className={CAMPO} />
                     </div>
                   </div>
-                  <label className="block text-xs text-gray-500 mb-1">Luogo (facoltativo)</label>
+                  <label className="block text-xs text-slate-500 mb-1">Luogo (facoltativo)</label>
                   <input value={luogo} onChange={(e) => setLuogo(e.target.value)} placeholder="Es. Piscina Comunale, Via Roma 1" className={CAMPO + ' mb-3'} />
-                  <label className="block text-xs text-gray-500 mb-1">Note per atleti e genitori (facoltativo)</label>
+                  <label className="block text-xs text-slate-500 mb-1">Note per atleti e genitori (facoltativo)</label>
                   <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} placeholder="Es. ritrovo alle 8:30 all'ingresso" className={CAMPO + ' mb-3 resize-none'} />
                   <p className="text-sm font-bold mb-2">Gare del trofeo</p>
                   <Reorder.Group as="div" axis="y" values={programma} onReorder={setProgramma}>
@@ -408,15 +407,15 @@ export default function GareCoach() {
                       </button>
                     )}
                   </div>
-                  <p className="text-xs text-gray-500 mb-2">Tocca gli atleti. Il tempo di iscrizione è facoltativo; il risultato lo scrivi dopo la gara.</p>
-                  {atleti.length === 0 && <p className="text-sm text-gray-500 py-3">Nessun atleta nella squadra.</p>}
+                  <p className="text-xs text-slate-500 mb-2">Tocca gli atleti. Il tempo di iscrizione è facoltativo; il risultato lo scrivi dopo la gara.</p>
+                  {atleti.length === 0 && <p className="text-sm text-slate-500 py-3">Nessun atleta nella squadra.</p>}
                   {atleti.map((a, i) => {
                     const r = riga(a.id)
                     return (
                       <div key={a.id} className={`py-3 ${i ? 'border-t border-gray-100' : ''}`}>
                         <button onClick={() => cambia(a.id, { incluso: !r.incluso })} className="w-full flex items-center justify-between text-left">
                           <span className="font-semibold">{a.nome} {a.cognome}</span>
-                          <span className={`text-xs font-bold px-3 py-1 rounded-full ${r.incluso ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500'}`}>
+                          <span className={`text-xs font-bold px-3 py-1 rounded-full ${r.incluso ? 'bg-blue-600 text-white' : 'bg-gray-100 text-slate-500'}`}>
                             {r.incluso ? '✓ Inclusa' : 'Assegna'}
                           </span>
                         </button>
@@ -439,14 +438,14 @@ export default function GareCoach() {
             ) : (
               <>
                 <div className={CARD}>
-                  <label className="block text-xs text-gray-500 mb-1">Trofeo</label>
+                  <label className="block text-xs text-slate-500 mb-1">Trofeo</label>
                   <select value={trofeo} onChange={(e) => { setTrofeo(e.target.value); setGaraSel('') }} className={CAMPO + ' mb-3'}>
                     <option value="">Scegli il trofeo…</option>
                     {trofei.map((t) => <option key={t.k} value={t.k}>{t.nome} · {dataIt(t.data)}</option>)}
                   </select>
                   {trofeo && (
                     <>
-                      <label className="block text-xs text-gray-500 mb-1">Gara</label>
+                      <label className="block text-xs text-slate-500 mb-1">Gara</label>
                       <select value={garaSel} onChange={(e) => setGaraSel(e.target.value)} className={CAMPO}>
                         <option value="">Tutte le gare del trofeo</option>
                         {gareDelTrofeo.map((n) => <option key={n}>{n}</option>)}
@@ -455,19 +454,19 @@ export default function GareCoach() {
                   )}
                 </div>
 
-                {trofei.length === 0 && <p className="text-center text-gray-500 py-8">Nessuna gara assegnata ancora 🏆</p>}
+                {trofei.length === 0 && <p className="text-center text-slate-500 py-8">Nessuna gara assegnata ancora 🏆</p>}
                 {trofeo && (
                   <div className={CARD}>
                     <div className="flex items-center justify-between mb-1">
                       <p className="font-bold">{garaSel || 'Tutte le gare'}</p>
                       <button onClick={eliminaGara} aria-label="Elimina" className="text-red-500 text-lg">🗑</button>
                     </div>
-                    {risultati[0]?.orario && <p className="text-xs text-gray-500 mb-1">Orario {risultati[0].orario.slice(0, 5)}</p>}
+                    {risultati[0]?.orario && <p className="text-xs text-slate-500 mb-1">Orario {risultati[0].orario.slice(0, 5)}</p>}
                     <ModificaTrofeo key={trofeo} righe={delTrofeo}
                       onSalvato={(k) => { setTrofeo(k); setGaraSel(''); caricaGare(atleti) }} />
                     {risultati.map((g) => (
                       <div key={g.id}>
-                        {!garaSel && <p className="text-xs font-bold text-gray-500 mt-2">{nomeGara(g)}</p>}
+                        {!garaSel && <p className="text-xs font-bold text-slate-500 mt-2">{nomeGara(g)}</p>}
                         <SchedaRisultato g={g} onSalvato={() => caricaGare(atleti)} />
                       </div>
                     ))}

@@ -4,7 +4,7 @@ import AppShell from '../components/AppShell'
 export default function InArrivo({ titolo }) {
   return (
     <AppShell titolo={titolo} attiva="funzioni" indietro="/funzioni">
-      <div className="bg-white border border-gray-100 rounded-3xl p-8 text-center text-gray-500 shadow-sm">
+      <div className="bg-white rounded-3xl p-8 text-center text-slate-500 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
         <p className="text-4xl mb-2">🛠️</p>
         <p>Questa sezione arriva a breve.</p>
       </div>

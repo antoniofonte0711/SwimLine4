@@ -9,6 +9,7 @@ import GareCoach from '../components/GareCoach'
 import { useFigli, useFiglioScelto } from '../lib/famiglia'
 import { aggiungiAlCalendario } from '../lib/ics'
 import { useRegole } from '../lib/regole'
+import Schede from '../components/Schede'
 import { ERRORE_TEMPO, erroreTempoImpossibile, normalizzaTempo, tempoPlausibile, tempoValido, passaggiCoerenti } from '../lib/tempo'
 import {
   leggiCoda, aggiungiInCoda, rimuoviDaCoda, sincronizza,
@@ -18,7 +19,7 @@ import {
 const TABELLA = 'gare'
 const VISTE = ['Nuova gara', 'Le mie gare']
 const DISTANZE = ['50', '100', '200', '400', '800', '1500']
-const CAMPO = 'w-full border border-gray-200 bg-gray-50 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400'
+const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white'
 const VUOTO = { nome_gara: '', data_gara: dataLocale(), distanza: '100', stile: 'Stile libero', tempo: '', passaggi: [], file: null }
 
 const formattaDataGara = (s) => (s ? new Date(s + 'T12:00:00').toLocaleDateString('it-IT') : '')
@@ -258,36 +259,29 @@ function GareAtleta() {
 
       <ProssimeGare gare={gare} />
 
-      {viste.length > 1 && (
-      <div className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">
-        <label className="block text-xs text-gray-500 mb-1">Cosa vuoi fare?</label>
-        <select value={vista} onChange={(e) => setVista(e.target.value)} className={CAMPO}>
-          {viste.map((v) => <option key={v}>{v}</option>)}
-        </select>
-      </div>
-      )}
+      {viste.length > 1 && <Schede valore={vista} opzioni={viste} onCambia={setVista} etichetta="Gare" />}
 
       {vista === 'Nuova gara' && viste.includes('Nuova gara') && (
-        <form onSubmit={salva} className="bg-white border border-gray-100 rounded-3xl p-5 shadow-sm">
-          <label className="block text-xs text-gray-500 mb-1">Nome gara</label>
+        <form onSubmit={salva} className="bg-white rounded-3xl p-5 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+          <label className="block text-xs text-slate-500 mb-1">Nome gara</label>
           <input value={form.nome_gara} placeholder="Es. Trofeo d'Autunno"
             onChange={(e) => setForm({ ...form, nome_gara: e.target.value })} className={CAMPO + ' mb-3'} />
 
           <div className="grid grid-cols-2 gap-3 mb-3">
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Data</label>
+              <label className="block text-xs text-slate-500 mb-1">Data</label>
               <input type="date" value={form.data_gara} required
                 onChange={(e) => setForm({ ...form, data_gara: e.target.value })} className={CAMPO} />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Distanza (m)</label>
+              <label className="block text-xs text-slate-500 mb-1">Distanza (m)</label>
               <select value={form.distanza} onChange={(e) => setForm({ ...form, distanza: e.target.value, passaggi: [] })} className={CAMPO}>
                 {DISTANZE.map((x) => <option key={x}>{x}</option>)}
               </select>
             </div>
           </div>
 
-          <label className="block text-xs text-gray-500 mb-1">Stile</label>
+          <label className="block text-xs text-slate-500 mb-1">Stile</label>
           <select value={form.stile} onChange={(e) => setForm({ ...form, stile: e.target.value })} className={CAMPO + ' mb-3'}>
             {STILI.map((s) => <option key={s}>{s}</option>)}
           </select>
@@ -298,7 +292,7 @@ function GareAtleta() {
 
           {nPassaggi > 0 && (
             <>
-              <p className="text-sm text-gray-500 mb-2">Passaggi ogni {passo} m</p>
+              <p className="text-sm text-slate-500 mb-2">Passaggi ogni {passo} m</p>
               <div className="grid grid-cols-2 gap-3 mb-4">
                 {Array.from({ length: nPassaggi }, (_, i) => (
                   <div key={i}>
@@ -310,7 +304,7 @@ function GareAtleta() {
             </>
           )}
 
-          <label className="block text-xs text-gray-500 mb-1">Video della gara (finisce anche nella sezione Video)</label>
+          <label className="block text-xs text-slate-500 mb-1">Video della gara (finisce anche nella sezione Video)</label>
           <input key={fileKey} type="file" accept="video/*" className="w-full text-sm mb-4"
             onChange={(e) => setForm({ ...form, file: e.target.files[0] || null })} />
 
@@ -326,23 +320,23 @@ function GareAtleta() {
 
       {vista === 'Le mie gare' && (
         <>
-          {tutte.length === 0 && <p className="text-center text-gray-500 py-8">Nessuna gara ancora 🏆</p>}
+          {tutte.length === 0 && <p className="text-center text-slate-500 py-8">Nessuna gara ancora 🏆</p>}
           {tutte.map((g) => (
-            <div key={g.id} className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">
+            <div key={g.id} className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <p className="font-bold">{g.nome_gara}</p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-slate-500">
                     {formattaDataGara(g.data_gara)} · {g.distanza} m {g.stile}
                     {g.inAttesa && <span className="ml-2 text-xs text-yellow-700 bg-yellow-100 px-2 py-0.5 rounded-full">⏳ da inviare</span>}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
                   <p className="text-xl font-extrabold text-blue-600">{g.tempo}</p>
-                  {!genitore && <button onClick={() => elimina(g)} title="Elimina" aria-label="Elimina" className="text-gray-500 hover:text-red-500 transition">🗑️</button>}
+                  {!genitore && <button onClick={() => elimina(g)} title="Elimina" aria-label="Elimina" className="text-slate-500 hover:text-red-500 transition">🗑️</button>}
                 </div>
               </div>
-              {g.passaggi?.length > 0 && <p className="text-xs text-gray-500 mt-2">Passaggi: {g.passaggi.join(' · ')}</p>}
+              {g.passaggi?.length > 0 && <p className="text-xs text-slate-500 mt-2">Passaggi: {g.passaggi.join(' · ')}</p>}
             </div>
           ))}
         </>

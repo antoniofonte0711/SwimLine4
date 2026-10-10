@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 
-const CAMPO = 'w-full border border-gray-200 bg-gray-50 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400'
+const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white'
 
 // Nel Profilo: il coach rinomina la squadra, atleta e genitore scrivono il nome per chiedere di entrare
 export default function BoxSquadra() {
@@ -52,14 +52,14 @@ export default function BoxSquadra() {
   }
 
   return (
-    <div className="bg-white border border-gray-100 rounded-3xl p-5 shadow-sm mb-3">
+    <div className="bg-white rounded-3xl p-5 shadow-[0_1px_2px_rgba(10,26,47,0.05)] mb-3">
       <p className="font-bold mb-1">👥 {coach ? 'La tua squadra' : 'Squadra'}</p>
-      <p className="text-xs text-gray-500 mb-3">
+      <p className="text-xs text-slate-500 mb-3">
         {coach
           ? 'Il nome della tua squadra: gli atleti e i genitori lo useranno per chiedere di entrare.'
           : 'Scrivi il nome della squadra (te lo dà il coach) per chiedere di entrare: il coach deve approvare.'}
       </p>
-      <label className="block text-xs text-gray-500 mb-1">Nome squadra</label>
+      <label className="block text-xs text-slate-500 mb-1">Nome squadra</label>
       <input value={testo} onChange={(e) => setTesto(e.target.value)} placeholder="Es. Delfini Nuoto Club" className={CAMPO + ' mb-3'} />
       {errore && <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mb-3">{errore}</p>}
       {ok && <p className="text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2 mb-3">{ok}</p>}
@@ -67,7 +67,7 @@ export default function BoxSquadra() {
         className="w-full font-bold text-white bg-blue-600 disabled:bg-gray-300 rounded-2xl py-3">
         {invio ? 'Salvo…' : coach ? 'Cambia nome' : 'Chiedi di entrare'}
       </button>
-      {attuale && <p className="text-xs text-gray-500 mt-3">Squadra attuale: <b>{attuale}</b></p>}
+      {attuale && <p className="text-xs text-slate-500 mt-3">Squadra attuale: <b>{attuale}</b></p>}
     </div>
   )
 }

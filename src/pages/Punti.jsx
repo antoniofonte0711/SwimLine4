@@ -7,8 +7,8 @@ import { SenzaSquadra } from '../components/PianoCard'
 import { PUNTI_DEFAULT, MSG_FASE10, usePunti } from '../lib/punti'
 import { useMiaSquadra } from '../lib/pianoSquadra'
 
-const CAMPO = 'w-full border border-gray-200 bg-gray-50 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400'
-const CARD = 'bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm'
+const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white'
+const CARD = 'bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]'
 const ESEMPI = [
   'Salta una serie dell\'allenamento',
   'Scegli l\'allenamento di domani',
@@ -29,26 +29,26 @@ function PuntiAtleta() {
 
       <div className={CARD}>
         <p className="font-bold mb-1">I tuoi premi</p>
-        {pronto && premi.length === 0 && <p className="text-sm text-gray-500">Ancora nessun premio: continua ad accumulare punti.</p>}
+        {pronto && premi.length === 0 && <p className="text-sm text-slate-500">Ancora nessun premio: continua ad accumulare punti.</p>}
         {premi.map((p, i) => (
           <div key={p.id} className={`flex items-center justify-between py-2.5 ${i ? 'border-t border-gray-100' : ''}`}>
             <div>
               <p className="font-semibold text-sm">🎁 {p.premio_nome}</p>
-              <p className="text-xs text-gray-500">{dataIt(p.ottenuto_il)}</p>
+              <p className="text-xs text-slate-500">{dataIt(p.ottenuto_il)}</p>
             </div>
-            <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${p.usato ? 'bg-gray-100 text-gray-500' : 'bg-green-100 text-green-700'}`}>{p.usato ? 'Usato' : 'Da usare'}</span>
+            <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${p.usato ? 'bg-gray-100 text-slate-500' : 'bg-green-100 text-green-700'}`}>{p.usato ? 'Usato' : 'Da usare'}</span>
           </div>
         ))}
       </div>
 
       <div className={CARD}>
         <p className="font-bold mb-1">Movimenti</p>
-        {pronto && movimenti.length === 0 && <p className="text-sm text-gray-500">Nessun movimento ancora.</p>}
+        {pronto && movimenti.length === 0 && <p className="text-sm text-slate-500">Nessun movimento ancora.</p>}
         {movimenti.map((m, i) => (
           <div key={m.id} className={`flex items-center justify-between py-2.5 ${i ? 'border-t border-gray-100' : ''}`}>
             <div>
               <p className="text-sm font-semibold">{m.motivo}</p>
-              <p className="text-xs text-gray-500">{dataIt(m.data)}</p>
+              <p className="text-xs text-slate-500">{dataIt(m.data)}</p>
             </div>
             <b className={m.punti >= 0 ? 'text-green-600' : 'text-red-500'}>{m.punti > 0 ? '+' : ''}{m.punti} punti</b>
           </div>
@@ -120,7 +120,7 @@ function PuntiCoach() {
     carica()
   }
 
-  if (!pronto) return <p className="text-center text-gray-500 py-8">Carico…</p>
+  if (!pronto) return <p className="text-center text-slate-500 py-8">Carico…</p>
   if (!squadra) return <SenzaSquadra />
 
   return (
@@ -129,12 +129,12 @@ function PuntiCoach() {
 
       <div className={CARD}>
         <p className="font-bold mb-1">Premi da confermare</p>
-        {vinti.length === 0 && <p className="text-sm text-gray-500">Nessun premio in attesa.</p>}
+        {vinti.length === 0 && <p className="text-sm text-slate-500">Nessun premio in attesa.</p>}
         {vinti.map((p, i) => (
           <div key={p.id} className={`flex items-center justify-between gap-2 py-2.5 ${i ? 'border-t border-gray-100' : ''}`}>
             <div className="min-w-0">
               <p className="font-semibold text-sm truncate">{nomi[p.atleta_id] || 'Atleta'}</p>
-              <p className="text-xs text-gray-500">🎁 {p.premio_nome}</p>
+              <p className="text-xs text-slate-500">🎁 {p.premio_nome}</p>
             </div>
             <button onClick={() => usato(p.id)} className="shrink-0 text-xs font-bold text-white bg-blue-600 rounded-full px-3 py-1.5">Segna usato</button>
           </div>
@@ -146,19 +146,19 @@ function PuntiCoach() {
         <div className="grid grid-cols-2 gap-3">
           {[['punti_presenza', 'Presenza'], ['punti_risultati', 'Risultati inseriti'], ['punti_gara', 'Gara completata'], ['punti_miglioramento', 'Tempo migliorato'], ['soglia_premio', 'Punti per ogni premio']].map(([k, n]) => (
             <div key={k} className={k === 'soglia_premio' ? 'col-span-2' : ''}>
-              <label className="block text-xs text-gray-500 mb-1">{n}</label>
+              <label className="block text-xs text-slate-500 mb-1">{n}</label>
               <input type="number" min="0" value={conf[k]} onChange={num(k)} className={CAMPO} />
             </div>
           ))}
         </div>
         {ok && <p className="text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2 mt-3">{ok}</p>}
         <button onClick={salvaConfig} className="w-full mt-3 font-bold text-white bg-blue-600 rounded-2xl py-3">Salva punti</button>
-        <p className="text-xs text-gray-500 mt-2">I punti arrivano da soli: presenza segnata, risultati scritti, tempo di gara inserito. Il miglioramento scatta se batti il tuo miglior tempo sulla stessa gara.</p>
+        <p className="text-xs text-slate-500 mt-2">I punti arrivano da soli: presenza segnata, risultati scritti, tempo di gara inserito. Il miglioramento scatta se batti il tuo miglior tempo sulla stessa gara.</p>
       </div>
 
       <div className={CARD}>
         <p className="font-bold mb-1">Premi in palio</p>
-        <p className="text-xs text-gray-500 mb-2">Quando un atleta raggiunge la soglia, il premio viene estratto a caso. "Comune" esce più spesso di "Raro".</p>
+        <p className="text-xs text-slate-500 mb-2">Quando un atleta raggiunge la soglia, il premio viene estratto a caso. "Comune" esce più spesso di "Raro".</p>
         {catalogo.length === 0 && (
           <button onClick={() => aggiungiPremi(ESEMPI.map((nome) => ({ nome, peso: 3 })))} className="w-full text-blue-600 font-bold bg-blue-50 rounded-2xl py-2.5 text-sm mb-3">Aggiungi i premi di esempio</button>
         )}
@@ -170,7 +170,7 @@ function PuntiCoach() {
                 {RARITA.map(([v, n]) => <option key={v} value={v}>{n}</option>)}
                 {!RARITA.some(([v]) => v === p.peso) && <option value={p.peso}>Peso {p.peso}</option>}
               </select>
-              <button onClick={() => aggiorna(p.id, { attivo: !p.attivo })} className="text-xs font-bold text-gray-600 bg-gray-100 rounded-full px-3 py-1.5">{p.attivo ? 'Disattiva' : 'Attiva'}</button>
+              <button onClick={() => aggiorna(p.id, { attivo: !p.attivo })} className="text-xs font-bold text-slate-600 bg-gray-100 rounded-full px-3 py-1.5">{p.attivo ? 'Disattiva' : 'Attiva'}</button>
               <button onClick={() => elimina(p.id)} className="text-xs font-bold text-red-500 ml-auto">Elimina</button>
             </div>
           </div>

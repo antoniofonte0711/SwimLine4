@@ -45,7 +45,7 @@ export default function App() {
       <CarrelloProvider>
         <BrowserRouter>
           <AvvisoErrore />
-          <Suspense fallback={<div className="p-6 text-center text-gray-500">Carico…</div>}>
+          <Suspense fallback={<div className="p-6 text-center text-slate-500">Carico…</div>}>
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />

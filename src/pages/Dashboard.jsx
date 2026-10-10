@@ -140,10 +140,10 @@ function HomeAtleta() {
   if (ruolo === 'ospite') {
     return (
       <AppShell titolo="Home" attiva="home">
-        <div className="bg-white border border-gray-100 rounded-3xl p-8 text-center shadow-sm">
+        <div className="bg-white rounded-3xl p-8 text-center shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
           <p className="text-4xl mb-2">👋</p>
           <p className="font-bold mb-1">Benvenuto in SwimLine4</p>
-          <p className="text-sm text-gray-500">Da ospite puoi vedere la squadra e il calendario gare.</p>
+          <p className="text-sm text-slate-500">Da ospite puoi vedere la squadra e il calendario gare.</p>
         </div>
       </AppShell>
     )
@@ -215,13 +215,13 @@ function HomeAtleta() {
           {righe.map((r, i) => (
             <div key={r.id} className={`py-3 ${i ? 'border-t border-gray-100' : ''}`}>
               <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${coloreLavoro(r.tipo_lavoro)}`}>{r.tipo_lavoro}</span>
-              <span className="text-sm text-gray-600 ml-2">
+              <span className="text-sm text-slate-600 ml-2">
                 {r.ripetizioni ? `${r.ripetizioni}×` : ''}{r.distanza} m {r.stile || ''}
               </span>
               {r.passaggi?.length > 0 ? (
-                <p className="text-xs text-gray-500 mt-1">{r.passaggi.map((p) => p || '–').join(' · ')}</p>
+                <p className="text-xs text-slate-500 mt-1">{r.passaggi.map((p) => p || '–').join(' · ')}</p>
               ) : (
-                r.tempo_totale && <p className="text-xs text-gray-500 mt-1">{r.tempo_totale}</p>
+                r.tempo_totale && <p className="text-xs text-slate-500 mt-1">{r.tempo_totale}</p>
               )}
             </div>
           ))}
@@ -245,7 +245,7 @@ function HomeCoach() {
   const settimana = useSettimanaSquadra(squadra?.id, giorno)
   return (
     <AppShell titolo={titoloGiorno(giorno)} attiva="home" giorno={giorno} onGiorno={setGiorno} voti={settimana.voti}>
-      {!pronto ? <p className="text-center text-gray-500 py-8">Carico…</p>
+      {!pronto ? <p className="text-center text-slate-500 py-8">Carico…</p>
         : !squadra ? <SenzaSquadra />
         : <><DomandeIngresso squadra={squadra} /><EditorAllenamento squadra={squadra} giorno={giorno} /></>}
     </AppShell>

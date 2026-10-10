@@ -20,14 +20,14 @@ function StoricoCoach() {
       .then(({ data }) => setPiani(data || []))
   }, [squadra?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (!pronto || (squadra && piani === null)) return <p className="text-center text-gray-500 py-8">Carico…</p>
+  if (!pronto || (squadra && piani === null)) return <p className="text-center text-slate-500 py-8">Carico…</p>
   if (!squadra) return <SenzaSquadra />
-  if (piani.length === 0) return <p className="text-center text-gray-500 py-8">Nessun allenamento ancora 🏊</p>
+  if (piani.length === 0) return <p className="text-center text-slate-500 py-8">Nessun allenamento ancora 🏊</p>
 
   return piani.map((p) => (
     <div key={p.id} className="mb-1">
       <div className="flex items-center justify-between px-1 mb-1">
-        <p className="text-sm font-semibold text-gray-500 capitalize">
+        <p className="text-sm font-semibold text-slate-500 capitalize">
           {p.data === dataLocale() ? 'Oggi · ' : ''}{formattaGiorno(p.data)}
         </p>
         <Link to={`/risultati?data=${p.data}`} className="text-xs font-semibold text-blue-600">Risultati ›</Link>

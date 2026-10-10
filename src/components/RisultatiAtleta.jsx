@@ -91,7 +91,7 @@ export default function RisultatiAtleta({ piano, atletaId, giorno }) {
 
   if (!piano) {
     return (
-      <p className="text-sm text-gray-500 bg-white border border-gray-100 rounded-3xl p-6 text-center shadow-sm">
+      <p className="text-sm text-slate-500 bg-white rounded-3xl p-6 text-center shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
         Nessun allenamento in questo giorno. Preparalo da Allenamenti.
       </p>
     )
@@ -99,7 +99,7 @@ export default function RisultatiAtleta({ piano, atletaId, giorno }) {
 
   return (
     <>
-      <p className="text-sm text-gray-500 mb-2 px-1">📋 {piano.titolo || 'Allenamento del giorno'}</p>
+      <p className="text-sm text-slate-500 mb-2 px-1">📋 {piano.titolo || 'Allenamento del giorno'}</p>
       {blocchiPiano(righe).map((b) => {
         if (b.serie) {
           // Serie a giri: i tempi si scrivono giro per giro, nell'ordine in cui si nuotano
@@ -108,17 +108,17 @@ export default function RisultatiAtleta({ piano, atletaId, giorno }) {
             <div key={b.righe[0].indice} className="bg-white border border-blue-100 rounded-3xl p-4 mb-3 shadow-sm">
               <p className="text-sm font-bold text-blue-700">
                 🔁 {giri} giri
-                {b.serie.recupero && <span className="text-xs font-normal text-gray-500 ml-2">rec {b.serie.recupero} tra i giri</span>}
+                {b.serie.recupero && <span className="text-xs font-normal text-slate-500 ml-2">rec {b.serie.recupero} tra i giri</span>}
               </p>
               {b.righe.map(({ riga: r }, k) => (
-                <p key={k} className="text-xs text-gray-500 mt-1">
+                <p key={k} className="text-xs text-slate-500 mt-1">
                   {perGiro(r) > 1 && `${perGiro(r)}×`}{r.distanza} m {r.stile} · {r.tipo_lavoro}
                   {r.ripartenza && ` · ↻ ${r.ripartenza}`}{r.note && ` · ${r.note}`}
                 </p>
               ))}
               {Array.from({ length: giri }, (_, g) => (
                 <div key={g} className="bg-gray-50 rounded-2xl p-3 mt-3">
-                  <p className="text-xs font-bold text-gray-600 mb-2">Giro {g + 1}</p>
+                  <p className="text-xs font-bold text-slate-600 mb-2">Giro {g + 1}</p>
                   <div className="grid grid-cols-2 gap-3">
                     {b.righe.flatMap(({ riga: r, indice: i }) => Array.from({ length: perGiro(r) }, (_, k) => {
                       const j = g * perGiro(r) + k
@@ -138,11 +138,11 @@ export default function RisultatiAtleta({ piano, atletaId, giorno }) {
         const { riga: r, indice: i } = b
         const n = Math.min(30, Number(r.ripetizioni) || 1)
         return (
-          <div key={i} className="bg-white border border-gray-100 rounded-3xl p-4 mb-3 shadow-sm">
+          <div key={i} className="bg-white rounded-3xl p-4 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
             <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${coloreLavoro(r.tipo_lavoro)}`}>{r.tipo_lavoro}</span>
-            <span className="text-sm text-gray-600 ml-2">{n}×{r.distanza} m {r.stile}</span>
-            {ripartenzeDiRiga(r).length > 0 && <span className="text-xs text-gray-500 ml-2">↻ ripartenza {ripartenzeDiRiga(r).join(' · ')}</span>}
-            {r.note && <p className="text-xs text-gray-500 mt-1">{r.note}</p>}
+            <span className="text-sm text-slate-600 ml-2">{n}×{r.distanza} m {r.stile}</span>
+            {ripartenzeDiRiga(r).length > 0 && <span className="text-xs text-slate-500 ml-2">↻ ripartenza {ripartenzeDiRiga(r).join(' · ')}</span>}
+            {r.note && <p className="text-xs text-slate-500 mt-1">{r.note}</p>}
             <div className="grid grid-cols-2 gap-3 mt-3">
               {Array.from({ length: n }, (_, j) => (
                 <InputTempo key={j} etichetta={`Passaggio ${j + 1}`} value={valori[i]?.[j] || ''} vuotoOk

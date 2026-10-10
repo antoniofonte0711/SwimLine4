@@ -81,7 +81,7 @@ export default function PianoCard({ piano, senzaTesta = false }) {
 
 export function SenzaSquadra() {
   return (
-    <p className="text-sm text-gray-500 bg-white border border-gray-100 rounded-3xl p-6 text-center shadow-sm">
+    <p className="text-sm text-slate-500 bg-white rounded-3xl p-6 text-center shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
       Non trovo una squadra collegata a questo account. Il coach crea la squadra in registrazione; se stai
       provando come admin, assegna un nome squadra al tuo profilo o crea una squadra con coach_id uguale al tuo utente.
     </p>

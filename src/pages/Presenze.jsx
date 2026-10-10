@@ -60,7 +60,7 @@ export default function Presenze() {
 
   return (
     <AppShell titolo="Presenze" attiva="funzioni" indietro="/funzioni">
-      <div className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">
+      <div className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
         <SelettoreData etichetta="Giorno" valore={giorno} onChange={setGiorno} />
         {fuoriAllenamento && (
           <p className="text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2 mt-3">
@@ -72,19 +72,19 @@ export default function Presenze() {
       {errore && <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mb-3">{errore}</p>}
 
       {atleti.length === 0 && (
-        <p className="text-sm text-gray-500 text-center py-8">
+        <p className="text-sm text-slate-500 text-center py-8">
           Nessun atleta nella tua squadra: compaiono qui quando scelgono la tua squadra in registrazione.
         </p>
       )}
 
       {atleti.map((a) => (
-        <div key={a.id} className="bg-white border border-gray-100 rounded-3xl p-4 mb-3 shadow-sm">
+        <div key={a.id} className="bg-white rounded-3xl p-4 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
           <p className="font-bold mb-3">{a.nome} {a.cognome}</p>
           <div className="grid grid-cols-3 gap-2">
             {Object.entries(STATI).map(([chiave, nome]) => (
               <button key={chiave} onClick={() => segna(a.id, chiave)}
                 className={`text-xs font-semibold rounded-xl py-2.5 px-1 transition active:scale-95 ${
-                  stati[a.id] === chiave ? COLORI[chiave] : 'bg-gray-100 text-gray-600'
+                  stati[a.id] === chiave ? COLORI[chiave] : 'bg-gray-100 text-slate-600'
                 }`}>
                 {nome}
               </button>

@@ -11,6 +11,7 @@ import SelettoreData from '../components/SelettoreData'
 import EditorAllenamento from '../components/EditorAllenamento'
 import { SenzaSquadra } from '../components/PianoCard'
 import { useMiaSquadra } from '../lib/pianoSquadra'
+import Schede from '../components/Schede'
 
 const VISTE = ['Aggiungi lavoro', 'Storico']
 
@@ -26,13 +27,7 @@ function AllenamentiAtleta() {
         </p>
       )}
 
-      <div className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">
-        <label className="block text-xs text-gray-500 mb-1">Cosa vuoi fare?</label>
-        <select value={vista} onChange={(e) => setVista(e.target.value)}
-          className="w-full border border-gray-200 bg-gray-50 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400">
-          {VISTE.map((v) => <option key={v}>{v}</option>)}
-        </select>
-      </div>
+      <Schede valore={vista} opzioni={VISTE} onCambia={setVista} etichetta="Allenamenti" />
 
       {vista === 'Aggiungi lavoro' && (
         <>
@@ -52,10 +47,10 @@ function AllenamentiCoach() {
   const { squadra, pronto } = useMiaSquadra()
   return (
     <AppShell titolo="Allenamenti" attiva="funzioni" indietro="/funzioni">
-      <div className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">
+      <div className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
         <SelettoreData etichetta="Data dell'allenamento" valore={giorno} onChange={setGiorno} />
       </div>
-      {!pronto ? <p className="text-center text-gray-500 py-8">Carico…</p>
+      {!pronto ? <p className="text-center text-slate-500 py-8">Carico…</p>
         : !squadra ? <SenzaSquadra />
         : <EditorAllenamento squadra={squadra} giorno={giorno} />}
     </AppShell>

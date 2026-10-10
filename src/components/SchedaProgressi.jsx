@@ -8,7 +8,7 @@ import { STILI, TIPI_LAVORO, dataLocale } from '../lib/lavori'
 import { tempoInSecondi, secondiInTempo, formattaData, normalizzaTempo, tempoValido, tempoPlausibile, erroreTempoImpossibile, ERRORE_TEMPO_BREVE } from '../lib/tempo'
 import { STILI_COACH } from '../lib/pianoSquadra'
 
-const CAMPO = 'w-full border border-gray-200 bg-gray-50 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400'
+const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white'
 const FONTI = ['Allenamenti e gare', 'Solo allenamenti', 'Solo gare']
 const TUTTI = 'Tutti gli stili'
 
@@ -114,43 +114,43 @@ export default function SchedaProgressi({ atletaId, coach = false }) {
         </>
       )}
 
-      <div className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">
+      <div className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
         <div className="grid grid-cols-2 gap-3 mb-3">
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Distanza</label>
+            <label className="block text-xs text-slate-500 mb-1">Distanza</label>
             <select value={distanza} onChange={(e) => setDistanza(e.target.value)} className={CAMPO}>
               {distanze.length === 0 && <option value="">—</option>}
               {distanze.map((d) => <option key={d} value={d}>{d} m</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Stile</label>
+            <label className="block text-xs text-slate-500 mb-1">Stile</label>
             <select value={stile} onChange={(e) => setStile(e.target.value)} className={CAMPO}>
               <option>{TUTTI}</option>
               {stili.map((s) => <option key={s}>{s}</option>)}
             </select>
           </div>
         </div>
-        <label className="block text-xs text-gray-500 mb-1">Cosa mostrare</label>
+        <label className="block text-xs text-slate-500 mb-1">Cosa mostrare</label>
         <select value={fonte} onChange={(e) => setFonte(e.target.value)} className={CAMPO + ' mb-3'}>
           {FONTI.map((f) => <option key={f}>{f}</option>)}
         </select>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Dal</label>
+            <label className="block text-xs text-slate-500 mb-1">Dal</label>
             <input type="date" value={dal} onChange={(e) => setDal(e.target.value)} className={CAMPO} />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Al</label>
+            <label className="block text-xs text-slate-500 mb-1">Al</label>
             <input type="date" value={al} onChange={(e) => setAl(e.target.value)} className={CAMPO} />
           </div>
         </div>
       </div>
 
-      <div className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">
+      <div className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
         {migliore !== null && (
           <>
-            <p className="text-xs text-gray-500">Migliore in questo periodo</p>
+            <p className="text-xs text-slate-500">Migliore in questo periodo</p>
             <p className="text-3xl font-extrabold text-blue-600 mb-2">{secondiInTempo(migliore)}</p>
           </>
         )}
@@ -166,19 +166,19 @@ export default function SchedaProgressi({ atletaId, coach = false }) {
             </ResponsiveContainer>
           </div>
         ) : (
-          <p className="text-sm text-gray-500 text-center py-8">Servono almeno due tempi con questi filtri<br />per mostrare il grafico.</p>
+          <p className="text-sm text-slate-500 text-center py-8">Servono almeno due tempi con questi filtri<br />per mostrare il grafico.</p>
         )}
-        <p className="text-xs text-gray-500 mt-1">Più la linea scende, più è veloce.</p>
+        <p className="text-xs text-slate-500 mt-1">Più la linea scende, più è veloce.</p>
       </div>
 
-      <div className="bg-white border border-gray-100 rounded-3xl p-5 shadow-sm">
-        <p className="text-sm text-gray-500 mb-2">Tempi dal più vecchio al più nuovo</p>
-        {filtrati.length === 0 && <p className="text-sm text-gray-500 py-3">Nessun tempo con questi filtri.</p>}
+      <div className="bg-white rounded-3xl p-5 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+        <p className="text-sm text-slate-500 mb-2">Tempi dal più vecchio al più nuovo</p>
+        {filtrati.length === 0 && <p className="text-sm text-slate-500 py-3">Nessun tempo con questi filtri.</p>}
         {filtrati.map((p) => (
           <div key={p.tabella + p.id} className="flex items-center justify-between border-t border-gray-100 py-3 text-sm gap-2">
             <div className="min-w-0">
               <p className="font-semibold truncate">{p.nome}</p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-slate-500">
                 {new Date(p.data + 'T12:00:00').toLocaleDateString('it-IT')} · {p.fonte} {p.stile ? `· ${p.stile}` : ''}
               </p>
             </div>
@@ -222,22 +222,22 @@ function NuovoTempo({ atletaId, onSalvato }) {
   }
 
   return (
-    <div className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">
+    <div className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
       <div className="grid grid-cols-2 gap-2 mb-3">
         {[['gara', '🏁 Gara'], ['allenamento', '🏊 Allenamento']].map(([k, n]) => (
           <button key={k} onClick={() => setTipo(k)}
-            className={`rounded-xl py-2.5 text-sm font-semibold ${tipo === k ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'}`}>{n}</button>
+            className={`rounded-xl py-2.5 text-sm font-semibold ${tipo === k ? 'bg-blue-600 text-white' : 'bg-gray-100 text-slate-600'}`}>{n}</button>
         ))}
       </div>
       <div className="mb-3"><SelettoreData etichetta="Data" valore={data} onChange={setData} /></div>
       {tipo === 'gara' ? (
         <>
-          <label className="block text-xs text-gray-500 mb-1">Nome gara</label>
+          <label className="block text-xs text-slate-500 mb-1">Nome gara</label>
           <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Es. Trofeo Lombardia" className={CAMPO + ' mb-3'} />
         </>
       ) : (
         <>
-          <label className="block text-xs text-gray-500 mb-1">Lavoro</label>
+          <label className="block text-xs text-slate-500 mb-1">Lavoro</label>
           <select value={lavoro} onChange={(e) => setLavoro(e.target.value)} className={CAMPO + ' mb-3'}>
             {TIPI_LAVORO.map((t) => <option key={t}>{t}</option>)}
           </select>
@@ -245,13 +245,13 @@ function NuovoTempo({ atletaId, onSalvato }) {
       )}
       <div className="grid grid-cols-2 gap-3 mb-3">
         <div>
-          <label className="block text-xs text-gray-500 mb-1">Stile</label>
+          <label className="block text-xs text-slate-500 mb-1">Stile</label>
           <select value={stile} onChange={(e) => setStile(e.target.value)} className={CAMPO}>
             {STILI.map((s) => <option key={s}>{s}</option>)}
           </select>
         </div>
         <div>
-          <label className="block text-xs text-gray-500 mb-1">Distanza (m)</label>
+          <label className="block text-xs text-slate-500 mb-1">Distanza (m)</label>
           <input type="number" min="25" step="25" value={distanza} onChange={(e) => setDistanza(e.target.value)} className={CAMPO} />
         </div>
       </div>

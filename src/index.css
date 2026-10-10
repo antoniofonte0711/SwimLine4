@@ -66,6 +66,14 @@ html.scuro input:not([type='checkbox']):not([type='radio']):not([type='range']):
 html.scuro select,
 html.scuro textarea { background-color: #1c3150; color: #e6eef8; border-color: #24395a; }
 
+/* Schermata d'ingresso: riflessi che scorrono sul fondo e corde che ondeggiano appena */
+@keyframes riflessi-vasca { from { transform: translate(0, 0); } to { transform: translate(-120px, 90px); } }
+@keyframes riflessi-vasca-2 { from { transform: translate(0, 0); } to { transform: translate(110px, -70px); } }
+@keyframes corda-vasca { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(5px); } }
+.riflessi-vasca { animation: riflessi-vasca 14s ease-in-out infinite alternate; will-change: transform; }
+.riflessi-vasca-2 { animation-name: riflessi-vasca-2; animation-duration: 17s; }
+.corda-vasca { animation: corda-vasca 6s ease-in-out infinite; transform-box: fill-box; }
+
 /* Chi ha chiesto meno animazioni al telefono non le vede */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

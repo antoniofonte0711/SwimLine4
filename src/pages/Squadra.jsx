@@ -13,7 +13,7 @@ import { riepilogoPresenze, STATI } from '../lib/presenze'
 import { useMiaSquadra } from '../lib/pianoSquadra'
 import { useRegole } from '../lib/regole'
 
-const CAMPO = 'w-full border border-gray-200 bg-gray-50 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400'
+const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white'
 const dataIt = (s) => (s ? new Date(s + 'T12:00:00').toLocaleDateString('it-IT') : '')
 
 // Squadra: nome della squadra e tempi dei compagni.
@@ -85,25 +85,25 @@ export default function Squadra() {
 
   return (
     <AppShell titolo="Squadra" attiva="funzioni" indietro="/funzioni">
-      <div className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">
-        <p className="text-xs text-gray-500">Squadra</p>
+      <div className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+        <p className="text-xs text-slate-500">Squadra</p>
         <p className="text-xl font-bold mb-3">{nomeSquadra || (isCoach ? 'Tutte le squadre' : 'Non sei ancora in una squadra')}</p>
 
         {nascosti ? (
-          <p className="text-sm text-gray-500">In questa squadra i tempi dei compagni non sono visibili. I tuoi li trovi in Gare e Progressi.</p>
+          <p className="text-sm text-slate-500">In questa squadra i tempi dei compagni non sono visibili. I tuoi li trovi in Gare e Progressi.</p>
         ) : atleti.length > 0 ? (
           <>
-            <label className="block text-xs text-gray-500 mb-1">{isCoach ? 'Atleta' : 'Compagno'}</label>
+            <label className="block text-xs text-slate-500 mb-1">{isCoach ? 'Atleta' : 'Compagno'}</label>
             <select value={scelto} onChange={(e) => setScelto(e.target.value)} className={CAMPO + ' mb-3'}>
               {atleti.map((a) => <option key={a.id} value={a.id}>{a.nome} {a.cognome}</option>)}
             </select>
-            <label className="block text-xs text-gray-500 mb-1">Cosa vuoi vedere?</label>
+            <label className="block text-xs text-slate-500 mb-1">Cosa vuoi vedere?</label>
             <select value={vista} onChange={(e) => setVista(e.target.value)} className={CAMPO}>
               {viste.map((v) => <option key={v}>{v}</option>)}
             </select>
           </>
         ) : (
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-slate-500">
             {isCoach
               ? 'Nessun atleta nella tua squadra: compaiono quando scelgono la tua squadra in registrazione.'
               : 'Quando entri in una squadra qui vedrai i tempi dei compagni.'}
@@ -119,8 +119,8 @@ export default function Squadra() {
       {scelto && !nascosti && vista === 'Gare' && (
         <>
           {elencoMigliori.length > 0 && (
-            <div className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">
-              <p className="text-sm text-gray-500 mb-2">Migliori tempi in gara</p>
+            <div className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+              <p className="text-sm text-slate-500 mb-2">Migliori tempi in gara</p>
               {elencoMigliori.map(([nome, m]) => (
                 <div key={nome} className="flex justify-between border-t border-gray-100 py-2.5 text-sm">
                   <span>{nome}</span>
@@ -129,17 +129,17 @@ export default function Squadra() {
               ))}
             </div>
           )}
-          {gare.length === 0 && <p className="text-center text-gray-500 py-6">Nessuna gara ancora 🏆</p>}
+          {gare.length === 0 && <p className="text-center text-slate-500 py-6">Nessuna gara ancora 🏆</p>}
           {gare.map((g) => (
-            <div key={g.id} className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">
+            <div key={g.id} className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
               <div className="flex justify-between gap-2">
                 <div>
                   <p className="font-bold">{g.nome_gara}</p>
-                  <p className="text-sm text-gray-500">{dataIt(g.data_gara)} · {g.distanza} m {g.stile}</p>
+                  <p className="text-sm text-slate-500">{dataIt(g.data_gara)} · {g.distanza} m {g.stile}</p>
                 </div>
                 <p className="text-xl font-extrabold text-blue-600">{g.tempo}</p>
               </div>
-              {g.passaggi?.length > 0 && <p className="text-xs text-gray-500 mt-2">Passaggi: {g.passaggi.map((p) => p || '–').join(' · ')}</p>}
+              {g.passaggi?.length > 0 && <p className="text-xs text-slate-500 mt-2">Passaggi: {g.passaggi.map((p) => p || '–').join(' · ')}</p>}
             </div>
           ))}
         </>
@@ -147,16 +147,16 @@ export default function Squadra() {
 
       {scelto && vista === 'Allenamenti' && (
         <>
-          {allenamenti.length === 0 && <p className="text-center text-gray-500 py-6">Nessun allenamento ancora 🏊</p>}
+          {allenamenti.length === 0 && <p className="text-center text-slate-500 py-6">Nessun allenamento ancora 🏊</p>}
           {allenamenti.map((r) => (
-            <div key={r.id} className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">
-              <p className="text-xs text-gray-500 capitalize mb-1">{formattaGiorno(r.data_allenamento || (r.created_at || '').slice(0, 10))}</p>
+            <div key={r.id} className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+              <p className="text-xs text-slate-500 capitalize mb-1">{formattaGiorno(r.data_allenamento || (r.created_at || '').slice(0, 10))}</p>
               <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${coloreLavoro(r.tipo_lavoro)}`}>{r.tipo_lavoro}</span>
-              <span className="text-sm text-gray-600 ml-2">{r.ripetizioni ? `${r.ripetizioni}×` : ''}{r.distanza} m {r.stile || ''}</span>
+              <span className="text-sm text-slate-600 ml-2">{r.ripetizioni ? `${r.ripetizioni}×` : ''}{r.distanza} m {r.stile || ''}</span>
               {r.passaggi?.length > 0 ? (
-                <p className="text-xs text-gray-500 mt-1">{r.passaggi.map((p) => p || '–').join(' · ')}</p>
+                <p className="text-xs text-slate-500 mt-1">{r.passaggi.map((p) => p || '–').join(' · ')}</p>
               ) : (
-                r.tempo_totale && <p className="text-xs text-gray-500 mt-1">{r.tempo_totale}</p>
+                r.tempo_totale && <p className="text-xs text-slate-500 mt-1">{r.tempo_totale}</p>
               )}
             </div>
           ))}
@@ -178,7 +178,7 @@ function OggiAtleta({ atletaId }) {
       .then(({ data }) => setPiano(data || null))
   }, [squadra?.id, oggi]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (piano === undefined) return <p className="text-center text-gray-500 py-6">Carico…</p>
+  if (piano === undefined) return <p className="text-center text-slate-500 py-6">Carico…</p>
   return <RisultatiAtleta piano={piano} atletaId={atletaId} giorno={oggi} />
 }
 
@@ -193,15 +193,15 @@ function PresenzeBreve({ atletaId }) {
   const assenze = righe.filter((r) => r.stato !== 'presente').slice(0, 15)
   return (
     <>
-      <div className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">
-        <p className="text-sm text-gray-500">Presenze</p>
+      <div className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+        <p className="text-sm text-slate-500">Presenze</p>
         <p className="text-3xl font-extrabold text-blue-600">{tot.percentuale === null ? '—' : `${tot.percentuale}%`}</p>
         <p className="font-bold mt-4 mb-1 text-sm">Assenze</p>
-        {assenze.length === 0 && <p className="text-sm text-gray-500">Nessuna assenza.</p>}
+        {assenze.length === 0 && <p className="text-sm text-slate-500">Nessuna assenza.</p>}
         {assenze.map((r, i) => (
           <div key={r.data} className={`flex justify-between py-2 text-sm ${i ? 'border-t border-gray-100' : ''}`}>
             <span>{new Date(r.data + 'T12:00:00').toLocaleDateString('it-IT')}</span>
-            <span className="text-gray-500">{STATI[r.stato]}</span>
+            <span className="text-slate-500">{STATI[r.stato]}</span>
           </div>
         ))}
       </div>
