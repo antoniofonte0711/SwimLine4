@@ -44,6 +44,7 @@ function RiepilogoAtleta() {
         .from('allenamenti_squadra')
         .select('data, righe')
         .eq('squadra_id', profile.squadra_id)
+        .eq('pubblicato', true)
         .gte('data', lunedi)
         .then(({ data }) => setPiani(data || []))
     }

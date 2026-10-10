@@ -4,7 +4,12 @@ import dati from 'C:/Users/maipa/Documents/SwimLine4-backup/2026-10-08/dati-prod
 
 const tabelle = {}
 for (const [k, v] of Object.entries(dati)) if (Array.isArray(v)) tabelle[k] = structuredClone(v)
-const UTENTI = { admin: '66341edd-f376-4474-84e2-f053b48793a5', coach: '354b286b-f344-4717-95c4-b698863bd3b2' }
+const UTENTI = {
+  admin: '66341edd-f376-4474-84e2-f053b48793a5',
+  coach: '354b286b-f344-4717-95c4-b698863bd3b2',
+  atleta: 'e0c63c5a-989a-4d92-a5d0-11e62e6e1832', // Atleta Uno
+  genitore: '4a22335f-d5d6-47a9-9253-f9a9215386d6', // Genitore Uno
+}
 const chi = (() => { try { return localStorage.getItem('mock-utente') || 'admin' } catch { return 'admin' } })()
 const utente = { id: UTENTI[chi] || UTENTI.admin, email: 'mock@locale' }
 

@@ -78,26 +78,36 @@ export function settimanaDi(giorno) {
 
 // Allenamenti pubblicati della squadra nella settimana del giorno scelto:
 // { voti: { data: difficoltà }, metri: totale della settimana, giorni: numero di allenamenti }
-export function useSettimanaSquadra(squadraId, giorno) {
-  const [dati, setDati] = useState({ voti: {}, metri: 0, giorni: 0 })
+// Con atletaId anche fatti (metri dei giorni in cui l'atleta era presente) e presenti (quanti di quei giorni)
+const VUOTO = { voti: {}, metri: 0, giorni: 0, fatti: 0, presenti: 0 }
+export function useSettimanaSquadra(squadraId, giorno, atletaId) {
+  const [dati, setDati] = useState(VUOTO)
   const [lun, dom] = settimanaDi(giorno)
   useEffect(() => {
     let attivo = true
-    if (!squadraId) return setDati({ voti: {}, metri: 0, giorni: 0 })
-    supabase.from('allenamenti_squadra').select('data, righe').eq('squadra_id', squadraId).eq('pubblicato', true)
-      .gte('data', lun).lte('data', dom)
-      .then(({ data }) => {
-        if (!attivo) return
-        const voti = {}
-        let metri = 0
-        ;(data || []).forEach((a) => {
-          const d = difficoltaPiano(a.righe || [])
-          if (d) { voti[a.data] = d.voto; metri += d.metri }
-        })
-        setDati({ voti, metri, giorni: Object.keys(voti).length })
+    if (!squadraId) return setDati(VUOTO)
+    Promise.all([
+      supabase.from('allenamenti_squadra').select('data, righe').eq('squadra_id', squadraId).eq('pubblicato', true)
+        .gte('data', lun).lte('data', dom),
+      atletaId
+        ? supabase.from('presenze').select('data, stato').eq('atleta_id', atletaId).gte('data', lun).lte('data', dom)
+        : Promise.resolve({ data: [] }),
+    ]).then(([{ data }, { data: presenze }]) => {
+      if (!attivo) return
+      const presente = new Set((presenze || []).filter((p) => p.stato === 'presente').map((p) => p.data))
+      const voti = {}
+      let metri = 0, fatti = 0, presenti = 0
+      ;(data || []).forEach((a) => {
+        const d = difficoltaPiano(a.righe || [])
+        if (!d) return
+        voti[a.data] = d.voto
+        metri += d.metri
+        if (presente.has(a.data)) { fatti += d.metri; presenti += 1 }
       })
+      setDati({ voti, metri, giorni: Object.keys(voti).length, fatti, presenti })
+    })
     return () => { attivo = false }
-  }, [squadraId, lun, dom])
+  }, [squadraId, lun, dom, atletaId])
   return dati
 }
 

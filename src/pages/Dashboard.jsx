@@ -23,6 +23,8 @@ const COLORE_STATO = {
 }
 
 // "Oggi" per il giorno corrente, altrimenti "Lun 5"
+const km = (metri) => (metri / 1000).toFixed(1).replace('.', ',')
+
 const titoloGiorno = (g) => {
   if (g === dataLocale()) return 'Oggi'
   const d = new Date(g + 'T12:00:00')
@@ -92,7 +94,7 @@ function HomeAtleta() {
   const [vasca, setVasca] = useState(false)
   const { squadra } = useMiaSquadra()
   const squadraNome = squadra?.nome
-  const settimana = useSettimanaSquadra(profile?.squadra_id, giorno)
+  const settimana = useSettimanaSquadra(profile?.squadra_id, giorno, user.id)
 
   // Allenamento pubblicato dal coach per questo giorno, della mia squadra
   // (il filtro serve all'admin, che per i permessi vedrebbe i piani di tutte le squadre)
@@ -177,9 +179,12 @@ function HomeAtleta() {
         <div className="bg-white rounded-3xl p-4 mb-3 flex items-center justify-between">
           <div>
             <p className="text-xs font-bold tracking-widest text-slate-500 uppercase">Questa settimana</p>
-            <p className="font-display text-3xl font-extrabold mt-1">{(settimana.metri / 1000).toFixed(1).replace('.', ',')}<span className="text-base"> km</span></p>
+            <p className="font-display text-3xl font-extrabold mt-1">{km(settimana.fatti)}<span className="text-base"> km fatti</span></p>
           </div>
-          <p className="text-[13px] text-slate-500 text-right">{settimana.giorni} {settimana.giorni === 1 ? 'allenamento' : 'allenamenti'}<br />in programma</p>
+          <p className="text-[13px] text-slate-500 text-right">
+            su {km(settimana.metri)} km in programma<br />
+            presente {settimana.presenti} su {settimana.giorni}
+          </p>
         </div>
       )}
 
