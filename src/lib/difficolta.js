@@ -5,6 +5,7 @@
 // Quanto stanca un metro in ogni zona (A2 = 1)
 export const PESI = {
   Riscaldamento: 0.5, Sciolto: 0.4, Defaticamento: 0.4, Tecnica: 0.7, Gambe: 0.9,
+  Ipossia: 1.2, // respirazione ridotta: poche vasche ma il fiato si fa sentire
   A2: 1,    // ritmo che si tiene a lungo senza cedere
   B1: 1.6,  // più ritmo, ma senza arrivare stremati
   B2: 2.6,  // fiato al limite su distanze lunghe
@@ -16,7 +17,7 @@ const PESO_PASSO_GARA = 4
 
 // Gruppi per la barra "dove è andata la fatica"
 export const GRUPPI = [
-  { id: 'recupero', nome: 'Recupero e tecnica', colore: 'bg-sky-300', tipi: ['Riscaldamento', 'Sciolto', 'Defaticamento', 'Tecnica', 'Gambe'] },
+  { id: 'recupero', nome: 'Recupero e tecnica', colore: 'bg-sky-300', tipi: ['Riscaldamento', 'Sciolto', 'Defaticamento', 'Tecnica', 'Gambe', 'Ipossia'] },
   { id: 'aerobico', nome: 'Aerobico', colore: 'bg-blue-500', tipi: ['A2', 'B1'] },
   { id: 'soglia', nome: 'Soglia', colore: 'bg-orange-400', tipi: ['B2'] },
   { id: 'lattacido', nome: 'Lattacido', colore: 'bg-red-500', tipi: ['C1', 'C2'] },

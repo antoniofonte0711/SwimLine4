@@ -7,7 +7,7 @@ import { usePreferenze } from '../lib/preferenze'
 
 const BREVE = { 'Stile libero': 'SL', 'Proprio stile': 'PS' }
 const stile = (s) => BREVE[s] || s
-const NOMI = { Riscaldamento: 'Riscaldamento', Tecnica: 'Tecnica', Sciolto: 'Sciolto', Defaticamento: 'Defaticamento', Gambe: 'Gambe' }
+const NOMI = { Riscaldamento: 'Riscaldamento', Tecnica: 'Tecnica', Sciolto: 'Sciolto', Defaticamento: 'Defaticamento', Gambe: 'Gambe', Ipossia: 'Ipossia' }
 
 // Un passo per ogni riga o serie a giri dell'allenamento
 function passi(righe) {

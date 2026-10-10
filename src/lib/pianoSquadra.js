@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { STILI } from './lavori'
 import { difficoltaPiano } from './difficolta'
 
-export const TIPI_COACH = ['Riscaldamento', 'Tecnica', 'Gambe', 'Sciolto', 'Defaticamento']
+export const TIPI_COACH = ['Riscaldamento', 'Tecnica', 'Gambe', 'Ipossia', 'Sciolto', 'Defaticamento']
 // Il coach può anche lasciare che ognuno nuoti il proprio stile (non vale per i lavori inseriti dagli atleti)
 export const STILI_COACH = [...STILI, 'Proprio stile']
 export const RIGA_VUOTA = { tipo_lavoro: 'A2', distanza: 100, ripetizioni: 4, stile: 'Stile libero', note: '', minuti: '', ripartenza: '' }
