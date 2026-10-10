@@ -17,6 +17,7 @@ import RichiesteSquadra from '../components/RichiesteSquadra'
 import DomandeIngresso from '../components/DomandeIngresso'
 import VistaOrgoglio from '../components/VistaOrgoglio'
 import { useRegole } from '../lib/regole'
+import { RecapOggi, RecapOggiFiglio } from '../components/RecapAtleta'
 import GenitoriAtleta from '../components/GenitoriAtleta'
 
 const COLORE_STATO = {
@@ -104,6 +105,8 @@ function HomeAtleta() {
   const settimana = useSettimanaSquadra(profile?.squadra_id, giorno, user.id)
   const { puo } = useRegole()
   const registra = puoModificare(ruolo) && puo('a_tempi')
+  // sabato e domenica al posto della riga "Questa settimana" c'è il riepilogo completo
+  const fineSettimana = [0, 6].includes(new Date(giorno + 'T12:00:00').getDay()) && giorno <= dataLocale()
 
   // Allenamento pubblicato dal coach per questo giorno, della mia squadra
   // (il filtro serve all'admin, che per i permessi vedrebbe i piani di tutte le squadre)
@@ -187,7 +190,11 @@ function HomeAtleta() {
       )}
       {vasca && piano && <ModalitaVasca righe={piano.righe} onChiudi={() => setVasca(false)} />}
 
-      {ruolo !== 'genitore' && settimana.giorni > 0 && (
+      {ruolo === 'genitore'
+        ? <RecapOggiFiglio squadraId={profile?.squadra_id} giorno={giorno} />
+        : <RecapOggi atletaId={user.id} squadraId={profile?.squadra_id} giorno={giorno} />}
+
+      {ruolo !== 'genitore' && settimana.giorni > 0 && !fineSettimana && (
         <div className="bg-white rounded-3xl p-4 mb-3 flex items-center justify-between">
           <div>
             <p className="text-xs font-bold tracking-widest text-slate-500 uppercase">Questa settimana</p>
