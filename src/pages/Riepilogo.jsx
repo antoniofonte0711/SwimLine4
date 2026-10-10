@@ -5,6 +5,7 @@ import AppShell from '../components/AppShell'
 import { dataLocale } from '../lib/lavori'
 import RiepilogoCoach from '../components/RiepilogoCoach'
 import { ALLENAMENTI_SETTIMANA, lunediDi, riepilogoPresenze } from '../lib/presenze'
+import { metriPiano } from '../lib/pianoSquadra'
 
 function Pallino({ valore, colore, etichetta }) {
   return (
@@ -17,9 +18,10 @@ function Pallino({ valore, colore, etichetta }) {
 
 // Dashboard: riepilogo della settimana e presenze
 function RiepilogoAtleta() {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const [righe, setRighe] = useState([])
   const [presenze, setPresenze] = useState([])
+  const [piani, setPiani] = useState([])
 
   useEffect(() => {
     const lunedi = lunediDi()
@@ -37,12 +39,22 @@ function RiepilogoAtleta() {
       .eq('atleta_id', user.id)
       .gte('data', dataLocale(quattroSettimaneFa))
       .then(({ data }) => setPresenze(data || []))
-  }, [user.id])
-
-  const metri = righe.reduce((s, r) => s + (r.distanza || 0) * (r.ripetizioni || 1), 0)
-  const giorni = new Set(righe.map((r) => r.data_allenamento)).size
+    if (profile?.squadra_id) {
+      supabase
+        .from('allenamenti_squadra')
+        .select('data, righe')
+        .eq('squadra_id', profile.squadra_id)
+        .gte('data', lunedi)
+        .then(({ data }) => setPiani(data || []))
+    }
+  }, [user.id, profile?.squadra_id])
 
   const lunedi = lunediDi()
+  // Km fatti = km dell'allenamento del coach nei giorni in cui l'atleta era presente (assente = 0)
+  const giorniPresente = new Set(presenze.filter((p) => p.data >= lunedi && p.stato === 'presente').map((p) => p.data))
+  const metri = piani.filter((p) => giorniPresente.has(p.data)).reduce((s, p) => s + metriPiano(p.righe), 0)
+  const giorni = giorniPresente.size
+
   const questaSettimana = riepilogoPresenze(presenze.filter((p) => p.data >= lunedi))
   const ultime4 = riepilogoPresenze(presenze)
   const previsti = ALLENAMENTI_SETTIMANA - questaSettimana.nonPenale
