@@ -110,7 +110,7 @@ export default function AdminPanel() {
         </nav>
 
         <main className="flex-[999_1_600px] min-w-0 flex flex-col gap-5">
-          {sezione === 'squadre' && !squadraId && <ElencoSquadre dati={dati} onApri={(id) => vai('squadre', id)} />}
+          {sezione === 'squadre' && !squadraId && <ElencoSquadre dati={dati} ricarica={ricarica} onApri={(id) => vai('squadre', id)} />}
           {sezione === 'squadre' && squadraId && dati && (
             <DettaglioSquadra key={squadraId} dati={dati} ricarica={ricarica} squadraId={squadraId} onIndietro={() => vai('squadre')} />
           )}

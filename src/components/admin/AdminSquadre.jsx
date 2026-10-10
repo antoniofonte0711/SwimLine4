@@ -30,7 +30,51 @@ export function useDatiSquadre() {
   return [dati, carica]
 }
 
-export function ElencoSquadre({ dati, onApri }) {
+// Nuova squadra creata dall'admin: nome (unico) e, se si vuole, il coach scelto tra gli utenti
+function NuovaSquadra({ dati, onCreata, onAnnulla }) {
+  const [nome, setNome] = useState('')
+  const [coach, setCoach] = useState('')
+  const [errore, setErrore] = useState('')
+  const [invio, setInvio] = useState(false)
+  // chi allena già una squadra non può allenarne un'altra
+  const liberi = dati.persone.filter((p) => !dati.squadre.some((s) => s.coach_id === p.id))
+    .sort((a, b) => nomeDi(a).localeCompare(nomeDi(b)))
+
+  async function crea(e) {
+    e.preventDefault()
+    setErrore('')
+    if (!nome.trim()) return setErrore('Scrivi il nome della squadra.')
+    setInvio(true)
+    const { data, error } = await supabase.rpc('admin_crea_squadra', { p_nome: nome, p_coach: coach || null })
+    setInvio(false)
+    if (error) return setErrore(error.message)
+    onCreata(data)
+  }
+
+  return (
+    <Scheda titolo="Nuova squadra" nota="Puoi crearne quante vuoi. Il coach si può scegliere anche dopo.">
+      <form onSubmit={crea}>
+        <label className="block text-sm font-semibold text-slate-600 mb-1" htmlFor="nuova-squadra">Nome della squadra</label>
+        <input id="nuova-squadra" value={nome} onChange={(e) => setNome(e.target.value)} maxLength={60} placeholder="Es. Esordienti A"
+          className="w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 text-[15px] font-semibold mb-3" />
+        <label className="block text-sm font-semibold text-slate-600 mb-1" htmlFor="nuovo-coach">Coach (facoltativo)</label>
+        <select id="nuovo-coach" value={coach} onChange={(e) => setCoach(e.target.value)}
+          className="w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 text-[15px] font-semibold mb-1">
+          <option value="">Nessun coach per ora</option>
+          {liberi.map((p) => <option key={p.id} value={p.id}>{nomeDi(p)} ({p.role})</option>)}
+        </select>
+        <p className="text-xs text-slate-500 mb-3">Chi scegli diventa coach di questa squadra.</p>
+        {errore && <p role="alert" className="text-sm text-white bg-red-600 rounded-xl px-3 py-2 mb-3">{errore}</p>}
+        <div className="flex gap-2 flex-wrap">
+          <button type="submit" disabled={invio} className={BOTTONE_PIENO}>{invio ? 'Creo…' : 'Crea squadra'}</button>
+          <button type="button" onClick={onAnnulla} className="min-h-[44px] rounded-xl px-4 text-sm font-extrabold bg-slate-100 text-slate-600">Annulla</button>
+        </div>
+      </form>
+    </Scheda>
+  )
+}
+
+export function ElencoSquadre({ dati, onApri, ricarica }) {
   const [cerca, setCerca] = useState('')
   const [stat, setStat] = useState(null)
   const [nuova, setNuova] = useState(false)
@@ -91,13 +135,7 @@ export function ElencoSquadre({ dati, onApri }) {
           + Nuova squadra
         </button>
       </div>
-      {nuova && (
-        <Scheda titolo="Come nasce una squadra">
-          <p className="text-sm text-slate-600">
-            Il coach si registra come «coach»: lo trovi in <b>Amministrazione › Coach da approvare</b>. Approvandolo scegli il nome e la squadra nasce, con lui come coach.
-          </p>
-        </Scheda>
-      )}
+      {nuova && dati && <NuovaSquadra dati={dati} onCreata={(id) => { setNuova(false); ricarica(); onApri(id) }} onAnnulla={() => setNuova(false)} />}
     </>
   )
 }

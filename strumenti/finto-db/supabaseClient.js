@@ -78,6 +78,13 @@ function query(nome) {
 const RPC = {
   admin_statistiche() { return { nuovi_utenti_7gg: 0, accessi_7gg: 3, coach_in_attesa: 0, allenamenti_in_programma: 0, segnalazioni: 0 } },
   coach_da_approvare() { return [] },
+  admin_crea_squadra({ p_nome, p_coach }) {
+    const id = crypto.randomUUID()
+    tabelle.squadre.push({ id, nome: p_nome.trim(), coach_id: p_coach, created_at: new Date().toISOString() })
+    const p = tabelle.profiles.find((x) => x.id === p_coach)
+    if (p) Object.assign(p, { squadra_id: id, role: p.role === 'admin' ? 'admin' : 'coach' })
+    return id
+  },
   aggiorna_mio_profilo({ p_nome, p_cognome, p_tempi_visibili }) {
     const p = (tabelle.profiles || []).find((r) => r.id === utente.id)
     if (p) Object.assign(p, { nome: p_nome.trim(), cognome: p_cognome?.trim() || null }, p_tempi_visibili == null ? {} : { tempi_visibili: p_tempi_visibili })
