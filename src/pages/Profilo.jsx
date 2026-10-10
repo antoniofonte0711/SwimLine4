@@ -15,6 +15,7 @@ import FigliGenitore from '../components/FigliGenitore'
 import GenitoriAtleta from '../components/GenitoriAtleta'
 import { CAMPO, Interruttore, Riga, Scelta, Sezione } from '../components/Impostazione'
 import { version } from '../../package.json'
+import { useRegole } from '../lib/regole'
 
 const BOTTONE = 'text-sm font-bold text-blue-600 bg-schiuma rounded-full px-4 py-2 active:scale-95 transition'
 const PRIMARIO = 'w-full bg-blue-600 text-white font-bold rounded-2xl py-3 active:scale-[0.98] transition disabled:opacity-50'
@@ -270,6 +271,7 @@ export default function Profilo() {
   const { user, profile, isAdmin, ruolo, adminReale, cambiaVista } = useAuth()
   const navigate = useNavigate()
   const [pref, salva] = usePreferenze()
+  const { puo } = useRegole()
 
   async function esci() {
     await supabase.auth.signOut()
@@ -281,7 +283,7 @@ export default function Profilo() {
     navigate('/dashboard')
   }
 
-  const registraTempi = puoModificare(ruolo)
+  const registraTempi = puoModificare(ruolo) && puo('a_tempi')
   const eAtleta = ['atleta', 'admin'].includes(profile?.role) && ruolo !== 'genitore' && ruolo !== 'ospite'
 
   return (
@@ -325,7 +327,7 @@ export default function Profilo() {
 
       {isAdmin && (
         <Link to="/admin" className="block text-center font-bold text-blue-600 bg-schiuma rounded-2xl py-3.5 mb-4">
-          Pannello admin
+          Pannello di controllo
         </Link>
       )}
 
@@ -352,7 +354,7 @@ export default function Profilo() {
         </Sezione>
       )}
 
-      {ruolo !== 'ospite' && (
+      {ruolo !== 'ospite' && puo('vasca') && (
         <Sezione titolo="In vasca">
           <Riga etichetta="Schermo sempre acceso" descrizione="Il telefono non si spegne mentre nuoti">
             <Interruttore acceso={pref.schermoAcceso} onCambia={(v) => salva({ schermoAcceso: v })} etichetta="Schermo sempre acceso" />
@@ -363,14 +365,16 @@ export default function Profilo() {
         </Sezione>
       )}
 
-      <Notifiche />
+      {puo('push') && <Notifiche />}
 
       <Sezione titolo="Aspetto">
-        <div className="py-3.5">
-          <p className="text-[15px] font-semibold text-abisso mb-2">Tema</p>
-          <Scelta valore={pref.tema} onCambia={(v) => salva({ tema: v })} etichetta="Tema"
-            opzioni={[['chiaro', 'Chiaro'], ['scuro', 'Scuro'], ['sistema', 'Come il telefono']]} />
-        </div>
+        {puo('scuro') && (
+          <div className="py-3.5">
+            <p className="text-[15px] font-semibold text-abisso mb-2">Tema</p>
+            <Scelta valore={pref.tema} onCambia={(v) => salva({ tema: v })} etichetta="Tema"
+              opzioni={[['chiaro', 'Chiaro'], ['scuro', 'Scuro'], ['sistema', 'Come il telefono']]} />
+          </div>
+        )}
         <Riga etichetta="Testo più grande">
           <Interruttore acceso={pref.testoGrande} onCambia={(v) => salva({ testoGrande: v })} etichetta="Testo più grande" />
         </Riga>

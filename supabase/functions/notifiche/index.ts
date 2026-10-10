@@ -64,6 +64,10 @@ Deno.serve(async (req) => {
   ])
   if (!squadra || (squadra.coach_id !== user.id && io?.role !== 'admin')) return risposta({ errore: 'Solo il coach della squadra' }, 403)
 
+  // Interruttore del Pannello: Notifiche › Nuovo allenamento
+  const { data: imp } = await admin.from('impostazioni_app').select('valore').eq('chiave', 'notifiche').maybeSingle()
+  if (imp?.valore?.allenamento === false) return risposta({ inviate: 0, spenta: true })
+
   // Solo allenamenti davvero pubblicati alla squadra
   const { data: piani } = await admin.from('allenamenti_squadra').select('data')
     .eq('squadra_id', squadra_id).eq('pubblicato', true).eq('visibilita', 'squadra').in('data', date)

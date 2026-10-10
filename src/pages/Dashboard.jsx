@@ -16,6 +16,7 @@ import { metriPiano, minutiPiano, useMiaSquadra, useSettimanaSquadra } from '../
 import RichiesteSquadra from '../components/RichiesteSquadra'
 import DomandeIngresso from '../components/DomandeIngresso'
 import VistaOrgoglio from '../components/VistaOrgoglio'
+import { useRegole } from '../lib/regole'
 import GenitoriAtleta from '../components/GenitoriAtleta'
 
 const COLORE_STATO = {
@@ -52,7 +53,7 @@ function Onde() {
 }
 
 // Il riquadro blu dell'allenamento del giorno: km, minuti, difficoltà e i due bottoni per l'acqua
-function EroeAllenamento({ piano, oggi, squadra, puoRegistrare, onVasca }) {
+function EroeAllenamento({ piano, oggi, squadra, vasca, registra, onVasca }) {
   const min = minutiPiano(piano.righe)
   return (
     <section className="relative overflow-hidden rounded-[32px] bg-blue-600 text-white p-5 mb-1">
@@ -70,15 +71,15 @@ function EroeAllenamento({ piano, oggi, squadra, puoRegistrare, onVasca }) {
           {min > 0 && <p className="font-display text-3xl font-bold pb-1">{min}<span className="text-base"> min</span></p>}
         </div>
         <Difficolta righe={piano.righe} suBlu />
-        {puoRegistrare && (
-          <div className="grid grid-cols-[minmax(0,1fr)_56px] gap-2 mt-3">
-            <button onClick={onVasca} className="h-14 rounded-[18px] bg-white text-blue-600 font-display text-lg font-extrabold flex items-center justify-center gap-2.5">
+        {(vasca || registra) && (
+          <div className={`grid gap-2 mt-3 ${vasca && registra ? 'grid-cols-[minmax(0,1fr)_56px]' : 'grid-cols-1'}`}>
+            {vasca && <button onClick={onVasca} className="h-14 rounded-[18px] bg-white text-blue-600 font-display text-lg font-extrabold flex items-center justify-center gap-2.5">
               <svg viewBox="0 0 24 24" className="w-[22px] h-[22px]" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.4-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5Z" /></svg>
               Inizia in vasca
-            </button>
-            <Link to="/allenamenti" aria-label="Registra i tempi" className="h-14 rounded-[18px] bg-white/15 flex items-center justify-center">
+            </button>}
+            {registra && <Link to="/allenamenti" aria-label="Registra i tempi" className="h-14 rounded-[18px] bg-white/15 flex items-center justify-center">
               <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="13" r="8" /><path d="M12 9v4l2.5 2M9.5 2.5h5" /></svg>
-            </Link>
+            </Link>}
           </div>
         )}
       </div>
@@ -101,6 +102,8 @@ function HomeAtleta() {
   const { squadra } = useMiaSquadra()
   const squadraNome = squadra?.nome
   const settimana = useSettimanaSquadra(profile?.squadra_id, giorno, user.id)
+  const { puo } = useRegole()
+  const registra = puoModificare(ruolo) && puo('a_tempi')
 
   // Allenamento pubblicato dal coach per questo giorno, della mia squadra
   // (il filtro serve all'admin, che per i permessi vedrebbe i piani di tutte le squadre)
@@ -163,13 +166,13 @@ function HomeAtleta() {
 
       {(adminReale || ['atleta', 'genitore'].includes(profile?.role)) && <RichiesteSquadra />}
 
-      {ruolo === 'genitore' && <VistaOrgoglio />}
+      {ruolo === 'genitore' && puo('g_orgoglio') && <VistaOrgoglio />}
       {['atleta', 'admin'].includes(ruolo) && <GenitoriAtleta soloInAttesa />}
 
-      {piano ? (
+      {ruolo === 'genitore' && !puo('g_allenamento') ? null : piano ? (
         <>
           <EroeAllenamento piano={piano} oggi={giorno === dataLocale()} squadra={squadraNome}
-            puoRegistrare={puoModificare(ruolo)} onVasca={() => setVasca(true)} />
+            vasca={puoModificare(ruolo) && puo('a_vasca')} registra={registra} onVasca={() => setVasca(true)} />
           <h2 className="font-display text-xl font-extrabold mt-5 mb-2 mx-1 flex items-baseline justify-between">
             Il programma
             <span className="font-sans text-[13px] font-semibold text-slate-500 tracking-normal">{piano.righe.length} lavori</span>
@@ -197,7 +200,7 @@ function HomeAtleta() {
         </div>
       )}
 
-      {ruolo !== 'genitore' && <CardPunti />}
+      {ruolo !== 'genitore' && puo('a_punti') && <CardPunti />}
 
       {righe.length > 0 && (
         <div className="bg-white rounded-3xl p-5 mb-3">
@@ -218,7 +221,7 @@ function HomeAtleta() {
         </div>
       )}
 
-      {puoModificare(ruolo) && (
+      {registra && (
       <Link to="/allenamenti"
         className="block text-center font-display font-extrabold text-blue-600 bg-schiuma rounded-[18px] py-4 active:scale-[0.98] transition">
         Registra i tuoi tempi

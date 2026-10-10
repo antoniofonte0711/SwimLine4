@@ -1,193 +1,134 @@
 import { useEffect, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
+import { useAuth } from '../context/AuthContext'
+import Icona from '../components/Icona'
 import SegnalazioniAdmin from '../components/SegnalazioniAdmin'
+import { DettaglioSquadra, ElencoSquadre, useDatiSquadre } from '../components/admin/AdminSquadre'
+import { CoachDaApprovare, RegistroAccessi, TuttiUtenti } from '../components/admin/AdminUtenti'
+import { FunzioniApp, NotificheApp, Sicurezza } from '../components/admin/AdminImpostazioni'
+import { Numero, Scheda } from '../components/admin/ui'
 
+const MENU = [
+  ['squadre', 'Squadre', 'onde'],
+  ['dashboard', 'Dashboard', 'grafico'],
+  ['Amministrazione', 'gruppo', [['utenti', 'Tutti gli utenti'], ['approvazioni', 'Coach da approvare'], ['segnalazioni', 'Segnalazioni'], ['accessi', 'Registro accessi']]],
+  ['Impostazioni', 'regolazioni', [['funzioni', 'Funzioni dell\'app'], ['notifiche', 'Notifiche e avvisi'], ['sicurezza', 'Sicurezza e backup']]],
+]
+
+function Dashboard({ dati, vai }) {
+  const [stat, setStat] = useState(null)
+  useEffect(() => { supabase.rpc('admin_statistiche').then(({ data }) => setStat(data || {})) }, [])
+  if (!dati) return <p className="text-slate-500">Carico…</p>
+  const genitoriSoli = dati.persone.filter((p) => p.role === 'genitore' && !dati.collegamenti.some((c) => c.genitore_id === p.id && c.stato === 'approvato'))
+  const controlli = [
+    [!stat?.coach_in_attesa, 'Coach da approvare', stat?.coach_in_attesa ? `${stat.coach_in_attesa} in attesa` : 'Nessuno in attesa', 'approvazioni'],
+    [!stat?.segnalazioni, 'Segnalazioni', stat?.segnalazioni ? `${stat.segnalazioni} da leggere` : 'Nessuna da leggere', 'segnalazioni'],
+    [genitoriSoli.length === 0, 'Genitori collegati ai figli', genitoriSoli.length ? `${genitoriSoli.length} genitori senza figli collegati` : 'Tutti collegati', 'squadre'],
+    [false, 'Protezione password rubate', 'Spenta: si accende su Supabase con il piano Pro', 'sicurezza'],
+  ]
+  return (
+    <>
+      <h1 className="font-display text-[34px] font-extrabold leading-tight">Dashboard</h1>
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3.5">
+        <Numero valore={dati.persone.length} etichetta="Persone nell'app" />
+        <Numero valore={dati.squadre.length} etichetta="Squadre" />
+        <Numero valore={dati.piani.filter((p) => p.pubblicato).length} etichetta="Allenamenti pubblicati" />
+        <Numero valore={stat?.accessi_7gg} etichetta="Accessi (7 gg)" />
+      </div>
+      <Scheda titolo="Da controllare" nota={`${controlli.filter((c) => c[0]).length} di ${controlli.length} a posto`}>
+        {controlli.map(([ok, titolo, dettaglio, dove]) => (
+          <button key={titolo} type="button" onClick={() => vai(dove)} className="w-full flex items-center gap-3 py-3 border-t border-slate-100 first:border-t-0 text-left">
+            <span aria-hidden="true" className={`w-7 h-7 shrink-0 rounded-full flex items-center justify-center ${ok ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-800'}`}>
+              {ok ? '✓' : '!'}
+            </span>
+            <span className="flex-1 min-w-0"><b className="block">{titolo}</b><span className="text-[13px] text-slate-500">{dettaglio}</span></span>
+            <span className="text-sm font-bold text-blue-600">Apri ›</span>
+          </button>
+        ))}
+      </Scheda>
+    </>
+  )
+}
+
+// Pannello di controllo (solo admin): squadre, persone, permessi, funzioni, notifiche, sicurezza
 export default function AdminPanel() {
-  const [users, setUsers] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [io, setIo] = useState(null)
-  const [accessi, setAccessi] = useState([])
-  const [apertura, setApertura] = useState(null) // { utente, link } oppure { utente, errore }
-  const [lavoro, setLavoro] = useState('')
+  const { profile, user } = useAuth()
+  const [parametri, setParametri] = useSearchParams()
+  const sezione = parametri.get('sezione') || 'squadre'
+  const squadraId = parametri.get('squadra')
+  const [dati, ricarica] = useDatiSquadre()
+  const [aperti, setAperti] = useState({ Amministrazione: true, Impostazioni: true })
 
-  const [inAttesa, setInAttesa] = useState([])     // coach registrati che aspettano l'approvazione
-  const [nomiSquadra, setNomiSquadra] = useState({}) // nome squadra modificabile prima di approvare
-  const [esito, setEsito] = useState('')
-
-  useEffect(() => {
-    loadUsers()
-    supabase.auth.getUser().then(({ data }) => setIo(data.user?.id || null))
-    caricaAccessi()
-    caricaInAttesa()
-  }, [])
-
-  async function caricaInAttesa() {
-    const { data, error } = await supabase.rpc('coach_da_approvare')
-    if (error) return
-    setInAttesa(data || [])
-    setNomiSquadra(Object.fromEntries((data || []).map((c) => [c.id, c.nome_squadra || ''])))
+  const vai = (s, sq) => {
+    const p = { sezione: s }
+    if (sq) p.squadra = sq
+    setParametri(p)
+    window.scrollTo(0, 0)
   }
 
-  async function decidiCoach(c, accetta) {
-    const chi = `${c.nome || ''} ${c.cognome || ''}`.trim() || c.email
-    if (!accetta && !window.confirm(`Rifiutare ${chi} come coach? Resterà nell'app come atleta.`)) return
-    setLavoro(c.id)
-    setEsito('')
-    const { data, error } = await supabase.rpc('approva_coach', { p_persona: c.id, p_accetta: accetta, p_nome_squadra: nomiSquadra[c.id] || null })
-    setLavoro('')
-    if (error) return setEsito('Errore: ' + error.message)
-    setEsito(accetta ? `${chi} ora è coach della squadra "${data}".` : `${chi} è stato rifiutato come coach.`)
-    caricaInAttesa()
-    loadUsers()
-  }
-
-  async function caricaAccessi() {
-    const { data } = await supabase.from('accessi_admin').select('id, admin_id, target_id, created_at').order('created_at', { ascending: false }).limit(10)
-    setAccessi(data || [])
-  }
-
-  // Caso estremo: genera un link di accesso monouso per l'account scelto
-  async function accediComo(u) {
-    if (!window.confirm(`Entrare come ${u.nome} ${u.cognome}? L'accesso viene registrato. Il link va aperto in una finestra privata, così non esci dal tuo account admin.`)) return
-    setLavoro(u.id)
-    const { data, error } = await supabase.functions.invoke('accedi-come', {
-      body: { target_id: u.id, redirect_to: window.location.origin },
-    })
-    setLavoro('')
-    if (error || data?.errore) {
-      let msg = data?.errore || error?.message || 'Errore'
-      if (/not found|404|Failed to send/i.test(msg)) msg = 'La funzione "accedi-come" non è ancora attiva su Supabase.'
-      setApertura({ utente: u, errore: msg })
-    } else {
-      setApertura({ utente: u, link: data.link })
-    }
-    caricaAccessi()
-  }
-
-  async function loadUsers() {
-    setLoading(true)
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id, nome, cognome, role, created_at')
-      .order('created_at', { ascending: false })
-    if (!error) setUsers(data)
-    setLoading(false)
-  }
-
-  async function updateRole(userId, newRole) {
-    await supabase.from('profiles').update({ role: newRole }).eq('id', userId)
-    loadUsers()
-  }
+  const voce = (attiva) => `w-full flex items-center gap-3 min-h-[54px] px-4 border-b border-slate-100 text-left text-[15px] font-semibold ${attiva ? 'bg-schiuma text-blue-600' : 'text-abisso hover:bg-slate-50'}`
+  const sottoVoce = (attiva) => `w-full min-h-[46px] pl-12 pr-4 border-b border-slate-100 text-left text-[15px] font-semibold ${attiva ? 'bg-schiuma text-blue-600' : 'bg-slate-50/60 text-slate-600'}`
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold text-black mb-4">Pannello amministratore</h1>
-      <p className="text-gray-600 mb-6">Qui vedi e gestisci tutti gli utenti della piattaforma.</p>
-
-      {(inAttesa.length > 0 || esito) && (
-        <div className="border-2 border-amber-300 bg-amber-50 rounded-2xl p-4 mb-6">
-          <h2 className="font-bold mb-1">Coach da approvare{inAttesa.length > 0 && ` (${inAttesa.length})`}</h2>
-          <p className="text-sm text-gray-600 mb-3">Approvando nasce la loro squadra e diventano coach con tutti i permessi su di essa.</p>
-          {inAttesa.map((c) => (
-            <div key={c.id} className="bg-white rounded-xl p-3 mb-2">
-              <p className="font-semibold">{c.nome} {c.cognome} <span className="text-sm font-normal text-gray-500">· {c.email}</span></p>
-              <p className="text-xs text-gray-500 mb-2">Registrato il {new Date(c.created_at).toLocaleString('it-IT')}</p>
-              <label className="block text-xs text-gray-500 mb-1">Nome della squadra</label>
-              <input value={nomiSquadra[c.id] || ''} onChange={(e) => setNomiSquadra({ ...nomiSquadra, [c.id]: e.target.value })}
-                placeholder={`Squadra di ${c.nome || 'nuovo coach'}`} className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-2" />
-              <div className="flex gap-2">
-                <button onClick={() => decidiCoach(c, true)} disabled={lavoro === c.id}
-                  className="flex-1 font-bold text-white bg-blue-600 rounded-lg py-2 disabled:opacity-60">{lavoro === c.id ? '…' : 'Approva'}</button>
-                <button onClick={() => decidiCoach(c, false)} disabled={lavoro === c.id}
-                  className="flex-1 font-bold text-gray-700 bg-gray-100 rounded-lg py-2 disabled:opacity-60">Rifiuta</button>
-              </div>
-            </div>
-          ))}
-          {esito && <p className="text-sm bg-white rounded-lg px-3 py-2">{esito}</p>}
+    <div className="min-h-screen bg-bordo text-abisso">
+      <header className="bg-white border-b border-slate-200 px-4 sm:px-6 py-3 flex items-center justify-between gap-3 flex-wrap pt-[max(env(safe-area-inset-top),0.75rem)]">
+        <div className="flex items-center gap-3 font-display text-[22px] font-extrabold">
+          <span className="w-11 h-11 rounded-xl bg-blue-600 text-white flex items-center justify-center"><Icona nome="onde" /></span>
+          <span>Swim<b className="text-blue-600">Line4</b> Pannello</span>
         </div>
-      )}
+        <div className="flex items-center gap-2">
+          <span className="hidden sm:inline text-[15px] font-semibold text-slate-600 mr-1">{profile?.nome} {profile?.cognome} · {user?.email}</span>
+          <Link to="/dashboard" className="min-h-[44px] rounded-xl px-4 bg-schiuma text-blue-600 font-extrabold text-sm flex items-center">Torna all'app</Link>
+        </div>
+      </header>
 
-      <SegnalazioniAdmin />
-
-      {loading ? (
-        <p>Caricamento...</p>
-      ) : (
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="bg-blue-500 text-white text-left">
-              <th className="p-2">Nome</th>
-              <th className="p-2">Cognome</th>
-              <th className="p-2">Ruolo</th>
-              <th className="p-2">Azioni</th>
-              <th className="p-2">Accesso</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((u) => (
-              <tr key={u.id} className="border-b border-gray-200">
-                <td className="p-2">{u.nome}</td>
-                <td className="p-2">{u.cognome}</td>
-                <td className="p-2">{u.role}</td>
-                <td className="p-2">
-                  <select
-                    value={u.role}
-                    onChange={(e) => updateRole(u.id, e.target.value)}
-                    className="border border-gray-300 rounded px-2 py-1"
-                  >
-                    <option value="atleta">Atleta</option>
-                    <option value="coach">Coach</option>
-                    {u.role === 'coach_in_attesa' && <option value="coach_in_attesa">Coach in attesa</option>}
-                    <option value="genitore">Genitore</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                </td>
-                <td className="p-2">
-                  {u.id !== io && (
-                    <button onClick={() => accediComo(u)} disabled={lavoro === u.id}
-                      className="text-sm font-semibold text-white bg-gray-800 rounded px-3 py-1 disabled:opacity-60">
-                      {lavoro === u.id ? '…' : 'Accedi come'}
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-
-      {accessi.length > 0 && (
-        <div className="mt-8">
-          <h2 className="font-bold mb-2">Ultimi accessi come altri utenti</h2>
-          {accessi.map((a) => {
-            const nome = (id) => { const x = users.find((u) => u.id === id); return x ? `${x.nome} ${x.cognome}` : 'account eliminato' }
+      <div className="flex flex-wrap gap-6 p-4 sm:p-6">
+        <nav aria-label="Menu del pannello" className="flex-1 basis-[240px] max-w-full lg:max-w-[290px] self-start bg-white border border-slate-200 rounded-2xl overflow-hidden">
+          {MENU.map((m) => {
+            if (!Array.isArray(m[2])) {
+              const [id, nome, icona] = m
+              return (
+                <button key={id} type="button" onClick={() => vai(id)} aria-current={sezione === id ? 'page' : undefined} className={voce(sezione === id)}>
+                  <Icona nome={icona} className="w-5 h-5" /> {nome}
+                </button>
+              )
+            }
+            const [nome, icona, figli] = m
             return (
-              <p key={a.id} className="text-sm text-gray-600 py-1 border-b border-gray-100">
-                {new Date(a.created_at).toLocaleString('it-IT')} · {nome(a.admin_id)} → {nome(a.target_id)}
-              </p>
+              <div key={nome}>
+                <button type="button" onClick={() => setAperti({ ...aperti, [nome]: !aperti[nome] })} aria-expanded={!!aperti[nome]} className={voce(false)}>
+                  <Icona nome={icona} className="w-5 h-5" /> {nome}
+                  <span aria-hidden="true" className={`ml-auto text-slate-500 transition-transform ${aperti[nome] ? 'rotate-90' : ''}`}>›</span>
+                </button>
+                {aperti[nome] && figli.map(([id, n]) => (
+                  <button key={id} type="button" onClick={() => vai(id)} aria-current={sezione === id ? 'page' : undefined} className={sottoVoce(sezione === id)}>{n}</button>
+                ))}
+              </div>
             )
           })}
-        </div>
-      )}
+        </nav>
 
-      {apertura && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setApertura(null)}>
-          <div className="w-full max-w-md bg-white rounded-2xl p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <p className="font-bold text-lg mb-1">Accedi come {apertura.utente.nome} {apertura.utente.cognome}</p>
-            {apertura.errore ? (
-              <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mt-3">{apertura.errore}</p>
-            ) : (
-              <>
-                <p className="text-sm text-gray-600 mb-4">Link monouso. Aprilo in una <b>finestra privata</b> (Ctrl+Maiusc+N): se lo apri in questa finestra, esci dal tuo account admin.</p>
-                <div className="flex gap-2">
-                  <button onClick={() => navigator.clipboard.writeText(apertura.link)} className="flex-1 font-bold text-blue-600 bg-blue-50 rounded-xl py-2.5">Copia link</button>
-                  <a href={apertura.link} target="_blank" rel="noreferrer" className="flex-1 text-center font-bold text-white bg-blue-600 rounded-xl py-2.5">Apri</a>
-                </div>
-              </>
-            )}
-            <button onClick={() => setApertura(null)} className="w-full text-sm text-gray-500 mt-4">Chiudi</button>
-          </div>
-        </div>
-      )}
+        <main className="flex-[999_1_600px] min-w-0 flex flex-col gap-5">
+          {sezione === 'squadre' && !squadraId && <ElencoSquadre dati={dati} onApri={(id) => vai('squadre', id)} />}
+          {sezione === 'squadre' && squadraId && dati && (
+            <DettaglioSquadra key={squadraId} dati={dati} ricarica={ricarica} squadraId={squadraId} onIndietro={() => vai('squadre')} />
+          )}
+          {sezione === 'dashboard' && <Dashboard dati={dati} vai={vai} />}
+          {sezione === 'utenti' && dati && <TuttiUtenti dati={dati} ricarica={ricarica} io={user?.id} />}
+          {sezione === 'approvazioni' && <CoachDaApprovare ricarica={ricarica} />}
+          {sezione === 'segnalazioni' && (
+            <>
+              <h1 className="font-display text-[34px] font-extrabold leading-tight">Segnalazioni</h1>
+              <SegnalazioniAdmin />
+            </>
+          )}
+          {sezione === 'accessi' && dati && <RegistroAccessi dati={dati} />}
+          {sezione === 'funzioni' && <FunzioniApp />}
+          {sezione === 'notifiche' && <NotificheApp dati={dati} />}
+          {sezione === 'sicurezza' && <Sicurezza />}
+        </main>
+      </div>
     </div>
   )
 }

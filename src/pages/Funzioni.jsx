@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { funzioniConsentite, IN_ARRIVO, mostraInArrivo } from '../lib/permessi'
 import AppShell from '../components/AppShell'
+import { percorsoAttivo, useRegole } from '../lib/regole'
 import Icona from '../components/Icona'
 
 // Funzioni raggruppate per argomento; ogni ruolo vede solo quelle consentite (gruppi vuoti nascosti)
@@ -28,8 +29,10 @@ const GRUPPI = [
 
 export default function Funzioni() {
   const { ruolo } = useAuth()
+  const { puo } = useRegole()
   const consentite = funzioniConsentite(ruolo)
-  const visibile = ([percorso]) => consentite.includes(percorso) && (mostraInArrivo || !IN_ARRIVO.includes(percorso))
+  // sezioni in arrivo: in sviluppo/anteprima sempre, per gli utenti solo se accese dal Pannello
+  const visibile = ([percorso]) => consentite.includes(percorso) && percorsoAttivo(percorso, ruolo, (k) => (IN_ARRIVO.includes(percorso) && mostraInArrivo) || puo(k))
   const gruppi = GRUPPI.map(([nome, voci]) => [nome, voci.filter(visibile)]).filter(([, voci]) => voci.length > 0)
 
   return (

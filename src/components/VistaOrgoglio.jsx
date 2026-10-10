@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabaseClient'
 import { dataLocale } from '../lib/lavori'
 import { useFigli, useFiglioScelto } from '../lib/famiglia'
 import { riepilogoOrgoglio } from '../lib/orgoglio'
+import { useRegole } from '../lib/regole'
 
 const dataBreve = (s) => new Date(s + 'T12:00:00').toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })
 
@@ -21,6 +22,7 @@ function Numero({ valore, etichetta }) {
 // Su ogni risultato può mandare un cuore o un "Bravo!", che arriva al figlio come notifica.
 export default function VistaOrgoglio() {
   const { approvati, figli, pronto } = useFigli()
+  const { puo } = useRegole()
   const [figlio, scegli] = useFiglioScelto(approvati)
   const [dati, setDati] = useState(null)
   const [mandati, setMandati] = useState(new Set())
@@ -139,7 +141,7 @@ export default function VistaOrgoglio() {
                     </p>
                     <p className="text-xs text-slate-500">{r.gara ? r.nome || 'Gara' : `Allenamento ${r.tipo}`} · {dataBreve(r.data)}</p>
                   </div>
-                  <div className="flex gap-1.5 shrink-0">
+                  {puo('g_cuori') && <div className="flex gap-1.5 shrink-0">
                     {[['cuore', '❤️', 'Manda un cuore'], ['bravo', '👏', 'Di\' bravo']].map(([tipo, icona, nomeAzione]) => {
                       const fatto = mandati.has(`${r.rif}|${tipo}`)
                       return (
@@ -149,7 +151,7 @@ export default function VistaOrgoglio() {
                         </button>
                       )
                     })}
-                  </div>
+                  </div>}
                 </div>
               ))}
             </div>

@@ -34,7 +34,7 @@ const utente = { id: UTENTI[chi] || UTENTI.admin, email: 'mock@locale' }
 
 function query(nome) {
   const filtri = []
-  let ordine = null, limite = null, modo = 'lista', azione = null, valori = null
+  let ordine = null, limite = null, modo = 'lista', azione = null, valori = null, conflitto = ['id']
   const q = {
     select() { return q }, eq(c, v) { filtri.push((r) => r[c] === v); return q }, neq(c, v) { filtri.push((r) => r[c] !== v); return q },
     in(c, vs) { filtri.push((r) => vs.includes(r[c])); return q }, gte(c, v) { filtri.push((r) => r[c] >= v); return q },
@@ -42,7 +42,7 @@ function query(nome) {
     is(c, v) { filtri.push((r) => (r[c] ?? null) === v); return q }, not() { return q }, or() { return q }, ilike() { return q }, range() { return q },
     order(c, o = {}) { ordine = [c, o.ascending !== false]; return q }, limit(n) { limite = n; return q },
     single() { modo = 'uno'; return q }, maybeSingle() { modo = 'forse'; return q },
-    insert(v) { azione = 'ins'; valori = v; return q }, upsert(v) { azione = 'ins'; valori = v; return q },
+    insert(v) { azione = 'ins'; valori = v; return q }, upsert(v, o = {}) { azione = 'ups'; valori = v; conflitto = (o.onConflict || 'id').split(','); return q },
     update(v) { azione = 'upd'; valori = v; return q }, delete() { azione = 'del'; return q },
     then(ok, ko) { return Promise.resolve(esegui()).then(ok, ko) },
   }
@@ -53,6 +53,14 @@ function query(nome) {
       tabelle.compagni_squadra = (tabelle.profiles || []).filter((p) => ['atleta', 'admin'].includes(p.role) && p.squadra_id && p.squadra_id === io?.squadra_id)
     }
     const t = (tabelle[nome] ||= [])
+    if (azione === 'ups') {
+      ;[].concat(valori).forEach((r) => {
+        const c = t.find((x) => conflitto.every((k) => x[k] === r[k]))
+        if (c) Object.assign(c, r)
+        else t.push({ id: crypto.randomUUID(), ...r })
+      })
+      return { data: null, error: null }
+    }
     if (azione === 'ins') { const lista = [].concat(valori).map((r) => ({ id: crypto.randomUUID(), created_at: new Date().toISOString(), ...r })); t.push(...lista); return { data: lista, error: null } }
     let righe = t.filter((r) => filtri.every((f) => f(r)))
     if (azione === 'upd') { righe.forEach((r) => Object.assign(r, valori)); return { data: righe, error: null } }
@@ -68,6 +76,8 @@ function query(nome) {
 
 // Funzioni del database usate dal Profilo: imitate in memoria
 const RPC = {
+  admin_statistiche() { return { nuovi_utenti_7gg: 0, accessi_7gg: 3, coach_in_attesa: 0, allenamenti_in_programma: 0, segnalazioni: 0 } },
+  coach_da_approvare() { return [] },
   aggiorna_mio_profilo({ p_nome, p_cognome, p_tempi_visibili }) {
     const p = (tabelle.profiles || []).find((r) => r.id === utente.id)
     if (p) Object.assign(p, { nome: p_nome.trim(), cognome: p_cognome?.trim() || null }, p_tempi_visibili == null ? {} : { tempi_visibili: p_tempi_visibili })
@@ -76,7 +86,7 @@ const RPC = {
 
 export const supabase = {
   from: query,
-  rpc: async (nome, args) => { RPC[nome]?.(args); return { data: null, error: null } },
+  rpc: async (nome, args) => ({ data: RPC[nome]?.(args) ?? null, error: null }),
   functions: { invoke: async () => ({ data: { publicKey: null }, error: { message: 'finto-db: niente funzioni' } }) },
   auth: {
     getSession: async () => ({ data: { session: { user: utente } } }),

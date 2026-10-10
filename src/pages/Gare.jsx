@@ -8,6 +8,7 @@ import InputTempo from '../components/InputTempo'
 import GareCoach from '../components/GareCoach'
 import { useFigli, useFiglioScelto } from '../lib/famiglia'
 import { aggiungiAlCalendario } from '../lib/ics'
+import { useRegole } from '../lib/regole'
 import { ERRORE_TEMPO, erroreTempoImpossibile, normalizzaTempo, tempoPlausibile, tempoValido, passaggiCoerenti } from '../lib/tempo'
 import {
   leggiCoda, aggiungiInCoda, rimuoviDaCoda, sincronizza,
@@ -68,7 +69,8 @@ function GareAtleta() {
   // il genitore guarda le gare del figlio scelto (sola lettura), l'atleta le sue
   const user = genitore ? { id: figlio?.atleta_id } : io
   const online = useOnline()
-  const viste = puoModificare(ruolo) ? VISTE : [VISTE[1]]
+  const { puo } = useRegole()
+  const viste = puoModificare(ruolo) && puo('a_gare') ? VISTE : [VISTE[1]]
   const [vista, setVista] = useState(viste[0])
   const [gare, setGare] = useState([])
   const [coda, setCoda] = useState([])
@@ -265,7 +267,7 @@ function GareAtleta() {
       </div>
       )}
 
-      {vista === 'Nuova gara' && puoModificare(ruolo) && (
+      {vista === 'Nuova gara' && viste.includes('Nuova gara') && (
         <form onSubmit={salva} className="bg-white border border-gray-100 rounded-3xl p-5 shadow-sm">
           <label className="block text-xs text-gray-500 mb-1">Nome gara</label>
           <input value={form.nome_gara} placeholder="Es. Trofeo d'Autunno"

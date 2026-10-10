@@ -11,6 +11,7 @@ import Riferimenti from '../components/Riferimenti'
 import { dataLocale } from '../lib/lavori'
 import { riepilogoPresenze, STATI } from '../lib/presenze'
 import { useMiaSquadra } from '../lib/pianoSquadra'
+import { useRegole } from '../lib/regole'
 
 const CAMPO = 'w-full border border-gray-200 bg-gray-50 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400'
 const dataIt = (s) => (s ? new Date(s + 'T12:00:00').toLocaleDateString('it-IT') : '')
@@ -20,6 +21,9 @@ const dataIt = (s) => (s ? new Date(s + 'T12:00:00').toLocaleDateString('it-IT')
 export default function Squadra() {
   const { user, profile, isCoach } = useAuth()
   const { squadra: squadraCoach, pronto } = useMiaSquadra()
+  const { puo } = useRegole()
+  // Pannello › Permessi: l'atleta può non vedere le gare dei compagni (le sue sì, nelle Gare)
+  const nascosti = !isCoach && !puo('a_compagni')
   const [nomeSquadra, setNomeSquadra] = useState('')
   const [atleti, setAtleti] = useState([])
   const [scelto, setScelto] = useState('')
@@ -85,7 +89,9 @@ export default function Squadra() {
         <p className="text-xs text-gray-500">Squadra</p>
         <p className="text-xl font-bold mb-3">{nomeSquadra || (isCoach ? 'Tutte le squadre' : 'Non sei ancora in una squadra')}</p>
 
-        {atleti.length > 0 ? (
+        {nascosti ? (
+          <p className="text-sm text-gray-500">In questa squadra i tempi dei compagni non sono visibili. I tuoi li trovi in Gare e Progressi.</p>
+        ) : atleti.length > 0 ? (
           <>
             <label className="block text-xs text-gray-500 mb-1">{isCoach ? 'Atleta' : 'Compagno'}</label>
             <select value={scelto} onChange={(e) => setScelto(e.target.value)} className={CAMPO + ' mb-3'}>
@@ -110,7 +116,7 @@ export default function Squadra() {
       {scelto && isCoach && vista === 'Grafico tempi' && <SchedaProgressi key={scelto} atletaId={scelto} />}
       {scelto && isCoach && vista === 'Riferimenti' && <Riferimenti key={scelto} atletaId={scelto} />}
 
-      {scelto && vista === 'Gare' && (
+      {scelto && !nascosti && vista === 'Gare' && (
         <>
           {elencoMigliori.length > 0 && (
             <div className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">

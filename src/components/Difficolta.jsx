@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { difficoltaPiano, formattaVoto } from '../lib/difficolta'
+import { useRegole } from '../lib/regole'
 
 // Colori delle zone sulla barra (dentro il riquadro blu l'aerobico diventa bianco per staccare)
 const COLORE_GRUPPO = { recupero: '#7cc4f5', aerobico: '#0b4fd9', soglia: '#e8711a', lattacido: '#c42b20', velocita: '#c2309f' }
@@ -8,8 +9,9 @@ const COLORE_GRUPPO = { recupero: '#7cc4f5', aerobico: '#0b4fd9', soglia: '#e871
 // suBlu: versione per il riquadro blu dell'allenamento del giorno
 export default function Difficolta({ righe, suBlu = false }) {
   const [aperto, setAperto] = useState(false)
+  const { puo } = useRegole()
   const d = difficoltaPiano(righe)
-  if (!d) return null
+  if (!d || !puo('difficolta')) return null
   const colore = (g) => (suBlu && g.id === 'aerobico' ? '#ffffff' : COLORE_GRUPPO[g.id])
   const tenue = suBlu ? 'text-blue-100' : 'text-slate-500'
   return (

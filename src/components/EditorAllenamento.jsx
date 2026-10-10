@@ -7,6 +7,7 @@ import { TIPI_LAVORO, distanzaDaTipo } from '../lib/lavori'
 import { RIGA_VUOTA, STILI_COACH, TIPI_COACH, abbinaTempi, addGiorni, blocchiPiano, metriPiano, minutiPiano, perGiro } from '../lib/pianoSquadra'
 import { normalizzaRipartenza, ripartenzaValida } from '../lib/tempo'
 import { avvisaSquadra } from '../lib/notifiche'
+import { useRegole } from '../lib/regole'
 import PianoCard from './PianoCard'
 import Difficolta from './Difficolta'
 
@@ -267,6 +268,7 @@ function SerieGiri({ chiave, serie, righe, primo, ultimo, annulli, cambia, cambi
 // Il coach prepara l'allenamento di un giorno per la squadra (non un allenamento per sé)
 export default function EditorAllenamento({ squadra, giorno }) {
   const { user } = useAuth()
+  const { puo } = useRegole()
   const navigate = useNavigate()
   const [titolo, setTitolo] = useState('')
   const [righe, setRighe] = useState(() => [nuovaRiga()])
@@ -615,12 +617,16 @@ export default function EditorAllenamento({ squadra, giorno }) {
       {errore && <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mb-3">{errore}</p>}
       {ok && <p className="text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2 mb-3">{ok}</p>}
 
-      <div className="grid grid-cols-2 gap-2">
-        <button onClick={() => salva(false)} className="font-bold text-blue-600 bg-blue-50 rounded-2xl py-3.5">Salva bozza</button>
-        <button onClick={() => salva(true)} className="font-bold text-white bg-blue-600 rounded-2xl py-3.5">
-          {vis === 'squadra' ? 'Pubblica' : 'Salva'}
-        </button>
-      </div>
+      {puo('c_pubblica') ? (
+        <div className="grid grid-cols-2 gap-2">
+          <button onClick={() => salva(false)} className="font-bold text-blue-600 bg-blue-50 rounded-2xl py-3.5">Salva bozza</button>
+          <button onClick={() => salva(true)} className="font-bold text-white bg-blue-600 rounded-2xl py-3.5">
+            {vis === 'squadra' ? 'Pubblica' : 'Salva'}
+          </button>
+        </div>
+      ) : (
+        <p className="text-sm text-amber-800 bg-amber-50 rounded-2xl px-4 py-3">La pubblicazione degli allenamenti è bloccata dall'amministratore per questa squadra.</p>
+      )}
       <button onClick={esci} className="w-full font-bold text-gray-600 bg-gray-100 rounded-2xl py-3 mt-2 active:scale-[0.98] transition">✕ Esci senza salvare</button>
       {stato !== 'nuovo' && (
         <button onClick={elimina} className="w-full text-sm text-red-500 mt-3 py-2">Elimina allenamento di questo giorno</button>

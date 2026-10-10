@@ -11,6 +11,7 @@ import {
   passaggiCoerenti, tempoPlausibile, erroreTempoImpossibile, ERRORE_TEMPO_BREVE,
 } from '../lib/tempo'
 import { useMiaSquadra } from '../lib/pianoSquadra'
+import { useRegole } from '../lib/regole'
 
 const CAMPO = 'w-full border border-gray-200 bg-gray-50 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400'
 const CARD = 'bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm'
@@ -247,7 +248,10 @@ function RigaGara({ g, i, totale, cambia, sposta, togli }) {
 // Gare del coach: assegna la gara a più atleti, poi inserisci i risultati
 export default function GareCoach() {
   const { squadra, pronto } = useMiaSquadra()
-  const [modo, setModo] = useState('nuova')
+  const { puo } = useRegole()
+  const assegna = puo('c_gare')
+  const [scelta, setModo] = useState('nuova')
+  const modo = assegna ? scelta : 'risultati'
   const [atleti, setAtleti] = useState([])
   const [gare, setGare] = useState([])
 
@@ -360,7 +364,7 @@ export default function GareCoach() {
         : (
           <>
             <div className="grid grid-cols-2 gap-2 mb-3">
-              {[['nuova', '+ Nuova gara'], ['risultati', 'Risultati']].map(([k, n]) => (
+              {[['nuova', '+ Nuova gara'], ['risultati', 'Risultati']].filter(([k]) => assegna || k === 'risultati').map(([k, n]) => (
                 <button key={k} onClick={() => setModo(k)}
                   className={`rounded-xl py-2.5 text-sm font-semibold ${modo === k ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 border border-gray-200'}`}>{n}</button>
               ))}
