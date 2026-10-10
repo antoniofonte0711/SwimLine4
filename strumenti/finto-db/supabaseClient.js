@@ -10,6 +10,25 @@ const UTENTI = {
   atleta: 'e0c63c5a-989a-4d92-a5d0-11e62e6e1832', // Atleta Uno
   genitore: '4a22335f-d5d6-47a9-9253-f9a9215386d6', // Genitore Uno
 }
+// Dati inventati per provare genitori, record e gare: Genitore Uno collegato ad Atleta Uno
+{
+  const A = UTENTI.atleta
+  const g = (gg) => { const d = new Date(); d.setDate(d.getDate() + gg); return d.toISOString().slice(0, 10) }
+  const t = (s) => `${Math.floor(s / 60)}'${String(Math.floor(s % 60)).padStart(2, '0')}"${String(Math.round((s % 1) * 100)).padStart(2, '0')}`
+  tabelle.genitori_figli = [{ id: 'gf1', genitore_id: UTENTI.genitore, atleta_id: A, stato: 'approvato' }]
+  tabelle.gare = [65.4, 64.8, 64.1, 63.2].map((s, i) => ({
+    id: 'gara' + i, atleta_id: A, nome_gara: 'Trofeo ' + (i + 1), distanza: 100, stile: 'Stile libero', tempo: t(s), data_gara: g(-80 + i * 25), passaggi: [],
+  })).concat([{ id: 'gara9', atleta_id: A, nome_gara: "Trofeo d'Autunno", distanza: 100, stile: 'Stile libero', tempo: null, data_gara: g(8), orario: '09:30:00', luogo: 'Piscina Comunale', note: 'Ritrovo 8:45', passaggi: [], ordine: 0 }])
+  tabelle.allenamenti = [0, 1, 2].map((i) => ({
+    id: 'all' + i, atleta_id: A, tipo_lavoro: 'C1', distanza: 100, ripetizioni: 4, stile: 'Stile libero',
+    passaggi: [t(70 - i), t(70.5 - i), t(71 - i), t(71.2 - i)], data_allenamento: g(-12 + i * 4),
+  }))
+  tabelle.notifiche = [
+    { id: 'n1', destinatario_id: A, tipo: 'record', titolo: 'Nuovo primato!', testo: 'Hai nuotato i 100 SL in gara in 1\'03"20, -0"90 rispetto al record precedente.', link: '/gare', letta: false, created_at: new Date().toISOString() },
+    { id: 'n2', destinatario_id: UTENTI.genitore, tipo: 'gara_nuova', titolo: 'Nuova gara in calendario', testo: "Trofeo d'Autunno, ore 09:30, Piscina Comunale.", link: '/gare', letta: false, created_at: new Date().toISOString() },
+  ]
+}
+
 const chi = (() => { try { return localStorage.getItem('mock-utente') || 'admin' } catch { return 'admin' } })()
 const utente = { id: UTENTI[chi] || UTENTI.admin, email: 'mock@locale' }
 
@@ -28,6 +47,11 @@ function query(nome) {
     then(ok, ko) { return Promise.resolve(esegui()).then(ok, ko) },
   }
   function esegui() {
+    // la vista compagni_squadra: atleti della mia squadra
+    if (nome === 'compagni_squadra') {
+      const io = (tabelle.profiles || []).find((p) => p.id === utente.id)
+      tabelle.compagni_squadra = (tabelle.profiles || []).filter((p) => ['atleta', 'admin'].includes(p.role) && p.squadra_id && p.squadra_id === io?.squadra_id)
+    }
     const t = (tabelle[nome] ||= [])
     if (azione === 'ins') { const lista = [].concat(valori).map((r) => ({ id: crypto.randomUUID(), created_at: new Date().toISOString(), ...r })); t.push(...lista); return { data: lista, error: null } }
     let righe = t.filter((r) => filtri.every((f) => f(r)))

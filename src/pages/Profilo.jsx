@@ -11,6 +11,8 @@ import BoxSquadra from '../components/BoxSquadra'
 import SquadreAdmin from '../components/SquadreAdmin'
 import RichiesteSquadra from '../components/RichiesteSquadra'
 import InputPassword from '../components/InputPassword'
+import FigliGenitore from '../components/FigliGenitore'
+import GenitoriAtleta from '../components/GenitoriAtleta'
 import { CAMPO, Interruttore, Riga, Scelta, Sezione } from '../components/Impostazione'
 import { version } from '../../package.json'
 
@@ -297,6 +299,9 @@ export default function Profilo() {
       {adminReale && <SquadreAdmin />}
 
       {['atleta', 'genitore', 'coach'].includes(profile?.role) && <BoxSquadra />}
+
+      {ruolo === 'genitore' && <FigliGenitore />}
+      {['atleta', 'admin'].includes(profile?.role) && ['atleta', 'admin'].includes(ruolo) && <GenitoriAtleta />}
 
       {adminReale && (
         <div className="bg-white rounded-3xl p-5 mb-4 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">

@@ -15,6 +15,8 @@ import ModalitaVasca from '../components/ModalitaVasca'
 import { metriPiano, minutiPiano, useMiaSquadra, useSettimanaSquadra } from '../lib/pianoSquadra'
 import RichiesteSquadra from '../components/RichiesteSquadra'
 import DomandeIngresso from '../components/DomandeIngresso'
+import VistaOrgoglio from '../components/VistaOrgoglio'
+import GenitoriAtleta from '../components/GenitoriAtleta'
 
 const COLORE_STATO = {
   presente: 'bg-green-100 text-green-700',
@@ -161,6 +163,9 @@ function HomeAtleta() {
 
       {(adminReale || ['atleta', 'genitore'].includes(profile?.role)) && <RichiesteSquadra />}
 
+      {ruolo === 'genitore' && <VistaOrgoglio />}
+      {['atleta', 'admin'].includes(ruolo) && <GenitoriAtleta soloInAttesa />}
+
       {piano ? (
         <>
           <EroeAllenamento piano={piano} oggi={giorno === dataLocale()} squadra={squadraNome}
@@ -211,10 +216,6 @@ function HomeAtleta() {
             </div>
           ))}
         </div>
-      )}
-
-      {ruolo === 'genitore' && (
-        <p className="text-xs text-gray-500 text-center mb-3 px-2">Vista genitore, in sola lettura. Il collegamento con i tempi di tuo figlio arriva con la fase Genitori.</p>
       )}
 
       {puoModificare(ruolo) && (

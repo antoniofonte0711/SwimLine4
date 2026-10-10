@@ -151,6 +151,64 @@ function SchedaRisultato({ g, onSalvato }) {
   )
 }
 
+// Cambia nome, data, orario, luogo e note di tutto il trofeo (atleti e genitori ricevono un avviso)
+function ModificaTrofeo({ righe, onSalvato }) {
+  const g = righe[0]
+  const [aperta, setAperta] = useState(false)
+  const [f, setF] = useState({})
+  const [errore, setErrore] = useState('')
+
+  function apri() {
+    setF({ nome: g.nome_gara || '', data: g.data_gara, orario: (g.orario || '').slice(0, 5), luogo: g.luogo || '', note: g.note || '' })
+    setErrore('')
+    setAperta(true)
+  }
+
+  async function salva() {
+    if (!f.nome.trim()) return setErrore('Scrivi il nome della gara.')
+    const { error } = await supabase.from('gare').update({
+      nome_gara: f.nome.trim(), data_gara: f.data, orario: f.orario || null, luogo: f.luogo.trim() || null, note: f.note.trim() || null,
+    }).in('id', righe.map((r) => r.id))
+    if (error) return setErrore('Non sono riuscito a salvare: ' + error.message)
+    setAperta(false)
+    onSalvato(`${f.nome.trim()}||${f.data}`)
+  }
+
+  if (!aperta) {
+    return (
+      <div className="mb-3">
+        {(g.luogo || g.note) && (
+          <p className="text-xs text-gray-500 mb-2">{[g.luogo && `📍 ${g.luogo}`, g.note].filter(Boolean).join(' · ')}</p>
+        )}
+        <button onClick={apri} className="text-sm font-bold text-blue-600 bg-blue-50 rounded-full px-4 py-2">✏️ Modifica gara</button>
+      </div>
+    )
+  }
+  return (
+    <div className="bg-gray-50 rounded-2xl p-3 mb-3">
+      <label className="block text-xs text-gray-500 mb-1">Nome gara / trofeo</label>
+      <input value={f.nome} onChange={(e) => setF({ ...f, nome: e.target.value })} className={CAMPO + ' mb-2'} />
+      <div className="grid grid-cols-2 gap-2 mb-2">
+        <SelettoreData etichetta="Data" valore={f.data} onChange={(v) => setF({ ...f, data: v })} />
+        <div>
+          <label className="block text-xs text-gray-500 mb-1">Orario</label>
+          <input type="time" value={f.orario} onChange={(e) => setF({ ...f, orario: e.target.value })} className={CAMPO} />
+        </div>
+      </div>
+      <label className="block text-xs text-gray-500 mb-1">Luogo</label>
+      <input value={f.luogo} onChange={(e) => setF({ ...f, luogo: e.target.value })} className={CAMPO + ' mb-2'} />
+      <label className="block text-xs text-gray-500 mb-1">Note</label>
+      <textarea value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} rows={2} className={CAMPO + ' mb-2 resize-none'} />
+      {errore && <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mb-2">{errore}</p>}
+      <p className="text-xs text-gray-500 mb-2">Salvando, atleti e genitori ricevono l'avviso "Gara modificata".</p>
+      <div className="grid grid-cols-2 gap-2">
+        <button onClick={() => setAperta(false)} className="font-bold text-gray-600 bg-white rounded-2xl py-2.5">Annulla</button>
+        <button onClick={salva} className="font-bold text-white bg-blue-600 rounded-2xl py-2.5">Salva modifiche</button>
+      </div>
+    </div>
+  )
+}
+
 // Una gara del programma del trofeo: si trascina dalla maniglia ⠿ o con le frecce
 function RigaGara({ g, i, totale, cambia, sposta, togli }) {
   const controlli = useDragControls()
@@ -197,6 +255,8 @@ export default function GareCoach() {
   const [nome, setNome] = useState('')
   const [data, setData] = useState(dataLocale())
   const [orario, setOrario] = useState('')
+  const [luogo, setLuogo] = useState('')
+  const [note, setNote] = useState('')
   const [programma, setProgramma] = useState(() => [nuovaGara()]) // gare del trofeo, in ordine
   const [righe, setRighe] = useState({}) // { idAtleta: { incluso, iscr } }
   const [errore, setErrore] = useState('')
@@ -255,7 +315,8 @@ export default function GareCoach() {
       programma.forEach((g, k) => {
         records.push({
           atleta_id: a.id, nome_gara: nome.trim(), distanza: Number(g.distanza), stile: g.stile,
-          data_gara: data, orario: orario || null, tempo: null, passaggi: [], ordine: k,
+          data_gara: data, orario: orario || null, luogo: luogo.trim() || null, note: note.trim() || null,
+          tempo: null, passaggi: [], ordine: k,
           ...(iscr && k === 0 ? { tempo_iscrizione: iscr } : {}),
         })
       })
@@ -267,7 +328,7 @@ export default function GareCoach() {
       return setErrore(/tempo_iscrizione|orario|ordine|null value/.test(error.message)
         ? MSG_MIGRAZIONE : 'Non sono riuscito a salvare: ' + error.message)
     }
-    setOk(`Gara assegnata a ${records.length} atleta/i. I tempi si inseriscono da "Risultati".`)
+    setOk(`Gara assegnata a ${scelti.length} atleta/i: ricevono una notifica (anche i genitori). I tempi si inseriscono da "Risultati".`)
     setRighe({})
     caricaGare(atleti)
   }
@@ -285,7 +346,7 @@ export default function GareCoach() {
 
   async function eliminaGara() {
     if (!risultati.length) return
-    if (!window.confirm(`Eliminare ${garaSel || 'tutte le gare'} del trofeo per ${risultati.length} atleta/i?`)) return
+    if (!window.confirm(`Eliminare ${garaSel || 'tutte le gare'} del trofeo per ${risultati.length} atleta/i? Chi non ha ancora il tempo riceve l'avviso "Gara cancellata".`)) return
     const { error } = await supabase.from('gare').delete().in('id', risultati.map((g) => g.id))
     if (error) return window.alert('Non sono riuscito a eliminare: ' + error.message)
     setGaraSel('')
@@ -317,6 +378,10 @@ export default function GareCoach() {
                       <input type="time" value={orario} onChange={(e) => setOrario(e.target.value)} className={CAMPO} />
                     </div>
                   </div>
+                  <label className="block text-xs text-gray-500 mb-1">Luogo (facoltativo)</label>
+                  <input value={luogo} onChange={(e) => setLuogo(e.target.value)} placeholder="Es. Piscina Comunale, Via Roma 1" className={CAMPO + ' mb-3'} />
+                  <label className="block text-xs text-gray-500 mb-1">Note per atleti e genitori (facoltativo)</label>
+                  <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} placeholder="Es. ritrovo alle 8:30 all'ingresso" className={CAMPO + ' mb-3 resize-none'} />
                   <p className="text-sm font-bold mb-2">Gare del trofeo</p>
                   <Reorder.Group as="div" axis="y" values={programma} onReorder={setProgramma}>
                     <AnimatePresence initial={false}>
@@ -394,6 +459,8 @@ export default function GareCoach() {
                       <button onClick={eliminaGara} aria-label="Elimina" className="text-red-500 text-lg">🗑</button>
                     </div>
                     {risultati[0]?.orario && <p className="text-xs text-gray-500 mb-1">Orario {risultati[0].orario.slice(0, 5)}</p>}
+                    <ModificaTrofeo key={trofeo} righe={delTrofeo}
+                      onSalvato={(k) => { setTrofeo(k); setGaraSel(''); caricaGare(atleti) }} />
                     {risultati.map((g) => (
                       <div key={g.id}>
                         {!garaSel && <p className="text-xs font-bold text-gray-500 mt-2">{nomeGara(g)}</p>}

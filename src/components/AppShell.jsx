@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { CalendarioFoglio } from './SelettoreData'
 import Icona from './Icona'
+import { useNonLette } from '../lib/notificheApp'
 import { useAuth } from '../context/AuthContext'
 import { dataLocale } from '../lib/lavori'
 import { nomeRuolo } from '../lib/permessi'
@@ -24,6 +25,7 @@ export default function AppShell({ titolo, attiva, indietro, giorno, onGiorno, v
   const voci = VOCI.filter(([chiave]) => !(ruolo === 'ospite' && chiave === 'riepilogo'))
   const iniziale = (profile?.nome || 'A').charAt(0).toUpperCase()
   const [calAperto, setCalAperto] = useState(false)
+  const nonLette = useNonLette()
   const navigate = useNavigate()
   // "Indietro" torna alla pagina precedente dell'app; se si è entrati da un link diretto
   // (nessuna pagina precedente) va al percorso indicato
@@ -65,10 +67,23 @@ export default function AppShell({ titolo, attiva, indietro, giorno, onGiorno, v
             </p>
             <h1 className="font-display text-[30px] font-extrabold leading-tight text-abisso truncate">{titolo}</h1>
           </div>
-          <Link to="/profilo" aria-label="Profilo"
-            className="w-11 h-11 shrink-0 rounded-full bg-abisso text-white font-display font-bold flex items-center justify-center">
-            {iniziale}
-          </Link>
+          <div className="flex items-center gap-2 shrink-0">
+            {ruolo !== 'ospite' && (
+              <Link to="/notifiche" aria-label={nonLette ? `Notifiche, ${nonLette} nuove` : 'Notifiche'}
+                className="relative w-11 h-11 rounded-full bg-white text-abisso flex items-center justify-center shadow-[0_1px_2px_rgba(10,26,47,0.08)]">
+                <Icona nome="campanella" />
+                {nonLette > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[20px] h-5 px-1 rounded-full bg-corsia text-white text-[11px] font-extrabold flex items-center justify-center">
+                    {nonLette > 9 ? '9+' : nonLette}
+                  </span>
+                )}
+              </Link>
+            )}
+            <Link to="/profilo" aria-label="Profilo"
+              className="w-11 h-11 rounded-full bg-abisso text-white font-display font-bold flex items-center justify-center">
+              {iniziale}
+            </Link>
+          </div>
         </div>
       </header>
 

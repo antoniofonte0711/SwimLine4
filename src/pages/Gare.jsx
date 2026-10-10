@@ -6,6 +6,8 @@ import { STILI, dataLocale } from '../lib/lavori'
 import { puoModificare } from '../lib/permessi'
 import InputTempo from '../components/InputTempo'
 import GareCoach from '../components/GareCoach'
+import { useFigli, useFiglioScelto } from '../lib/famiglia'
+import { aggiungiAlCalendario } from '../lib/ics'
 import { ERRORE_TEMPO, erroreTempoImpossibile, normalizzaTempo, tempoPlausibile, tempoValido, passaggiCoerenti } from '../lib/tempo'
 import {
   leggiCoda, aggiungiInCoda, rimuoviDaCoda, sincronizza,
@@ -20,8 +22,51 @@ const VUOTO = { nome_gara: '', data_gara: dataLocale(), distanza: '100', stile: 
 
 const formattaDataGara = (s) => (s ? new Date(s + 'T12:00:00').toLocaleDateString('it-IT') : '')
 
+// Gare messe in calendario dal coach e non ancora nuotate, raggruppate per trofeo (nome + data)
+function ProssimeGare({ gare }) {
+  const oggi = dataLocale()
+  const gruppi = new Map()
+  gare.filter((g) => !g.tempo && !g.inAttesa && g.data_gara >= oggi).forEach((g) => {
+    const k = `${g.nome_gara}||${g.data_gara}`
+    if (!gruppi.has(k)) gruppi.set(k, [])
+    gruppi.get(k).push(g)
+  })
+  const lista = [...gruppi.values()].sort((a, b) => a[0].data_gara.localeCompare(b[0].data_gara))
+  if (!lista.length) return null
+  return (
+    <section className="mb-4">
+      <h2 className="text-xs font-bold tracking-widest text-slate-500 uppercase px-1 mb-2">Prossime gare</h2>
+      {lista.map((righe) => {
+        const g = righe[0]
+        const prove = righe.sort((a, b) => (a.ordine ?? 0) - (b.ordine ?? 0)).map((r) => `${r.distanza} m ${r.stile}`).join(', ')
+        return (
+          <div key={g.id} className="bg-white rounded-3xl p-5 mb-2.5">
+            <p className="font-display text-xl font-extrabold text-abisso">{g.nome_gara}</p>
+            <p className="text-[15px] font-semibold text-blue-600 mt-0.5 first-letter:uppercase">
+              {new Date(g.data_gara + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}
+              {g.orario && ` · ore ${g.orario.slice(0, 5)}`}
+            </p>
+            {g.luogo && <p className="text-sm text-slate-600 mt-1">📍 {g.luogo}</p>}
+            <p className="text-sm text-slate-600 mt-1">🏊 {prove}</p>
+            {g.note && <p className="text-sm text-slate-500 mt-1">{g.note}</p>}
+            <button onClick={() => aggiungiAlCalendario({ id: g.id, nome: g.nome_gara, data: g.data_gara, orario: g.orario?.slice(0, 5), luogo: g.luogo, note: g.note, dettagli: prove })}
+              className="w-full mt-3 font-bold text-white bg-blue-600 rounded-2xl py-3 flex items-center justify-center gap-2 active:scale-[0.98] transition">
+              📅 Aggiungi al calendario
+            </button>
+          </div>
+        )
+      })}
+    </section>
+  )
+}
+
 function GareAtleta() {
-  const { user, ruolo } = useAuth()
+  const { user: io, ruolo } = useAuth()
+  const genitore = ruolo === 'genitore'
+  const { approvati, pronto: figliPronti } = useFigli()
+  const [figlio, scegliFiglio] = useFiglioScelto(approvati)
+  // il genitore guarda le gare del figlio scelto (sola lettura), l'atleta le sue
+  const user = genitore ? { id: figlio?.atleta_id } : io
   const online = useOnline()
   const viste = puoModificare(ruolo) ? VISTE : [VISTE[1]]
   const [vista, setVista] = useState(viste[0])
@@ -34,8 +79,9 @@ function GareAtleta() {
   const [salvando, setSalvando] = useState(false)
 
   const carica = useCallback(async () => {
-    if (navigator.onLine) await sincronizza(supabase, TABELLA, user.id)
-    setCoda(leggiCoda(TABELLA, user.id))
+    if (!user.id) return setGare([])
+    if (!genitore && navigator.onLine) await sincronizza(supabase, TABELLA, user.id)
+    setCoda(genitore ? [] : leggiCoda(TABELLA, user.id))
     const { data, error } = await supabase
       .from(TABELLA)
       .select('*')
@@ -48,7 +94,7 @@ function GareAtleta() {
     } else {
       setGare(leggiCache(TABELLA, user.id))
     }
-  }, [user.id])
+  }, [user.id, genitore])
 
   useEffect(() => {
     carica()
@@ -191,12 +237,33 @@ function GareAtleta() {
         </p>
       )}
 
+      {genitore && figliPronti && !figlio && (
+        <div className="bg-white rounded-3xl p-6 text-center mb-3">
+          <p className="font-bold text-abisso mb-1">Nessun figlio collegato</p>
+          <p className="text-sm text-slate-500">Collega tuo figlio dal Profilo per vedere le sue gare.</p>
+        </div>
+      )}
+      {genitore && approvati.length > 1 && (
+        <div className="flex gap-2 mb-3 overflow-x-auto" role="tablist" aria-label="Figlio">
+          {approvati.map((f) => (
+            <button key={f.atleta_id} role="tab" aria-selected={f.atleta_id === figlio?.atleta_id} onClick={() => scegliFiglio(f.atleta_id)}
+              className={`shrink-0 rounded-full px-4 py-2 text-sm font-bold ${f.atleta_id === figlio?.atleta_id ? 'bg-blue-600 text-white' : 'bg-white text-slate-600'}`}>
+              {f.nome}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <ProssimeGare gare={gare} />
+
+      {viste.length > 1 && (
       <div className="bg-white border border-gray-100 rounded-3xl p-5 mb-3 shadow-sm">
         <label className="block text-xs text-gray-500 mb-1">Cosa vuoi fare?</label>
         <select value={vista} onChange={(e) => setVista(e.target.value)} className={CAMPO}>
           {viste.map((v) => <option key={v}>{v}</option>)}
         </select>
       </div>
+      )}
 
       {vista === 'Nuova gara' && puoModificare(ruolo) && (
         <form onSubmit={salva} className="bg-white border border-gray-100 rounded-3xl p-5 shadow-sm">
@@ -270,7 +337,7 @@ function GareAtleta() {
                 </div>
                 <div className="flex items-center gap-3">
                   <p className="text-xl font-extrabold text-blue-600">{g.tempo}</p>
-                  <button onClick={() => elimina(g)} title="Elimina" aria-label="Elimina" className="text-gray-500 hover:text-red-500 transition">🗑️</button>
+                  {!genitore && <button onClick={() => elimina(g)} title="Elimina" aria-label="Elimina" className="text-gray-500 hover:text-red-500 transition">🗑️</button>}
                 </div>
               </div>
               {g.passaggi?.length > 0 && <p className="text-xs text-gray-500 mt-2">Passaggi: {g.passaggi.join(' · ')}</p>}

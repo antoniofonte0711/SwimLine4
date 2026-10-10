@@ -31,6 +31,7 @@ const RisultatiAllenamento = lazy(() => import('./pages/RisultatiAllenamento'))
 const PresenzeAtleta = lazy(() => import('./pages/PresenzeAtleta'))
 const NuovaPassword = lazy(() => import('./pages/NuovaPassword'))
 const NonTrovata = lazy(() => import('./pages/NonTrovata'))
+const Notifiche = lazy(() => import('./pages/Notifiche'))
 
 // Sezioni che arrivano nella fase 2 (visibili solo in sviluppo e anteprima)
 const PROSSIMAMENTE = [
@@ -55,6 +56,7 @@ export default function App() {
               <Route path="/riepilogo" element={<ProtectedRoute><Riepilogo /></ProtectedRoute>} />
               <Route path="/funzioni" element={<ProtectedRoute><Funzioni /></ProtectedRoute>} />
               <Route path="/profilo" element={<ProtectedRoute><Profilo /></ProtectedRoute>} />
+              <Route path="/notifiche" element={<ProtectedRoute><Notifiche /></ProtectedRoute>} />
               <Route path="/allenamenti" element={<ProtectedRoute><Allenamenti /></ProtectedRoute>} />
               <Route path="/gare" element={<ProtectedRoute><Gare /></ProtectedRoute>} />
 
