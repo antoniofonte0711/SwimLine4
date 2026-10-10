@@ -2,39 +2,54 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { funzioniConsentite, IN_ARRIVO, mostraInArrivo } from '../lib/permessi'
 import AppShell from '../components/AppShell'
+import Icona from '../components/Icona'
 
-const FUNZIONI = [
-  ['/allenamenti', '⏱', 'Allenamenti'],
-  ['/storico', '📖', 'Storico'],
-  ['/presenze', '✅', 'Presenze'],
-  ['/gare', '🏆', 'Gare'],
-  ['/video', '🎥', 'Video'],
-  ['/progressi', '📈', 'Progressi'],
-  ['/record', '🏅', 'Record'],
-  ['/archivio', '📋', 'Archivio gare'],
-  ['/squadra', '👥', 'Squadra'],
-  ['/calendario', '🗓', 'Calendario'],
-  ['/punti', '⭐', 'Punti'],
-  ['/impostazioni', '⚙️', 'Impostazioni'],
+// Funzioni raggruppate per argomento; ogni ruolo vede solo quelle consentite (gruppi vuoti nascosti)
+const GRUPPI = [
+  ['Allenamento', [
+    ['/allenamenti', 'cronometro', 'Allenamenti'],
+    ['/storico', 'libro', 'Storico'],
+    ['/progressi', 'grafico', 'Progressi'],
+    ['/record', 'medaglia', 'Record'],
+  ]],
+  ['Gare', [
+    ['/gare', 'coppa', 'Gare'],
+    ['/archivio', 'archivio', 'Archivio gare'],
+    ['/video', 'video', 'Video'],
+  ]],
+  ['Squadra', [
+    ['/presenze', 'spunta', 'Presenze'],
+    ['/squadra', 'gruppo', 'Squadra'],
+    ['/calendario', 'calendario', 'Calendario'],
+    ['/punti', 'stella', 'Punti'],
+    ['/impostazioni', 'regolazioni', 'Impostazioni'],
+  ]],
 ]
 
 export default function Funzioni() {
   const { ruolo } = useAuth()
   const consentite = funzioniConsentite(ruolo)
-  const voci = FUNZIONI.filter(([percorso]) =>
-    consentite.includes(percorso) && (mostraInArrivo || !IN_ARRIVO.includes(percorso)))
+  const visibile = ([percorso]) => consentite.includes(percorso) && (mostraInArrivo || !IN_ARRIVO.includes(percorso))
+  const gruppi = GRUPPI.map(([nome, voci]) => [nome, voci.filter(visibile)]).filter(([, voci]) => voci.length > 0)
 
   return (
     <AppShell titolo="Funzioni" attiva="funzioni">
-      <div className="grid grid-cols-3 gap-3">
-        {voci.map(([percorso, icona, nome]) => (
-          <Link key={percorso} to={percorso}
-            className="bg-white border border-gray-100 rounded-2xl min-h-[96px] px-1 py-4 text-center text-[13px] font-medium shadow-sm hover:shadow-md active:scale-95 transition">
-            <span aria-hidden="true" className="block text-2xl mb-1.5">{icona}</span>
-            {nome}
-          </Link>
-        ))}
-      </div>
+      {gruppi.map(([nome, voci]) => (
+        <section key={nome} className="mb-5">
+          <h2 className="text-xs font-bold tracking-widest text-slate-500 uppercase px-1 mb-2">{nome}</h2>
+          <div className="grid grid-cols-3 gap-2.5">
+            {voci.map(([percorso, icona, etichetta]) => (
+              <Link key={percorso} to={percorso}
+                className="bg-white rounded-3xl min-h-[100px] px-1 py-4 flex flex-col items-center justify-center gap-2 text-center text-[13px] font-semibold text-abisso shadow-[0_1px_2px_rgba(10,26,47,0.05)] active:scale-95 transition">
+                <span className="w-11 h-11 rounded-2xl bg-schiuma text-blue-600 flex items-center justify-center">
+                  <Icona nome={icona} />
+                </span>
+                {etichetta}
+              </Link>
+            ))}
+          </div>
+        </section>
+      ))}
     </AppShell>
   )
 }

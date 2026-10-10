@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { CalendarioFoglio } from './SelettoreData'
+import Icona from './Icona'
 import { useAuth } from '../context/AuthContext'
 import { dataLocale } from '../lib/lavori'
 import { nomeRuolo } from '../lib/permessi'
@@ -11,13 +12,6 @@ const VOCI = [
   ['funzioni', '/funzioni', 'griglia', 'Funzioni'],
   ['profilo', '/profilo', 'persona', 'Profilo'],
 ]
-// Icone disegnate (le emoji cambiano aspetto da un telefono all'altro)
-const ICONE = {
-  onde: <><path d="M2 15c2 0 2-1.5 4-1.5s2 1.5 4 1.5 2-1.5 4-1.5 2 1.5 4 1.5 2-1.5 4-1.5" /><path d="M2 19.5c2 0 2-1.5 4-1.5s2 1.5 4 1.5 2-1.5 4-1.5 2 1.5 4 1.5 2-1.5 4-1.5" /><circle cx="15" cy="6" r="2.2" /><path d="M5 11.5 9 8l3 2.5" /></>,
-  grafico: <><path d="M3 17l5-5 4 3 8-8" /><path d="M15 7h5v5" /></>,
-  griglia: <><rect x="4" y="4" width="6" height="6" rx="1.5" /><rect x="14" y="4" width="6" height="6" rx="1.5" /><rect x="4" y="14" width="6" height="6" rx="1.5" /><rect x="14" y="14" width="6" height="6" rx="1.5" /></>,
-  persona: <><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" /></>,
-}
 const SIGLE = ['DOM', 'LUN', 'MAR', 'MER', 'GIO', 'VEN', 'SAB']
 
 // Struttura comune di tutte le schermate (layout Limpida): testata chiara, striscia dei giorni e menu in basso.
@@ -133,10 +127,7 @@ export default function AppShell({ titolo, attiva, indietro, giorno, onGiorno, v
             className={`h-[60px] flex flex-col items-center justify-center gap-0.5 text-[11px] rounded-2xl transition ${
               attiva === chiave ? 'text-blue-600 font-extrabold' : 'text-slate-500 font-semibold'
             }`}>
-            <svg aria-hidden="true" viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor"
-              strokeWidth={attiva === chiave ? 2.2 : 1.9} strokeLinecap="round" strokeLinejoin="round">
-              {ICONE[icona]}
-            </svg>
+            <Icona nome={icona} spessore={attiva === chiave ? 2.2 : 1.9} />
             {nome}
           </Link>
         ))}
