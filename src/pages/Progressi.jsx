@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import AppShell from '../components/AppShell'
 import SchedaProgressi from '../components/SchedaProgressi'
+import SceltaFiglio, { useAtletaVisto } from '../components/SceltaFiglio'
 import { SenzaSquadra } from '../components/PianoCard'
 import { useMiaSquadra } from '../lib/pianoSquadra'
 
@@ -48,12 +49,18 @@ function ProgressiCoach() {
   )
 }
 
-export default function Progressi() {
-  const { user, ruolo } = useAuth()
-  if (ruolo === 'coach') return <ProgressiCoach />
+// Atleta: i suoi progressi. Genitore: quelli del figlio scelto (sola lettura).
+function ProgressiAtleta() {
+  const visto = useAtletaVisto()
   return (
-    <AppShell titolo="Progressi" attiva="funzioni" indietro="/funzioni">
-      <SchedaProgressi atletaId={user.id} />
+    <AppShell titolo={visto.genitore && visto.figlio ? `Progressi di ${visto.figlio.nome}` : 'Progressi'} attiva="funzioni" indietro="/funzioni">
+      <SceltaFiglio visto={visto} cosa="i suoi progressi" />
+      {visto.atletaId && <SchedaProgressi key={visto.atletaId} atletaId={visto.atletaId} />}
     </AppShell>
   )
+}
+
+export default function Progressi() {
+  const { ruolo } = useAuth()
+  return ruolo === 'coach' ? <ProgressiCoach /> : <ProgressiAtleta />
 }

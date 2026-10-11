@@ -6,29 +6,32 @@ import { leggiCoda, rimuoviDaCoda, sincronizza, salvaCache, leggiCache, useOnlin
 
 const TABELLA = 'allenamenti'
 
-// Lo storico di tutti i lavori, raggruppati per giorno
-export default function StoricoAllenamenti() {
+// Lo storico di tutti i lavori, raggruppati per giorno.
+// Con atletaId (genitore che guarda il figlio) è in sola lettura: niente coda offline, niente cestino.
+export default function StoricoAllenamenti({ atletaId }) {
   const { user } = useAuth()
+  const soloLettura = !!atletaId && atletaId !== user.id
+  const id = atletaId || user.id
   const online = useOnline()
   const [righe, setRighe] = useState([])
   const [coda, setCoda] = useState([])
 
   const carica = useCallback(async () => {
-    if (navigator.onLine) await sincronizza(supabase, TABELLA, user.id)
-    setCoda(leggiCoda(TABELLA, user.id))
+    if (!soloLettura && navigator.onLine) await sincronizza(supabase, TABELLA, id)
+    setCoda(soloLettura ? [] : leggiCoda(TABELLA, id))
     const { data, error } = await supabase
       .from(TABELLA)
       .select('*')
-      .eq('atleta_id', user.id)
+      .eq('atleta_id', id)
       .order('created_at', { ascending: false })
       .limit(300)
     if (!error && data) {
       setRighe(data)
-      salvaCache(TABELLA, user.id, data)
+      salvaCache(TABELLA, id, data)
     } else {
-      setRighe(leggiCache(TABELLA, user.id))
+      setRighe(leggiCache(TABELLA, id))
     }
-  }, [user.id])
+  }, [id, soloLettura])
 
   useEffect(() => {
     carica()
@@ -79,7 +82,7 @@ export default function StoricoAllenamenti() {
             )}
             {r.video_url && <a href={r.video_url} target="_blank" rel="noreferrer" className="text-xs text-blue-600">🎥 Guarda il video</a>}
           </div>
-          <button onClick={() => elimina(r)} title="Elimina" aria-label="Elimina" className="text-slate-500 hover:text-red-500 transition">🗑️</button>
+          {!soloLettura && <button onClick={() => elimina(r)} title="Elimina" aria-label="Elimina" className="text-slate-500 hover:text-red-500 transition">🗑️</button>}
         </div>
       ))}
     </div>

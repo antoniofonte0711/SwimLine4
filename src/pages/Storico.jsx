@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import AppShell from '../components/AppShell'
 import StoricoAllenamenti from '../components/StoricoAllenamenti'
+import SceltaFiglio, { useAtletaVisto } from '../components/SceltaFiglio'
 import PianoCard, { SenzaSquadra } from '../components/PianoCard'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
@@ -37,11 +38,22 @@ function StoricoCoach() {
   ))
 }
 
+// Atleta: i suoi lavori. Genitore: quelli del figlio scelto.
+function StoricoAtleta() {
+  const visto = useAtletaVisto()
+  return (
+    <>
+      <SceltaFiglio visto={visto} cosa="i suoi allenamenti" />
+      {visto.atletaId && <StoricoAllenamenti key={visto.atletaId} atletaId={visto.atletaId} />}
+    </>
+  )
+}
+
 export default function Storico() {
   const { ruolo } = useAuth()
   return (
     <AppShell titolo="Storico" attiva="funzioni" indietro="/funzioni">
-      {ruolo === 'coach' ? <StoricoCoach /> : <StoricoAllenamenti />}
+      {ruolo === 'coach' ? <StoricoCoach /> : <StoricoAtleta />}
     </AppShell>
   )
 }

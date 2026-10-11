@@ -6,6 +6,7 @@ import AppShell from '../components/AppShell'
 import { STILI } from '../lib/lavori'
 import { tempoInSecondi, secondiInTempo, normalizzaTempo, tempoValido, tempoPlausibile, erroreTempoImpossibile, ERRORE_TEMPO_BREVE } from '../lib/tempo'
 import InputTempo from '../components/InputTempo'
+import SceltaFiglio, { useAtletaVisto } from '../components/SceltaFiglio'
 
 const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white'
 
@@ -13,6 +14,7 @@ const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl 
 // Fonte: Gare oppure Allenamenti. Ambito: i miei oppure la squadra.
 export default function Record() {
   const { user, profile, isCoach } = useAuth()
+  const visto = useAtletaVisto() // il genitore: "I miei" = i record del figlio scelto
   const [fonte, setFonte] = useState('Gare')
   const [ambito, setAmbito] = useState(isCoach ? 'Squadra' : 'I miei')
   const [stile, setStile] = useState(STILI[0])
@@ -64,8 +66,8 @@ export default function Record() {
         })
       })
     }
-    return lista.filter((v) => v.stile === stile && (ambito === 'Squadra' || v.atleta === user.id))
-  }, [fonte, gare, allenamenti, stile, ambito, user.id])
+    return lista.filter((v) => v.stile === stile && (ambito === 'Squadra' || v.atleta === visto.atletaId))
+  }, [fonte, gare, allenamenti, stile, ambito, visto.atletaId])
 
   // Per ogni distanza: il miglior tempo di ciascun atleta, in ordine dal più veloce
   const classifiche = useMemo(() => {
@@ -83,6 +85,7 @@ export default function Record() {
 
   return (
     <AppShell titolo="Record" attiva="funzioni" indietro="/funzioni">
+      <SceltaFiglio visto={visto} cosa="i suoi record" />
       <div className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
         <div className="grid grid-cols-2 gap-3 mb-3">
           <div>
@@ -95,7 +98,7 @@ export default function Record() {
           <div>
             <label className="block text-xs text-slate-500 mb-1">Di chi</label>
             <select value={ambito} onChange={(e) => setAmbito(e.target.value)} className={CAMPO}>
-              <option>I miei</option>
+              <option value="I miei">{visto.genitore ? `Di ${visto.figlio?.nome || 'mio figlio'}` : 'I miei'}</option>
               <option>Squadra</option>
             </select>
           </div>

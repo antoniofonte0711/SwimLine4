@@ -7,6 +7,7 @@ import AppShell from '../components/AppShell'
 import PianoCard from '../components/PianoCard'
 import { coloreLavoro, dataLocale, formattaGiorno } from '../lib/lavori'
 import { useMiaSquadra } from '../lib/pianoSquadra'
+import SceltaFiglio, { useAtletaVisto } from '../components/SceltaFiglio'
 
 const MESI = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre']
 const INTEST = ['L', 'M', 'M', 'G', 'V', 'S', 'D']
@@ -14,7 +15,9 @@ const PRES = { presente: 'bg-green-500', assente: 'bg-red-500', non_penale: 'bg-
 
 // Calendario: allenamenti e gare del mese. Il coach vede anche quanti atleti c'erano (es. 12/15).
 export default function Calendario() {
-  const { user, isCoach } = useAuth()
+  const { isCoach } = useAuth()
+  const visto = useAtletaVisto() // il genitore vede presenze e lavori del figlio scelto
+  const atletaId = visto.atletaId
   const { squadra } = useMiaSquadra()
   const oggi = dataLocale()
   const base = new Date()
@@ -49,8 +52,8 @@ export default function Calendario() {
           const r = await supabase.from('presenze').select('atleta_id, data, stato').in('atleta_id', ids).gte('data', da).lte('data', a)
           pr = r.data || []
         }
-      } else {
-        const r = await supabase.from('presenze').select('atleta_id, data, stato').eq('atleta_id', user.id).gte('data', da).lte('data', a)
+      } else if (atletaId) {
+        const r = await supabase.from('presenze').select('atleta_id, data, stato').eq('atleta_id', atletaId).gte('data', da).lte('data', a)
         pr = r.data || []
       }
       if (!attivo) return
@@ -61,16 +64,16 @@ export default function Calendario() {
     }
     carica()
     return () => { attivo = false }
-  }, [da, a, squadra?.id, isCoach, user.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [da, a, squadra?.id, isCoach, atletaId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Lavori che l'atleta ha registrato nel giorno scelto
   useEffect(() => {
-    if (isCoach) return setMiei([])
+    if (isCoach || !atletaId) return setMiei([])
     let attivo = true
-    supabase.from('allenamenti').select('*').eq('atleta_id', user.id).eq('data_allenamento', scelto).order('created_at')
+    supabase.from('allenamenti').select('*').eq('atleta_id', atletaId).eq('data_allenamento', scelto).order('created_at')
       .then(({ data }) => { if (attivo) setMiei(data || []) })
     return () => { attivo = false }
-  }, [scelto, isCoach, user.id])
+  }, [scelto, isCoach, atletaId])
 
   const perGiorno = useMemo(() => {
     const m = {}
@@ -104,6 +107,7 @@ export default function Calendario() {
 
   return (
     <AppShell titolo="Calendario" attiva="funzioni" indietro="/funzioni">
+      <SceltaFiglio visto={visto} cosa="le sue presenze" />
       <div className="bg-white rounded-3xl p-4 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
         <div className="flex items-center justify-between mb-3">
           <button onClick={() => vaiMese(-1)} aria-label="Mese precedente" className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 text-xl font-bold active:scale-90 transition">‹</button>
@@ -179,7 +183,7 @@ export default function Calendario() {
 
           {!isCoach && miei.length > 0 && (
             <div className="bg-white rounded-3xl p-5 shadow-[0_1px_2px_rgba(10,26,47,0.05)] mb-3">
-              <p className="font-bold mb-1">I tuoi lavori</p>
+              <p className="font-bold mb-1">{visto.genitore ? `I lavori di ${visto.figlio?.nome || 'tuo figlio'}` : 'I tuoi lavori'}</p>
               {miei.map((r, i) => (
                 <div key={r.id} className={`py-2 ${i ? 'border-t border-gray-100' : ''}`}>
                   <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${coloreLavoro(r.tipo_lavoro)}`}>{r.tipo_lavoro}</span>
