@@ -54,6 +54,10 @@ export default function Funzioni() {
           </div>
         </section>
       ))}
+      <Link to="/guida" className="flex items-center justify-center gap-2 min-h-[48px] text-sm font-bold text-blue-600 bg-schiuma rounded-2xl">
+        <Icona nome="libro" className="w-5 h-5" />
+        Come si usa l'app? Apri la guida
+      </Link>
     </AppShell>
   )
 }

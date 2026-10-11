@@ -24,7 +24,9 @@ export default function Privacy() {
         <p className="text-sm text-slate-500 mb-6">SwimLine4 · aggiornata il {new Date(VERSIONE_INFORMATIVA + 'T12:00:00').toLocaleDateString('it-IT')}</p>
 
         <Paragrafo titolo="Chi è il titolare">
-          <p>Titolare del trattamento: <b>{TITOLARE || DA_INDICARE}</b>. Contatto: <b>{CONTATTO || DA_INDICARE}</b>.</p>
+          <p>Titolare del trattamento: <b>{TITOLARE || DA_INDICARE}</b>. Contatto: {CONTATTO
+            ? <a href={`mailto:${CONTATTO}`} className="font-bold text-blue-600 underline break-all">{CONTATTO}</a>
+            : <b>{DA_INDICARE}</b>}.</p>
           <p>Puoi scriverci anche dall'app: Profilo › Aiuto › Segnala un problema.</p>
         </Paragrafo>
 
@@ -42,7 +44,7 @@ export default function Privacy() {
         <Paragrafo titolo="Chi li vede">
           <p><b>Il coach della tua squadra</b> vede tempi, gare e presenze dei suoi atleti.</p>
           <p><b>I genitori</b> vedono i dati del figlio solo dopo che l'atleta ha approvato la richiesta.</p>
-          <p><b>I compagni</b> vedono i tuoi tempi di gara solo se lo permetti (Profilo › Privacy). Gli allenamenti li vedete solo tu e il coach.</p>
+          <p><b>La tua squadra</b> (compagni e loro genitori) vede i tuoi tempi di gara solo se lo permetti (Profilo › Privacy). Gli allenamenti li vedete solo tu, il coach e i genitori che hai approvato.</p>
           <p><b>L'amministratore dell'app</b> può accedere ai dati per assistenza e sicurezza; ogni accesso a un altro account resta registrato.</p>
         </Paragrafo>
 

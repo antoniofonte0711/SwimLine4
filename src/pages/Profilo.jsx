@@ -16,6 +16,7 @@ import GenitoriAtleta from '../components/GenitoriAtleta'
 import { CAMPO, Interruttore, Riga, Scelta, Sezione } from '../components/Impostazione'
 import { version } from '../../package.json'
 import { useRegole } from '../lib/regole'
+import { svuotaCache } from '../lib/codaOffline'
 
 const BOTTONE = 'text-sm font-bold text-blue-600 bg-schiuma rounded-full px-4 py-2 active:scale-95 transition'
 const PRIMARIO = 'w-full bg-blue-600 text-white font-bold rounded-2xl py-3 active:scale-[0.98] transition disabled:opacity-50'
@@ -169,9 +170,9 @@ function Privacy() {
   }
 
   return (
-    <Sezione titolo="Privacy" nota="Il tuo coach vede sempre i tuoi tempi. Gli allenamenti che registri li vedete solo tu e il coach.">
-      <Riga etichetta="I compagni vedono le mie gare" descrizione="Tempi di gara nella pagina Squadra e nei Record">
-        <Interruttore acceso={visibili} onCambia={cambia} etichetta="I compagni vedono le mie gare" />
+    <Sezione titolo="Privacy" nota="Il tuo coach vede sempre i tuoi tempi. Gli allenamenti che registri li vedete solo tu, il coach e i genitori che hai approvato.">
+      <Riga etichetta="La squadra vede le mie gare" descrizione="Compagni e loro genitori: tempi di gara nella pagina Squadra e nei Record">
+        <Interruttore acceso={visibili} onCambia={cambia} etichetta="La squadra vede le mie gare" />
       </Riga>
       {errore && <div className="py-3"><Messaggio errore={errore} /></div>}
     </Sezione>
@@ -237,6 +238,7 @@ function EliminaAccount() {
     if (conferma.trim().toUpperCase() !== 'ELIMINA') return setErrore('Scrivi ELIMINA per confermare.')
     const { error } = await supabase.rpc('elimina_mio_account')
     if (error) return setErrore('Non sono riuscito a eliminarlo: ' + error.message)
+    svuotaCache()
     await supabase.auth.signOut()
     navigate('/')
   }
@@ -274,6 +276,7 @@ export default function Profilo() {
   const { puo } = useRegole()
 
   async function esci() {
+    svuotaCache() // telefono condiviso: le copie offline non restano al prossimo che entra
     await supabase.auth.signOut()
     navigate('/')
   }
@@ -383,6 +386,9 @@ export default function Profilo() {
       {eAtleta && <Privacy />}
 
       <Sezione titolo="Aiuto">
+        <Riga etichetta="Guida all'app" descrizione="Ogni tasto spiegato, passo per passo">
+          <Link to="/guida" className={BOTTONE + ' inline-flex items-center'}>Apri</Link>
+        </Riga>
         <SegnalaProblema />
         <Riga etichetta="Informativa privacy" descrizione="Quali dati usiamo, chi li vede, come cancellarli">
           <Link to="/privacy" className={BOTTONE + ' inline-flex items-center'}>Leggi</Link>

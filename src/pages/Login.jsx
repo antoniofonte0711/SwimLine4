@@ -93,6 +93,9 @@ export default function Login() {
           Non hai un account?{' '}
           <Link to="/registrati" className="text-blue-600 font-bold hover:underline">Registrati</Link>
         </p>
+        <p className="text-sm text-slate-500 text-center mt-2">
+          Prima volta? <Link to="/guida" className="text-blue-600 font-bold hover:underline">Leggi la guida</Link>
+        </p>
       </form>
     </div>
   )

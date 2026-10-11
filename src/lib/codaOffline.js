@@ -61,6 +61,16 @@ export function leggiCache(tabella, userId) {
   return leggi(chiaveCache(tabella, userId))
 }
 
+// All'uscita dall'account si tolgono le copie offline (telefono condiviso); la coda dei dati
+// non ancora inviati resta, così nessuno perde quello che ha scritto senza rete
+export function svuotaCache() {
+  try {
+    const chiavi = []
+    for (let i = 0; i < localStorage.length; i++) chiavi.push(localStorage.key(i))
+    chiavi.filter((k) => k?.startsWith('swimline4:cache:')).forEach((k) => localStorage.removeItem(k))
+  } catch { /* localStorage non disponibile */ }
+}
+
 export function erroreDiRete(error) {
   return !navigator.onLine || /fetch|network|failed/i.test(error?.message || '')
 }
