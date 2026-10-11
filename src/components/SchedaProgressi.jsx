@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabaseClient'
 import { caricaTutto } from '../lib/caricaTutto'
 import InputTempo from './InputTempo'
 import SelettoreData from './SelettoreData'
-import { STILI, TIPI_LAVORO, dataLocale } from '../lib/lavori'
+import { STILI, TIPI_LAVORO, VASCHE, dataLocale, testoVasca, vascaDi } from '../lib/lavori'
 import { tempoInSecondi, secondiInTempo, formattaData, normalizzaTempo, tempoValido, tempoPlausibile, erroreTempoImpossibile, ERRORE_TEMPO_BREVE } from '../lib/tempo'
 import { STILI_COACH } from '../lib/pianoSquadra'
 
@@ -29,6 +29,7 @@ function piuFrequente(lista) {
 export default function SchedaProgressi({ atletaId, coach = false }) {
   const [punti, setPunti] = useState([])
   const [fonte, setFonte] = useState(FONTI[0])
+  const [vasca, setVasca] = useState(25)
   const [distanza, setDistanza] = useState('')
   const [stile, setStile] = useState(TUTTI)
   const [dal, setDal] = useState('')
@@ -57,9 +58,12 @@ export default function SchedaProgressi({ atletaId, coach = false }) {
     ;(g || []).forEach((r) => {
       const sec = tempoInSecondi(r.tempo)
       if (sec === null) return
-      lista.push({ id: r.id, tabella: 'gare', fonte: 'Gara', data: r.data_gara, distanza: r.distanza, stile: r.stile, sec, nome: r.nome_gara })
+      lista.push({ id: r.id, tabella: 'gare', fonte: 'Gara', data: r.data_gara, distanza: r.distanza, stile: r.stile, vasca: vascaDi(r), sec, nome: r.nome_gara })
     })
     setPunti(lista)
+    // se l'atleta ha gare in una sola vasca, si parte da quella
+    const vasche = new Set(lista.filter((p) => p.fonte === 'Gara').map((p) => p.vasca))
+    if (vasche.size === 1) setVasca([...vasche][0])
     let prossima
     if (nuova) {
       // Il tempo appena aggiunto deve vedersi: niente filtri che lo nascondano
@@ -89,9 +93,10 @@ export default function SchedaProgressi({ atletaId, coach = false }) {
         .filter((p) => String(p.distanza) === distanza)
         .filter((p) => stile === TUTTI || p.stile === stile)
         .filter((p) => fonte === FONTI[0] || (fonte === FONTI[1] ? p.fonte === 'Allenamento' : p.fonte === 'Gara'))
+        .filter((p) => p.fonte !== 'Gara' || p.vasca === vasca) // gare: una vasca alla volta
         .filter((p) => (!dal || p.data >= dal) && (!al || p.data <= al))
         .sort((x, y) => String(x.data).localeCompare(String(y.data))),
-    [punti, distanza, stile, fonte, dal, al]
+    [punti, distanza, stile, fonte, vasca, dal, al]
   )
   const migliore = filtrati.length ? Math.min(...filtrati.map((p) => p.sec)) : null
   const dati = filtrati.map((p) => ({ data: formattaData(p.data), tempo: p.sec }))
@@ -110,7 +115,7 @@ export default function SchedaProgressi({ atletaId, coach = false }) {
           <button onClick={() => setAperto(!aperto)} className="w-full font-bold text-white bg-blue-600 rounded-2xl py-3.5 mb-3">
             {aperto ? 'Chiudi' : '+ Aggiungi tempo a questo atleta'}
           </button>
-          {aperto && <NuovoTempo atletaId={atletaId} onSalvato={(nuova) => { carica(nuova); setAperto(false) }} />}
+          {aperto && <NuovoTempo atletaId={atletaId} onSalvato={(nuova) => { if (nuova.vasca) setVasca(nuova.vasca); carica(nuova); setAperto(false) }} />}
         </>
       )}
 
@@ -131,10 +136,22 @@ export default function SchedaProgressi({ atletaId, coach = false }) {
             </select>
           </div>
         </div>
-        <label className="block text-xs text-slate-500 mb-1">Cosa mostrare</label>
-        <select value={fonte} onChange={(e) => setFonte(e.target.value)} className={CAMPO + ' mb-3'}>
-          {FONTI.map((f) => <option key={f}>{f}</option>)}
-        </select>
+        <div className={fonte !== FONTI[1] ? 'grid grid-cols-2 gap-3 mb-3' : 'mb-3'}>
+          <div>
+            <label className="block text-xs text-slate-500 mb-1">Cosa mostrare</label>
+            <select value={fonte} onChange={(e) => setFonte(e.target.value)} className={CAMPO}>
+              {FONTI.map((f) => <option key={f}>{f}</option>)}
+            </select>
+          </div>
+          {fonte !== FONTI[1] && (
+            <div>
+              <label className="block text-xs text-slate-500 mb-1">Vasca delle gare</label>
+              <select value={vasca} onChange={(e) => setVasca(Number(e.target.value))} className={CAMPO}>
+                {VASCHE.map(([v, n]) => <option key={v} value={v}>{n}</option>)}
+              </select>
+            </div>
+          )}
+        </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-xs text-slate-500 mb-1">Dal</label>
@@ -179,7 +196,7 @@ export default function SchedaProgressi({ atletaId, coach = false }) {
             <div className="min-w-0">
               <p className="font-semibold truncate">{p.nome}</p>
               <p className="text-xs text-slate-500">
-                {new Date(p.data + 'T12:00:00').toLocaleDateString('it-IT')} · {p.fonte} {p.stile ? `· ${p.stile}` : ''}
+                {new Date(p.data + 'T12:00:00').toLocaleDateString('it-IT')} · {p.fonte} {p.stile ? `· ${p.stile}` : ''}{p.vasca ? ` · ${testoVasca(p.vasca)}` : ''}
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -201,6 +218,7 @@ function NuovoTempo({ atletaId, onSalvato }) {
   const [lavoro, setLavoro] = useState(TIPI_LAVORO[0])
   const [stile, setStile] = useState('Stile libero')
   const [distanza, setDistanza] = useState('100')
+  const [vasca, setVasca] = useState(25)
   const [tempo, setTempo] = useState('')
   const [errore, setErrore] = useState('')
   const [invio, setInvio] = useState(false)
@@ -214,11 +232,11 @@ function NuovoTempo({ atletaId, onSalvato }) {
     if (tipo === 'gara' && !nome.trim()) return setErrore('Scrivi il nome della gara.')
     setInvio(true)
     const { error } = tipo === 'gara'
-      ? await supabase.from('gare').insert({ atleta_id: atletaId, nome_gara: nome.trim(), distanza: Number(distanza), stile, tempo: t, data_gara: data })
+      ? await supabase.from('gare').insert({ atleta_id: atletaId, nome_gara: nome.trim(), distanza: Number(distanza), stile, vasca, tempo: t, data_gara: data })
       : await supabase.from('allenamenti').insert({ atleta_id: atletaId, tipo_lavoro: lavoro, distanza: Number(distanza), ripetizioni: 1, stile, tempo_totale: t, data_allenamento: data })
     setInvio(false)
     if (error) return setErrore('Non sono riuscito a salvare: ' + error.message)
-    onSalvato({ distanza: Number(distanza), stile })
+    onSalvato({ distanza: Number(distanza), stile, ...(tipo === 'gara' ? { vasca } : {}) })
   }
 
   return (
@@ -234,6 +252,10 @@ function NuovoTempo({ atletaId, onSalvato }) {
         <>
           <label className="block text-xs text-slate-500 mb-1">Nome gara</label>
           <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Es. Trofeo Lombardia" className={CAMPO + ' mb-3'} />
+          <label className="block text-xs text-slate-500 mb-1">Vasca</label>
+          <select value={vasca} onChange={(e) => setVasca(Number(e.target.value))} className={CAMPO + ' mb-3'}>
+            {VASCHE.map(([v, n]) => <option key={v} value={v}>{n}</option>)}
+          </select>
         </>
       ) : (
         <>

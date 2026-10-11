@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabaseClient'
 import { caricaTutto } from '../lib/caricaTutto'
 import { useAuth } from '../context/AuthContext'
 import AppShell from '../components/AppShell'
-import { STILI } from '../lib/lavori'
+import { STILI, VASCHE, vascaDi } from '../lib/lavori'
 import { tempoInSecondi, secondiInTempo, normalizzaTempo, tempoValido, tempoPlausibile, erroreTempoImpossibile, ERRORE_TEMPO_BREVE } from '../lib/tempo'
 import InputTempo from '../components/InputTempo'
 import SceltaFiglio, { useAtletaVisto } from '../components/SceltaFiglio'
@@ -18,6 +18,7 @@ export default function Record() {
   const [fonte, setFonte] = useState('Gare')
   const [ambito, setAmbito] = useState(isCoach ? 'Squadra' : 'I miei')
   const [stile, setStile] = useState(STILI[0])
+  const [vasca, setVasca] = useState(25)
   const [nomi, setNomi] = useState({})
   const [gare, setGare] = useState([])
   const [allenamenti, setAllenamenti] = useState([])
@@ -38,7 +39,7 @@ export default function Record() {
       setNomi(mappa)
 
       const [g, a] = await Promise.all([
-        caricaTutto(() => supabase.from('gare').select('id, atleta_id, distanza, stile, tempo, nome_gara, data_gara, created_at')),
+        caricaTutto(() => supabase.from('gare').select('id, atleta_id, distanza, stile, vasca, tempo, nome_gara, data_gara, created_at')),
         caricaTutto(() => supabase.from('allenamenti').select('id, atleta_id, tipo_lavoro, distanza, stile, tempo_totale, passaggi, data_allenamento, created_at')),
       ])
       setGare(g.data || [])
@@ -54,7 +55,8 @@ export default function Record() {
     if (fonte === 'Gare') {
       gare.forEach((g) => {
         const sec = tempoInSecondi(g.tempo)
-        if (sec !== null) lista.push({ id: g.id, tabella: 'gare', idx: -1, tempo: g.tempo, creato: g.created_at, atleta: g.atleta_id, distanza: g.distanza, stile: g.stile, sec, quando: g.data_gara, extra: g.nome_gara })
+        // vasca corta e lunga non si confrontano: si guarda solo quella scelta
+        if (sec !== null && vascaDi(g) === vasca) lista.push({ id: g.id, tabella: 'gare', idx: -1, tempo: g.tempo, creato: g.created_at, atleta: g.atleta_id, distanza: g.distanza, stile: g.stile, sec, quando: g.data_gara, extra: g.nome_gara })
       })
     } else {
       allenamenti.forEach((r) => {
@@ -67,7 +69,7 @@ export default function Record() {
       })
     }
     return lista.filter((v) => v.stile === stile && (ambito === 'Squadra' || v.atleta === visto.atletaId))
-  }, [fonte, gare, allenamenti, stile, ambito, visto.atletaId])
+  }, [fonte, gare, allenamenti, stile, ambito, vasca, visto.atletaId])
 
   // Per ogni distanza: il miglior tempo di ciascun atleta, in ordine dal più veloce
   const classifiche = useMemo(() => {
@@ -103,10 +105,22 @@ export default function Record() {
             </select>
           </div>
         </div>
-        <label className="block text-xs text-slate-500 mb-1">Stile</label>
-        <select value={stile} onChange={(e) => setStile(e.target.value)} className={CAMPO}>
-          {STILI.map((s) => <option key={s}>{s}</option>)}
-        </select>
+        <div className={fonte === 'Gare' ? 'grid grid-cols-2 gap-3' : ''}>
+          <div>
+            <label className="block text-xs text-slate-500 mb-1">Stile</label>
+            <select value={stile} onChange={(e) => setStile(e.target.value)} className={CAMPO}>
+              {STILI.map((s) => <option key={s}>{s}</option>)}
+            </select>
+          </div>
+          {fonte === 'Gare' && (
+            <div>
+              <label className="block text-xs text-slate-500 mb-1">Vasca</label>
+              <select value={vasca} onChange={(e) => setVasca(Number(e.target.value))} className={CAMPO}>
+                {VASCHE.map(([v, n]) => <option key={v} value={v}>{n}</option>)}
+              </select>
+            </div>
+          )}
+        </div>
       </div>
 
       {carico && <p className="text-center text-slate-500 py-6">Carico i record…</p>}

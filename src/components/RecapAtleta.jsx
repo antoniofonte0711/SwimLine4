@@ -22,7 +22,7 @@ export function useRecap(atletaId, squadraId, da, a) {
         : Promise.resolve({ data: [] }),
       supabase.from('presenze').select('data, stato').eq('atleta_id', atletaId).gte('data', da).lte('data', a),
       supabase.from('allenamenti').select('id, data_allenamento, tipo_lavoro, distanza, stile, passaggi').eq('atleta_id', atletaId).gte('data_allenamento', storia).lte('data_allenamento', a),
-      supabase.from('gare').select('id, nome_gara, distanza, stile, tempo, data_gara').eq('atleta_id', atletaId).gte('data_gara', storia).lte('data_gara', a),
+      supabase.from('gare').select('id, nome_gara, distanza, stile, vasca, tempo, data_gara').eq('atleta_id', atletaId).gte('data_gara', storia).lte('data_gara', a),
       supabase.from('punti_movimenti').select('data, punti').eq('atleta_id', atletaId).gte('data', da).lte('data', a),
     ]).then(([p, pr, al, g, pt]) => {
       if (!attivo) return

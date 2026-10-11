@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import AppShell from '../components/AppShell'
-import { coloreLavoro, formattaGiorno } from '../lib/lavori'
+import { coloreLavoro, formattaGiorno, testoVasca, vascaDi } from '../lib/lavori'
 import { tempoInSecondi } from '../lib/tempo'
 import RisultatiAtleta from '../components/RisultatiAtleta'
 import SchedaProgressi from '../components/SchedaProgressi'
@@ -73,15 +73,15 @@ export default function Squadra() {
     }
   }, [scelto, isCoach])
 
-  // Miglior tempo per ogni distanza e stile
+  // Miglior tempo per ogni distanza, stile e vasca (25 e 50 m sono prove diverse)
   const migliori = {}
   gare.forEach((g) => {
     const sec = tempoInSecondi(g.tempo)
     if (sec === null) return
-    const k = `${g.distanza} m ${g.stile}`
-    if (!migliori[k] || sec < migliori[k].sec) migliori[k] = { sec, tempo: g.tempo, dist: g.distanza }
+    const k = `${g.distanza} m ${g.stile} · ${testoVasca(vascaDi(g))}`
+    if (!migliori[k] || sec < migliori[k].sec) migliori[k] = { sec, tempo: g.tempo, dist: g.distanza, vasca: vascaDi(g) }
   })
-  const elencoMigliori = Object.entries(migliori).sort((a, b) => a[1].dist - b[1].dist)
+  const elencoMigliori = Object.entries(migliori).sort((a, b) => a[1].vasca - b[1].vasca || a[1].dist - b[1].dist)
 
   return (
     <AppShell titolo="Squadra" attiva="funzioni" indietro="/funzioni">
@@ -135,7 +135,7 @@ export default function Squadra() {
               <div className="flex justify-between gap-2">
                 <div>
                   <p className="font-bold">{g.nome_gara}</p>
-                  <p className="text-sm text-slate-500">{dataIt(g.data_gara)} · {g.distanza} m {g.stile}</p>
+                  <p className="text-sm text-slate-500">{dataIt(g.data_gara)} · {g.distanza} m {g.stile} · {testoVasca(vascaDi(g))}</p>
                 </div>
                 <p className="text-xl font-extrabold text-blue-600">{g.tempo}</p>
               </div>

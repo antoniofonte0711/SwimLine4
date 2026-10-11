@@ -38,7 +38,7 @@ function SchedaPrevisioni({ atletaId }) {
     setDati(null)
     Promise.all([
       caricaTutto(() => supabase.from('allenamenti').select('tipo_lavoro, distanza, stile, passaggi, tempo_totale, data_allenamento, created_at').eq('atleta_id', atletaId)),
-      caricaTutto(() => supabase.from('gare').select('distanza, stile, tempo, data_gara').eq('atleta_id', atletaId)),
+      caricaTutto(() => supabase.from('gare').select('distanza, stile, vasca, tempo, data_gara').eq('atleta_id', atletaId)),
     ]).then(([a, g]) => { if (attivo) setDati(serieTempi(a.data || [], g.data || [])) })
     return () => { attivo = false }
   }, [atletaId])
@@ -50,7 +50,7 @@ function SchedaPrevisioni({ atletaId }) {
       .filter((s) => s.fonte === (fonte === 'Gare' ? 'gara' : 'allenamento'))
       .map((s) => ({ ...s, p: prevedi(s.punti, { oggi, dal, fino }) }))
       .filter((s) => s.p)
-      .sort((x, y) => x.distanza - y.distanza || TIPI_LAVORO.indexOf(x.tipo) - TIPI_LAVORO.indexOf(y.tipo))
+      .sort((x, y) => x.distanza - y.distanza || (x.vasca || 0) - (y.vasca || 0) || TIPI_LAVORO.indexOf(x.tipo) - TIPI_LAVORO.indexOf(y.tipo))
     const stili = [...new Set([...STILI_COACH, ...righe.map((r) => r.stile)])]
     return stili.map((st) => [st, righe.filter((r) => r.stile === st)]).filter(([, r]) => r.length)
   }, [dati, fonte, dal, fino, oggi])
@@ -92,7 +92,8 @@ function SchedaPrevisioni({ atletaId }) {
                 <p className="text-sm font-semibold flex items-center gap-2 min-w-0">
                   <span className={`w-2 h-2 shrink-0 rounded-full ${AFFIDABILITA[r.p.affidabilita][0]}`} title={AFFIDABILITA[r.p.affidabilita][1]} />
                   {r.distanza} m
-                  {r.tipo && <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${coloreLavoro(r.tipo)}`}>{r.tipo}</span>}
+                  {r.vasca && <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-slate-600">vasca {r.vasca}</span>}
+                  {r.tipo &&<span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${coloreLavoro(r.tipo)}`}>{r.tipo}</span>}
                 </p>
                 <p className="text-right shrink-0">
                   <span className="text-xs text-slate-500">{secondiInTempo(r.p.attuale)} → </span>

@@ -5,6 +5,11 @@ export const TIPI_LAVORO = [
 ]
 export const STILI = ['Stile libero', 'Dorso', 'Rana', 'Farfalla', 'Misti']
 
+// Vasca delle gare: corta (25 m) o lunga (50 m). I tempi si confrontano solo nella stessa vasca.
+export const VASCHE = [[25, 'Vasca 25 m'], [50, 'Vasca 50 m']]
+export const vascaDi = (g) => (Number(g?.vasca) === 50 ? 50 : 25)
+export const testoVasca = (v) => `vasca ${Number(v) === 50 ? 50 : 25}`
+
 // Ogni zona ha il suo colore pieno, uguale in tutta l'app (layout Limpida)
 const COLORI = {
   A2: 'bg-[#0b4fd9] text-white',
