@@ -7,6 +7,7 @@ import { useNonLette } from '../lib/notificheApp'
 import { useAuth } from '../context/AuthContext'
 import { dataLocale } from '../lib/lavori'
 import { nomeRuolo } from '../lib/permessi'
+import { useTipiLavoro } from '../lib/useTipiLavoro'
 
 const VOCI = [
   ['home', '/dashboard', 'onde', 'Oggi'],
@@ -23,6 +24,7 @@ const SIGLE = ['DOM', 'LUN', 'MAR', 'MER', 'GIO', 'VEN', 'SAB']
 // voti: { '2026-10-08': 5.8 } difficoltà dei giorni, disegnata come barretta sotto ogni giorno (facoltativo)
 export default function AppShell({ titolo, attiva, indietro, giorno, onGiorno, voti = {}, children }) {
   const { profile, ruolo, staVedendoCome, cambiaVista, squadraGestita } = useAuth()
+  useTipiLavoro() // carica subito i lavori della squadra (colori e difficoltà in tutta l'app)
   const voci = VOCI.filter(([chiave]) => !(ruolo === 'ospite' && chiave === 'riepilogo'))
   const iniziale = (profile?.nome || 'A').charAt(0).toUpperCase()
   const [calAperto, setCalAperto] = useState(false)

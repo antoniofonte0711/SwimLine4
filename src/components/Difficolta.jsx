@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { difficoltaPiano, formattaVoto } from '../lib/difficolta'
 import { useRegole } from '../lib/regole'
+import { useTipiLavoro } from '../lib/useTipiLavoro'
 
 // Colori delle zone sulla barra (dentro il riquadro blu l'aerobico diventa bianco per staccare)
 const COLORE_GRUPPO = { recupero: '#7cc4f5', aerobico: '#0b4fd9', soglia: '#e8711a', lattacido: '#c42b20', velocita: '#c2309f' }
@@ -10,6 +11,7 @@ const COLORE_GRUPPO = { recupero: '#7cc4f5', aerobico: '#0b4fd9', soglia: '#e871
 export default function Difficolta({ righe, suBlu = false }) {
   const [aperto, setAperto] = useState(false)
   const { puo } = useRegole()
+  useTipiLavoro() // i pesi dei lavori aggiunti dalla squadra
   const d = difficoltaPiano(righe)
   if (!d || !puo('difficolta')) return null
   const colore = (g) => (suBlu && g.id === 'aerobico' ? '#ffffff' : COLORE_GRUPPO[g.id])
@@ -44,7 +46,7 @@ export default function Difficolta({ righe, suBlu = false }) {
               </span>
             ))}
           </div>
-          <p className={`text-xs mt-2.5 ${tenue}`}>Calcolata dai metri di ogni lavoro e dalla sua zona (A2 il più leggero, C2 il più pesante).</p>
+          <p className={`text-xs mt-2.5 ${tenue}`}>Calcolata dai metri di ogni lavoro e da quanto stanca (A2 il più leggero, C2 il più pesante; i lavori aggiunti dalla squadra come li ha impostati il coach).</p>
         </>
       ) : (
         <p className={`text-xs mt-2 ${tenue}`}>Tocca per vedere dove va la fatica</p>

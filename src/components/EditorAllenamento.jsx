@@ -3,8 +3,10 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Reorder, AnimatePresence, motion, useDragControls } from 'framer-motion'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
-import { TIPI_LAVORO, distanzaDaTipo } from '../lib/lavori'
-import { RIGA_VUOTA, STILI_COACH, TIPI_COACH, abbinaTempi, addGiorni, blocchiPiano, metriPiano, minutiPiano, perGiro } from '../lib/pianoSquadra'
+import { distanzaDaTipo } from '../lib/lavori'
+import { lavoriDaScegliere } from '../lib/tipiLavoro'
+import { useTipiLavoro } from '../lib/useTipiLavoro'
+import { RIGA_VUOTA, STILI_COACH, abbinaTempi, addGiorni, blocchiPiano, metriPiano, minutiPiano, perGiro } from '../lib/pianoSquadra'
 import { normalizzaRipartenza, ripartenzaValida } from '../lib/tempo'
 import { avvisaSquadra } from '../lib/notifiche'
 import { useRegole } from '../lib/regole'
@@ -61,7 +63,7 @@ function CampiRiga({ r, i, inSerie, cambia, cambiaTipo }) {
     <>
       <div className="grid grid-cols-2 lg:grid-cols-4 lg:items-end gap-2 mb-2">
         <select value={r.tipo_lavoro} onChange={(e) => cambiaTipo(i, e.target.value)} className={CAMPO}>
-          {[...TIPI_COACH, ...TIPI_LAVORO].map((t) => <option key={t}>{t}</option>)}
+          {lavoriDaScegliere({ coach: true, tieni: r.tipo_lavoro }).map((t) => <option key={t}>{t}</option>)}
         </select>
         <select value={r.stile} onChange={(e) => cambia(i, 'stile', e.target.value)} className={CAMPO}>
           {STILI_COACH.map((s) => <option key={s}>{s}</option>)}
@@ -268,6 +270,7 @@ function SerieGiri({ chiave, serie, righe, primo, ultimo, annulli, cambia, cambi
 // Il coach prepara l'allenamento di un giorno per la squadra (non un allenamento per sé)
 export default function EditorAllenamento({ squadra, giorno }) {
   const { user } = useAuth()
+  useTipiLavoro() // i lavori accesi per questa squadra (anche quelli aggiunti dal coach)
   const { puo } = useRegole()
   const navigate = useNavigate()
   const [titolo, setTitolo] = useState('')
@@ -582,7 +585,7 @@ export default function EditorAllenamento({ squadra, giorno }) {
         </div>
         <p className="text-xs text-slate-500 mb-2">Oppure scegli subito il tipo di lavoro:</p>
         <div className="flex flex-wrap gap-2">
-          {[...TIPI_COACH, ...TIPI_LAVORO].map((t) => (
+          {lavoriDaScegliere({ coach: true }).map((t) => (
             <button key={t} onClick={() => aggiungiLavoro(t)}
               className="text-xs font-semibold rounded-full px-3 py-1.5 bg-gray-100 text-slate-600 active:scale-95">+ {t}</button>
           ))}

@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useCarrello, filePerLavoro } from '../context/CarrelloContext'
-import { TIPI_LAVORO, STILI, distanzaDaTipo } from '../lib/lavori'
+import { STILI, distanzaDaTipo } from '../lib/lavori'
+import { infoLavoro, lavoriDaScegliere } from '../lib/tipiLavoro'
+import { useTipiLavoro } from '../lib/useTipiLavoro'
 import InputTempo from './InputTempo'
 import { AVVISO_VIDEO, VIDEO_ATTIVI } from '../lib/permessi'
 import { leggiPreferenze } from '../lib/preferenze'
@@ -12,7 +14,7 @@ const BASE = { tipo_lavoro: 'C1', distanza: 75, ripetizioni: 4, stile: 'Stile li
 // Tipo di lavoro e stile partono da quelli preferiti (Profilo → Allenamento)
 function iniziale() {
   const p = leggiPreferenze()
-  const tipo = TIPI_LAVORO.includes(p.tipoLavoro) ? p.tipoLavoro : BASE.tipo_lavoro
+  const tipo = infoLavoro(p.tipoLavoro || '') ? p.tipoLavoro : BASE.tipo_lavoro
   return {
     ...BASE,
     tipo_lavoro: tipo,
@@ -27,6 +29,8 @@ export default function FormLavoro() {
   const [f, setF] = useState(iniziale)
   const [fileKey, setFileKey] = useState(0)
   const [errore, setErrore] = useState('')
+  useTipiLavoro()
+  const tipi = lavoriDaScegliere({ tieni: f.tipo_lavoro })
 
   const n = Math.min(30, Math.max(1, Number(f.ripetizioni) || 1))
 
@@ -86,7 +90,7 @@ export default function FormLavoro() {
 
       <label className="block text-xs text-slate-500 mb-1">Tipo di lavoro</label>
       <select value={f.tipo_lavoro} onChange={(e) => cambiaTipo(e.target.value)} className={CAMPO + ' mb-3'}>
-        {TIPI_LAVORO.map((t) => <option key={t}>{t}</option>)}
+        {tipi.map((t) => <option key={t}>{t}</option>)}
       </select>
 
       <div className="grid grid-cols-2 gap-3 mb-3">

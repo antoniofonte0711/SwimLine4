@@ -9,7 +9,8 @@ import SceltaFiglio, { useAtletaVisto } from '../components/SceltaFiglio'
 import { SenzaSquadra } from '../components/PianoCard'
 import { useMiaSquadra } from '../lib/pianoSquadra'
 import { STILI_COACH } from '../lib/pianoSquadra'
-import { TIPI_LAVORO, coloreLavoro, dataLocale } from '../lib/lavori'
+import { coloreLavoro, dataLocale } from '../lib/lavori'
+import { ordineLavoro } from '../lib/tipiLavoro'
 import { secondiInTempo } from '../lib/tempo'
 import { prevedi, scorciatoie, serieTempi, stagione } from '../lib/previsioni'
 
@@ -50,7 +51,7 @@ function SchedaPrevisioni({ atletaId }) {
       .filter((s) => s.fonte === (fonte === 'Gare' ? 'gara' : 'allenamento'))
       .map((s) => ({ ...s, p: prevedi(s.punti, { oggi, dal, fino }) }))
       .filter((s) => s.p)
-      .sort((x, y) => x.distanza - y.distanza || (x.vasca || 0) - (y.vasca || 0) || TIPI_LAVORO.indexOf(x.tipo) - TIPI_LAVORO.indexOf(y.tipo))
+      .sort((x, y) => x.distanza - y.distanza || (x.vasca || 0) - (y.vasca || 0) || ordineLavoro(x.tipo) - ordineLavoro(y.tipo))
     const stili = [...new Set([...STILI_COACH, ...righe.map((r) => r.stile)])]
     return stili.map((st) => [st, righe.filter((r) => r.stile === st)]).filter(([, r]) => r.length)
   }, [dati, fonte, dal, fino, oggi])

@@ -1,30 +1,17 @@
 // Difficoltà automatica di un allenamento, calcolata dal piano del coach.
 // Ogni metro "pesa" in base alla zona di lavoro: A2 è il riferimento (1 punto al metro),
 // le zone più intense costano di più. 5 km tutti in A2 = 5 su 10.
+// Pesi e zone vengono da tipiLavoro.js: quelli di base più i lavori aggiunti dalla squadra.
+import { BASE, GRUPPI_LAVORO, infoLavoro } from './tipiLavoro'
 
-// Quanto stanca un metro in ogni zona (A2 = 1)
-export const PESI = {
-  Riscaldamento: 0.5, Sciolto: 0.4, Defaticamento: 0.4, Tecnica: 0.7, Gambe: 0.9,
-  Ipossia: 1.2, // respirazione ridotta: poche vasche ma il fiato si fa sentire
-  A2: 1,    // ritmo che si tiene a lungo senza cedere
-  B1: 1.6,  // più ritmo, ma senza arrivare stremati
-  B2: 2.6,  // fiato al limite su distanze lunghe
-  C1: 3.5,  // acido lattico da sopportare
-  C2: 4.5,  // massimo sforzo su 50-100 ripetuto
-  C3: 3,    // massimo sforzo su 25-50: stanca, ma si recupera presto
-}
+// Quanto stanca un metro in ogni zona di base (A2 = 1)
+export const PESI = Object.fromEntries(BASE.filter((t) => !t.sigla.startsWith('Passo gara')).map((t) => [t.sigla, t.peso]))
 const PESO_PASSO_GARA = 4
 
 // Gruppi per la barra "dove è andata la fatica"
-export const GRUPPI = [
-  { id: 'recupero', nome: 'Recupero e tecnica', colore: 'bg-sky-300', tipi: ['Riscaldamento', 'Sciolto', 'Defaticamento', 'Tecnica', 'Gambe', 'Ipossia'] },
-  { id: 'aerobico', nome: 'Aerobico', colore: 'bg-blue-500', tipi: ['A2', 'B1'] },
-  { id: 'soglia', nome: 'Soglia', colore: 'bg-orange-400', tipi: ['B2'] },
-  { id: 'lattacido', nome: 'Lattacido', colore: 'bg-red-500', tipi: ['C1', 'C2'] },
-  { id: 'velocita', nome: 'Velocità', colore: 'bg-fuchsia-500', tipi: ['C3'] },
-]
+export const GRUPPI = GRUPPI_LAVORO.map(([id, nome]) => ({ id, nome }))
 const gruppoDi = (tipo = '') =>
-  tipo.startsWith('Passo gara') ? 'lattacido' : (GRUPPI.find((g) => g.tipi.includes(tipo))?.id ?? 'aerobico')
+  tipo.startsWith('Passo gara') ? 'lattacido' : (infoLavoro(tipo)?.gruppo ?? 'aerobico')
 
 export const LIVELLI = [
   { fino: 3, nome: 'Leggero', colore: 'text-emerald-600 bg-emerald-50' },
@@ -35,7 +22,7 @@ export const LIVELLI = [
 ]
 
 export const pesoRiga = (r) => {
-  const base = r.tipo_lavoro?.startsWith('Passo gara') ? PESO_PASSO_GARA : PESI[r.tipo_lavoro] ?? 1
+  const base = r.tipo_lavoro?.startsWith('Passo gara') ? PESO_PASSO_GARA : infoLavoro(r.tipo_lavoro || '')?.peso ?? 1
   // "forte" nelle note di un lavoro tranquillo: ci sono tratti veloci dentro
   const forte = base <= PESI.B1 && /\bfort[ei]\b/i.test(r.note || '') ? 1.15 : 1
   return base * forte

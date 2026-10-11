@@ -5,6 +5,8 @@ import { caricaTutto } from '../lib/caricaTutto'
 import InputTempo from './InputTempo'
 import SelettoreData from './SelettoreData'
 import { STILI, TIPI_LAVORO, VASCHE, dataLocale, testoVasca, vascaDi } from '../lib/lavori'
+import { lavoriDaScegliere } from '../lib/tipiLavoro'
+import { useTipiLavoro } from '../lib/useTipiLavoro'
 import { tempoInSecondi, secondiInTempo, formattaData, normalizzaTempo, tempoValido, tempoPlausibile, erroreTempoImpossibile, ERRORE_TEMPO_BREVE } from '../lib/tempo'
 import { STILI_COACH } from '../lib/pianoSquadra'
 
@@ -215,7 +217,8 @@ function NuovoTempo({ atletaId, onSalvato }) {
   const [tipo, setTipo] = useState('gara')
   const [data, setData] = useState(dataLocale())
   const [nome, setNome] = useState('')
-  const [lavoro, setLavoro] = useState(TIPI_LAVORO[0])
+  useTipiLavoro()
+  const [lavoro, setLavoro] = useState(() => lavoriDaScegliere()[0] || TIPI_LAVORO[0])
   const [stile, setStile] = useState('Stile libero')
   const [distanza, setDistanza] = useState('100')
   const [vasca, setVasca] = useState(25)
@@ -261,7 +264,7 @@ function NuovoTempo({ atletaId, onSalvato }) {
         <>
           <label className="block text-xs text-slate-500 mb-1">Lavoro</label>
           <select value={lavoro} onChange={(e) => setLavoro(e.target.value)} className={CAMPO + ' mb-3'}>
-            {TIPI_LAVORO.map((t) => <option key={t}>{t}</option>)}
+            {lavoriDaScegliere({ tieni: lavoro }).map((t) => <option key={t}>{t}</option>)}
           </select>
         </>
       )}

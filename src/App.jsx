@@ -29,6 +29,7 @@ const Record = lazy(() => import('./pages/Record'))
 const InArrivo = lazy(() => import('./pages/InArrivo'))
 const AdminPanel = lazy(() => import('./pages/AdminPanel'))
 const Impostazioni = lazy(() => import('./pages/Impostazioni'))
+const Lavori = lazy(() => import('./pages/Lavori'))
 const Calendario = lazy(() => import('./pages/Calendario'))
 const Punti = lazy(() => import('./pages/Punti'))
 const RisultatiAllenamento = lazy(() => import('./pages/RisultatiAllenamento'))
@@ -77,6 +78,7 @@ export default function App() {
               <Route path="/punti" element={<ProtectedRoute><Punti /></ProtectedRoute>} />
               <Route path="/calendario" element={<ProtectedRoute><Calendario /></ProtectedRoute>} />
               <Route path="/impostazioni" element={<ProtectedRoute requireCoach><Impostazioni /></ProtectedRoute>} />
+              <Route path="/lavori" element={<ProtectedRoute requireCoach><Lavori /></ProtectedRoute>} />
               <Route path="/risultati" element={<ProtectedRoute requireCoach><RisultatiAllenamento /></ProtectedRoute>} />
               <Route path="/squadra/presenze/:id" element={<ProtectedRoute requireCoach><PresenzeAtleta /></ProtectedRoute>} />
 

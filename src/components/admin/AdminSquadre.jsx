@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabaseClient'
 import { useAuth } from '../../context/AuthContext'
 import { PERMESSI_SQUADRA, ricaricaRegole } from '../../lib/regole'
 import Icona from '../Icona'
+import GestioneLavori from '../GestioneLavori'
 import { BOTTONE_PIENO, ChipRuolo, Gruppo, Interruttore, Interruttori, Numero, Salvato, Scheda, Vuoto } from './ui'
 
 const COLORI = ['#0b4fd9', '#0f6b3f', '#b45309', '#6d28c9', '#c2309f', '#0a1a2f']
@@ -140,7 +141,7 @@ export function ElencoSquadre({ dati, onApri, ricarica }) {
   )
 }
 
-const SCHEDE = [['panoramica', 'Panoramica'], ['persone', 'Persone'], ['permessi', 'Permessi'], ['genitori', 'Genitori e figli']]
+const SCHEDE = [['panoramica', 'Panoramica'], ['persone', 'Persone'], ['permessi', 'Permessi'], ['lavori', 'Lavori'], ['genitori', 'Genitori e figli']]
 
 export function DettaglioSquadra({ dati, ricarica, squadraId, onIndietro }) {
   const { entraInSquadra } = useAuth()
@@ -195,7 +196,8 @@ export function DettaglioSquadra({ dati, ricarica, squadraId, onIndietro }) {
       )}
       {scheda === 'persone' && <PersoneSquadra dati={dati} membri={membri} squadra={squadra} ricarica={ricarica} />}
       {scheda === 'permessi' && <PermessiSquadra squadraId={squadraId} iniziali={dati.permessi[squadraId] || {}} ricarica={ricarica} />}
-      {scheda === 'genitori' && <GenitoriSquadra dati={dati} membri={membri} ricarica={ricarica} />}
+      {scheda === 'lavori' && <GestioneLavori squadraId={squadraId} admin />}
+      {scheda === 'genitori' &&<GenitoriSquadra dati={dati} membri={membri} ricarica={ricarica} />}
     </>
   )
 }

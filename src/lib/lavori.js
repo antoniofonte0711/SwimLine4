@@ -1,8 +1,7 @@
-// Lavori e stili tra cui scegliere in SwimLine4
-export const TIPI_LAVORO = [
-  'A2', 'B1', 'B2', 'C1', 'C2', 'C3',
-  'Passo gara 50', 'Passo gara 100', 'Passo gara 200', 'Passo gara 400',
-]
+import { BASE, TINTE, infoLavoro } from './tipiLavoro'
+
+// Lavori e stili tra cui scegliere in SwimLine4. I lavori di ogni squadra: lavoriDaScegliere() in tipiLavoro.js
+export const TIPI_LAVORO = BASE.filter((t) => !t.soloCoach).map((t) => t.sigla)
 export const STILI = ['Stile libero', 'Dorso', 'Rana', 'Farfalla', 'Misti']
 
 // Vasca delle gare: corta (25 m) o lunga (50 m). I tempi si confrontano solo nella stessa vasca.
@@ -10,17 +9,9 @@ export const VASCHE = [[25, 'Vasca 25 m'], [50, 'Vasca 50 m']]
 export const vascaDi = (g) => (Number(g?.vasca) === 50 ? 50 : 25)
 export const testoVasca = (v) => `vasca ${Number(v) === 50 ? 50 : 25}`
 
-// Ogni zona ha il suo colore pieno, uguale in tutta l'app (layout Limpida)
-const COLORI = {
-  A2: 'bg-[#0b4fd9] text-white',
-  B1: 'bg-[#f2b705] text-[#0a1a2f]',
-  B2: 'bg-[#e8711a] text-[#0a1a2f]',
-  C1: 'bg-[#c42b20] text-white',
-  C2: 'bg-[#6d28c9] text-white',
-  C3: 'bg-[#c2309f] text-white',
-}
+// Ogni zona ha il suo colore pieno, uguale in tutta l'app (layout Limpida); i lavori aggiunti hanno il loro
 export const coloreLavoro = (t = '') =>
-  t.startsWith('Passo gara') ? 'bg-[#0a1a2f] text-white' : COLORI[t] || 'bg-[#d9efff] text-[#0a3a5c]'
+  t.startsWith('Passo gara') ? TINTE.notte : TINTE[infoLavoro(t)?.colore] || TINTE.cielo
 
 // "Passo gara 100" -> 100 (per le altre scelte non c'è una distanza fissa)
 export const distanzaDaTipo = (t = '') =>

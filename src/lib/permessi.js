@@ -13,7 +13,7 @@ const TUTTE = [
   '/record', '/archivio', '/squadra', '/calendario', '/punti',
 ]
 // Solo admin e coach (anche quando l'admin guarda l'app come coach)
-const SOLO_COACH = ['/presenze', '/impostazioni']
+const SOLO_COACH = ['/presenze', '/impostazioni', '/lavori']
 
 const PERMESSI = {
   admin: [...TUTTE, ...SOLO_COACH],

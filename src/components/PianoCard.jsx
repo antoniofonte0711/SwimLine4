@@ -1,14 +1,22 @@
 import { coloreLavoro } from '../lib/lavori'
 import { blocchiPiano, giriSerie, metriPiano, minutiPiano, perGiro, ripartenzeDiRiga } from '../lib/pianoSquadra'
+import { infoLavoro } from '../lib/tipiLavoro'
+import { useTipiLavoro } from '../lib/useTipiLavoro'
 import Difficolta from './Difficolta'
 
 const BREVE = { 'Stile libero': 'SL', 'Proprio stile': 'PS' }
-// Sigla della zona sul blocco colorato (Riscaldamento -> RIS, Passo gara 200 -> PG 200)
-export const siglaLavoro = (t = '') =>
-  t.startsWith('Passo gara') ? 'PG ' + t.split(' ').pop() : t.length <= 3 ? t : t.slice(0, 3).toUpperCase()
+// Sigla della zona sul blocco colorato (Riscaldamento -> RIS, Passo gara 200 -> PG 200).
+// I lavori aggiunti dalla squadra (es. EN2, A1L) restano come li ha scritti il coach fino a 5 caratteri.
+export const siglaLavoro = (t = '') => {
+  if (t.startsWith('Passo gara')) return 'PG ' + t.split(' ').pop()
+  const aggiunto = infoLavoro(t) && infoLavoro(t).origine !== 'base'
+  if (t.length <= 3 || (aggiunto && t.length <= 5)) return t
+  return t.slice(0, aggiunto ? 4 : 3).toUpperCase()
+}
 const metri = (n) => n.toLocaleString('it-IT')
 
 export function ChipZona({ tipo }) {
+  useTipiLavoro() // colore giusto anche per i lavori aggiunti dalla squadra
   return (
     <span title={tipo} className={`inline-flex items-center justify-center min-w-[52px] h-7 px-1.5 rounded-[10px] text-xs font-extrabold ${coloreLavoro(tipo)}`}>
       {siglaLavoro(tipo)}

@@ -3,7 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { RUOLI_VISTA, nomeRuolo, puoModificare } from '../lib/permessi'
-import { TIPI_LAVORO, STILI } from '../lib/lavori'
+import { STILI } from '../lib/lavori'
+import { lavoriDaScegliere } from '../lib/tipiLavoro'
 import { usePreferenze } from '../lib/preferenze'
 import { attivaNotifiche, disattivaNotifiche, notificheAttive, notificheSupportate, serveHome } from '../lib/notifiche'
 import AppShell from '../components/AppShell'
@@ -350,7 +351,7 @@ export default function Profilo() {
           <Riga etichetta="Lavoro preferito">
             <select value={pref.tipoLavoro} onChange={(e) => salva({ tipoLavoro: e.target.value })} aria-label="Lavoro preferito"
               className="border border-linea bg-bordo rounded-campo px-3 min-h-[44px] text-sm font-semibold max-w-[160px]">
-              {TIPI_LAVORO.map((t) => <option key={t}>{t}</option>)}
+              {lavoriDaScegliere({ tieni: pref.tipoLavoro }).map((t) => <option key={t}>{t}</option>)}
             </select>
           </Riga>
           <Riga etichetta="Stile preferito">

@@ -301,6 +301,17 @@ export const GUIDA = [
     ],
   },
   {
+    id: 'lavori', titolo: 'Tipi di lavoro (coach)', pagine: ['/lavori'], per: ['coach'],
+    intro: 'Non tutti usano le stesse sigle: qui scegli i lavori della tua squadra e ne aggiungi di tuoi.',
+    passi: [
+      ['Spunta', 'Lavoro acceso: compare quando prepari l\'allenamento e quando gli atleti scrivono i tempi. Senza spunta sparisce dai menu; gli allenamenti già fatti restano come sono.'],
+      ['+ Aggiungi lavoro nuovo', 'Scrivi la sigla (es. A1) e che lavoro è.'],
+      ['Quanto stanca?', 'Confrontalo con quelli che conosci: "Come B1", "Tra A2 e B1"… L\'app ne ricava la difficoltà e il tipo di fatica (puoi cambiarlo).'],
+      ['Esempio sotto', 'Quanto varrebbe un allenamento di 4 km tutto di quel lavoro, per capire se l\'hai messo giusto.'],
+      ['Modifica · Elimina', 'Solo per i lavori aggiunti dalla squadra. Se vuoi solo non vederlo più, basta togliere la spunta.'],
+    ],
+  },
+  {
     id: 'impostazioni', titolo: 'Impostazioni della squadra (coach)', pagine: ['/impostazioni'], per: ['coach'],
     passi: [
       ['Cerca', 'Scrivi almeno 2 lettere del nome o del cognome, oppure l\'email esatta.'],
@@ -349,6 +360,7 @@ export const GUIDA = [
     passi: [
       ['Dashboard', 'Numeri dell\'app: nuovi utenti, accessi, coach in attesa, segnalazioni.'],
       ['Squadre', 'Le squadre con coach e atleti; "Crea squadra" con nome (e coach facoltativo); permessi della squadra a interruttori.'],
+      ['Squadra › Lavori', 'I tipi di lavoro della squadra con la spunta e "+ Aggiungi lavoro nuovo": solo per quella squadra o nell\'elenco generale.'],
       ['Cosa fare?', 'Per le persone selezionate: Cambia ruolo, Sposta in un\'altra squadra, Togli dalla squadra.'],
       ['Tutti gli utenti', '"Entra ›" apre l\'app come quella persona (link monouso, da aprire in una finestra privata). Ogni accesso resta nel Registro accessi.'],
       ['Coach da approvare', '"Approva" (nasce la sua squadra) o "Rifiuta".'],
@@ -365,7 +377,7 @@ export const GUIDA = [
 export const guidaPer = (ruolo) => GUIDA.filter((s) => ruolo === 'admin' || s.per.includes(ruolo))
 
 // L'admin in queste pagine vede la versione del coach (le altre le vede da atleta)
-const ADMIN_COME_COACH = ['/squadra', '/presenze', '/impostazioni', '/risultati']
+const ADMIN_COME_COACH = ['/squadra', '/presenze', '/impostazioni', '/risultati', '/lavori']
 
 // Schede della pagina in cui sei, per il tuo ruolo; se la pagina non ne ha, la scheda del menu
 export function guidaPagina(percorso, ruolo) {
