@@ -27,7 +27,7 @@ export default function CardPunti({ dettaglio = true }) {
     setApertura({ stato: 'apro' })
     const { data, error } = await supabase.rpc('apri_premio')
     if (error) return setApertura({ stato: 'errore', testo: error.message })
-    setApertura({ stato: 'ok', testo: data.premio_nome })
+    setApertura({ stato: 'ok', testo: data.premio_nome, grande: data.grande })
     carica()
   }
 
@@ -60,8 +60,8 @@ export default function CardPunti({ dettaglio = true }) {
               {apertura.stato === 'apro' && <motion.p animate={{ rotate: [0, -12, 12, -12, 12, 0] }} transition={{ repeat: Infinity, duration: 0.8 }} className="text-6xl">🎁</motion.p>}
               {apertura.stato === 'ok' && (
                 <>
-                  <motion.p initial={{ scale: 0 }} animate={{ scale: [0, 1.4, 1] }} transition={{ duration: 0.6 }} className="text-6xl mb-3">🎉</motion.p>
-                  <p className="text-sm text-slate-500">Hai vinto</p>
+                  <motion.p initial={{ scale: 0 }} animate={{ scale: [0, 1.4, 1] }} transition={{ duration: 0.6 }} className="text-6xl mb-3">{apertura.grande ? '🏆' : '🎉'}</motion.p>
+                  <p className="text-sm text-slate-500">{apertura.grande ? 'PREMIO GRANDE! Hai vinto' : 'Hai vinto'}</p>
                   <p className="text-xl font-extrabold text-blue-600 mt-1">{apertura.testo}</p>
                   <p className="text-xs text-slate-500 mt-3">Mostralo al coach per usarlo.</p>
                 </>

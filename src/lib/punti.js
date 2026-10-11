@@ -3,6 +3,14 @@ import { supabase } from './supabaseClient'
 
 export const PUNTI_DEFAULT = { punti_presenza: 10, punti_risultati: 5, punti_gara: 15, punti_miglioramento: 10, soglia_premio: 100 }
 
+// Il premio grande si sblocca dopo questi premi piccoli (stesso numero in apri_premio, migrazione 20)
+export const PICCOLI_PER_GRANDE = 6
+// Premi piccoli aperti dall'ultimo premio grande (premi: dal più recente)
+export const piccoliDopoGrande = (premi) => {
+  const i = premi.findIndex((p) => p.grande)
+  return i === -1 ? premi.length : i
+}
+
 // Livelli in base ai punti totali
 export const LIVELLI = [
   { nome: 'Bronzo', da: 0, colore: 'text-orange-700', barra: 'bg-orange-600' },
