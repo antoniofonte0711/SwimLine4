@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { CalendarioFoglio } from './SelettoreData'
 import Icona from './Icona'
+import GuidaPagina from './GuidaPagina'
 import { useNonLette } from '../lib/notificheApp'
 import { useAuth } from '../context/AuthContext'
 import { dataLocale } from '../lib/lavori'
@@ -25,6 +26,8 @@ export default function AppShell({ titolo, attiva, indietro, giorno, onGiorno, v
   const voci = VOCI.filter(([chiave]) => !(ruolo === 'ospite' && chiave === 'riepilogo'))
   const iniziale = (profile?.nome || 'A').charAt(0).toUpperCase()
   const [calAperto, setCalAperto] = useState(false)
+  const [guidaAperta, setGuidaAperta] = useState(false)
+  const chiudiGuida = useCallback(() => setGuidaAperta(false), [])
   const nonLette = useNonLette()
   const navigate = useNavigate()
   // "Indietro" torna alla pagina precedente dell'app; se si è entrati da un link diretto
@@ -68,6 +71,11 @@ export default function AppShell({ titolo, attiva, indietro, giorno, onGiorno, v
             <h1 className="font-display text-[30px] font-extrabold leading-tight text-abisso truncate">{titolo}</h1>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            {/* "?": la guida dei tasti di questa pagina */}
+            <button type="button" onClick={() => setGuidaAperta(true)} aria-label="Come si usa questa pagina"
+              className="w-11 h-11 rounded-full bg-white text-blue-600 font-display text-xl font-extrabold flex items-center justify-center shadow-[0_1px_2px_rgba(10,26,47,0.08)] active:scale-95 transition">
+              ?
+            </button>
             {ruolo !== 'ospite' && (
               <Link to="/notifiche" aria-label={nonLette ? `Notifiche, ${nonLette} nuove` : 'Notifiche'}
                 className="relative w-11 h-11 rounded-full bg-white text-abisso flex items-center justify-center shadow-[0_1px_2px_rgba(10,26,47,0.08)]">
@@ -88,6 +96,7 @@ export default function AppShell({ titolo, attiva, indietro, giorno, onGiorno, v
       </header>
 
       {calAperto && <CalendarioFoglio valore={giorno} onScegli={onGiorno} onChiudi={() => setCalAperto(false)} />}
+      {guidaAperta && <GuidaPagina onChiudi={chiudiGuida} />}
 
       <main className="px-4 pt-2 pb-32">
         <div className="max-w-md lg:max-w-[900px] mx-auto">
