@@ -5,6 +5,7 @@ import SfondoVasca from '../components/SfondoVasca'
 import Icona from '../components/Icona'
 import InputPassword from '../components/InputPassword'
 import { erroreAuth } from '../lib/erroriAuth'
+import { registraErrore } from '../lib/registroErrori'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -37,8 +38,10 @@ export default function Login() {
     setError('')
     // il link dell'email porta alla pagina dove si sceglie la nuova password
     const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/nuova-password` })
-    if (error) setError(erroreAuth(error))
-    else setOk('Ti abbiamo inviato un\'email per scegliere una nuova password (se non la trovi, guarda nello spam).')
+    if (error) {
+      if (/sending|not authorized|smtp/i.test(error.message || '')) registraErrore(error, 'Password dimenticata: email non inviata')
+      setError(erroreAuth(error))
+    } else setOk('Ti abbiamo inviato un\'email per scegliere una nuova password (se non la trovi, guarda nello spam).')
   }
 
   return (

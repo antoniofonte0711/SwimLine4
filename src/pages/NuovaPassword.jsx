@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import SfondoVasca from '../components/SfondoVasca'
 import InputPassword from '../components/InputPassword'
+import { MESSAGGIO_RUBATA, volteRubata } from '../lib/passwordRubata'
 
 const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white transition mb-4'
 
@@ -34,6 +35,10 @@ export default function NuovaPassword() {
     if (password.length < 8) return setErrore('La password deve avere almeno 8 caratteri.')
     if (password !== ripeti) return setErrore('Le due password non coincidono.')
     setSalvo(true)
+    if (await volteRubata(password)) {
+      setSalvo(false)
+      return setErrore(MESSAGGIO_RUBATA)
+    }
     const { error } = await supabase.auth.updateUser({ password })
     setSalvo(false)
     if (error) {

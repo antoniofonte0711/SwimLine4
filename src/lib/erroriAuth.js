@@ -1,7 +1,8 @@
 // Errori di accesso e registrazione (Supabase Auth, in inglese) tradotti in frasi chiare per chiunque
 const MESSAGGI = [
   [/already registered|already exists|user_already_exists/i, 'Esiste già un account con questa email: accedi, oppure usa "Password dimenticata?".'],
-  [/email not confirmed|email_not_confirmed/i, 'Prima devi confermare l\'email: apri il messaggio che ti abbiamo mandato (guarda anche nello spam).'],
+  [/email not confirmed|email_not_confirmed/i, 'Prima devi confermare l\'email: apri il messaggio che ti abbiamo mandato (guarda anche nello spam). Se non arriva, avvisa il tuo coach: l\'amministratore può attivarti.'],
+  [/error sending|sending (confirmation|recovery)|not authorized|smtp/i, 'In questo momento non riusciamo a mandare l\'email. Riprova più tardi, oppure avvisa il tuo coach: l\'amministratore lo sa già.'],
   [/invalid login|invalid_credentials|invalid grant/i, 'Email o password non corretti.'],
   [/password should be|weak_password|password is too short/i, 'La password è troppo corta: usa almeno 8 caratteri.'],
   [/invalid format|email_address_invalid|valid email|unable to validate email/i, 'L\'indirizzo email non sembra giusto: controllalo.'],

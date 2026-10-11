@@ -19,6 +19,7 @@ import { version } from '../../package.json'
 import { useRegole } from '../lib/regole'
 import { svuotaCache } from '../lib/codaOffline'
 import { iMieiDati, scaricaJson } from '../lib/copiaDati'
+import { MESSAGGIO_RUBATA, volteRubata } from '../lib/passwordRubata'
 
 const BOTTONE = 'cliccabile text-sm font-bold text-blue-600 bg-schiuma rounded-full px-4 min-h-[44px]'
 const PRIMARIO = 'cliccabile w-full bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl min-h-[48px] disabled:opacity-50'
@@ -90,6 +91,7 @@ function CambiaPassword() {
     e.preventDefault()
     if (password.length < 8) return setEsito({ errore: 'La password deve avere almeno 8 caratteri.' })
     if (password !== conferma) return setEsito({ errore: 'Le due password non sono uguali.' })
+    if (await volteRubata(password)) return setEsito({ errore: MESSAGGIO_RUBATA })
     const { error } = await supabase.auth.updateUser({ password })
     if (error) return setEsito({ errore: 'Non sono riuscito a cambiarla: ' + error.message })
     setPassword('')

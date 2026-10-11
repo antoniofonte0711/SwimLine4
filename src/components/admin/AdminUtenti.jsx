@@ -4,6 +4,41 @@ import { BOTTONE, BOTTONE_PIENO, ChipRuolo, Salvato, Scheda, Vuoto } from './ui'
 
 const nomeDi = (p) => `${p?.nome || ''} ${p?.cognome || ''}`.trim() || 'Senza nome'
 
+// Chi si è registrato ma non ha confermato l'email (il link può non arrivare: Supabase senza un servizio
+// email proprio scrive solo ai membri del team). L'admin, se conosce la persona, la conferma da qui.
+function EmailDaConfermare({ ricarica }) {
+  const [lista, setLista] = useState([])
+  const [esito, setEsito] = useState('')
+  const carica = () => supabase.rpc('admin_email_da_confermare').then(({ data }) => setLista(data || []))
+  useEffect(() => { carica() }, [])
+
+  async function conferma(p) {
+    if (!window.confirm(`Confermare l'email di ${nomeDi(p)} (${p.email})? Fallo solo se conosci questa persona.`)) return
+    const { error } = await supabase.rpc('admin_conferma_email', { p_persona: p.id })
+    setEsito(error ? 'Errore: ' + error.message : `${nomeDi(p)} ora può accedere.`)
+    carica()
+    ricarica()
+  }
+
+  if (!lista.length && !esito) return null
+  return (
+    <Scheda titolo="Email da confermare" azioni={<Salvato stato={esito} />}
+      nota="Si sono registrati ma non hanno aperto il link di conferma (a volte non arriva). Conferma solo chi conosci.">
+      {lista.length === 0 && <p className="text-sm text-slate-500">Nessuno in attesa.</p>}
+      {lista.map((p) => (
+        <div key={p.id} className="flex flex-wrap items-center gap-3 py-3 border-t border-slate-100 first-of-type:border-t-0">
+          <span className="flex-1 min-w-[160px]">
+            <b className="block">{nomeDi(p)}</b>
+            <span className="text-[13px] text-slate-500 break-all">{p.email} · {new Date(p.created_at).toLocaleString('it-IT')}</span>
+          </span>
+          {p.role && <ChipRuolo ruolo={p.role} />}
+          <button type="button" onClick={() => conferma(p)} className={BOTTONE_PIENO}>Conferma email</button>
+        </div>
+      ))}
+    </Scheda>
+  )
+}
+
 // Tutti gli account dell'app: ruolo, squadra, accesso al loro posto (per aiutarli)
 export function TuttiUtenti({ dati, ricarica, io }) {
   const [cerca, setCerca] = useState('')
@@ -39,6 +74,7 @@ export function TuttiUtenti({ dati, ricarica, io }) {
   return (
     <>
       <h1 className="font-display text-[34px] font-extrabold leading-tight">Tutti gli utenti</h1>
+      <EmailDaConfermare ricarica={ricarica} />
       <Scheda nota="Ogni account dell'app, in tutte le squadre." azioni={<Salvato stato={esito} />}>
         <input type="search" value={cerca} onChange={(e) => setCerca(e.target.value)} aria-label="Cerca per nome o squadra"
           placeholder="Cerca per nome o squadra…" className="w-full min-h-[46px] border border-slate-300 rounded-xl px-3.5 bg-slate-50 mb-3" />
@@ -122,7 +158,7 @@ export function CoachDaApprovare({ ricarica }) {
   return (
     <>
       <h1 className="font-display text-[34px] font-extrabold leading-tight">Coach da approvare</h1>
-      <Scheda nota="Approvando nasce la loro squadra e diventano coach con tutti i permessi su di essa." azioni={<Salvato stato={esito} />}>
+      <Scheda nota="Approvando nasce la loro squadra e diventano coach con tutti i permessi su di essa. La loro email vale come confermata anche se il link non è arrivato." azioni={<Salvato stato={esito} />}>
         {lista === null && <p className="text-slate-500">Carico…</p>}
         {lista?.length === 0 && <Vuoto titolo="Nessun coach in attesa">Chi si registra come coach compare qui.</Vuoto>}
         {lista?.map((c) => (

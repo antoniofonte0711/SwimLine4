@@ -6,6 +6,8 @@ import Icona from '../components/Icona'
 import InputPassword from '../components/InputPassword'
 import { ETA_CONSENSO, erroreAuth, eta } from '../lib/erroriAuth'
 import { VERSIONE_INFORMATIVA } from '../lib/privacy'
+import { MESSAGGIO_RUBATA, volteRubata } from '../lib/passwordRubata'
+import { registraErrore } from '../lib/registroErrori'
 
 export default function Registrati() {
   const [nome, setNome] = useState('')
@@ -54,6 +56,10 @@ export default function Registrati() {
     }
 
     setInvio(true)
+    if (await volteRubata(password)) {
+      setInvio(false)
+      return setError(MESSAGGIO_RUBATA)
+    }
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -62,6 +68,8 @@ export default function Registrati() {
     setInvio(false)
 
     if (error) {
+      // email di conferma non partita (servizio email di Supabase): lo sa subito anche l'admin
+      if (/sending|not authorized|smtp/i.test(error.message || '')) registraErrore(error, 'Registrazione: email di conferma non inviata')
       setError(erroreAuth(error))
       return
     }
@@ -85,7 +93,7 @@ export default function Registrati() {
           <p className="text-sm text-slate-600 mt-2">
             {entrato
               ? 'Il tuo account è pronto: tra un attimo entri nell\'app.'
-              : 'Ti abbiamo mandato un\'email: apri il link per confermare l\'account (se non la trovi, guarda nello spam). Poi accedi.'}
+              : 'Ti abbiamo mandato un\'email: apri il link per confermare l\'account (se non la trovi, guarda nello spam). Poi accedi. Se non arriva, avvisa il tuo coach: l\'amministratore può attivarti.'}
           </p>
           {role === 'coach' && (
             <p className="text-sm text-slate-600 mt-2">Il profilo coach si attiva quando l'amministratore lo approva: fino ad allora entri come atleta.</p>

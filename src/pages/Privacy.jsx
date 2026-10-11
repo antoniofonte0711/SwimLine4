@@ -50,6 +50,9 @@ export default function Privacy() {
 
         <Paragrafo titolo="Dove sono e per quanto">
           <p>I dati stanno su server nell'Unione Europea (Supabase, Irlanda); l'app è servita da Vercel. Restano finché l'account è attivo.</p>
+          <p>Ogni notte si fa una copia di sicurezza dei dati, nello stesso posto; si tengono le ultime 14.</p>
+          <p>Se l'app va in errore sul tuo telefono, l'amministratore riceve il messaggio d'errore con la pagina, il tipo di telefono e il tuo account, per sistemarlo; si tiene 60 giorni.</p>
+          <p>Quando scegli una password, l'app controlla che non compaia negli elenchi pubblici di password rubate (haveibeenpwned.com): viene inviato solo un frammento cifrato di 5 caratteri, mai la password.</p>
           <p>Atleti e genitori possono eliminare l'account da Profilo › Elimina il mio account: si cancellano subito profilo, tempi, gare, presenze, punti e documenti caricati (certificato, tesserini). Per un account coach scrivi all'amministratore.</p>
         </Paragrafo>
 
