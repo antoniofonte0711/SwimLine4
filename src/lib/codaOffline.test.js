@@ -50,6 +50,23 @@ describe('coda offline', () => {
     expect(leggiCoda('tempi', 'a')).toEqual([])
   })
 
+  it('un tempo salvato mentre la coda sta inviando non si perde', async () => {
+    aggiungiInCoda('tempi', { id: 1, atleta_id: 'a' })
+    const sb = {
+      from: () => ({ insert: async () => { aggiungiInCoda('tempi', { id: 9, atleta_id: 'a' }); return { error: null } } }),
+    }
+    expect(await sincronizza(sb, 'tempi', 'a')).toBe(1)
+    expect(leggiCoda('tempi', 'a').map((r) => r.id)).toEqual([9])
+  })
+
+  it('due invii insieme ne fanno partire uno solo', async () => {
+    aggiungiInCoda('tempi', { id: 1, atleta_id: 'a' })
+    const sb = supabaseFinto()
+    const [x, y] = await Promise.all([sincronizza(sb, 'tempi', 'a'), sincronizza(sb, 'tempi', 'a')])
+    expect(sb.inseriti).toEqual([1])
+    expect([x, y]).toEqual([1, 1])
+  })
+
   it('all\'uscita sparisce la copia offline ma non la coda da inviare', () => {
     localStorage.setItem('swimline4:cache:gare:u1', '[1]')
     localStorage.setItem('swimline4:coda:gare', '[2]')

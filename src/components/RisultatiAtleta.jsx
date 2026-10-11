@@ -152,7 +152,7 @@ export default function RisultatiAtleta({ piano, atletaId, giorno }) {
           </div>
         )
       })}
-      {errore && <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mb-3">{errore}</p>}
+      {errore && <p className="text-sm text-white bg-red-600 rounded-lg px-3 py-2 mb-3">{errore}</p>}
       {ok && <p className="text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2 mb-3">{ok}</p>}
       <button onClick={salva} disabled={salvo} className="w-full font-bold text-white bg-blue-600 disabled:opacity-60 rounded-2xl py-3.5">
         {salvo ? 'Salvo…' : 'Salva risultati'}

@@ -127,7 +127,7 @@ export default function FormLavoro() {
       {!VIDEO_ATTIVI && <p className="text-xs font-semibold text-amber-800 bg-amber-50 rounded-xl px-3 py-2 mt-1">{AVVISO_VIDEO}</p>}
       <div className="mb-4" />
 
-      {errore && <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mb-3">{errore}</p>}
+      {errore && <p className="text-sm text-white bg-red-600 rounded-lg px-3 py-2 mb-3">{errore}</p>}
 
       <button type="submit"
         className="w-full bg-blue-50 text-blue-600 font-bold rounded-2xl py-3.5 hover:bg-blue-100 active:scale-[0.98] transition">

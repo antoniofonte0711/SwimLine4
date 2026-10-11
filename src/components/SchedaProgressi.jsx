@@ -281,7 +281,7 @@ function NuovoTempo({ atletaId, onSalvato }) {
         </div>
       </div>
       <div className="mb-3"><InputTempo etichetta="Tempo" value={tempo} onChange={setTempo} /></div>
-      {errore && <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mb-3">{errore}</p>}
+      {errore && <p className="text-sm text-white bg-red-600 rounded-lg px-3 py-2 mb-3">{errore}</p>}
       <button onClick={salva} disabled={invio} className="w-full font-bold text-white bg-blue-600 disabled:bg-gray-300 rounded-2xl py-3">
         {invio ? 'Salvo…' : 'Salva tempo'}
       </button>

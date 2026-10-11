@@ -62,7 +62,7 @@ export default function BoxSquadra() {
       </p>
       <label className="block text-xs text-slate-500 mb-1">Nome squadra</label>
       <input value={testo} onChange={(e) => setTesto(e.target.value)} placeholder="Es. Delfini Nuoto Club" className={CAMPO + ' mb-3'} />
-      {errore && <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mb-3">{errore}</p>}
+      {errore && <p className="text-sm text-white bg-red-600 rounded-lg px-3 py-2 mb-3">{errore}</p>}
       {ok && <p className="text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2 mb-3">{ok}</p>}
       <button onClick={salva} disabled={invio || !testo.trim() || testo.trim() === attuale}
         className="w-full font-bold text-white bg-blue-600 disabled:bg-gray-300 rounded-2xl py-3">

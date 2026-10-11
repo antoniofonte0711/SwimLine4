@@ -34,7 +34,7 @@ export default function SegnalazioniAdmin() {
             {nomi[s.autore_id] || 'Account eliminato'} · {new Date(s.created_at).toLocaleString('it-IT')}
           </p>
           <p className="whitespace-pre-wrap mb-2">{s.testo}</p>
-          {s.dispositivo && <p className="text-[11px] text-slate-400 mb-2 break-all">{s.dispositivo}</p>}
+          {s.dispositivo && <p className="text-[11px] text-slate-500 mb-2 break-all">{s.dispositivo}</p>}
           <button onClick={() => risolta(s.id)} className="text-sm font-bold text-blue-600">Risolto, togli dalla lista</button>
         </div>
       ))}

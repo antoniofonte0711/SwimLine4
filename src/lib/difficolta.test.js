@@ -1,6 +1,26 @@
 import { describe, it, expect } from 'vitest'
 import { difficoltaPiano, pesoRiga, formattaVoto } from './difficolta'
 
+// Allenamento vero del 9 ottobre 2026, calcolato a mano (11/10):
+// RIS 300+200 ×0,5 = 250 · TEC 800 ×0,7 = 560 · C3 200 ×3 = 600 · A2 2000 ×1 = 2000 · Sciolto 4×50 ×0,4 = 80
+// Ipossia 200 ×1,2 = 240 · B2 400 ×2,6 = 1040 ("Forte" non conta: B2 è già duro) → 4770 su 4300 m → 4,8 Moderato
+const R = (tipo_lavoro, distanza, ripetizioni = 1, note = '') => ({ tipo_lavoro, distanza, ripetizioni, note })
+const NOVE_OTTOBRE = [
+  R('Riscaldamento', 300), R('Riscaldamento', 50, 4, 'Cambio stile ogni 25'), R('Tecnica', 50, 16), R('C3', 25, 8, 'Attivazione'),
+  R('A2', 2000, 1, 'Lavoro centrale, di cui almeno: 400 gambe, 400 pull (pull buoy), 400 boccaglio + 100 PS'),
+  R('Sciolto', 50), R('Ipossia', 25, 8), R('Sciolto', 50), R('Sciolto', 50), R('B2', 400, 1, 'Forte'), R('Sciolto', 50),
+]
+describe('controllo a mano su un allenamento vero', () => {
+  it('9 ottobre: 4,8/10 Moderato, fatica divisa come nel calcolo a mano', () => {
+    const d = difficoltaPiano(NOVE_OTTOBRE)
+    expect(d.metri).toBe(4300)
+    expect(d.carico).toBe(4770)
+    expect(d.voto).toBe(4.8)
+    expect(d.livello.nome).toBe('Moderato')
+    expect(Object.fromEntries(d.gruppi.map((g) => [g.id, g.carico]))).toEqual({ recupero: 1130, aerobico: 2000, soglia: 1040, velocita: 600 })
+  })
+})
+
 const riga = (tipo_lavoro, distanza, ripetizioni = 1, note = '') => ({ tipo_lavoro, distanza, ripetizioni, note, stile: 'Stile libero' })
 
 describe('difficoltà', () => {

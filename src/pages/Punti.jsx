@@ -28,7 +28,7 @@ function PuntiAtleta() {
   return (
     <>
       <CardPunti dettaglio={false} />
-      {errore && <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mb-3">{errore}</p>}
+      {errore && <p className="text-sm text-white bg-red-600 rounded-lg px-3 py-2 mb-3">{errore}</p>}
 
       <div className={CARD}>
         <p className="font-bold mb-1">I tuoi premi</p>
@@ -135,7 +135,7 @@ function PuntiCoach() {
 
   return (
     <>
-      {errore && <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mb-3">{errore}</p>}
+      {errore && <p className="text-sm text-white bg-red-600 rounded-lg px-3 py-2 mb-3">{errore}</p>}
 
       <div className={CARD}>
         <p className="font-bold mb-1">Premi da confermare</p>

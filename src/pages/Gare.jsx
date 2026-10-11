@@ -321,7 +321,7 @@ function GareAtleta() {
           {!VIDEO_ATTIVI && <p className="text-xs font-semibold text-amber-800 bg-amber-50 rounded-xl px-3 py-2 mt-1">{AVVISO_VIDEO}</p>}
           <div className="mb-4" />
 
-          {errore && <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mb-3">{errore}</p>}
+          {errore && <p className="text-sm text-white bg-red-600 rounded-lg px-3 py-2 mb-3">{errore}</p>}
           {messaggio && <p className="text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2 mb-3">{messaggio}</p>}
 
           <button type="submit" disabled={salvando}

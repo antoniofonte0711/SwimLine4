@@ -50,7 +50,7 @@ export default function Privacy() {
 
         <Paragrafo titolo="Dove sono e per quanto">
           <p>I dati stanno su server nell'Unione Europea (Supabase, Irlanda); l'app è servita da Vercel. Restano finché l'account è attivo.</p>
-          <p>Atleti e genitori possono eliminare l'account da Profilo › Elimina il mio account: si cancellano subito profilo, tempi, gare, presenze e punti. Per un account coach scrivi all'amministratore.</p>
+          <p>Atleti e genitori possono eliminare l'account da Profilo › Elimina il mio account: si cancellano subito profilo, tempi, gare, presenze, punti e documenti caricati (certificato, tesserini). Per un account coach scrivi all'amministratore.</p>
         </Paragrafo>
 
         <Paragrafo titolo="Minori di 14 anni">
@@ -58,7 +58,7 @@ export default function Privacy() {
         </Paragrafo>
 
         <Paragrafo titolo="I tuoi diritti">
-          <p>Puoi chiedere di vedere, correggere, cancellare o ricevere una copia dei tuoi dati, e opporti al loro uso, scrivendo al contatto qui sopra. Puoi anche rivolgerti al Garante per la protezione dei dati personali (garanteprivacy.it).</p>
+          <p>Una copia dei tuoi dati la scarichi da solo quando vuoi: Profilo › I miei dati › Scarica. Puoi anche chiedere di vederli, correggerli, cancellarli o riceverne una copia, e opporti al loro uso, scrivendo al contatto qui sopra. Puoi anche rivolgerti al Garante per la protezione dei dati personali (garanteprivacy.it).</p>
         </Paragrafo>
       </article>
     </div>

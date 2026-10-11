@@ -76,7 +76,7 @@ export function TuttiUtenti({ dati, ricarica, io }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setApertura(null)}>
           <div role="dialog" aria-modal="true" className="w-full max-w-md bg-white rounded-2xl p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <p className="font-bold text-lg mb-1">Entra come {nomeDi(apertura.p)}</p>
-            {apertura.errore ? <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mt-3">{apertura.errore}</p> : (
+            {apertura.errore ? <p className="text-sm text-white bg-red-600 rounded-lg px-3 py-2 mt-3">{apertura.errore}</p> : (
               <>
                 <p className="text-sm text-slate-600 mb-4">Link monouso. Aprilo in una <b>finestra privata</b>: se lo apri qui, esci dal tuo account admin.</p>
                 <div className="flex gap-2">

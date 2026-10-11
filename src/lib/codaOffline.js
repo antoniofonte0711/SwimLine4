@@ -34,22 +34,28 @@ export function rimuoviDaCoda(tabella, id) {
 }
 
 // Invia i tempi in attesa. Restituisce quanti ne ha inviati.
-export async function sincronizza(supabase, tabella, userId) {
-  const tutti = leggi(chiaveCoda(tabella))
-  const miei = tutti.filter((r) => r.atleta_id === userId)
-  const altri = tutti.filter((r) => r.atleta_id !== userId)
-  if (miei.length === 0) return 0
+// Un invio alla volta per tabella (pagina e menu possono chiederlo insieme); alla fine si tolgono
+// solo quelli inviati, rileggendo la coda: un tempo aggiunto nel frattempo non si perde.
+const inCorso = new Map()
+export function sincronizza(supabase, tabella, userId) {
+  const chiave = `${tabella}:${userId}`
+  if (!inCorso.has(chiave)) {
+    inCorso.set(chiave, invia(supabase, tabella, userId).finally(() => inCorso.delete(chiave)))
+  }
+  return inCorso.get(chiave)
+}
 
-  const rimasti = []
-  let inviati = 0
+async function invia(supabase, tabella, userId) {
+  const miei = leggi(chiaveCoda(tabella)).filter((r) => r.atleta_id === userId)
+  if (miei.length === 0) return 0
+  const inviati = new Set()
   for (const record of miei) {
     const { error } = await supabase.from(tabella).insert(record)
     // 23505 = già presente (inviato in un tentativo precedente): va bene
-    if (!error || error.code === '23505') inviati++
-    else rimasti.push(record)
+    if (!error || error.code === '23505') inviati.add(record.id)
   }
-  scrivi(chiaveCoda(tabella), [...altri, ...rimasti])
-  return inviati
+  scrivi(chiaveCoda(tabella), leggi(chiaveCoda(tabella)).filter((r) => !inviati.has(r.id)))
+  return inviati.size
 }
 
 // Copia dell'ultimo elenco scaricato, per vederlo anche offline
@@ -73,6 +79,17 @@ export function svuotaCache() {
 
 export function erroreDiRete(error) {
   return !navigator.onLine || /fetch|network|failed/i.test(error?.message || '')
+}
+
+// In qualsiasi pagina: appena c'è rete parte l'invio dei tempi e delle gare rimasti sul telefono
+// (prima partivano solo aprendo Storico o Gare, e il coach poteva non vederli per giorni)
+export function useInvioAutomatico(supabase, userId) {
+  const online = useOnline()
+  useEffect(() => {
+    if (!online || !userId) return
+    sincronizza(supabase, 'allenamenti', userId)
+    sincronizza(supabase, 'gare', userId)
+  }, [supabase, online, userId])
 }
 
 export function useOnline() {

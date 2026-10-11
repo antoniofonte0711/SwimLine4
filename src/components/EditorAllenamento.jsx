@@ -121,7 +121,7 @@ function RigaLavoro({ chiave, r, i, primo, ultimo, puoiTogliere, cambia, cambiaT
         <div className="bg-gray-50 rounded-2xl p-3 mt-3">
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold text-slate-600">Ripartenza di ogni ripetizione</p>
-            <button onClick={() => cambia(i, 'ripartenze', undefined)} className="text-xs text-red-500">Togli</button>
+            <button onClick={() => cambia(i, 'ripartenze', undefined)} className="text-xs font-semibold text-red-600 px-2 min-h-[36px]">Togli</button>
           </div>
           <p className="text-xs text-slate-500 mb-2">Le caselle vuote usano la ripartenza generale.</p>
           <div className="grid grid-cols-3 lg:grid-cols-6 gap-2">
@@ -135,7 +135,7 @@ function RigaLavoro({ chiave, r, i, primo, ultimo, puoiTogliere, cambia, cambiaT
       {((!personali && n > 1) || puoiTogliere) && (
         <div className="flex items-center justify-between gap-2 mt-2">
           {!personali && n > 1
-            ? <button onClick={() => cambia(i, 'ripartenze', [])} className="text-xs font-semibold text-blue-600">+ Ripartenza diversa per ogni ripetizione</button>
+            ? <button onClick={() => cambia(i, 'ripartenze', [])} className="text-xs font-semibold text-blue-600 min-h-[36px] text-left">+ Ripartenza diversa per ogni ripetizione</button>
             : <span />}
           {puoiTogliere && <button onClick={() => togli(i)} className="text-xs text-red-500">Togli lavoro</button>}
         </div>
@@ -155,7 +155,7 @@ function Conferma({ titolo, testo, si, no }) {
         <p className="text-sm text-slate-600 mb-5">{testo}</p>
         <div className="grid grid-cols-2 gap-2">
           <button onClick={no} className="font-bold text-slate-600 bg-gray-100 rounded-2xl py-3">Annulla</button>
-          <button onClick={si} className="font-bold text-white bg-red-500 rounded-2xl py-3">Sì, togli</button>
+          <button onClick={si} className="font-bold text-white bg-red-600 rounded-2xl py-3">Sì, togli</button>
         </div>
       </div>
     </div>
@@ -617,7 +617,7 @@ export default function EditorAllenamento({ squadra, giorno }) {
         <div className="mt-2"><Difficolta righe={righeSalvate(righe)} /></div>
       </div>
 
-      {errore && <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mb-3">{errore}</p>}
+      {errore && <p className="text-sm text-white bg-red-600 rounded-lg px-3 py-2 mb-3">{errore}</p>}
       {ok && <p className="text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2 mb-3">{ok}</p>}
 
       {puo('c_pubblica') ? (

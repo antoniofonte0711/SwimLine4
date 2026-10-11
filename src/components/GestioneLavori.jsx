@@ -194,7 +194,7 @@ export default function GestioneLavori({ squadraId, admin = false }) {
             <div key={t.sigla} className="flex items-center gap-3 py-2.5 border-t border-slate-100 first-of-type:border-t-0">
               {squadraId ? (
                 <input type="checkbox" checked={t.attivo} onChange={(e) => spunta(t, e.target.checked)} aria-label={`Usa ${t.sigla} in questa squadra`}
-                  className="w-[22px] h-[22px] shrink-0 accent-blue-600" />
+                  className="w-6 h-6 shrink-0 accent-blue-600" />
               ) : null}
               <Chip sigla={t.sigla} colore={t.colore} base={t.origine === 'base'} />
               <span className={`flex-1 min-w-0 ${t.attivo || !squadraId ? '' : 'opacity-50'}`}>

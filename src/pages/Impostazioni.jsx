@@ -87,7 +87,7 @@ export default function Impostazioni() {
         : !squadra ? <SenzaSquadra />
         : (
           <>
-            {errore && <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mb-3">{errore}</p>}
+            {errore && <p className="text-sm text-white bg-red-600 rounded-lg px-3 py-2 mb-3">{errore}</p>}
             {ok && <p className="text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2 mb-3">{ok}</p>}
 
             <DomandeIngresso squadra={squadra} onCambio={caricaMembri} />
@@ -151,7 +151,7 @@ export default function Impostazioni() {
                   </div>
                   {p.role !== 'coach' && (
                     <button onClick={() => togli(p)} disabled={invio === p.id}
-                      className="text-sm font-semibold text-red-500 disabled:opacity-60 px-2 shrink-0">
+                      className="text-sm font-semibold text-red-600 disabled:opacity-60 px-3 min-h-[44px] shrink-0">
                       {invio === p.id ? '…' : 'Togli'}
                     </button>
                   )}

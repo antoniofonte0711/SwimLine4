@@ -18,12 +18,13 @@ import { CAMPO, Interruttore, Riga, Scelta, Sezione } from '../components/Impost
 import { version } from '../../package.json'
 import { useRegole } from '../lib/regole'
 import { svuotaCache } from '../lib/codaOffline'
+import { iMieiDati, scaricaJson } from '../lib/copiaDati'
 
 const BOTTONE = 'cliccabile text-sm font-bold text-blue-600 bg-schiuma rounded-full px-4 min-h-[44px]'
 const PRIMARIO = 'cliccabile w-full bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl min-h-[48px] disabled:opacity-50'
 
 function Messaggio({ ok, errore }) {
-  if (errore) return <p role="alert" className="text-sm text-white bg-red-500 rounded-xl px-3 py-2 mt-2">{errore}</p>
+  if (errore) return <p role="alert" className="text-sm text-white bg-red-600 rounded-xl px-3 py-2 mt-2">{errore}</p>
   if (ok) return <p role="status" className="text-sm text-emerald-700 bg-emerald-50 rounded-xl px-3 py-2 mt-2">{ok}</p>
   return null
 }
@@ -227,9 +228,27 @@ function SegnalaProblema() {
   )
 }
 
+// Copia di tutti i propri dati in un file (diritto di accesso previsto dalla privacy)
+function ScaricaDati() {
+  const { user } = useAuth()
+  const [stato, setStato] = useState('')
+  async function scarica() {
+    setStato('Preparo il file…')
+    const copia = await iMieiDati(user.id)
+    scaricaJson(copia, `swimline4-miei-dati-${new Date().toISOString().slice(0, 10)}.json`)
+    setStato('')
+  }
+  return (
+    <Riga etichetta="I miei dati" descrizione={stato || 'Scarica un file con tutto quello che l\'app sa di te'}>
+      <button type="button" onClick={scarica} disabled={!!stato} className={BOTTONE}>Scarica</button>
+    </Riga>
+  )
+}
+
 // Atleti e genitori chiudono da soli l'account; per un coach si cancellerebbe tutta la squadra
 function EliminaAccount() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [aperto, setAperto] = useState(false)
   const [conferma, setConferma] = useState('')
   const [errore, setErrore] = useState('')
@@ -237,6 +256,9 @@ function EliminaAccount() {
   async function elimina(e) {
     e.preventDefault()
     if (conferma.trim().toUpperCase() !== 'ELIMINA') return setErrore('Scrivi ELIMINA per confermare.')
+    // prima i documenti (certificato, tesserini): lo spazio file non si svuota da solo
+    const { data: file } = await supabase.storage.from('documenti-atleti').list(user.id)
+    if (file?.length) await supabase.storage.from('documenti-atleti').remove(file.map((f) => `${user.id}/${f.name}`))
     const { error } = await supabase.rpc('elimina_mio_account')
     if (error) return setErrore('Non sono riuscito a eliminarlo: ' + error.message)
     svuotaCache()
@@ -255,7 +277,8 @@ function EliminaAccount() {
     <form onSubmit={elimina} className="bg-white rounded-3xl p-5 border-2 border-red-200">
       <p className="font-bold text-red-700 mb-1">Eliminare l'account?</p>
       <p className="text-sm text-slate-600 mb-3">
-        Si cancellano per sempre il profilo, i tempi, le gare, le presenze, i punti e i video. Non si può tornare indietro.
+        Si cancellano per sempre il profilo, i tempi, le gare, le presenze, i punti, i documenti e i video. Non si può tornare indietro.
+        Se vuoi tenerne una copia, prima usa «I miei dati › Scarica».
       </p>
       <label className="block text-xs text-slate-500 mb-1" htmlFor="conferma-elimina">Per confermare scrivi ELIMINA</label>
       <input id="conferma-elimina" value={conferma} onChange={(e) => setConferma(e.target.value)} autoComplete="off" className={CAMPO + ' mb-3'} />
@@ -399,6 +422,7 @@ export default function Profilo() {
         <Riga etichetta="Informativa privacy" descrizione="Quali dati usiamo, chi li vede, come cancellarli">
           <Link to="/privacy" className={BOTTONE + ' inline-flex items-center'}>Leggi</Link>
         </Riga>
+        <ScaricaDati />
         <Riga etichetta="Versione" descrizione={`SwimLine4 ${version}`} />
       </Sezione>
 

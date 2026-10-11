@@ -142,7 +142,7 @@ function SchedaRisultato({ g, onSalvato }) {
               <Parziali passaggi={passaggi} finale={tempo} passo={passo} distanza={d} />
             </>
           )}
-          {errore && <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mt-3">{errore}</p>}
+          {errore && <p className="text-sm text-white bg-red-600 rounded-lg px-3 py-2 mt-3">{errore}</p>}
           <button onClick={salva} disabled={invio}
             className="w-full mt-3 font-bold text-white bg-blue-600 disabled:bg-gray-300 rounded-2xl py-3">
             {invio ? 'Salvo…' : 'Salva risultato'}
@@ -206,7 +206,7 @@ function ModificaTrofeo({ righe, onSalvato }) {
       </select>
       <label className="block text-xs text-slate-500 mb-1">Note</label>
       <textarea value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} rows={2} className={CAMPO + ' mb-2 resize-none'} />
-      {errore && <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mb-2">{errore}</p>}
+      {errore && <p className="text-sm text-white bg-red-600 rounded-lg px-3 py-2 mb-2">{errore}</p>}
       <p className="text-xs text-slate-500 mb-2">Salvando, atleti e genitori ricevono l'avviso "Gara modificata".</p>
       <div className="grid grid-cols-2 gap-2">
         <button onClick={() => setAperta(false)} className="font-bold text-slate-600 bg-white rounded-2xl py-2.5">Annulla</button>
@@ -412,7 +412,7 @@ export default function GareCoach() {
                   <div className="flex items-center justify-between mb-1">
                     <p className="font-bold">A chi assegni la gara?</p>
                     {atleti.length > 0 && (
-                      <button onClick={selezionaTutti} className="text-xs font-bold text-blue-600">
+                      <button onClick={selezionaTutti} className="text-xs font-bold text-blue-600 px-2 min-h-[36px]">
                         {tuttiSelezionati ? 'Deseleziona tutti' : 'Seleziona tutti'}
                       </button>
                     )}
@@ -439,7 +439,7 @@ export default function GareCoach() {
                   })}
                 </div>
 
-                {errore && <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mb-3">{errore}</p>}
+                {errore && <p className="text-sm text-white bg-red-600 rounded-lg px-3 py-2 mb-3">{errore}</p>}
                 {ok && <p className="text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2 mb-3">{ok}</p>}
                 <button onClick={salva} disabled={invio} className="w-full font-bold text-white bg-blue-600 disabled:bg-gray-300 rounded-2xl py-3.5">
                   {invio ? 'Salvo…' : `Assegna gara${nSelezionati ? ` a ${nSelezionati}` : ''}`}

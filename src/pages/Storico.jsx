@@ -31,7 +31,7 @@ function StoricoCoach() {
         <p className="text-sm font-semibold text-slate-500 capitalize">
           {p.data === dataLocale() ? 'Oggi · ' : ''}{formattaGiorno(p.data)}
         </p>
-        <Link to={`/risultati?data=${p.data}`} className="text-xs font-semibold text-blue-600">Risultati ›</Link>
+        <Link to={`/risultati?data=${p.data}`} className="text-xs font-semibold text-blue-600 inline-flex items-center px-2 min-h-[36px]">Risultati ›</Link>
       </div>
       <PianoCard piano={p} />
     </div>

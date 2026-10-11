@@ -205,7 +205,7 @@ function DettaglioRecord({ voce, nome, stile, allenamenti, onChiudi, onFatto }) 
         <p className="text-sm"><b>Realizzato il</b> {dataIt}</p>
         {inserito && <p className="text-xs text-slate-500 mb-4">Registrato il {inserito}</p>}
         <InputTempo etichetta="Tempo" value={nuovo} onChange={setNuovo} />
-        {errore && <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mt-3">{errore}</p>}
+        {errore && <p className="text-sm text-white bg-red-600 rounded-lg px-3 py-2 mt-3">{errore}</p>}
         <div className="grid grid-cols-2 gap-2 mt-4">
           <button onClick={salva} disabled={lavoro} className="font-bold text-white bg-blue-600 disabled:opacity-60 rounded-2xl py-3">Cambia tempo</button>
           <button onClick={elimina} disabled={lavoro} className="font-bold text-red-600 bg-red-50 disabled:opacity-60 rounded-2xl py-3">Elimina</button>

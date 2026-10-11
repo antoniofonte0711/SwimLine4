@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
+import { leggiTutto, scaricaJson } from '../../lib/copiaDati'
 import { FUNZIONI_APP, NOTIFICHE_APP, ricaricaRegole } from '../../lib/regole'
 import { BOTTONE, BOTTONE_PIENO, Gruppo, Interruttore, Interruttori, Salvato, Scheda } from './ui'
 
@@ -101,8 +102,10 @@ export function NotificheApp({ dati }) {
   )
 }
 
+// Tutte le tabelle con dati (non le iscrizioni push, che contengono chiavi dei telefoni)
 const TABELLE_COPIA = ['squadre', 'profiles', 'allenamenti_squadra', 'presenze', 'allenamenti', 'gare', 'punti_movimenti',
-  'punti_config', 'premi_catalogo', 'premi_atleta', 'genitori_figli', 'impostazioni_app', 'impostazioni_squadra']
+  'punti_config', 'premi_catalogo', 'premi_atleta', 'genitori_figli', 'incoraggiamenti', 'notifiche', 'atleta_riferimenti',
+  'richieste_squadra', 'segnalazioni', 'accessi_admin', 'tipi_lavoro', 'tipi_lavoro_squadra', 'impostazioni_app', 'impostazioni_squadra']
 
 export function Sicurezza() {
   const [stato, setStato] = useState('')
@@ -110,17 +113,10 @@ export function Sicurezza() {
   async function scarica() {
     setStato('Preparo la copia…')
     const copia = { esportato_il: new Date().toISOString() }
-    for (const t of TABELLE_COPIA) {
-      const { data, error } = await supabase.from(t).select('*').limit(10000)
-      copia[t] = error ? { errore: error.message } : data
-    }
-    const url = URL.createObjectURL(new Blob([JSON.stringify(copia, null, 1)], { type: 'application/json' }))
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `swimline4-copia-${new Date().toISOString().slice(0, 10)}.json`
-    a.click()
-    setTimeout(() => URL.revokeObjectURL(url), 5000)
-    setStato('Copia scaricata')
+    for (const t of TABELLE_COPIA) copia[t] = await leggiTutto(t)
+    const errori = TABELLE_COPIA.filter((t) => copia[t]?.errore)
+    scaricaJson(copia, `swimline4-copia-${new Date().toISOString().slice(0, 10)}.json`)
+    setStato(errori.length ? `Errore: copia scaricata, ma non sono riuscito a leggere ${errori.join(', ')}` : 'Copia scaricata')
   }
 
   const voci = [

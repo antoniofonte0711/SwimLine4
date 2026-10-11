@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext'
 import { PERMESSI_SQUADRA, ricaricaRegole } from '../../lib/regole'
 import Icona from '../Icona'
 import GestioneLavori from '../GestioneLavori'
+import { dataLocale } from '../../lib/lavori'
 import { BOTTONE_PIENO, ChipRuolo, Gruppo, Interruttore, Interruttori, Numero, Salvato, Scheda, Vuoto } from './ui'
 
 const COLORI = ['#0b4fd9', '#0f6b3f', '#b45309', '#6d28c9', '#c2309f', '#0a1a2f']
@@ -187,7 +188,7 @@ export function DettaglioSquadra({ dati, ricarica, squadraId, onIndietro }) {
             <Numero valore={membri.filter((p) => ['atleta', 'admin'].includes(p.role)).length} etichetta="Atleti" />
             <Numero valore={membri.filter((p) => p.role === 'genitore').length} etichetta="Genitori" />
             <Numero valore={piani.length} etichetta="Allenamenti pubblicati" />
-            <Numero valore={piani.filter((p) => p.data >= new Date().toISOString().slice(0, 10)).length} etichetta="In programma" />
+            <Numero valore={piani.filter((p) => p.data >= dataLocale()).length} etichetta="In programma" />
           </div>
           <Scheda titolo="Il coach" nota={`${coach ? nomeDi(coach) : 'Nessun coach'} · squadra creata il ${new Date(squadra.created_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}`}>
             <p className="text-sm text-slate-600">Entrando come coach vedi e gestisci la squadra esattamente come la vede lui: allenamenti, presenze, gare, risultati.</p>

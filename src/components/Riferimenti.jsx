@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import { supabase } from '../lib/supabaseClient'
 import { riepilogoPresenze } from '../lib/presenze'
+import { dataLocale } from '../lib/lavori'
 
 const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white'
 const BUCKET = 'documenti-atleti'
@@ -73,7 +74,7 @@ export default function Riferimenti({ atletaId }) {
 
   const nAssenze = riepilogoPresenze(assenze).assenti
   const anno = profilo?.data_nascita ? new Date(profilo.data_nascita).getFullYear() : '—'
-  const scaduto = r.certificato_scadenza && r.certificato_scadenza < new Date().toISOString().slice(0, 10)
+  const scaduto = r.certificato_scadenza && r.certificato_scadenza < dataLocale()
 
   return (
     <>
@@ -119,7 +120,7 @@ export default function Riferimenti({ atletaId }) {
         <textarea value={r.note || ''} onChange={campo('note')} rows={3} className={CAMPO} />
       </div>
 
-      {errore && <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mb-3">{errore}</p>}
+      {errore && <p className="text-sm text-white bg-red-600 rounded-lg px-3 py-2 mb-3">{errore}</p>}
       {ok && <p className="text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2 mb-3">{ok}</p>}
       <button onClick={salva} disabled={invio} className="w-full font-bold text-white bg-blue-600 disabled:opacity-60 rounded-2xl py-3.5">
         {invio ? 'Salvo…' : 'Salva riferimenti'}

@@ -79,7 +79,7 @@ export default function RiepilogoCoach() {
       <div className="bg-white rounded-3xl p-5 mb-3 shadow-card">
         <p className="font-bold mb-1">Bollettino giorni</p>
         <p className="text-xs text-slate-500 mb-3">Tocca per cambiare: P presente · A assente · F festa (non penale)</p>
-        {errore && <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mb-3">{errore}</p>}
+        {errore && <p className="text-sm text-white bg-red-600 rounded-lg px-3 py-2 mb-3">{errore}</p>}
         {atleti.length === 0 ? (
           <p className="text-sm text-slate-500">Nessun atleta nella squadra: compaiono quando la scelgono in registrazione.</p>
         ) : (

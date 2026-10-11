@@ -8,6 +8,8 @@ import { useAuth } from '../context/AuthContext'
 import { dataLocale } from '../lib/lavori'
 import { nomeRuolo } from '../lib/permessi'
 import { useTipiLavoro } from '../lib/useTipiLavoro'
+import { useInvioAutomatico } from '../lib/codaOffline'
+import { supabase } from '../lib/supabaseClient'
 
 const VOCI = [
   ['home', '/dashboard', 'onde', 'Oggi'],
@@ -25,6 +27,8 @@ const SIGLE = ['DOM', 'LUN', 'MAR', 'MER', 'GIO', 'VEN', 'SAB']
 export default function AppShell({ titolo, attiva, indietro, giorno, onGiorno, voti = {}, children }) {
   const { profile, ruolo, staVedendoCome, cambiaVista, squadraGestita } = useAuth()
   useTipiLavoro() // carica subito i lavori della squadra (colori e difficoltà in tutta l'app)
+  // non quando l'admin guarda l'app come un altro: la coda sul telefono è di chi l'ha scritta
+  useInvioAutomatico(supabase, staVedendoCome ? null : profile?.id)
   const voci = VOCI.filter(([chiave]) => !(ruolo === 'ospite' && chiave === 'riepilogo'))
   const iniziale = (profile?.nome || 'A').charAt(0).toUpperCase()
   const [calAperto, setCalAperto] = useState(false)
@@ -130,7 +134,7 @@ export default function AppShell({ titolo, attiva, indietro, giorno, onGiorno, v
                     <button key={valore} onClick={() => onGiorno(valore)} aria-current={eOggi ? 'date' : undefined} aria-pressed={scelto}
                       aria-label={`${d.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric' })}${voto ? `, difficoltà ${String(voto).replace('.', ',')}` : ''}`}
                       className={`py-1.5 rounded-2xl text-[11px] font-semibold flex flex-col items-center gap-1 transition ${
-                        scelto ? 'bg-blue-600 text-blue-100' : voto ? 'text-slate-500' : 'text-slate-400'
+                        scelto ? 'bg-blue-600 text-blue-100' : voto ? 'text-slate-600' : 'text-slate-500'
                       }`}>
                       {SIGLE[d.getDay()]}
                       <span className={`text-base font-bold ${scelto ? 'text-white' : 'text-abisso'} ${eOggi && !scelto ? 'underline decoration-2 decoration-blue-600 underline-offset-4' : ''}`}>{d.getDate()}</span>

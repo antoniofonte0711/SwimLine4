@@ -69,7 +69,7 @@ export default function Presenze() {
         )}
       </div>
 
-      {errore && <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mb-3">{errore}</p>}
+      {errore && <p className="text-sm text-white bg-red-600 rounded-lg px-3 py-2 mb-3">{errore}</p>}
 
       {atleti.length === 0 && (
         <p className="text-sm text-slate-500 text-center py-8">

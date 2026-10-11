@@ -13,7 +13,7 @@ export const TINTE = {
   notte: 'bg-[#0a1a2f] text-white',
   cielo: 'bg-[#d9efff] text-[#0a3a5c]',
   menta: 'bg-[#c6f0dd] text-[#0a3a2a]',
-  acqua: 'bg-[#0e8f9a] text-white',
+  acqua: 'bg-[#0b7a84] text-white', // scurito per la leggibilità (contrasto 5:1)
   verde: 'bg-[#0f6b3f] text-white',
   ambra: 'bg-[#ffd99a] text-[#4a2a00]',
   bordeaux: 'bg-[#7a1730] text-white',

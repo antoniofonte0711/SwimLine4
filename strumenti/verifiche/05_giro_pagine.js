@@ -10,7 +10,7 @@ window.__giro = []; window.__giroFinito = false;
   const larghezze = [375, 1280]
   const pagine = ['/dashboard', '/riepilogo', '/funzioni', '/profilo', '/notifiche', '/allenamenti', '/gare', '/storico',
     '/progressi', '/previsioni', '/record', '/squadra', '/calendario', '/punti', '/presenze', '/impostazioni', '/risultati',
-    '/video', '/admin', '/guida', '/privacy']
+    '/video', '/admin', '/guida', '/privacy', '/lavori']
   for (const r of ruoli) {
     localStorage.setItem('mock-utente', r)
     for (const w of larghezze) {
@@ -31,7 +31,11 @@ window.__giro = []; window.__giroFinito = false;
         const scroll = d.documentElement.scrollWidth > d.documentElement.clientWidth
         const testo = (d.body.innerText || '').trim().length
         const dove = f.contentWindow.location.pathname
-        window.__giro.push(`${r} ${w} ${p}${dove !== p ? ' -> ' + dove : ''}${scroll ? ' SCROLL' : ''}${testo < 40 ? ' VUOTA' : ''}${errori.length ? ' ERR ' + errori.join(' | ') : ''}`)
+        // tasti troppo piccoli per un dito (sotto 24×24 px, minimo WCAG 2.2), solo sul telefono
+        const piccoli = w > 500 ? [] : [...d.querySelectorAll('button, a[href], select, input:not([type=hidden]), [role=switch], [role=tab]')]
+          .filter((el) => { const b = el.getBoundingClientRect(); return b.width > 0 && b.height > 0 && (b.width < 24 || b.height < 24) })
+          .map((el) => (el.getAttribute('aria-label') || el.innerText || el.type || el.tagName).trim().slice(0, 25))
+        window.__giro.push(`${r} ${w} ${p}${dove !== p ? ' -> ' + dove : ''}${scroll ? ' SCROLL' : ''}${testo < 40 ? ' VUOTA' : ''}${piccoli.length ? ' PICCOLI(' + piccoli.length + '): ' + [...new Set(piccoli)].slice(0, 4).join(' / ') : ''}${errori.length ? ' ERR ' + errori.join(' | ') : ''}`)
         f.remove()
       }
     }

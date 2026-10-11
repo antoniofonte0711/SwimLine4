@@ -120,7 +120,7 @@ export default function CarrelloCard({ giorno, onSalvato }) {
       ))}
       </AnimatePresence>
 
-      {errore && <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mt-2">{errore}</p>}
+      {errore && <p className="text-sm text-white bg-red-600 rounded-lg px-3 py-2 mt-2">{errore}</p>}
       {messaggio && <p className="text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2 mt-2">{messaggio}</p>}
 
       {n > 0 && (

@@ -82,7 +82,7 @@ export default function StoricoAllenamenti({ atletaId }) {
             )}
             {/^https:\/\//i.test(r.video_url || '') && <a href={r.video_url} target="_blank" rel="noreferrer" className="text-xs text-blue-600">🎥 Guarda il video</a>}
           </div>
-          {!soloLettura && <button onClick={() => elimina(r)} title="Elimina" aria-label="Elimina" className="text-slate-500 hover:text-red-500 transition">🗑️</button>}
+          {!soloLettura && <button onClick={() => elimina(r)} title="Elimina" aria-label="Elimina" className="w-10 h-10 shrink-0 flex items-center justify-center rounded-xl text-slate-500 hover:text-red-500 hover:bg-red-50 transition">🗑️</button>}
         </div>
       ))}
     </div>
