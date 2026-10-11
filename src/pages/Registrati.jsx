@@ -4,6 +4,8 @@ import { supabase } from '../lib/supabaseClient'
 import SfondoVasca from '../components/SfondoVasca'
 import Icona from '../components/Icona'
 import InputPassword from '../components/InputPassword'
+import { ETA_CONSENSO, erroreAuth, eta } from '../lib/erroriAuth'
+import { VERSIONE_INFORMATIVA } from '../lib/privacy'
 
 export default function Registrati() {
   const [nome, setNome] = useState('')
@@ -17,7 +19,14 @@ export default function Registrati() {
   const [nomeSquadra, setNomeSquadra] = useState('')
   const [squadre, setSquadre] = useState([])
   const [squadraScelta, setSquadraScelta] = useState('')
+  const [privacy, setPrivacy] = useState(false)
+  const [consensoGenitore, setConsensoGenitore] = useState(false)
+  const [invio, setInvio] = useState(false)
+  const [entrato, setEntrato] = useState(false) // account attivo subito (senza conferma email)
   const navigate = useNavigate()
+  // atleta sotto i 14 anni: serve il consenso di un genitore
+  const anni = eta(dataNascita)
+  const minore = role === 'atleta' && anni !== null && anni < ETA_CONSENSO
 
   useEffect(() => {
     supabase.from('squadre').select('id, nome').then(({ data }) => {
@@ -28,27 +37,40 @@ export default function Registrati() {
   async function handleRegister(e) {
     e.preventDefault()
     setError('')
+    if (password.length < 8) return setError('La password deve avere almeno 8 caratteri.')
+    if (!privacy) return setError('Per continuare leggi e accetta l\'informativa privacy.')
+    if (minore && !consensoGenitore) return setError('Sotto i 14 anni serve il consenso di un genitore: chiedi a mamma o papà di spuntare la casella.')
 
-    const metadata = { nome, cognome, data_nascita: dataNascita, role }
+    // il consenso resta salvato insieme all'account (data e versione dell'informativa)
+    const metadata = {
+      nome, cognome, data_nascita: dataNascita, role,
+      privacy_accettata: new Date().toISOString(), privacy_versione: VERSIONE_INFORMATIVA,
+      ...(minore ? { consenso_genitore: true } : {}),
+    }
     if (role === 'coach' && nomeSquadra) {
       metadata.nome_squadra = nomeSquadra
     } else if (role !== 'coach' && squadraScelta) {
       metadata.squadra_id = squadraScelta
     }
 
-    const { error } = await supabase.auth.signUp({
+    setInvio(true)
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: { data: metadata },
     })
+    setInvio(false)
 
     if (error) {
-      setError('Errore nella registrazione: ' + error.message)
+      setError(erroreAuth(error))
       return
     }
 
+    // Se Supabase non chiede la conferma dell'email l'account è già attivo: si entra subito
+    const attivo = !!data?.session
+    setEntrato(attivo)
     setSuccess(true)
-    setTimeout(() => navigate('/login'), 5000)
+    setTimeout(() => navigate(attivo ? '/dashboard' : '/login'), attivo ? 3500 : 6000)
   }
 
   if (success) {
@@ -56,9 +78,15 @@ export default function Registrati() {
       <div className="min-h-screen relative overflow-hidden flex items-center justify-center bg-[#0a3fbf] px-4 py-8">
       <SfondoVasca />
         <div className="relative bg-white rounded-[28px] shadow-[0_24px_60px_rgba(4,26,77,0.35)] p-7 text-center max-w-sm text-white">
-          <div className="text-4xl mb-3">✅</div>
+          <span className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-blue-600 text-white flex items-center justify-center">
+            <Icona nome="spunta" className="w-8 h-8" />
+          </span>
           <p className="font-display text-xl font-extrabold text-abisso">Registrazione completata!</p>
-          <p className="text-sm text-slate-600 mt-2">Controlla la tua email per confermare l'account.</p>
+          <p className="text-sm text-slate-600 mt-2">
+            {entrato
+              ? 'Il tuo account è pronto: tra un attimo entri nell\'app.'
+              : 'Ti abbiamo mandato un\'email: apri il link per confermare l\'account (se non la trovi, guarda nello spam). Poi accedi.'}
+          </p>
           {role === 'coach' && (
             <p className="text-sm text-slate-600 mt-2">Il profilo coach si attiva quando l'amministratore lo approva: fino ad allora entri come atleta.</p>
           )}
@@ -128,15 +156,30 @@ export default function Registrati() {
         <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
           className="w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white transition mb-4" required />
 
-        <label className="block text-sm font-semibold text-slate-600 mb-1">Password</label>
+        <label className="block text-sm font-semibold text-slate-600 mb-1">Password (almeno 8 caratteri)</label>
         <InputPassword value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password"
           className="w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white transition mb-4" />
 
-        {error && <p className="text-sm text-white bg-red-600 rounded-xl px-3 py-2 mb-4">{error}</p>}
+        {minore && (
+          <label className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-3 mb-3 cursor-pointer">
+            <input type="checkbox" checked={consensoGenitore} onChange={(e) => setConsensoGenitore(e.target.checked)} className="mt-1 w-5 h-5 shrink-0 accent-blue-600" />
+            <span className="text-sm text-amber-900">
+              <b>Per il genitore:</b> l'atleta ha meno di 14 anni. Sono il genitore (o chi ne fa le veci), ho letto l'informativa e do il consenso al trattamento dei suoi dati.
+            </span>
+          </label>
+        )}
+        <label className="flex items-start gap-3 mb-4 cursor-pointer">
+          <input type="checkbox" checked={privacy} onChange={(e) => setPrivacy(e.target.checked)} className="mt-1 w-5 h-5 shrink-0 accent-blue-600" />
+          <span className="text-sm text-slate-600">
+            Ho letto l'<Link to="/privacy" className="text-blue-600 font-bold underline">informativa privacy</Link> e accetto il trattamento dei dati per usare l'app.
+          </span>
+        </label>
 
-        <button type="submit"
-          className="w-full min-h-[52px] bg-blue-600 text-white font-display font-extrabold text-lg rounded-2xl hover:bg-blue-700 active:scale-[0.98] transition">
-          Crea account
+        {error && <p role="alert" className="text-sm text-white bg-red-600 rounded-xl px-3 py-2 mb-4">{error}</p>}
+
+        <button type="submit" disabled={invio}
+          className="w-full min-h-[52px] bg-blue-600 text-white font-display font-extrabold text-lg rounded-2xl hover:bg-blue-700 active:scale-[0.98] transition disabled:opacity-60">
+          {invio ? 'Creo l\'account…' : 'Crea account'}
         </button>
 
         <p className="text-sm text-slate-500 text-center mt-5">

@@ -384,6 +384,9 @@ export default function Profilo() {
 
       <Sezione titolo="Aiuto">
         <SegnalaProblema />
+        <Riga etichetta="Informativa privacy" descrizione="Quali dati usiamo, chi li vede, come cancellarli">
+          <Link to="/privacy" className={BOTTONE + ' inline-flex items-center'}>Leggi</Link>
+        </Riga>
         <Riga etichetta="Versione" descrizione={`SwimLine4 ${version}`} />
       </Sezione>
 
