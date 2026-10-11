@@ -3,12 +3,17 @@ import ReactDOM from 'react-dom/client'
 import App from './App'
 import './index.css'
 import { avviaAspetto } from './lib/preferenze'
+import { avviaRegistroErrori } from './lib/registroErrori'
+import ReteDiSicurezza from './components/ReteDiSicurezza'
 
 avviaAspetto()
+avviaRegistroErrori()
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <App />
+    <ReteDiSicurezza>
+      <App />
+    </ReteDiSicurezza>
     {import.meta.env.VITE_VERCEL_ENV === 'preview' && (
       <div style={{ position: 'fixed', top: 0, left: '50%', transform: 'translateX(-50%)', zIndex: 9999, background: '#f59e0b', color: '#000', fontSize: 11, fontWeight: 700, padding: '2px 10px', borderRadius: '0 0 6px 6px', pointerEvents: 'none' }}>
         ANTEPRIMA

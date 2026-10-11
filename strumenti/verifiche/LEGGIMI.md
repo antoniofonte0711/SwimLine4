@@ -49,6 +49,15 @@ Utenti di prova dell'anteprima (dati inventati, `@swimline4.test`): coach `…00
 - **Leggibilità**: messaggi d'errore, tinta "acqua" e testi grigi chiari portati sopra il contrasto 4,5:1.
 - **Sito**: intestazioni di sicurezza su Vercel (niente incorporamento in altri siti, niente fotocamera/microfono/posizione).
 
+### Aggiunte dell'11/10/2026 (tutte gratis)
+
+- **Errori dell'app** (migrazione 27): ogni errore sui telefoni arriva in Pannello › Segnalazioni › Errori dell'app
+  (stesso errore = contatore, max 200 nuovi all'ora, 60 giorni). Al posto dello schermo bianco: "Ops, qualcosa non va" + Ricarica.
+- **Copia notturna** (migrazione 28, pg_cron): ogni notte tutte le tabelle in `copie.istantanee`, ultimi 14 giorni.
+  Controllo: `select giorno, count(*), sum(quante) from copie.istantanee group by 1 order by 1 desc;`
+  Ripristino di un giorno: `select copie.esporta('AAAA-MM-GG')` → salvare come .json → `strumenti/ripristino/crea_sql_ripristino.mjs`.
+- **Pagina iniziale**: a chi serve l'app (coach, atleta, genitore) + "Come funziona" e "Privacy" anche senza account.
+
 ## Cosa resta fuori (da fare a mano)
 
 - **Protezione password rubate** (Supabase › Authentication): da accendere nel pannello di Supabase.

@@ -360,6 +360,7 @@ export const GUIDA = [
     passi: [
       ['Dashboard', 'Numeri dell\'app: nuovi utenti, accessi, coach in attesa, segnalazioni.'],
       ['Squadre', 'Le squadre con coach e atleti; "Crea squadra" con nome (e coach facoltativo); permessi della squadra a interruttori.'],
+      ['Segnalazioni', 'Quello che scrivono gli utenti e, sotto, gli "Errori dell\'app" arrivati da soli dai telefoni: "Dettagli" per capire, "Risolto" per toglierli.'],
       ['Squadra › Lavori', 'I tipi di lavoro della squadra con la spunta e "+ Aggiungi lavoro nuovo": solo per quella squadra o nell\'elenco generale.'],
       ['Cosa fare?', 'Per le persone selezionate: Cambia ruolo, Sposta in un\'altra squadra, Togli dalla squadra.'],
       ['Tutti gli utenti', '"Entra ›" apre l\'app come quella persona (link monouso, da aprire in una finestra privata). Ogni accesso resta nel Registro accessi.'],

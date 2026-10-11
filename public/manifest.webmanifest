@@ -1,7 +1,7 @@
 {
   "name": "SwimLine4",
   "short_name": "SwimLine4",
-  "description": "Tempi di gara e allenamento, video e progressi per nuotatori e squadre.",
+  "description": "L'app per squadre di nuoto: allenamenti del coach, tempi e record degli atleti, progressi per i genitori.",
   "lang": "it",
   "start_url": "/",
   "scope": "/",
