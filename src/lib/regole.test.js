@@ -9,7 +9,8 @@ describe('interruttori del pannello', () => {
     const puo = creaPuo()
     expect(puo('a_tempi')).toBe(true)
     expect(puo('s_sola')).toBe(false)
-    expect(puo('video')).toBe(false)
+    expect(puo('archivio')).toBe(false)
+    expect(puo('video')).toBe(true) // la sezione si vede (con l'avviso "non in funzione")
     expect(puo('n_record')).toBe(true)
   })
 

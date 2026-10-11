@@ -13,7 +13,7 @@ export const FUNZIONI_APP = [
   ['difficolta', 'Difficoltà automatica', true],
   ['scuro', 'Tema scuro', true],
   ['vasca', 'Modalità In vasca', true],
-  ['video', 'Video (in arrivo)', false],
+  ['video', 'Video (si vede, ma non è ancora in funzione)', true],
   ['archivio', 'Archivio gare (in arrivo)', false],
 ]
 
