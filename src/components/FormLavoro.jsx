@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useCarrello, filePerLavoro } from '../context/CarrelloContext'
 import { TIPI_LAVORO, STILI, distanzaDaTipo } from '../lib/lavori'
 import InputTempo from './InputTempo'
+import { AVVISO_VIDEO, VIDEO_ATTIVI } from '../lib/permessi'
 import { leggiPreferenze } from '../lib/preferenze'
 import { ERRORE_TEMPO, erroreTempoImpossibile, normalizzaTempo, tempoPlausibile, tempoValido } from '../lib/tempo'
 
@@ -117,8 +118,10 @@ export default function FormLavoro() {
       </div>
 
       <label className="block text-xs text-slate-500 mb-1">Video (facoltativo, finisce anche nella sezione Video)</label>
-      <input key={fileKey} type="file" accept="video/*" className="w-full text-sm mb-4"
+      <input key={fileKey} type="file" accept="video/*" className="w-full text-sm disabled:opacity-50" disabled={!VIDEO_ATTIVI}
         onChange={(e) => setF({ ...f, file: e.target.files[0] || null })} />
+      {!VIDEO_ATTIVI && <p className="text-xs font-semibold text-amber-800 bg-amber-50 rounded-xl px-3 py-2 mt-1">{AVVISO_VIDEO}</p>}
+      <div className="mb-4" />
 
       {errore && <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mb-3">{errore}</p>}
 

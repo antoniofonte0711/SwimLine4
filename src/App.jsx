@@ -36,7 +36,6 @@ const Notifiche = lazy(() => import('./pages/Notifiche'))
 
 // Sezioni che arrivano nella fase 2 (visibili solo in sviluppo e anteprima)
 const PROSSIMAMENTE = [
-  ['/video', 'Video'],
   ['/archivio', 'Archivio gare'],
 ]
 
@@ -74,6 +73,8 @@ export default function App() {
               <Route path="/risultati" element={<ProtectedRoute requireCoach><RisultatiAllenamento /></ProtectedRoute>} />
               <Route path="/squadra/presenze/:id" element={<ProtectedRoute requireCoach><PresenzeAtleta /></ProtectedRoute>} />
 
+              {/* Video: la sezione c'è per tutti, con l'avviso "attualmente non in funzione" */}
+              <Route path="/video" element={<ProtectedRoute><InArrivo titolo="Video" fermo /></ProtectedRoute>} />
               {mostraInArrivo && PROSSIMAMENTE.map(([percorso, titolo]) => (
                 <Route key={percorso} path={percorso}
                   element={<ProtectedRoute><InArrivo titolo={titolo} /></ProtectedRoute>} />

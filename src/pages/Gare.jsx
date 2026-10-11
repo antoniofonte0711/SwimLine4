@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import AppShell from '../components/AppShell'
 import { STILI, dataLocale } from '../lib/lavori'
-import { puoModificare } from '../lib/permessi'
+import { AVVISO_VIDEO, VIDEO_ATTIVI, puoModificare } from '../lib/permessi'
 import InputTempo from '../components/InputTempo'
 import GareCoach from '../components/GareCoach'
 import { useFigli, useFiglioScelto } from '../lib/famiglia'
@@ -305,8 +305,10 @@ function GareAtleta() {
           )}
 
           <label className="block text-xs text-slate-500 mb-1">Video della gara (finisce anche nella sezione Video)</label>
-          <input key={fileKey} type="file" accept="video/*" className="w-full text-sm mb-4"
+          <input key={fileKey} type="file" accept="video/*" className="w-full text-sm disabled:opacity-50" disabled={!VIDEO_ATTIVI}
             onChange={(e) => setForm({ ...form, file: e.target.files[0] || null })} />
+          {!VIDEO_ATTIVI && <p className="text-xs font-semibold text-amber-800 bg-amber-50 rounded-xl px-3 py-2 mt-1">{AVVISO_VIDEO}</p>}
+          <div className="mb-4" />
 
           {errore && <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mb-3">{errore}</p>}
           {messaggio && <p className="text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2 mb-3">{messaggio}</p>}

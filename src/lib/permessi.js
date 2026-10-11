@@ -26,7 +26,10 @@ const PERMESSI = {
 }
 
 // Sezioni non ancora pronte: si vedono in sviluppo e nell'anteprima Vercel, non agli utenti veri
-export const IN_ARRIVO = ['/video', '/archivio']
+export const IN_ARRIVO = ['/archivio']
+// Video: la sezione si vede, ma caricare e guardare video non è ancora attivo (spazio Supabase insufficiente)
+export const VIDEO_ATTIVI = false
+export const AVVISO_VIDEO = 'Video: attualmente non in funzione.'
 export const mostraInArrivo = import.meta.env.DEV || import.meta.env.VITE_VERCEL_ENV === 'preview'
 
 export const nomeRuolo = (r) => RUOLI_VISTA.find(([k]) => k === r)?.[1] ?? r
