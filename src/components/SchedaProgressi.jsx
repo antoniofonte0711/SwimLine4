@@ -114,7 +114,7 @@ export default function SchedaProgressi({ atletaId, coach = false }) {
         </>
       )}
 
-      <div className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+      <div className="bg-white rounded-3xl p-5 mb-3 shadow-card">
         <div className="grid grid-cols-2 gap-3 mb-3">
           <div>
             <label className="block text-xs text-slate-500 mb-1">Distanza</label>
@@ -147,7 +147,7 @@ export default function SchedaProgressi({ atletaId, coach = false }) {
         </div>
       </div>
 
-      <div className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+      <div className="bg-white rounded-3xl p-5 mb-3 shadow-card">
         {migliore !== null && (
           <>
             <p className="text-xs text-slate-500">Migliore in questo periodo</p>
@@ -171,7 +171,7 @@ export default function SchedaProgressi({ atletaId, coach = false }) {
         <p className="text-xs text-slate-500 mt-1">Più la linea scende, più è veloce.</p>
       </div>
 
-      <div className="bg-white rounded-3xl p-5 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+      <div className="bg-white rounded-3xl p-5 shadow-card">
         <p className="text-sm text-slate-500 mb-2">Tempi dal più vecchio al più nuovo</p>
         {filtrati.length === 0 && <p className="text-sm text-slate-500 py-3">Nessun tempo con questi filtri.</p>}
         {filtrati.map((p) => (
@@ -222,7 +222,7 @@ function NuovoTempo({ atletaId, onSalvato }) {
   }
 
   return (
-    <div className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+    <div className="bg-white rounded-3xl p-5 mb-3 shadow-card">
       <div className="grid grid-cols-2 gap-2 mb-3">
         {[['gara', '🏁 Gara'], ['allenamento', '🏊 Allenamento']].map(([k, n]) => (
           <button key={k} onClick={() => setTipo(k)}

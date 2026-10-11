@@ -76,7 +76,7 @@ export default function RiepilogoCoach() {
         <p className="text-sm text-blue-100">{squadra.nome}</p>
       </div>
 
-      <div className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+      <div className="bg-white rounded-3xl p-5 mb-3 shadow-card">
         <p className="font-bold mb-1">Bollettino giorni</p>
         <p className="text-xs text-slate-500 mb-3">Tocca per cambiare: P presente · A assente · F festa (non penale)</p>
         {errore && <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mb-3">{errore}</p>}
@@ -105,7 +105,7 @@ export default function RiepilogoCoach() {
         )}
       </div>
 
-      <div className="bg-white rounded-3xl p-5 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+      <div className="bg-white rounded-3xl p-5 shadow-card">
         <p className="font-bold mb-2">Lavori svolti</p>
         {piani.length === 0 && <p className="text-sm text-slate-500">Nessun allenamento negli ultimi 14 giorni.</p>}
         {piani.map((p, i) => (
@@ -115,7 +115,7 @@ export default function RiepilogoCoach() {
               <p className="text-xs text-slate-500">{p.titolo || 'Allenamento'} · {(metriPiano(p.righe) / 1000).toFixed(1).replace('.', ',')} km</p>
             </div>
             <Link to={`/allenamenti?data=${p.data}`}
-              className="text-xs font-bold px-3 py-1.5 rounded-full bg-blue-50 text-blue-600 active:scale-95">
+              className="cliccabile inline-flex items-center min-h-[44px] text-xs font-bold px-4 rounded-full bg-blue-50 text-blue-600">
               {!p.pubblicato ? 'Bozza' : p.visibilita === 'coach' ? 'Solo coach' : 'Pubblicato'} ›
             </Link>
           </div>

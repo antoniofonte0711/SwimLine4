@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { livelloDi, usePunti } from '../lib/punti'
+import Icona from './Icona'
 
 // La linea dei punti dell'atleta: livello, barra verso il prossimo premio, apertura del premio a sorpresa
 export default function CardPunti({ dettaglio = true }) {
@@ -13,7 +14,7 @@ export default function CardPunti({ dettaglio = true }) {
 
   if (!pronto) return null
   if (!profile?.squadra_id) {
-    return <p className="text-xs text-slate-500 bg-white rounded-3xl p-4 mb-3 text-center shadow-[0_1px_2px_rgba(10,26,47,0.05)]">Entra in una squadra per accumulare punti e vincere premi.</p>
+    return <p className="text-xs text-slate-500 bg-white rounded-3xl p-4 mb-3 text-center shadow-card">Entra in una squadra per accumulare punti e vincere premi.</p>
   }
   if (errore) return null
 
@@ -33,20 +34,24 @@ export default function CardPunti({ dettaglio = true }) {
 
   return (
     <>
-      <div className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+      <div className="bg-white rounded-3xl p-5 mb-3 shadow-card">
         <div className="flex items-center justify-between">
-          <p className={`font-bold ${livello.colore}`}>Livello {livello.nome}</p>
-          {dettaglio && <Link to="/punti" className="text-xs font-semibold text-blue-600">Movimenti e premi ›</Link>}
+          <p className="font-bold text-abisso flex items-center gap-2">
+            <Icona nome="stella" className="w-5 h-5 text-blue-600" />
+            Livello {livello.nome}
+          </p>
+          {dettaglio && <Link to="/punti" className="cliccabile inline-flex items-center min-h-[44px] -my-2 text-xs font-semibold text-blue-600">Movimenti e premi ›</Link>}
         </div>
-        <p className="text-3xl font-extrabold mt-1">{dentro}<span className="text-slate-500">/{soglia}</span> <span className="text-sm font-semibold text-slate-500">punti al prossimo premio</span></p>
-        <div className="h-3 rounded-full bg-gray-100 overflow-hidden mt-3">
-          <motion.div className={`h-full rounded-full ${livello.barra}`} initial={{ width: 0 }} animate={{ width: `${perc}%` }} transition={{ duration: 0.8, ease: 'easeOut' }} />
+        <p className="font-display text-3xl font-extrabold mt-1">{dentro}<span className="text-slate-500">/{soglia}</span> <span className="font-sans text-sm font-semibold text-slate-500 tracking-normal">punti al prossimo premio</span></p>
+        <div className="h-3 rounded-full bg-schiuma overflow-hidden mt-3">
+          <motion.div className="h-full rounded-full bg-blue-600" initial={{ width: 0 }} animate={{ width: `${perc}%` }} transition={{ duration: 0.8, ease: 'easeOut' }} />
         </div>
         <p className="text-xs text-slate-500 mt-2">{tot} punti totali · ti mancano {soglia - dentro} punti per un premio a sorpresa</p>
         {daAprire > 0 && (
           <motion.button onClick={apri} whileTap={{ scale: 0.96 }} animate={{ scale: [1, 1.04, 1] }} transition={{ repeat: Infinity, duration: 1.6 }}
-            className="w-full mt-4 font-bold text-white bg-gradient-to-r from-blue-600 to-sky-500 rounded-2xl py-3.5 shadow-lg shadow-blue-200">
-            🎁 Apri il tuo premio{daAprire > 1 ? ` (${daAprire})` : ''}
+            className="w-full mt-4 min-h-[48px] font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-2xl flex items-center justify-center gap-2">
+            <Icona nome="regalo" className="w-5 h-5" />
+            Apri il tuo premio{daAprire > 1 ? ` (${daAprire})` : ''}
           </motion.button>
         )}
       </div>
@@ -57,10 +62,18 @@ export default function CardPunti({ dettaglio = true }) {
             className="fixed inset-0 z-[70] flex items-center justify-center p-6 bg-black/50" onClick={() => apertura.stato !== 'apro' && setApertura(null)}>
             <motion.div initial={{ scale: 0.6, rotate: -8 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', stiffness: 260, damping: 16 }}
               className="w-full max-w-xs bg-white rounded-3xl p-8 text-center shadow-2xl" onClick={(e) => e.stopPropagation()}>
-              {apertura.stato === 'apro' && <motion.p animate={{ rotate: [0, -12, 12, -12, 12, 0] }} transition={{ repeat: Infinity, duration: 0.8 }} className="text-6xl">🎁</motion.p>}
+              {apertura.stato === 'apro' && (
+                <motion.span animate={{ rotate: [0, -12, 12, -12, 12, 0] }} transition={{ repeat: Infinity, duration: 0.8 }}
+                  className="w-20 h-20 mx-auto rounded-3xl bg-schiuma text-blue-600 flex items-center justify-center">
+                  <Icona nome="regalo" className="w-11 h-11" />
+                </motion.span>
+              )}
               {apertura.stato === 'ok' && (
                 <>
-                  <motion.p initial={{ scale: 0 }} animate={{ scale: [0, 1.4, 1] }} transition={{ duration: 0.6 }} className="text-6xl mb-3">{apertura.grande ? '🏆' : '🎉'}</motion.p>
+                  <motion.span initial={{ scale: 0 }} animate={{ scale: [0, 1.4, 1] }} transition={{ duration: 0.6 }}
+                    className="w-20 h-20 mx-auto mb-3 rounded-3xl bg-blue-600 text-white flex items-center justify-center">
+                    <Icona nome={apertura.grande ? 'coppa' : 'regalo'} className="w-11 h-11" />
+                  </motion.span>
                   <p className="text-sm text-slate-500">{apertura.grande ? 'PREMIO GRANDE! Hai vinto' : 'Hai vinto'}</p>
                   <p className="text-xl font-extrabold text-blue-600 mt-1">{apertura.testo}</p>
                   <p className="text-xs text-slate-500 mt-3">Mostralo al coach per usarlo.</p>

@@ -15,7 +15,7 @@ import { useRegole } from '../lib/regole'
 import Schede from './Schede'
 
 const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white'
-const CARD = 'bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]'
+const CARD = 'bg-white rounded-3xl p-5 mb-3 shadow-card'
 const DISTANZE = ['25', '50', '100', '200', '400', '800', '1500']
 const MSG_MIGRAZIONE = 'Manca una colonna nel database: esegui 10_migrazione_fase10_punti_gare.sql su Supabase.'
 const nuovaGara = (x = {}) => ({ distanza: '100', stile: 'Stile libero', ...x, _id: crypto.randomUUID() })

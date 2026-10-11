@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { MotionConfig } from 'framer-motion'
 import { AuthProvider } from './context/AuthContext'
 import { CarrelloProvider } from './context/CarrelloContext'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -42,6 +43,8 @@ const PROSSIMAMENTE = [
 
 export default function App() {
   return (
+    // reducedMotion="user": chi ha chiesto meno animazioni al telefono non vede movimenti
+    <MotionConfig reducedMotion="user">
     <AuthProvider>
       <CarrelloProvider>
         <BrowserRouter>
@@ -88,5 +91,6 @@ export default function App() {
         </BrowserRouter>
       </CarrelloProvider>
     </AuthProvider>
+    </MotionConfig>
   )
 }

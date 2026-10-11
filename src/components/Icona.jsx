@@ -17,6 +17,12 @@ const ICONE = {
   stella: <path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z" />,
   campanella: <><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z" /><path d="M10 20.5a2 2 0 0 0 4 0" /></>,
   regolazioni: <><path d="M4 7h10" /><path d="M18 7h2" /><circle cx="16" cy="7" r="2" /><path d="M4 17h4" /><path d="M12 17h8" /><circle cx="10" cy="17" r="2" /></>,
+  regalo: <><rect x="3.5" y="8.5" width="17" height="4" rx="1.2" /><path d="M5 12.5V19a1.5 1.5 0 0 0 1.5 1.5h11A1.5 1.5 0 0 0 19 19v-6.5" /><path d="M12 8.5v12" /><path d="M12 8.5C10.5 5 7 4.5 7 6.5s3 2 5 2zM12 8.5c1.5-3.5 5-4 5-2s-3 2-5 2z" /></>,
+  occhio: <><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" /><circle cx="12" cy="12" r="3" /></>,
+  clessidra: <><path d="M7 3.5h10M7 20.5h10" /><path d="M8 3.5c0 4 8 5 8 8.5s-8 4.5-8 8.5M16 3.5c0 4-8 5-8 8.5s8 4.5 8 8.5" /></>,
+  cuore: <path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z" />,
+  pollice: <><path d="M7.5 10.5v9h-3v-9z" /><path d="M7.5 10.5 11 3.8a2 2 0 0 1 2.5 1.9V9h5a2 2 0 0 1 2 2.3l-1.2 6.8A2 2 0 0 1 17.3 20H7.5" /></>,
+  freccia: <path d="M9 6l6 6-6 6" />,
 }
 
 export default function Icona({ nome, className = 'w-6 h-6', spessore = 1.9 }) {

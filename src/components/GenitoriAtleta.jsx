@@ -47,7 +47,7 @@ export default function GenitoriAtleta({ soloInAttesa = false }) {
       {collegati.map((r) => (
         <div key={r.id} className="py-3 flex items-center justify-between gap-3">
           <p className="text-[15px] font-semibold text-abisso truncate">{r.nome} {r.cognome}</p>
-          <button onClick={() => scollega(r)} className="text-xs font-semibold text-slate-500 shrink-0">Scollega</button>
+          <button onClick={() => scollega(r)} className="cliccabile min-h-[44px] px-2 -mr-2 rounded-campo text-xs font-semibold text-slate-500 hover:text-abisso shrink-0">Scollega</button>
         </div>
       ))}
     </Sezione>

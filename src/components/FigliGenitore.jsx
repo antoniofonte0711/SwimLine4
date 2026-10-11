@@ -51,7 +51,7 @@ export default function FigliGenitore() {
             <p className="text-[15px] font-semibold text-abisso truncate">{f.nome} {f.cognome}</p>
             <span className={`inline-block text-xs font-bold rounded-full px-2 py-0.5 mt-1 ${STATO[f.stato][1]}`}>{STATO[f.stato][0]}</span>
           </div>
-          <button onClick={() => scollega(f)} className="text-xs font-semibold text-slate-500 shrink-0">Scollega</button>
+          <button onClick={() => scollega(f)} className="cliccabile min-h-[44px] px-2 -mr-2 rounded-campo text-xs font-semibold text-slate-500 hover:text-abisso shrink-0">Scollega</button>
         </div>
       ))}
       {aperto ? (

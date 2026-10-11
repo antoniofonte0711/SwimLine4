@@ -85,7 +85,7 @@ export default function Squadra() {
 
   return (
     <AppShell titolo="Squadra" attiva="funzioni" indietro="/funzioni">
-      <div className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+      <div className="bg-white rounded-3xl p-5 mb-3 shadow-card">
         <p className="text-xs text-slate-500">Squadra</p>
         <p className="text-xl font-bold mb-3">{nomeSquadra || (isCoach ? 'Tutte le squadre' : 'Non sei ancora in una squadra')}</p>
 
@@ -119,7 +119,7 @@ export default function Squadra() {
       {scelto && !nascosti && vista === 'Gare' && (
         <>
           {elencoMigliori.length > 0 && (
-            <div className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+            <div className="bg-white rounded-3xl p-5 mb-3 shadow-card">
               <p className="text-sm text-slate-500 mb-2">Migliori tempi in gara</p>
               {elencoMigliori.map(([nome, m]) => (
                 <div key={nome} className="flex justify-between border-t border-gray-100 py-2.5 text-sm">
@@ -131,7 +131,7 @@ export default function Squadra() {
           )}
           {gare.length === 0 && <p className="text-center text-slate-500 py-6">Nessuna gara ancora 🏆</p>}
           {gare.map((g) => (
-            <div key={g.id} className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+            <div key={g.id} className="bg-white rounded-3xl p-5 mb-3 shadow-card">
               <div className="flex justify-between gap-2">
                 <div>
                   <p className="font-bold">{g.nome_gara}</p>
@@ -149,7 +149,7 @@ export default function Squadra() {
         <>
           {allenamenti.length === 0 && <p className="text-center text-slate-500 py-6">Nessun allenamento ancora 🏊</p>}
           {allenamenti.map((r) => (
-            <div key={r.id} className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+            <div key={r.id} className="bg-white rounded-3xl p-5 mb-3 shadow-card">
               <p className="text-xs text-slate-500 capitalize mb-1">{formattaGiorno(r.data_allenamento || (r.created_at || '').slice(0, 10))}</p>
               <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${coloreLavoro(r.tipo_lavoro)}`}>{r.tipo_lavoro}</span>
               <span className="text-sm text-slate-600 ml-2">{r.ripetizioni ? `${r.ripetizioni}×` : ''}{r.distanza} m {r.stile || ''}</span>
@@ -193,7 +193,7 @@ function PresenzeBreve({ atletaId }) {
   const assenze = righe.filter((r) => r.stato !== 'presente').slice(0, 15)
   return (
     <>
-      <div className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+      <div className="bg-white rounded-3xl p-5 mb-3 shadow-card">
         <p className="text-sm text-slate-500">Presenze</p>
         <p className="text-3xl font-extrabold text-blue-600">{tot.percentuale === null ? '—' : `${tot.percentuale}%`}</p>
         <p className="font-bold mt-4 mb-1 text-sm">Assenze</p>

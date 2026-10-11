@@ -91,7 +91,7 @@ export default function RisultatiAtleta({ piano, atletaId, giorno }) {
 
   if (!piano) {
     return (
-      <p className="text-sm text-slate-500 bg-white rounded-3xl p-6 text-center shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+      <p className="text-sm text-slate-500 bg-white rounded-3xl p-6 text-center shadow-card">
         Nessun allenamento in questo giorno. Preparalo da Allenamenti.
       </p>
     )
@@ -138,7 +138,7 @@ export default function RisultatiAtleta({ piano, atletaId, giorno }) {
         const { riga: r, indice: i } = b
         const n = Math.min(30, Number(r.ripetizioni) || 1)
         return (
-          <div key={i} className="bg-white rounded-3xl p-4 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+          <div key={i} className="bg-white rounded-3xl p-4 mb-3 shadow-card">
             <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${coloreLavoro(r.tipo_lavoro)}`}>{r.tipo_lavoro}</span>
             <span className="text-sm text-slate-600 ml-2">{n}×{r.distanza} m {r.stile}</span>
             {ripartenzeDiRiga(r).length > 0 && <span className="text-xs text-slate-500 ml-2">↻ ripartenza {ripartenzeDiRiga(r).join(' · ')}</span>}

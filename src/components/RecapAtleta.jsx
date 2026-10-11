@@ -6,6 +6,7 @@ import { km, riepilogoPeriodo } from '../lib/riepilogo'
 import { formattaVoto } from '../lib/difficolta'
 import { secondiInTempo } from '../lib/tempo'
 import { useFigli, useFiglioScelto } from '../lib/famiglia'
+import Icona from './Icona'
 
 const COLORE_STATO = { presente: 'bg-emerald-500', assente: 'bg-red-500', non_penale: 'bg-amber-400' }
 
@@ -61,7 +62,7 @@ export function CardSettimana({ recap, nome, compatta = false, onChiudi }) {
       <div className="flex items-start justify-between gap-2">
         <p className="text-xs font-bold tracking-widest text-slate-500 uppercase">Com'è andata la settimana</p>
         {onChiudi && (
-          <button type="button" onClick={onChiudi} aria-label="Chiudi il riepilogo" className="w-9 h-9 -mt-2 -mr-2 rounded-full text-slate-500 flex items-center justify-center">
+          <button type="button" onClick={onChiudi} aria-label="Chiudi il riepilogo" className="cliccabile w-11 h-11 -mt-3 -mr-3 rounded-full text-slate-500 hover:bg-bordo flex items-center justify-center">
             <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
           </button>
         )}
@@ -77,7 +78,7 @@ export function CardSettimana({ recap, nome, compatta = false, onChiudi }) {
           <div key={g.data} className="flex flex-col items-center gap-1" title={g.stato || ''}>
             <span className="text-[11px] font-bold text-slate-500">{g.sigla}</span>
             <span className={`w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold ${
-              g.stato === 'presente' ? 'bg-emerald-500 text-white' : g.stato === 'assente' ? 'bg-red-100 text-red-700' : g.metri ? 'bg-schiuma text-blue-600' : 'bg-bordo text-slate-400'
+              g.stato === 'presente' ? 'bg-stato-ok text-white' : g.stato === 'assente' ? 'bg-red-100 text-red-700' : g.metri ? 'bg-schiuma text-blue-600' : 'bg-bordo text-slate-500'
             }`}>{g.numero}</span>
             {g.gare > 0 && <span className="text-[10px] font-bold text-amber-700">gara</span>}
           </div>
@@ -91,13 +92,22 @@ export function CardSettimana({ recap, nome, compatta = false, onChiudi }) {
       </div>
 
       {!compatta && r.record.length > 0 && (
-        <div className="mt-4">
-          <p className="text-sm font-bold text-abisso mb-1">I record della settimana</p>
-          {r.record.map((x) => (
-            <p key={x.rif} className="text-sm text-slate-600 py-1">
-              🏅 {x.etichetta}{x.gara ? ' in gara' : ` (${x.tipo})`}: <b className="text-abisso">{secondiInTempo(x.sec)}</b>, −{secondiInTempo(x.meglio)}
-            </p>
-          ))}
+        <div className="mt-5">
+          <p className="text-sm font-bold text-abisso mb-1 flex items-center gap-2">
+            <Icona nome="medaglia" className="w-5 h-5 text-blue-600" />
+            I record della settimana
+          </p>
+          <ul>
+            {r.record.map((x) => (
+              <li key={x.rif} className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-baseline gap-x-4 py-2.5 border-t border-linea first:border-t-0">
+                <span className="text-sm font-semibold text-abisso truncate">
+                  {x.etichetta} <span className="font-medium text-slate-500">{x.gara ? 'in gara' : `· ${x.tipo}`}</span>
+                </span>
+                <b className="text-[15px] text-abisso tabular-nums">{secondiInTempo(x.sec)}</b>
+                <span className="text-[13px] font-bold text-stato-ok tabular-nums min-w-[52px] text-right">−{secondiInTempo(x.meglio)}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
       {!compatta && r.piuDuro && (
@@ -106,7 +116,7 @@ export function CardSettimana({ recap, nome, compatta = false, onChiudi }) {
         </p>
       )}
       {compatta && (
-        <Link to="/riepilogo" className="block text-center font-bold text-blue-600 bg-schiuma rounded-2xl py-3 mt-4">Vedi tutto il riepilogo</Link>
+        <Link to="/riepilogo" className="cliccabile flex items-center justify-center min-h-[48px] font-bold text-blue-600 bg-schiuma rounded-2xl mt-4">Vedi tutto il riepilogo</Link>
       )}
     </section>
   )

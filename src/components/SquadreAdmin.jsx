@@ -37,7 +37,7 @@ export default function SquadreAdmin() {
   }
 
   return (
-    <div className="bg-white rounded-3xl p-5 shadow-[0_1px_2px_rgba(10,26,47,0.05)] mb-3">
+    <div className="bg-white rounded-3xl p-5 shadow-card mb-3">
       <p className="font-bold mb-1">🏊 Squadre (admin)</p>
       <p className="text-xs text-slate-500 mb-3">
         Entra in una squadra per vederla e gestirla come il suo coach: allenamenti, presenze, progressi, persone.

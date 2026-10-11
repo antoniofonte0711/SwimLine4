@@ -13,7 +13,7 @@ import { TIPI_LAVORO, coloreLavoro, dataLocale } from '../lib/lavori'
 import { secondiInTempo } from '../lib/tempo'
 import { prevedi, scorciatoie, serieTempi, stagione } from '../lib/previsioni'
 
-const CARD = 'bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]'
+const CARD = 'bg-white rounded-3xl p-5 mb-3 shadow-card'
 const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white'
 const FONTI = ['Gare', 'Allenamenti']
 const AFFIDABILITA = {

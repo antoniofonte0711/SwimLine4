@@ -65,7 +65,7 @@ export default function StoricoAllenamenti({ atletaId }) {
   }
 
   return giorni.map((g) => (
-    <div key={g} className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+    <div key={g} className="bg-white rounded-3xl p-5 mb-3 shadow-card">
       <p className="text-sm font-semibold text-slate-500 capitalize mb-2">{formattaGiorno(g)}</p>
       {perGiorno[g].map((r) => (
         <div key={r.id} className="flex items-start justify-between gap-2 border-t border-gray-100 py-3">

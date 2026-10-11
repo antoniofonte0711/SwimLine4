@@ -57,30 +57,33 @@ function RiepilogoAtleta() {
         <div className="flex gap-2 mb-3 overflow-x-auto" role="tablist" aria-label="Figlio">
           {approvati.map((f) => (
             <button key={f.atleta_id} role="tab" aria-selected={f.atleta_id === figlio?.atleta_id} onClick={() => scegliFiglio(f.atleta_id)}
-              className={`shrink-0 rounded-full px-4 py-2 text-sm font-bold ${f.atleta_id === figlio?.atleta_id ? 'bg-blue-600 text-white' : 'bg-white text-slate-600'}`}>
+              className={`cliccabile shrink-0 rounded-full px-4 min-h-[44px] text-sm font-bold ${f.atleta_id === figlio?.atleta_id ? 'bg-blue-600 text-white' : 'bg-white text-slate-600'}`}>
               {f.nome}
             </button>
           ))}
         </div>
       )}
 
-      <nav aria-label="Settimana" className="bg-white rounded-3xl p-2 mb-3 flex items-center justify-between">
+      <nav aria-label="Settimana" className="bg-white rounded-3xl p-1 mb-3 flex items-center justify-between lg:max-w-md">
         <button type="button" onClick={() => setLunedi(addGiorni(lunedi, -7))} aria-label="Settimana precedente"
-          className="w-11 h-11 rounded-full text-slate-500 text-xl font-bold hover:bg-bordo">‹</button>
+          className="cliccabile w-11 h-11 rounded-full text-slate-500 text-xl font-bold hover:bg-bordo">‹</button>
         <div className="text-center">
           <p className="font-bold text-abisso">{lunedi === questaSettimana ? 'Questa settimana' : intervallo(lunedi)}</p>
           {lunedi === questaSettimana && <p className="text-xs text-slate-500">{intervallo(lunedi)}</p>}
         </div>
         <button type="button" onClick={() => setLunedi(addGiorni(lunedi, 7))} disabled={lunedi >= questaSettimana} aria-label="Settimana successiva"
-          className="w-11 h-11 rounded-full text-slate-500 text-xl font-bold hover:bg-bordo disabled:opacity-30">›</button>
+          className="cliccabile w-11 h-11 rounded-full text-slate-500 text-xl font-bold hover:bg-bordo disabled:opacity-30">›</button>
       </nav>
 
-      <CardSettimana recap={recap} nome={genitore ? figlio?.nome : null} />
+      {/* Computer: la settimana a sinistra, le presenze a destra */}
+      <div className="lg:grid lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:gap-6 lg:items-start">
+        <CardSettimana recap={recap} nome={genitore ? figlio?.nome : null} />
 
-      <div className="bg-blue-600 text-white rounded-3xl p-5 mb-3">
-        <p className="text-sm text-blue-100">Presenze agli allenamenti · ultime 4 settimane</p>
-        <p className="font-display text-4xl font-extrabold mt-1">{ultime4.percentuale === null ? '—' : `${ultime4.percentuale}%`}</p>
-        {ultime4.percentuale === null && <p className="text-xs text-blue-100 mt-2">Le presenze le segna il coach: appariranno qui.</p>}
+        <div className="bg-blue-600 text-white rounded-3xl p-6 mb-3">
+          <p className="text-sm text-blue-50">Presenze agli allenamenti · ultime 4 settimane</p>
+          <p className="font-display text-4xl font-extrabold mt-1">{ultime4.percentuale === null ? '—' : `${ultime4.percentuale}%`}</p>
+          {ultime4.percentuale === null && <p className="text-xs text-blue-50 mt-2">Le presenze le segna il coach: appariranno qui.</p>}
+        </div>
       </div>
     </AppShell>
   )

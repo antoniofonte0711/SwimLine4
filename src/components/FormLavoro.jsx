@@ -80,7 +80,7 @@ export default function FormLavoro() {
   }
 
   return (
-    <form onSubmit={aggiungiAlCarrello} className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+    <form onSubmit={aggiungiAlCarrello} className="bg-white rounded-3xl p-5 mb-3 shadow-card">
       <p className="text-sm text-slate-500 mb-3">Scegli il tuo lavoro</p>
 
       <label className="block text-xs text-slate-500 mb-1">Tipo di lavoro</label>

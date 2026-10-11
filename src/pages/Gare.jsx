@@ -262,7 +262,7 @@ function GareAtleta() {
       {viste.length > 1 && <Schede valore={vista} opzioni={viste} onCambia={setVista} etichetta="Gare" />}
 
       {vista === 'Nuova gara' && viste.includes('Nuova gara') && (
-        <form onSubmit={salva} className="bg-white rounded-3xl p-5 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+        <form onSubmit={salva} className="bg-white rounded-3xl p-5 shadow-card">
           <label className="block text-xs text-slate-500 mb-1">Nome gara</label>
           <input value={form.nome_gara} placeholder="Es. Trofeo d'Autunno"
             onChange={(e) => setForm({ ...form, nome_gara: e.target.value })} className={CAMPO + ' mb-3'} />
@@ -322,7 +322,7 @@ function GareAtleta() {
         <>
           {tutte.length === 0 && <p className="text-center text-slate-500 py-8">Nessuna gara ancora 🏆</p>}
           {tutte.map((g) => (
-            <div key={g.id} className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+            <div key={g.id} className="bg-white rounded-3xl p-5 mb-3 shadow-card">
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <p className="font-bold">{g.nome_gara}</p>

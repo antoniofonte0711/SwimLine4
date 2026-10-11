@@ -49,28 +49,29 @@ export default function AppShell({ titolo, attiva, indietro, giorno, onGiorno, v
   const dataTesto = centro.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })
 
   return (
-    <div className="min-h-screen bg-bordo">
+    <div className="min-h-screen bg-bordo lg:pl-[232px]">
       {staVedendoCome && (
         <div className="sticky top-0 z-50 bg-amber-400 text-black text-sm px-4 py-2 flex items-center justify-between gap-3 pt-[max(env(safe-area-inset-top),0.5rem)]">
-          <span>
-            👁 Stai vedendo l'app come: <b>{nomeRuolo(ruolo)}</b>
-            {squadraGestita && <> · squadra <b>{squadraGestita.nome}</b></>}
+          <span className="flex items-center gap-1.5">
+            <Icona nome="occhio" className="w-4 h-4 shrink-0" />
+            <span>Stai vedendo l'app come: <b>{nomeRuolo(ruolo)}</b>
+              {squadraGestita && <> · squadra <b>{squadraGestita.nome}</b></>}</span>
           </span>
-          <button onClick={() => cambiaVista('admin')} className="font-bold bg-black text-white rounded-full px-3 py-1">Torna admin</button>
+          <button onClick={() => cambiaVista('admin')} className="font-bold bg-black text-white rounded-full px-3 min-h-[44px]">Torna admin</button>
         </div>
       )}
-      <header className="px-5 pt-[max(env(safe-area-inset-top),1.25rem)] pb-2">
-        <div className="max-w-md lg:max-w-[900px] mx-auto flex items-center justify-between gap-3">
+      {/* Intestazione uguale su tutte le pagine: logo, titolo, (data), campanella e avatar */}
+      <header className="px-4 lg:px-10 pt-[max(env(safe-area-inset-top),1rem)] lg:pt-8 pb-2">
+        <div className="max-w-md md:max-w-2xl lg:max-w-[1120px] mx-auto flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[13px] font-semibold text-slate-500 first-letter:uppercase">
-              {onGiorno ? dataTesto : <>Swim<b className="text-blue-600">Line4</b></>}
-            </p>
-            <h1 className="font-display text-[30px] font-extrabold leading-tight text-abisso truncate">{titolo}</h1>
+            <p className="text-[13px] font-bold text-slate-500 lg:hidden">Swim<span className="text-blue-600">Line4</span></p>
+            <h1 className="font-display text-[30px] lg:text-[40px] font-extrabold leading-tight text-abisso truncate">{titolo}</h1>
+            {onGiorno && <p className="text-sm lg:text-[15px] text-slate-500 first-letter:uppercase">{dataTesto}</p>}
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {ruolo !== 'ospite' && (
               <Link to="/notifiche" aria-label={nonLette ? `Notifiche, ${nonLette} nuove` : 'Notifiche'}
-                className="relative w-11 h-11 rounded-full bg-white text-abisso flex items-center justify-center shadow-[0_1px_2px_rgba(10,26,47,0.08)]">
+                className="cliccabile relative w-11 h-11 rounded-full bg-white border border-linea text-abisso flex items-center justify-center shadow-card">
                 <Icona nome="campanella" />
                 {nonLette > 0 && (
                   <span className="absolute -top-0.5 -right-0.5 min-w-[20px] h-5 px-1 rounded-full bg-corsia text-white text-[11px] font-extrabold flex items-center justify-center">
@@ -80,7 +81,7 @@ export default function AppShell({ titolo, attiva, indietro, giorno, onGiorno, v
               </Link>
             )}
             <Link to="/profilo" aria-label="Profilo"
-              className="w-11 h-11 rounded-full bg-abisso text-white font-display font-bold flex items-center justify-center">
+              className="cliccabile w-11 h-11 rounded-full bg-abisso text-white font-display font-bold flex items-center justify-center">
               {iniziale}
             </Link>
           </div>
@@ -89,25 +90,26 @@ export default function AppShell({ titolo, attiva, indietro, giorno, onGiorno, v
 
       {calAperto && <CalendarioFoglio valore={giorno} onScegli={onGiorno} onChiudi={() => setCalAperto(false)} />}
 
-      <main className="px-4 pt-2 pb-32">
-        <div className="max-w-md lg:max-w-[900px] mx-auto">
+      {/* in fondo spazio per la barra flottante (altezza + margine + zona sicura), che così non copre nulla */}
+      <main className="px-4 lg:px-10 pt-2 pb-[calc(7rem+env(safe-area-inset-bottom))] lg:pb-12">
+        <div className="max-w-md md:max-w-2xl lg:max-w-[1120px] mx-auto">
           {indietro && (
             <button type="button" onClick={tornaIndietro}
-              className="inline-block mb-4 text-sm font-semibold text-blue-600 bg-schiuma rounded-full px-4 py-2">
+              className="cliccabile inline-flex items-center min-h-[44px] mb-4 text-sm font-semibold text-blue-600 bg-schiuma rounded-full px-4">
               ← Indietro
             </button>
           )}
 
           {onGiorno && (
-            <nav aria-label="Settimana" className="bg-white rounded-3xl px-2 pt-2 pb-3 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+            <nav aria-label="Settimana" className="bg-white rounded-3xl px-1 pt-2 pb-3 mb-4 shadow-card">
               <div className="flex items-center justify-between px-1 mb-1">
-                <button onClick={() => sposta(-7)} aria-label="Settimana precedente" className="w-9 h-9 rounded-full text-slate-500 text-lg font-bold hover:bg-bordo">‹</button>
-                <button onClick={() => setCalAperto(true)} className="text-xs font-bold text-slate-500 capitalize px-3 py-1.5 rounded-full hover:bg-bordo">
+                <button onClick={() => sposta(-7)} aria-label="Settimana precedente" className="cliccabile w-11 h-11 rounded-full text-slate-500 text-lg font-bold hover:bg-bordo">‹</button>
+                <button onClick={() => setCalAperto(true)} className="cliccabile min-h-[44px] text-xs font-bold text-slate-500 capitalize px-3 rounded-full hover:bg-bordo">
                   {centro.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })} ▾
                 </button>
-                <button onClick={() => sposta(7)} aria-label="Settimana successiva" className="w-9 h-9 rounded-full text-slate-500 text-lg font-bold hover:bg-bordo">›</button>
+                <button onClick={() => sposta(7)} aria-label="Settimana successiva" className="cliccabile w-11 h-11 rounded-full text-slate-500 text-lg font-bold hover:bg-bordo">›</button>
               </div>
-              <div className="grid grid-cols-7 gap-0.5">
+              <div className="grid grid-cols-7">
                 {giorni.map((d) => {
                   const valore = dataLocale(d)
                   const scelto = valore === giorno
@@ -135,12 +137,27 @@ export default function AppShell({ titolo, attiva, indietro, giorno, onGiorno, v
         </div>
       </main>
 
-      <nav className="fixed left-1/2 -translate-x-1/2 w-[calc(100%-1.5rem)] max-w-md h-[68px] bg-white/95 backdrop-blur rounded-[26px] shadow-[0_10px_30px_rgba(10,26,47,0.14)] grid grid-flow-col auto-cols-fr items-center px-1.5 z-40"
+      {/* Telefono e tablet: barra flottante in basso */}
+      <nav aria-label="Navigazione" className="lg:hidden fixed left-1/2 -translate-x-1/2 w-[calc(100%-1.5rem)] max-w-md h-[68px] bg-white/95 backdrop-blur rounded-barra shadow-flottante grid grid-flow-col auto-cols-fr items-center px-1.5 z-40"
         style={{ bottom: 'calc(12px + env(safe-area-inset-bottom))' }}>
         {voci.map(([chiave, percorso, icona, nome]) => (
           <Link key={chiave} to={percorso} aria-current={attiva === chiave ? 'page' : undefined}
-            className={`h-[60px] flex flex-col items-center justify-center gap-0.5 text-[11px] rounded-2xl transition ${
+            className={`cliccabile h-[60px] flex flex-col items-center justify-center gap-0.5 text-[11px] rounded-2xl ${
               attiva === chiave ? 'text-blue-600 font-extrabold' : 'text-slate-500 font-semibold'
+            }`}>
+            <Icona nome={icona} spessore={attiva === chiave ? 2.2 : 1.9} />
+            {nome}
+          </Link>
+        ))}
+      </nav>
+
+      {/* Computer: barra laterale fissa, non copre mai i contenuti */}
+      <nav aria-label="Navigazione" className="hidden lg:flex fixed inset-y-0 left-0 w-[232px] flex-col gap-1 px-4 py-8 bg-white border-r border-linea z-40">
+        <p className="font-display text-[22px] font-extrabold text-abisso px-3 mb-6">Swim<span className="text-blue-600">Line4</span></p>
+        {voci.map(([chiave, percorso, icona, nome]) => (
+          <Link key={chiave} to={percorso} aria-current={attiva === chiave ? 'page' : undefined}
+            className={`cliccabile min-h-[48px] px-3 rounded-campo flex items-center gap-3 text-[15px] ${
+              attiva === chiave ? 'bg-schiuma text-blue-600 font-bold' : 'text-slate-500 font-semibold hover:bg-bordo'
             }`}>
             <Icona nome={icona} spessore={attiva === chiave ? 2.2 : 1.9} />
             {nome}

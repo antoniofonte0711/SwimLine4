@@ -17,8 +17,8 @@ import { CAMPO, Interruttore, Riga, Scelta, Sezione } from '../components/Impost
 import { version } from '../../package.json'
 import { useRegole } from '../lib/regole'
 
-const BOTTONE = 'text-sm font-bold text-blue-600 bg-schiuma rounded-full px-4 py-2 active:scale-95 transition'
-const PRIMARIO = 'w-full bg-blue-600 text-white font-bold rounded-2xl py-3 active:scale-[0.98] transition disabled:opacity-50'
+const BOTTONE = 'cliccabile text-sm font-bold text-blue-600 bg-schiuma rounded-full px-4 min-h-[44px]'
+const PRIMARIO = 'cliccabile w-full bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl min-h-[48px] disabled:opacity-50'
 
 function Messaggio({ ok, errore }) {
   if (errore) return <p role="alert" className="text-sm text-white bg-red-500 rounded-xl px-3 py-2 mt-2">{errore}</p>
@@ -288,7 +288,9 @@ export default function Profilo() {
 
   return (
     <AppShell titolo="Profilo" attiva="profilo">
-      <div className="bg-white rounded-3xl p-6 text-center mb-4 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+      {/* Computer: dati e impostazioni a sinistra, squadre a destra. Telefono: una colonna, stesso ordine */}
+      <div className="lg:grid lg:grid-cols-2 lg:gap-x-6 lg:items-start">
+      <div className="bg-white rounded-3xl p-6 text-center mb-4 shadow-card lg:col-start-1">
         <div className="w-20 h-20 mx-auto mb-3 rounded-full bg-blue-600 text-white font-display text-3xl font-extrabold flex items-center justify-center">
           {(profile?.nome || 'A').charAt(0).toUpperCase()}
         </div>
@@ -296,6 +298,7 @@ export default function Profilo() {
         <p className="text-sm text-slate-500">{nomeRuolo(profile?.role)}</p>
       </div>
 
+      <div className="lg:col-start-2 lg:row-start-1 lg:row-span-2">
       {/* L'admin è anche atleta: entra in una squadra accettando l'invito del coach (non creandone una sua) */}
       {adminReale && <RichiesteSquadra completo />}
       {adminReale && <SquadreAdmin />}
@@ -306,7 +309,7 @@ export default function Profilo() {
       {['atleta', 'admin'].includes(profile?.role) && ['atleta', 'admin'].includes(ruolo) && <GenitoriAtleta />}
 
       {adminReale && (
-        <div className="bg-white rounded-3xl p-5 mb-4 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+        <div className="bg-white rounded-3xl p-5 mb-4 shadow-card">
           <p className="font-bold mb-1">Vedi l'app come</p>
           <p className="text-xs text-slate-500 mb-3">
             Cambia solo cosa si vede sullo schermo e cosa si può fare. I dati restano i tuoi.
@@ -314,7 +317,7 @@ export default function Profilo() {
           <div className="grid grid-cols-2 gap-2">
             {RUOLI_VISTA.map(([chiave, nome]) => (
               <button key={chiave} onClick={() => vediCome(chiave)}
-                className={`text-sm font-semibold rounded-xl py-3 transition active:scale-95 ${
+                className={`cliccabile text-sm font-semibold rounded-xl min-h-[48px] ${
                   ruolo === chiave ? 'bg-blue-600 text-white' : 'bg-bordo text-slate-600'
                 }`}>
                 {nome}
@@ -326,11 +329,13 @@ export default function Profilo() {
       )}
 
       {isAdmin && (
-        <Link to="/admin" className="block text-center font-bold text-blue-600 bg-schiuma rounded-2xl py-3.5 mb-4">
+        <Link to="/admin" className="cliccabile flex items-center justify-center min-h-[48px] font-bold text-blue-600 bg-schiuma rounded-2xl mb-4">
           Pannello di controllo
         </Link>
       )}
+      </div>
 
+      <div className="lg:col-start-1">
       <Sezione titolo="Account">
         <CambiaNome />
         <Riga etichetta="Email" descrizione={user?.email} />
@@ -341,13 +346,13 @@ export default function Profilo() {
         <Sezione titolo="Allenamento" nota="Già scelti quando registri i tempi: puoi sempre cambiarli lì.">
           <Riga etichetta="Lavoro preferito">
             <select value={pref.tipoLavoro} onChange={(e) => salva({ tipoLavoro: e.target.value })} aria-label="Lavoro preferito"
-              className="border border-gray-200 bg-gray-50 rounded-xl px-3 py-2 text-sm font-semibold max-w-[160px]">
+              className="border border-linea bg-bordo rounded-campo px-3 min-h-[44px] text-sm font-semibold max-w-[160px]">
               {TIPI_LAVORO.map((t) => <option key={t}>{t}</option>)}
             </select>
           </Riga>
           <Riga etichetta="Stile preferito">
             <select value={pref.stile} onChange={(e) => salva({ stile: e.target.value })} aria-label="Stile preferito"
-              className="border border-gray-200 bg-gray-50 rounded-xl px-3 py-2 text-sm font-semibold max-w-[160px]">
+              className="border border-linea bg-bordo rounded-campo px-3 min-h-[44px] text-sm font-semibold max-w-[160px]">
               {STILI.map((s) => <option key={s}>{s}</option>)}
             </select>
           </Riga>
@@ -387,7 +392,7 @@ export default function Profilo() {
         <Riga etichetta="Versione" descrizione={`SwimLine4 ${version}`} />
       </Sezione>
 
-      <button onClick={esci} className="w-full font-bold text-slate-600 bg-white rounded-2xl py-3.5 mb-2 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+      <button onClick={esci} className="cliccabile w-full min-h-[48px] font-bold text-slate-600 bg-white border border-linea rounded-2xl mb-2 shadow-card">
         Esci
       </button>
       {['atleta', 'genitore'].includes(profile?.role) && <EliminaAccount />}
@@ -396,6 +401,8 @@ export default function Profilo() {
           Per chiudere un account coach usa «Segnala un problema»: se ne occupa l'amministratore, così la squadra non va persa.
         </p>
       )}
+      </div>
+      </div>
     </AppShell>
   )
 }

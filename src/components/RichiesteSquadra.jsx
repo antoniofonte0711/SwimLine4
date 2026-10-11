@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
+import Icona from './Icona'
 
 const MIGRAZIONE = 'Manca un aggiornamento del database: esegui supabase/12_migrazione_fase12_richieste_admin.sql.'
 const messaggio = (error) => (/function|schema cache/i.test(error.message) ? MIGRAZIONE : error.message)
@@ -69,7 +70,7 @@ export default function RichiesteSquadra({ completo = false }) {
     <div className={`bg-white border rounded-3xl p-5 shadow-sm mb-3 ${richieste.length ? 'border-blue-200' : 'border-gray-100'}`}>
       {completo && (
         <>
-          <p className="font-bold mb-1">🏊 La mia squadra (da atleta)</p>
+          <p className="font-bold mb-1 flex items-center gap-2"><Icona nome="onde" className="w-5 h-5 text-blue-600" />La mia squadra (da atleta)</p>
           <p className="text-xs text-slate-500 mb-3">
             Sei admin ma anche atleta: i coach ti trovano e ti invitano, e tu entri nella loro squadra solo se accetti.
           </p>
@@ -80,7 +81,7 @@ export default function RichiesteSquadra({ completo = false }) {
       )}
       {domande.map((r) => (
         <div key={r.id} className="bg-amber-50 rounded-2xl p-3 mb-2">
-          <p className="text-sm">⏳ Hai chiesto di entrare in <b>{r.squadra_nome}</b>: aspetta che {r.coach_nome ? <b>{r.coach_nome}</b> : 'il coach'} approvi.</p>
+          <p className="text-sm"><Icona nome="clessidra" className="w-4 h-4 inline -mt-0.5 mr-1" />Hai chiesto di entrare in <b>{r.squadra_nome}</b>: aspetta che {r.coach_nome ? <b>{r.coach_nome}</b> : 'il coach'} approvi.</p>
         </div>
       ))}
       {inviti.map((r) => (

@@ -86,7 +86,7 @@ export default function Record() {
   return (
     <AppShell titolo="Record" attiva="funzioni" indietro="/funzioni">
       <SceltaFiglio visto={visto} cosa="i suoi record" />
-      <div className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+      <div className="bg-white rounded-3xl p-5 mb-3 shadow-card">
         <div className="grid grid-cols-2 gap-3 mb-3">
           <div>
             <label className="block text-xs text-slate-500 mb-1">Fonte</label>
@@ -115,7 +115,7 @@ export default function Record() {
       )}
 
       {classifiche.map(([distanza, righe]) => (
-        <div key={distanza} className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+        <div key={distanza} className="bg-white rounded-3xl p-5 mb-3 shadow-card">
           <p className="font-bold mb-2">{distanza} m {stile}</p>
           {righe.map((r, i) => (
             <div key={r.atleta} onClick={() => isCoach && setDettaglio(r)}

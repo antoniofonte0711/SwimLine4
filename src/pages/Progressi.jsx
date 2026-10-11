@@ -33,7 +33,7 @@ function ProgressiCoach() {
       {!pronto ? <p className="text-center text-slate-500 py-8">Carico…</p>
         : !squadra ? <SenzaSquadra />
         : (
-          <div className="bg-white rounded-3xl p-5 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+          <div className="bg-white rounded-3xl p-5 shadow-card">
             <p className="font-bold mb-1">Atleti di {squadra.nome}</p>
             <p className="text-xs text-slate-500 mb-2">Tocca la freccia per aprire la scheda: gare e lavori di quell'atleta, a tua scelta.</p>
             {atleti.length === 0 && <p className="text-sm text-slate-500 py-3">Nessun atleta nella squadra.</p>}

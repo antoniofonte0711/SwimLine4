@@ -92,7 +92,7 @@ export default function Impostazioni() {
 
             <DomandeIngresso squadra={squadra} onCambio={caricaMembri} />
 
-            <form onSubmit={trova} className="bg-white rounded-3xl p-5 shadow-[0_1px_2px_rgba(10,26,47,0.05)] mb-3">
+            <form onSubmit={trova} className="bg-white rounded-3xl p-5 shadow-card mb-3">
               <p className="font-bold">Aggiungi una persona a {squadra.nome}</p>
               <p className="text-xs text-slate-500 mb-3">
                 Cerca per nome o cognome, oppure scrivi l'email completa con cui si è registrata. Puoi aggiungere atleti e genitori;
@@ -139,7 +139,7 @@ export default function Impostazioni() {
               })}
             </form>
 
-            <div className="bg-white rounded-3xl p-5 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+            <div className="bg-white rounded-3xl p-5 shadow-card">
               <p className="font-bold mb-1">Persone in {squadra.nome}</p>
               <p className="text-xs text-slate-500 mb-2">{membri.length} {membri.length === 1 ? 'persona' : 'persone'}. Togliendo qualcuno dalla squadra i suoi tempi restano salvati.</p>
               {membri.length === 0 && <p className="text-sm text-slate-500 py-3">Nessuno in squadra per ora.</p>}

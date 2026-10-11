@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
+import Icona from './Icona'
 
 const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white'
 
@@ -52,8 +53,8 @@ export default function BoxSquadra() {
   }
 
   return (
-    <div className="bg-white rounded-3xl p-5 shadow-[0_1px_2px_rgba(10,26,47,0.05)] mb-3">
-      <p className="font-bold mb-1">👥 {coach ? 'La tua squadra' : 'Squadra'}</p>
+    <div className="bg-white rounded-3xl p-5 shadow-card mb-3">
+      <p className="font-bold mb-1 flex items-center gap-2"><Icona nome="gruppo" className="w-5 h-5 text-blue-600" />{coach ? 'La tua squadra' : 'Squadra'}</p>
       <p className="text-xs text-slate-500 mb-3">
         {coach
           ? 'Il nome della tua squadra: gli atleti e i genitori lo useranno per chiedere di entrare.'

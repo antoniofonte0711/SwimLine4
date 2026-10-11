@@ -106,7 +106,7 @@ function RigaLavoro({ chiave, r, i, primo, ultimo, puoiTogliere, cambia, cambiaT
   }
   return (
     <Reorder.Item as="div" value={chiave} dragListener={false} dragControls={controlli} {...ANIMA}
-      className="relative bg-white rounded-3xl p-4 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+      className="relative bg-white rounded-3xl p-4 mb-3 shadow-card">
       <div className="flex items-center justify-between mb-3">
         <div onPointerDown={(e) => controlli.start(e)} style={{ touchAction: 'none' }}
           className="flex items-center gap-2 cursor-grab active:cursor-grabbing select-none text-slate-500 text-sm font-semibold">
@@ -548,7 +548,7 @@ export default function EditorAllenamento({ squadra, giorno }) {
 
   return (
     <>
-      <div className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+      <div className="bg-white rounded-3xl p-5 mb-3 shadow-card">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
           <p className="font-bold">Allenamento di {squadra.nome}</p>
           <div className="flex items-center gap-2 whitespace-nowrap">
@@ -573,7 +573,7 @@ export default function EditorAllenamento({ squadra, giorno }) {
           })}
         </AnimatePresence>
       </Reorder.Group>
-      <div className="bg-white rounded-3xl p-4 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+      <div className="bg-white rounded-3xl p-4 mb-3 shadow-card">
         <div className="grid grid-cols-2 gap-2 mb-3">
           <button onClick={() => aggiungiLavoro()}
             className="text-blue-600 font-bold bg-blue-50 rounded-2xl py-3">+ Aggiungi Lavoro</button>
@@ -589,7 +589,7 @@ export default function EditorAllenamento({ squadra, giorno }) {
         </div>
       </div>
 
-      <div className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+      <div className="bg-white rounded-3xl p-5 mb-3 shadow-card">
         <p className="text-sm font-bold mb-2">Chi lo vede</p>
         <div className="grid grid-cols-2 gap-2 mb-4">
           {[['coach', '🔒 Solo coach'], ['squadra', '👥 Tutta la squadra']].map(([k, n]) => (

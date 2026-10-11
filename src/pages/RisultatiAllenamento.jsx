@@ -42,7 +42,7 @@ export default function RisultatiAllenamento() {
         : !squadra ? <SenzaSquadra />
         : (
           <>
-            <div className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+            <div className="bg-white rounded-3xl p-5 mb-3 shadow-card">
               <SelettoreData etichetta="Data dell'allenamento" valore={giorno} onChange={setGiorno} />
               <label className="block text-xs text-slate-500 mt-3 mb-1">Atleta</label>
               <select value={atleta} onChange={(e) => setAtleta(e.target.value)} className={CAMPO}>

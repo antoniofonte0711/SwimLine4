@@ -38,7 +38,7 @@ export default function PresenzeAtleta() {
         <p className="text-sm text-blue-100">{tot.presenti} presenze · {tot.assenti} assenze · {tot.nonPenale} non penali</p>
       </div>
 
-      <div className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+      <div className="bg-white rounded-3xl p-5 mb-3 shadow-card">
         <p className="font-bold mb-3">Percentuale per mese</p>
         {grafico.length === 0 ? <p className="text-sm text-slate-500">Nessuna presenza segnata.</p> : (
           <div style={{ width: '100%', height: 200 }}>
@@ -54,7 +54,7 @@ export default function PresenzeAtleta() {
         )}
       </div>
 
-      <div className="bg-white rounded-3xl p-5 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+      <div className="bg-white rounded-3xl p-5 shadow-card">
         <p className="font-bold mb-2">Assenze</p>
         {assenze.length === 0 && <p className="text-sm text-slate-500">Nessuna assenza.</p>}
         {assenze.map((r, i) => (

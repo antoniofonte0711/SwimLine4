@@ -6,6 +6,7 @@ import { dataLocale } from '../lib/lavori'
 import { useFigli, useFiglioScelto } from '../lib/famiglia'
 import { riepilogoOrgoglio } from '../lib/orgoglio'
 import { useRegole } from '../lib/regole'
+import Icona from './Icona'
 
 const dataBreve = (s) => new Date(s + 'T12:00:00').toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })
 
@@ -68,7 +69,9 @@ export default function VistaOrgoglio() {
     const inAttesa = figli.some((f) => f.stato === 'in_attesa')
     return (
       <div className="bg-white rounded-3xl p-6 text-center mb-3">
-        <p className="text-4xl mb-2" aria-hidden="true">👨‍👩‍👧</p>
+        <span className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-schiuma text-blue-600 flex items-center justify-center">
+          <Icona nome="gruppo" className="w-7 h-7" />
+        </span>
         <p className="font-display text-xl font-extrabold text-abisso mb-1">{inAttesa ? 'In attesa di approvazione' : 'Segui i progressi di tuo figlio'}</p>
         <p className="text-sm text-slate-500 mb-4">
           {inAttesa ? 'Appena tuo figlio approva dal suo telefono, qui vedrai i suoi miglioramenti.' : 'Sceglilo dall\'elenco della squadra: lui approva e qui vedrai i suoi miglioramenti.'}
@@ -142,12 +145,12 @@ export default function VistaOrgoglio() {
                     <p className="text-xs text-slate-500">{r.gara ? r.nome || 'Gara' : `Allenamento ${r.tipo}`} · {dataBreve(r.data)}</p>
                   </div>
                   {puo('g_cuori') && <div className="flex gap-1.5 shrink-0">
-                    {[['cuore', '❤️', 'Manda un cuore'], ['bravo', '👏', 'Di\' bravo']].map(([tipo, icona, nomeAzione]) => {
+                    {[['cuore', 'cuore', 'Manda un cuore'], ['bravo', 'pollice', 'Di\' bravo']].map(([tipo, icona, nomeAzione]) => {
                       const fatto = mandati.has(`${r.rif}|${tipo}`)
                       return (
                         <button key={tipo} onClick={() => incoraggia(r, tipo)} disabled={fatto} aria-label={`${nomeAzione} a ${nome}`} aria-pressed={fatto}
-                          className={`w-11 h-11 rounded-2xl text-xl flex items-center justify-center transition active:scale-90 ${fatto ? 'bg-amber-100' : 'bg-bordo'}`}>
-                          {icona}
+                          className={`cliccabile w-11 h-11 rounded-2xl flex items-center justify-center ${fatto ? 'bg-blue-600 text-white' : 'bg-bordo text-blue-600'}`}>
+                          <Icona nome={icona} className="w-5 h-5" />
                         </button>
                       )
                     })}

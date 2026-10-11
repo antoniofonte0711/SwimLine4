@@ -77,7 +77,7 @@ export default function Riferimenti({ atletaId }) {
 
   return (
     <>
-      <div className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)] text-sm">
+      <div className="bg-white rounded-3xl p-5 mb-3 shadow-card text-sm">
         <p className="font-bold mb-2">Anagrafica</p>
         <p><span className="text-slate-500">Nome e cognome:</span> {profilo?.nome} {profilo?.cognome}</p>
         <p><span className="text-slate-500">Data di nascita:</span> {dataIt(profilo?.data_nascita)}</p>
@@ -87,7 +87,7 @@ export default function Riferimenti({ atletaId }) {
         <input value={r.categoria || ''} onChange={campo('categoria')} placeholder="Es. Ragazzi, Juniores" className={CAMPO} />
       </div>
 
-      <div className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+      <div className="bg-white rounded-3xl p-5 mb-3 shadow-card">
         <p className="font-bold mb-2">Tesserini</p>
         <div className="grid grid-cols-2 gap-3">
           {[['id_fin', 'ID FIN'], ['id_uisp', 'ID UISP']].map(([k, n]) => (
@@ -103,7 +103,7 @@ export default function Riferimenti({ atletaId }) {
         {r.tesserino_path && <button onClick={() => apri(r.tesserino_path)} className="text-xs font-semibold text-blue-600 mt-2">Apri tesserino</button>}
       </div>
 
-      <div className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+      <div className="bg-white rounded-3xl p-5 mb-3 shadow-card">
         <p className="font-bold mb-2">Certificato medico</p>
         <label className="block text-xs text-slate-500 mb-1">Scadenza</label>
         <input type="date" value={r.certificato_scadenza || ''} onChange={campo('certificato_scadenza')} className={CAMPO} />
@@ -114,7 +114,7 @@ export default function Riferimenti({ atletaId }) {
         <p className="text-xs text-slate-500 mt-3">I documenti sono privati: li vedono solo i coach della squadra.</p>
       </div>
 
-      <div className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+      <div className="bg-white rounded-3xl p-5 mb-3 shadow-card">
         <label className="block text-xs text-slate-500 mb-1">Altre informazioni</label>
         <textarea value={r.note || ''} onChange={campo('note')} rows={3} className={CAMPO} />
       </div>

@@ -108,7 +108,7 @@ export default function Calendario() {
   return (
     <AppShell titolo="Calendario" attiva="funzioni" indietro="/funzioni">
       <SceltaFiglio visto={visto} cosa="le sue presenze" />
-      <div className="bg-white rounded-3xl p-4 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+      <div className="bg-white rounded-3xl p-4 mb-3 shadow-card">
         <div className="flex items-center justify-between mb-3">
           <button onClick={() => vaiMese(-1)} aria-label="Mese precedente" className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 text-xl font-bold active:scale-90 transition">‹</button>
           <AnimatePresence mode="wait" initial={false}>
@@ -172,7 +172,7 @@ export default function Calendario() {
                 {isCoach && !info.piano.pubblicato && <p className="text-xs font-bold text-amber-700 mb-1 px-1">Bozza, non ancora pubblicata</p>}
                 <PianoCard piano={info.piano} />
               </>
-            : <p className="text-sm text-slate-500 bg-white rounded-3xl p-5 text-center shadow-[0_1px_2px_rgba(10,26,47,0.05)] mb-3">Nessun allenamento in questo giorno.</p>}
+            : <p className="text-sm text-slate-500 bg-white rounded-3xl p-5 text-center shadow-card mb-3">Nessun allenamento in questo giorno.</p>}
 
           {isCoach && (
             <div className="flex gap-2 mb-3">
@@ -182,7 +182,7 @@ export default function Calendario() {
           )}
 
           {!isCoach && miei.length > 0 && (
-            <div className="bg-white rounded-3xl p-5 shadow-[0_1px_2px_rgba(10,26,47,0.05)] mb-3">
+            <div className="bg-white rounded-3xl p-5 shadow-card mb-3">
               <p className="font-bold mb-1">{visto.genitore ? `I lavori di ${visto.figlio?.nome || 'tuo figlio'}` : 'I tuoi lavori'}</p>
               {miei.map((r, i) => (
                 <div key={r.id} className={`py-2 ${i ? 'border-t border-gray-100' : ''}`}>
@@ -195,7 +195,7 @@ export default function Calendario() {
           )}
 
           {gareGiorno.length > 0 && (
-            <div className="bg-white rounded-3xl p-5 shadow-[0_1px_2px_rgba(10,26,47,0.05)] mb-3">
+            <div className="bg-white rounded-3xl p-5 shadow-card mb-3">
               <p className="font-bold mb-1">🏆 Gare</p>
               {gareGiorno.map((g, i) => (
                 <p key={g.nome} className={`text-sm py-2 ${i ? 'border-t border-gray-100' : ''}`}>

@@ -47,7 +47,7 @@ function AllenamentiCoach() {
   const { squadra, pronto } = useMiaSquadra()
   return (
     <AppShell titolo="Allenamenti" attiva="funzioni" indietro="/funzioni">
-      <div className="bg-white rounded-3xl p-5 mb-3 shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
+      <div className="bg-white rounded-3xl p-5 mb-3 shadow-card">
         <SelettoreData etichetta="Data dell'allenamento" valore={giorno} onChange={setGiorno} />
       </div>
       {!pronto ? <p className="text-center text-slate-500 py-8">Carico…</p>

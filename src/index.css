@@ -6,18 +6,39 @@
 
 body {
   font-family: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #f2f6f9;
-  color: #0a1a2f;
+  background: theme('colors.bordo');
+  color: theme('colors.abisso');
+  /* cifre tutte larghe uguali: tempi e statistiche restano allineati in colonna */
   font-variant-numeric: tabular-nums;
 }
 
 /* Numeri grandi e titoli: carattere largo e deciso */
 .font-display { letter-spacing: -0.03em; }
 
+/* Superficie delle card: ogni riquadro bianco arrotondato ha il bordo sottile e l'ombra morbida.
+   :where() non pesa: un bordo o un'ombra scritti sull'elemento vincono sempre. */
+:where(.bg-white.rounded-3xl, .bg-white.rounded-card, .bg-white.rounded-\[32px\]) {
+  border: 1px solid theme('colors.linea');
+  box-shadow: theme('boxShadow.card');
+}
+
+/* Card e bottoni cliccabili: risposta chiara al passaggio, alla pressione e alla tastiera.
+   Solo colori, ombra e transform, 150 ms. */
+.cliccabile {
+  transition-property: color, background-color, border-color, box-shadow, transform;
+  transition-duration: 150ms;
+}
+@media (hover: hover) {
+  .cliccabile:hover { border-color: #b9cbe0; box-shadow: 0 4px 14px rgba(10, 26, 47, 0.08); }
+}
+.cliccabile:active { transform: scale(0.98); }
+
 /* Contorno ben visibile su bottoni e link quando si naviga con la tastiera */
 a:focus-visible,
-button:focus-visible {
-  outline: 3px solid #2563eb;
+button:focus-visible,
+select:focus-visible,
+[role='switch']:focus-visible {
+  outline: 3px solid theme('colors.blue.500');
   outline-offset: 2px;
 }
 
@@ -58,7 +79,11 @@ html.scuro .border-gray-200,
 html.scuro .border-gray-300,
 html.scuro .border-slate-200,
 html.scuro .border-blue-100,
-html.scuro .border-blue-200 { border-color: #24395a; }
+html.scuro .border-blue-200,
+html.scuro .border-linea,
+html.scuro :where(.bg-white.rounded-3xl, .bg-white.rounded-card, .bg-white.rounded-\[32px\]) { border-color: #24395a; }
+html.scuro .shadow-card,
+html.scuro :where(.bg-white.rounded-3xl, .bg-white.rounded-card, .bg-white.rounded-\[32px\]) { box-shadow: none; }
 html.scuro .shadow-sm,
 html.scuro .shadow-blue-200,
 html.scuro .shadow-blue-300 { --tw-shadow-color: transparent; box-shadow: none; }

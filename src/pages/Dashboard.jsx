@@ -19,6 +19,7 @@ import VistaOrgoglio from '../components/VistaOrgoglio'
 import { useRegole } from '../lib/regole'
 import { RecapOggi, RecapOggiFiglio } from '../components/RecapAtleta'
 import GenitoriAtleta from '../components/GenitoriAtleta'
+import Icona from '../components/Icona'
 
 const COLORE_STATO = {
   presente: 'bg-green-100 text-green-700',
@@ -88,6 +89,17 @@ function EroeAllenamento({ piano, oggi, squadra, vasca, registra, onVasca }) {
   )
 }
 
+// Bottone primario: pieno, blu, largo quanto il testo (al massimo 320px)
+function BottoneRegistra() {
+  return (
+    <Link to="/allenamenti"
+      className="cliccabile inline-flex items-center justify-center gap-2 w-full max-w-[320px] min-h-[48px] px-6 font-display font-extrabold text-white bg-blue-600 hover:bg-blue-700 rounded-campo">
+      <Icona nome="cronometro" className="w-5 h-5" />
+      Registra i tuoi tempi
+    </Link>
+  )
+}
+
 // Home: i giorni e, sotto, gli allenamenti del giorno scelto
 function HomeAtleta() {
   const { user, ruolo, profile, adminReale } = useAuth()
@@ -140,8 +152,10 @@ function HomeAtleta() {
   if (ruolo === 'ospite') {
     return (
       <AppShell titolo="Home" attiva="home">
-        <div className="bg-white rounded-3xl p-8 text-center shadow-[0_1px_2px_rgba(10,26,47,0.05)]">
-          <p className="text-4xl mb-2">👋</p>
+        <div className="bg-white rounded-3xl p-8 text-center shadow-card">
+          <span className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-schiuma text-blue-600 flex items-center justify-center">
+            <Icona nome="onde" className="w-7 h-7" />
+          </span>
           <p className="font-bold mb-1">Benvenuto in SwimLine4</p>
           <p className="text-sm text-slate-500">Da ospite puoi vedere la squadra e il calendario gare.</p>
         </div>
@@ -159,7 +173,7 @@ function HomeAtleta() {
 
       {ruolo === 'coach_in_attesa' && (
         <div className="bg-amber-50 border border-amber-200 rounded-3xl p-5 mb-3">
-          <p className="font-bold text-amber-800 mb-1">⏳ Account coach in attesa</p>
+          <p className="font-bold text-amber-800 mb-1 flex items-center gap-2"><Icona nome="clessidra" className="w-5 h-5" />Account coach in attesa</p>
           <p className="text-sm text-amber-800">
             L'amministratore deve approvare il tuo profilo coach. Appena lo approva nasce la tua squadra
             e trovi qui tutte le funzioni da coach. Intanto puoi usare l'app come atleta.
@@ -172,24 +186,35 @@ function HomeAtleta() {
       {ruolo === 'genitore' && puo('g_orgoglio') && <VistaOrgoglio />}
       {['atleta', 'admin'].includes(ruolo) && <GenitoriAtleta soloInAttesa />}
 
+      {/* Computer: allenamento a sinistra, riepilogo e azioni a destra. Telefono: una colonna, stesso ordine */}
+      <div className="lg:grid lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:gap-6 lg:items-start">
+      <div>
       {ruolo === 'genitore' && !puo('g_allenamento') ? null : piano ? (
         <>
           <EroeAllenamento piano={piano} oggi={giorno === dataLocale()} squadra={squadraNome}
             vasca={puoModificare(ruolo) && puo('a_vasca')} registra={registra} onVasca={() => setVasca(true)} />
-          <h2 className="font-display text-xl font-extrabold mt-5 mb-2 mx-1 flex items-baseline justify-between">
+          <h2 className="font-display text-xl font-extrabold mt-5 mb-2 flex items-baseline justify-between">
             Il programma
             <span className="font-sans text-[13px] font-semibold text-slate-500 tracking-normal">{piano.righe.length} lavori</span>
           </h2>
           <PianoCard piano={piano} senzaTesta />
         </>
       ) : (
-        <div className="bg-white rounded-3xl p-7 text-center text-slate-500 mb-3">
-          <p className="font-display text-xl font-extrabold text-abisso mb-1">Nessun allenamento</p>
-          <p className="text-sm">Il coach non ha pubblicato l'allenamento di questo giorno. Appena lo fa, lo trovi qui.</p>
+        <div className="bg-white rounded-3xl p-6 text-slate-500 mb-3 flex flex-col items-center text-center gap-3">
+          <span className="w-12 h-12 rounded-2xl bg-schiuma text-blue-600 flex items-center justify-center">
+            <Icona nome="onde" className="w-7 h-7" />
+          </span>
+          <div>
+            <p className="font-display text-xl font-extrabold text-abisso mb-1">Nessun allenamento</p>
+            <p className="text-sm">Il coach non ha pubblicato l'allenamento di questo giorno. Appena lo fa, lo trovi qui.</p>
+          </div>
+          {registra && <BottoneRegistra />}
         </div>
       )}
       {vasca && piano && <ModalitaVasca righe={piano.righe} onChiudi={() => setVasca(false)} />}
+      </div>
 
+      <div className="mt-3 lg:mt-0">
       {ruolo === 'genitore'
         ? <RecapOggiFiglio squadraId={profile?.squadra_id} giorno={giorno} />
         : <RecapOggi atletaId={user.id} squadraId={profile?.squadra_id} giorno={giorno} />}
@@ -228,12 +253,9 @@ function HomeAtleta() {
         </div>
       )}
 
-      {registra && (
-      <Link to="/allenamenti"
-        className="block text-center font-display font-extrabold text-blue-600 bg-schiuma rounded-[18px] py-4 active:scale-[0.98] transition">
-        Registra i tuoi tempi
-      </Link>
-      )}
+      {registra && piano && <BottoneRegistra />}
+      </div>
+      </div>
     </AppShell>
   )
 }
