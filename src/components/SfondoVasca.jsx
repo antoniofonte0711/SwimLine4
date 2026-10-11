@@ -8,8 +8,9 @@ import { useEffect, useState } from 'react'
 const PASSO = 22
 
 // Larghezza visibile della vasca (su 1000) per uno schermo largo w e alto h
+// (finestra ancora a misura zero, es. scheda nascosta: 0/0 darebbe NaN e le corde sparirebbero)
 function largaVisibile() {
-  if (typeof window === 'undefined') return 1000
+  if (typeof window === 'undefined' || !window.innerWidth || !window.innerHeight) return 1000
   return Math.min(1000, Math.max(300, (window.innerWidth / window.innerHeight) * 1000))
 }
 
