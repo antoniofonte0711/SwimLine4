@@ -3,6 +3,7 @@ import { QRCodeSVG } from 'qrcode.react'
 import { supabase } from '../lib/supabaseClient'
 import { riepilogoPresenze } from '../lib/presenze'
 import { dataLocale } from '../lib/lavori'
+import { SESSI, categoriaFin } from '../lib/categorie'
 
 const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white'
 const BUCKET = 'documenti-atleti'
@@ -19,7 +20,7 @@ export default function Riferimenti({ atletaId }) {
 
   const carica = useCallback(async () => {
     const [{ data: p }, { data: rif }, { data: pr }] = await Promise.all([
-      supabase.from('profiles').select('nome, cognome, data_nascita').eq('id', atletaId).maybeSingle(),
+      supabase.from('profiles').select('nome, cognome, data_nascita, sesso').eq('id', atletaId).maybeSingle(),
       supabase.from('atleta_riferimenti').select('*').eq('atleta_id', atletaId).maybeSingle(),
       supabase.from('presenze').select('data, stato').eq('atleta_id', atletaId).order('data', { ascending: false }),
     ])
@@ -31,6 +32,15 @@ export default function Riferimenti({ atletaId }) {
   useEffect(() => { setErrore(''); setOk(''); carica() }, [carica])
 
   const campo = (k) => (e) => setR({ ...r, [k]: e.target.value })
+
+  // maschile o femminile: cambia l'età delle categorie FIN
+  async function cambiaSesso(valore) {
+    setErrore('')
+    setOk('')
+    const { error } = await supabase.rpc('imposta_sesso', { p_persona: atletaId, p_sesso: valore || null })
+    if (error) return setErrore('Non sono riuscito a salvare: ' + error.message)
+    setProfilo((p) => ({ ...p, sesso: valore || null }))
+  }
 
   async function salva() {
     setErrore('')
@@ -84,8 +94,15 @@ export default function Riferimenti({ atletaId }) {
         <p><span className="text-slate-500">Data di nascita:</span> {dataIt(profilo?.data_nascita)}</p>
         <p><span className="text-slate-500">Anno di nascita:</span> {anno}</p>
         <p><span className="text-slate-500">Assenze totali:</span> {nAssenze}</p>
-        <label className="block text-xs text-slate-500 mt-3 mb-1">Categoria</label>
-        <input value={r.categoria || ''} onChange={campo('categoria')} placeholder="Es. Ragazzi, Juniores" className={CAMPO} />
+        <label className="block text-xs text-slate-500 mt-3 mb-1" htmlFor="rif-sesso">Gare maschili o femminili</label>
+        <select id="rif-sesso" value={profilo?.sesso || ''} onChange={(e) => cambiaSesso(e.target.value)} className={CAMPO}>
+          <option value="">Non indicato</option>
+          {SESSI.map(([v, n]) => <option key={v} value={v}>{n}</option>)}
+        </select>
+        <label className="block text-xs text-slate-500 mt-3 mb-1" htmlFor="rif-categoria">Categoria (vuota = calcolata dall'anno di nascita)</label>
+        <input id="rif-categoria" value={r.categoria || ''} onChange={campo('categoria')}
+          placeholder={categoriaFin(profilo?.data_nascita, profilo?.sesso) || 'Es. Ragazzi, Juniores'} className={CAMPO} />
+        <p className="text-xs text-slate-500 mt-1">I compagni vedono solo la categoria, mai la data di nascita.</p>
       </div>
 
       <div className="bg-white rounded-3xl p-5 mb-3 shadow-card">

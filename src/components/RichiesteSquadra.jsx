@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import Icona from './Icona'
+import FinestraAttesa, { attesaGiaVista } from './FinestraAttesa'
 
 const MIGRAZIONE = 'Manca un aggiornamento del database: esegui supabase/12_migrazione_fase12_richieste_admin.sql.'
 const messaggio = (error) => (/function|schema cache/i.test(error.message) ? MIGRAZIONE : error.message)
@@ -16,6 +17,7 @@ export default function RichiesteSquadra({ completo = false }) {
   const [errore, setErrore] = useState('')
   const [ok, setOk] = useState('')
   const [invio, setInvio] = useState('')
+  const [finestra, setFinestra] = useState(null) // domanda appena fatta (es. in registrazione): finestra d'attesa
 
   const carica = useCallback(async () => {
     const { data, error } = await supabase.rpc('mie_richieste')
@@ -24,7 +26,20 @@ export default function RichiesteSquadra({ completo = false }) {
       return
     }
     setRichieste(data || [])
+    if (!completo) setFinestra((f) => f || (data || []).find((r) => r.tipo === 'domanda' && !attesaGiaVista(r.id)) || null)
   }, [completo])
+
+  async function annulla(r) {
+    if (!window.confirm(`Annullare la richiesta per ${r.squadra_nome}?`)) return
+    setErrore('')
+    setOk('')
+    setInvio(r.id)
+    const { error } = await supabase.rpc('annulla_mia_domanda', { p_richiesta: r.id })
+    setInvio('')
+    if (error) return setErrore(messaggio(error))
+    setOk(`Richiesta per ${r.squadra_nome} annullata.`)
+    await carica()
+  }
 
   useEffect(() => { carica() }, [carica])
 
@@ -82,8 +97,16 @@ export default function RichiesteSquadra({ completo = false }) {
       {domande.map((r) => (
         <div key={r.id} className="bg-amber-50 rounded-2xl p-3 mb-2">
           <p className="text-sm"><Icona nome="clessidra" className="w-4 h-4 inline -mt-0.5 mr-1" />Hai chiesto di entrare in <b>{r.squadra_nome}</b>: aspetta che {r.coach_nome ? <b>{r.coach_nome}</b> : 'il coach'} approvi.</p>
+          <button type="button" onClick={() => annulla(r)} disabled={!!invio}
+            className="min-h-[44px] mt-1 text-sm font-bold text-slate-600 underline disabled:opacity-60">
+            {invio === r.id ? 'Annullo…' : 'Annulla richiesta'}
+          </button>
         </div>
       ))}
+      {finestra && (
+        <FinestraAttesa richiesta={finestra} onChiudi={() => setFinestra(null)}
+          onAnnullata={() => { setFinestra(null); setOk(`Richiesta per ${finestra.squadra_nome} annullata.`); carica() }} />
+      )}
       {inviti.map((r) => (
         <div key={r.id} className="bg-blue-50 rounded-2xl p-3 mb-2">
           <p className="text-sm">

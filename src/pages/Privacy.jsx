@@ -25,14 +25,15 @@ export default function Privacy() {
 
         <Paragrafo titolo="Chi è il titolare">
           <p>Titolare del trattamento: <b>{TITOLARE || DA_INDICARE}</b>. Contatto: {CONTATTO
-            ? <a href={`mailto:${CONTATTO}`} className="font-bold text-blue-600 underline break-all">{CONTATTO}</a>
+            ? <a href={`mailto:${CONTATTO}`} className="inline-block py-1 font-bold text-blue-600 underline break-all">{CONTATTO}</a>
             : <b>{DA_INDICARE}</b>}.</p>
           <p>Puoi scriverci anche dall'app: Profilo › Aiuto › Segnala un problema.</p>
         </Paragrafo>
 
         <Paragrafo titolo="Quali dati raccogliamo">
           <p>Nome, cognome, data di nascita, email e ruolo (atleta, genitore o coach); la squadra di cui fai parte.</p>
-          <p>Per gli atleti: tempi di allenamento e di gara, presenze, punti e premi, eventuali documenti caricati dal coach.</p>
+          <p>Per gli atleti, se lo indichi: se gareggi nelle gare maschili o femminili (serve solo a calcolare la categoria FIN).</p>
+          <p>Per gli atleti: tempi di allenamento e di gara, allenamenti fuori piano che proponi al coach, presenze, punti e premi, eventuali documenti caricati dal coach.</p>
           <p>Le notifiche dell'app e, se le attivi, l'indirizzo tecnico del telefono per le notifiche push.</p>
         </Paragrafo>
 
@@ -44,7 +45,7 @@ export default function Privacy() {
         <Paragrafo titolo="Chi li vede">
           <p><b>Il coach della tua squadra</b> vede tempi, gare e presenze dei suoi atleti.</p>
           <p><b>I genitori</b> vedono i dati del figlio solo dopo che l'atleta ha approvato la richiesta.</p>
-          <p><b>La tua squadra</b> (compagni e loro genitori) vede i tuoi tempi di gara solo se lo permetti (Profilo › Privacy). Gli allenamenti li vedete solo tu, il coach e i genitori che hai approvato.</p>
+          <p><b>La tua squadra</b> (compagni e loro genitori) vede il tuo nome e la tua categoria FIN (es. Ragazzi), mai la data o l'anno di nascita: quelli li vede solo il coach. I tuoi tempi di gara li vede solo se lo permetti (Profilo › Privacy). Gli allenamenti li vedete solo tu, il coach e i genitori che hai approvato.</p>
           <p><b>L'amministratore dell'app</b> può accedere ai dati per assistenza e sicurezza; ogni accesso a un altro account resta registrato.</p>
         </Paragrafo>
 
@@ -53,7 +54,8 @@ export default function Privacy() {
           <p>Ogni notte si fa una copia di sicurezza dei dati, nello stesso posto; si tengono le ultime 14.</p>
           <p>Se l'app va in errore sul tuo telefono, l'amministratore riceve il messaggio d'errore con la pagina, il tipo di telefono e il tuo account, per sistemarlo; si tiene 60 giorni.</p>
           <p>Quando scegli una password, l'app controlla che non compaia negli elenchi pubblici di password rubate (haveibeenpwned.com): viene inviato solo un frammento cifrato di 5 caratteri, mai la password.</p>
-          <p>Atleti e genitori possono eliminare l'account da Profilo › Elimina il mio account: si cancellano subito profilo, tempi, gare, presenze, punti e documenti caricati (certificato, tesserini). Per un account coach scrivi all'amministratore.</p>
+          <p>Atleti e genitori possono eliminare l'account da Profilo › Elimina il mio account: l'account si chiude subito (nessuno lo vede più e non si può entrare) e resta recuperabile dall'amministratore per 30 giorni, nel caso sia stato uno sbaglio (per esempio di un ragazzo). Dopo 30 giorni si cancellano per sempre profilo, tempi, gare, presenze, punti e documenti caricati (certificato, tesserini). Per un account coach scrivi all'amministratore.</p>
+          <p>Se scrivi una segnalazione (Profilo › Aiuto › Segnala un problema) la legge solo l'amministratore.</p>
         </Paragrafo>
 
         <Paragrafo titolo="Minori di 14 anni">

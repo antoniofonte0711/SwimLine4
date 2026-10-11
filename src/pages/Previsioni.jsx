@@ -32,7 +32,7 @@ function SchedaPrevisioni({ atletaId }) {
   const [dati, setDati] = useState(null)
   const [fonte, setFonte] = useState(FONTI[0])
   const [dal, setDal] = useState(stagione(oggi).inizio)
-  const [fino, setFino] = useState(stagione(oggi).fine)
+  const [fino, setFino] = useState(voci[voci.length - 1][1]) // fine stagione
 
   useEffect(() => {
     let attivo = true
@@ -60,16 +60,15 @@ function SchedaPrevisioni({ atletaId }) {
     <>
       <div className={CARD}>
         <p className="text-sm font-bold mb-2">Fino a quando</p>
-        <div className="flex flex-wrap gap-2 mb-3">
+        <div className="grid grid-flow-col auto-cols-fr gap-2" role="group" aria-label="Data della previsione">
           {voci.map(([nome, data]) => (
             <button key={nome} type="button" onClick={() => setFino(data)} aria-pressed={fino === data}
-              className={`text-xs font-bold rounded-full px-3 py-2 ${fino === data ? 'bg-blue-600 text-white' : 'bg-gray-100 text-slate-600'}`}>
+              className={`min-h-[48px] text-sm font-bold rounded-2xl px-3 ${fino === data ? 'bg-blue-600 text-white' : 'bg-bordo text-slate-600'}`}>
               {nome}
             </button>
           ))}
         </div>
-        <SelettoreData etichetta="Previsione al" valore={fino} onChange={(d) => setFino(d < oggi ? oggi : d)} />
-        <p className="text-xs font-semibold text-blue-600 mt-1 px-1">{dataIt(fino)}</p>
+        <p className="text-xs font-semibold text-blue-600 mt-2 px-1">Previsione al {dataIt(fino)}</p>
         <div className="mt-3">
           <SelettoreData etichetta="Tempi usati dal (di solito l'inizio della stagione)" valore={dal} onChange={(d) => setDal(d > oggi ? oggi : d)} />
         </div>

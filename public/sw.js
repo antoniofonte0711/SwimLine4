@@ -43,6 +43,7 @@ self.addEventListener('push', (event) => {
     body: dati.body || '',
     icon: '/icons/icon-192.png',
     badge: '/icons/icon-192.png',
+    silent: !!dati.silenziosa, // es. "Allenamento fuori piano": arriva senza suono né vibrazione
     data: { url: dati.url || '/dashboard' },
   }))
 })

@@ -6,11 +6,14 @@ describe('stagione e scorciatoie', () => {
     expect(stagione('2026-10-11')).toEqual({ inizio: '2026-09-01', fine: '2027-07-31' })
     expect(stagione('2027-03-05')).toEqual({ inizio: '2026-09-01', fine: '2027-07-31' })
   })
-  it('fine gennaio e fine aprile sono le prossime dopo oggi', () => {
-    const s = Object.fromEntries(scorciatoie('2026-10-11'))
-    expect(s['Fine gennaio']).toBe('2027-01-31')
-    expect(s['Fine aprile']).toBe('2027-04-30')
-    expect(s['Tra 4 anni']).toBe('2030-10-11')
+  it('solo metà stagione (fine gennaio) e fine stagione', () => {
+    expect(scorciatoie('2026-10-11')).toEqual([['Metà stagione', '2027-01-31'], ['Fine stagione', '2027-07-31']])
+  })
+  it('dopo fine gennaio resta solo la fine stagione', () => {
+    expect(scorciatoie('2027-03-01')).toEqual([['Fine stagione', '2027-07-31']])
+  })
+  it('ad agosto si guarda già la stagione nuova', () => {
+    expect(scorciatoie('2027-08-10')).toEqual([['Metà stagione', '2028-01-31'], ['Fine stagione', '2028-07-31']])
   })
 })
 

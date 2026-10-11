@@ -9,6 +9,11 @@ describe('erroreAuth', () => {
     expect(erroreAuth({ message: 'Password should be at least 6 characters.' })).toMatch(/almeno 8/)
     expect(erroreAuth({ message: 'email rate limit exceeded' })).toMatch(/Troppi tentativi/)
   })
+  it('codice dell\'email, account eliminato, email chiesta da poco', () => {
+    expect(erroreAuth({ code: 'otp_expired', message: 'Token has expired or is invalid' })).toMatch(/Codice sbagliato o scaduto/)
+    expect(erroreAuth({ code: 'user_banned', message: 'User is banned' })).toMatch(/account è stato eliminato/)
+    expect(erroreAuth({ message: 'For security purposes, you can only request this after 52 seconds.' })).toMatch(/aspetta un minuto/)
+  })
   it('un errore sconosciuto non mostra l\'inglese', () => {
     expect(erroreAuth({ message: 'Something weird happened' })).toBe('Qualcosa non ha funzionato: riprova tra poco.')
     expect(erroreAuth(null)).toBe('Qualcosa non ha funzionato: riprova tra poco.')

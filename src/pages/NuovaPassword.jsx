@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import SfondoVasca from '../components/SfondoVasca'
 import InputPassword from '../components/InputPassword'
+import BarraPassword from '../components/BarraPassword'
 import { MESSAGGIO_RUBATA, volteRubata } from '../lib/passwordRubata'
 
 const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white transition mb-4'
@@ -75,6 +76,7 @@ export default function NuovaPassword() {
             <label className="block text-sm font-semibold text-slate-600 mb-1">Nuova password</label>
             <InputPassword value={password} onChange={(e) => setPassword(e.target.value)}
               autoComplete="new-password" className={`${CAMPO} text-gray-900`} />
+            <BarraPassword password={password} />
             <label className="block text-sm font-semibold text-slate-600 mb-1">Ripeti la password</label>
             <InputPassword value={ripeti} onChange={(e) => setRipeti(e.target.value)}
               autoComplete="new-password" className={`${CAMPO} text-gray-900`} />

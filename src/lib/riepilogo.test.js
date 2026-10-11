@@ -31,6 +31,14 @@ describe('riepilogo della settimana', () => {
     expect(r.piuDuro.data).toBe('2026-10-07')
   })
 
+  it('gli allenamenti fuori piano accettati si aggiungono ai km fatti', () => {
+    const r = riepilogoPeriodo({ piani, presenze, extra: [{ data: '2026-10-11', metri: 2500 }, { data: '2026-10-20', metri: 9000 }], da: '2026-10-05', a: '2026-10-11' })
+    expect(r.metriFatti).toBe(5600 + 2500)
+    expect(r.metriExtra).toBe(2500)
+    expect(r.giorni[6].extra).toBe(2500)
+    expect(r.metriProgramma).toBe(9600) // il programma del coach non cambia
+  })
+
   it('una settimana vuota non si rompe', () => {
     const r = riepilogoPeriodo({ da: '2026-10-12', a: '2026-10-18' })
     expect(r).toMatchObject({ metriFatti: 0, presenti: 0, record: [], piuDuro: null })

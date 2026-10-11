@@ -20,6 +20,7 @@ import { useRegole } from '../lib/regole'
 import { RecapOggi, RecapOggiFiglio } from '../components/RecapAtleta'
 import GenitoriAtleta from '../components/GenitoriAtleta'
 import Icona from '../components/Icona'
+import { ProponiFuoriPiano, ProposteFuoriPiano } from '../components/FuoriPiano'
 
 const COLORE_STATO = {
   presente: 'bg-green-100 text-green-700',
@@ -254,6 +255,11 @@ function HomeAtleta() {
       )}
 
       {registra && piano && <BottoneRegistra />}
+
+      {/* nuotato da solo, fuori dal piano: lo propone al coach */}
+      {registra && profile?.squadra_id && ruolo !== 'genitore' && (
+        <div className="mt-3"><ProponiFuoriPiano atletaId={user.id} giorno={giorno} /></div>
+      )}
       </div>
       </div>
     </AppShell>
@@ -269,7 +275,7 @@ function HomeCoach() {
     <AppShell titolo={titoloGiorno(giorno)} attiva="home" giorno={giorno} onGiorno={setGiorno} voti={settimana.voti}>
       {!pronto ? <p className="text-center text-slate-500 py-8">Carico…</p>
         : !squadra ? <SenzaSquadra />
-        : <><DomandeIngresso squadra={squadra} /><EditorAllenamento squadra={squadra} giorno={giorno} /></>}
+        : <><DomandeIngresso squadra={squadra} /><ProposteFuoriPiano squadra={squadra} /><EditorAllenamento squadra={squadra} giorno={giorno} /></>}
     </AppShell>
   )
 }

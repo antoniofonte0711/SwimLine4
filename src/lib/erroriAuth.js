@@ -8,6 +8,9 @@ const MESSAGGI = [
   [/invalid format|email_address_invalid|valid email|unable to validate email/i, 'L\'indirizzo email non sembra giusto: controllalo.'],
   [/rate limit|too many|over_email_send_rate_limit|over_request_rate_limit/i, 'Troppi tentativi in poco tempo: aspetta qualche minuto e riprova.'],
   [/signups not allowed|signup_disabled/i, 'Le registrazioni sono chiuse in questo momento.'],
+  [/otp_expired|token has expired|expired or is invalid|invalid otp|otp.*invalid/i, 'Codice sbagliato o scaduto: controlla di usare l\'email più recente, oppure tocca "Rimanda l\'email".'],
+  [/user is banned|user_banned|banned/i, 'Questo account è stato eliminato. Se è stato uno sbaglio, chiedi al coach o scrivi all\'amministratore (l\'indirizzo è nella pagina Privacy): può recuperarlo entro 30 giorni.'],
+  [/for security purposes|request this after|email_send_rate/i, 'Hai appena chiesto un\'email: aspetta un minuto prima di chiederne un\'altra.'],
   [/failed to fetch|network|load failed/i, 'Connessione assente o lenta: controlla internet e riprova.'],
 ]
 

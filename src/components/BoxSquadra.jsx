@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import Icona from './Icona'
+import FinestraAttesa from './FinestraAttesa'
 
 const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white'
 
@@ -14,6 +16,28 @@ export default function BoxSquadra() {
   const [errore, setErrore] = useState('')
   const [ok, setOk] = useState('')
   const [invio, setInvio] = useState(false)
+  const [inAttesa, setInAttesa] = useState([]) // domande fatte da me che aspettano il coach
+  const [finestra, setFinestra] = useState(null)
+  const navigate = useNavigate()
+
+  async function caricaDomande() {
+    if (coach) return []
+    const { data } = await supabase.rpc('mie_richieste')
+    const domande = (data || []).filter((r) => r.tipo === 'domanda')
+    setInAttesa(domande)
+    return domande
+  }
+  useEffect(() => { caricaDomande() }, [coach]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function annulla(r) {
+    if (!window.confirm(`Annullare la richiesta per ${r.squadra_nome}?`)) return
+    setErrore('')
+    setOk('')
+    const { error } = await supabase.rpc('annulla_mia_domanda', { p_richiesta: r.id })
+    if (error) return setErrore(error.message)
+    setOk(`Richiesta per ${r.squadra_nome} annullata.`)
+    caricaDomande()
+  }
 
   useEffect(() => {
     let attivo = true
@@ -48,7 +72,11 @@ export default function BoxSquadra() {
       setOk(`Nome della squadra: ${data}`)
       await ricaricaProfilo()
     } else {
-      setOk(`Richiesta inviata a ${data}: entri quando il coach la approva.`)
+      // la richiesta è davvero salvata: finestra d'attesa (si chiude con "Ho capito" e si torna alla Home)
+      const domande = await caricaDomande()
+      const fatta = domande.find((r) => r.squadra_nome === data)
+      if (fatta) setFinestra(fatta)
+      else setOk(`Richiesta inviata a ${data}: entri quando il coach la approva.`)
     }
   }
 
@@ -69,6 +97,16 @@ export default function BoxSquadra() {
         {invio ? 'Salvo…' : coach ? 'Cambia nome' : 'Chiedi di entrare'}
       </button>
       {attuale && <p className="text-xs text-slate-500 mt-3">Squadra attuale: <b>{attuale}</b></p>}
+      {inAttesa.map((r) => (
+        <div key={r.id} className="bg-amber-50 rounded-2xl p-3 mt-3 flex items-center justify-between gap-2">
+          <p className="text-sm min-w-0"><Icona nome="clessidra" className="w-4 h-4 inline -mt-0.5 mr-1" />In attesa del coach: <b>{r.squadra_nome}</b></p>
+          <button type="button" onClick={() => annulla(r)} className="shrink-0 min-h-[44px] text-sm font-bold text-slate-600 underline">Annulla</button>
+        </div>
+      ))}
+      {finestra && (
+        <FinestraAttesa richiesta={finestra} onChiudi={() => { setFinestra(null); navigate('/dashboard') }}
+          onAnnullata={() => { setFinestra(null); setOk(`Richiesta per ${finestra.squadra_nome} annullata.`); caricaDomande() }} />
+      )}
     </div>
   )
 }

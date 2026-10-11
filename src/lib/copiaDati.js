@@ -27,6 +27,7 @@ export function scaricaJson(dati, nome) {
 const MIEI = [
   ['allenamenti', 'atleta_id'], ['gare', 'atleta_id'], ['presenze', 'atleta_id'], ['punti_movimenti', 'atleta_id'],
   ['premi_atleta', 'atleta_id'], ['atleta_riferimenti', 'atleta_id'], ['notifiche', 'destinatario_id'],
+  ['allenamenti_extra', 'atleta_id'],
 ]
 export async function iMieiDati(id) {
   const copia = { esportato_il: new Date().toISOString() }

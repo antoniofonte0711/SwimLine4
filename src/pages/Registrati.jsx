@@ -4,7 +4,12 @@ import { supabase } from '../lib/supabaseClient'
 import SfondoVasca from '../components/SfondoVasca'
 import Icona from '../components/Icona'
 import InputPassword from '../components/InputPassword'
+import InputData from '../components/InputData'
+import BarraPassword from '../components/BarraPassword'
+import ControllaEmail from '../components/ControllaEmail'
 import { ETA_CONSENSO, erroreAuth, eta } from '../lib/erroriAuth'
+import { erroreNascita } from '../lib/dataScritta'
+import { SESSI } from '../lib/categorie'
 import { VERSIONE_INFORMATIVA } from '../lib/privacy'
 import { MESSAGGIO_RUBATA, volteRubata } from '../lib/passwordRubata'
 import { registraErrore } from '../lib/registroErrori'
@@ -13,6 +18,8 @@ export default function Registrati() {
   const [nome, setNome] = useState('')
   const [cognome, setCognome] = useState('')
   const [dataNascita, setDataNascita] = useState('')
+  const [dataScritta, setDataScritta] = useState('')
+  const [sesso, setSesso] = useState('')
   const [role, setRole] = useState('atleta')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -39,6 +46,8 @@ export default function Registrati() {
   async function handleRegister(e) {
     e.preventDefault()
     setError('')
+    const nascitaSbagliata = erroreNascita(dataScritta)
+    if (nascitaSbagliata) return setError(nascitaSbagliata)
     if (password.length < 8) return setError('La password deve avere almeno 8 caratteri.')
     if (!privacy) return setError('Per continuare leggi e accetta l\'informativa privacy.')
     if (minore && !consensoGenitore) return setError('Sotto i 14 anni serve il consenso di un genitore: chiedi a mamma o papà di spuntare la casella.')
@@ -48,6 +57,7 @@ export default function Registrati() {
       nome, cognome, data_nascita: dataNascita, role,
       privacy_accettata: new Date().toISOString(), privacy_versione: VERSIONE_INFORMATIVA,
       ...(minore ? { consenso_genitore: true } : {}),
+      ...(role === 'atleta' && sesso ? { sesso } : {}),
     }
     if (role === 'coach' && nomeSquadra) {
       metadata.nome_squadra = nomeSquadra
@@ -74,32 +84,40 @@ export default function Registrati() {
       return
     }
 
-    // Se Supabase non chiede la conferma dell'email l'account è già attivo: si entra subito
+    // Se Supabase non chiede la conferma dell'email l'account è già attivo: si entra subito.
+    // Altrimenti la schermata "Controlla la tua email" (link o codice), senza uscire dall'app.
     const attivo = !!data?.session
     setEntrato(attivo)
     setSuccess(true)
-    setTimeout(() => navigate(attivo ? '/dashboard' : '/login'), attivo ? 3500 : 6000)
+    if (attivo) setTimeout(() => navigate('/dashboard'), 3500)
   }
 
   if (success) {
     return (
       <div className="min-h-screen relative overflow-hidden flex items-center justify-center bg-[#0a3fbf] px-4 py-8">
       <SfondoVasca />
-        <div className="relative bg-white rounded-[28px] shadow-[0_24px_60px_rgba(4,26,77,0.35)] p-7 text-center max-w-sm text-white">
-          <span className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-blue-600 text-white flex items-center justify-center">
-            <Icona nome="spunta" className="w-8 h-8" />
-          </span>
-          <p className="font-display text-xl font-extrabold text-abisso">Registrazione completata!</p>
-          <p className="text-sm text-slate-600 mt-2">
-            {entrato
-              ? 'Il tuo account è pronto: tra un attimo entri nell\'app.'
-              : 'Ti abbiamo mandato un\'email: apri il link per confermare l\'account (se non la trovi, guarda nello spam). Poi accedi. Se non arriva, avvisa il tuo coach: l\'amministratore può attivarti.'}
-          </p>
+        <div className="relative bg-white rounded-[28px] shadow-[0_24px_60px_rgba(4,26,77,0.35)] p-7 w-full max-w-sm">
+          {entrato ? (
+            <div className="text-center">
+              <span className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-blue-600 text-white flex items-center justify-center">
+                <Icona nome="spunta" className="w-8 h-8" />
+              </span>
+              <p className="font-display text-xl font-extrabold text-abisso">Registrazione completata!</p>
+              <p className="text-sm text-slate-600 mt-2">Il tuo account è pronto: tra un attimo entri nell'app.</p>
+            </div>
+          ) : (
+            <ControllaEmail email={email} tipo="signup" onFatto={() => navigate('/dashboard')} onIndietro={() => setSuccess(false)} />
+          )}
           {role === 'coach' && (
-            <p className="text-sm text-slate-600 mt-2">Il profilo coach si attiva quando l'amministratore lo approva: fino ad allora entri come atleta.</p>
+            <p className="text-sm text-slate-600 mt-4 text-center">Il profilo coach si attiva quando l'amministratore lo approva: fino ad allora entri come atleta.</p>
           )}
           {role !== 'coach' && squadraScelta && (
-            <p className="text-sm text-slate-600 mt-2">Il coach della squadra riceve la tua richiesta: entri quando la approva.</p>
+            <p className="text-sm text-slate-600 mt-4 text-center">Il coach della squadra riceve la tua richiesta: entri quando la approva.</p>
+          )}
+          {!entrato && (
+            <p className="text-xs text-slate-500 mt-3 text-center">
+              Non arriva nemmeno dopo qualche minuto? Avvisa il tuo coach: l'amministratore può attivarti.
+            </p>
           )}
         </div>
       </div>
@@ -126,9 +144,11 @@ export default function Registrati() {
         <input value={cognome} onChange={(e) => setCognome(e.target.value)}
           className="w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white transition mb-4" required />
 
-        <label className="block text-sm font-semibold text-slate-600 mb-1">Data di nascita</label>
-        <input type="date" value={dataNascita} onChange={(e) => setDataNascita(e.target.value)}
-          className="w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white transition mb-4" required />
+        <label htmlFor="data-nascita" className="block text-sm font-semibold text-slate-600 mb-1">Data di nascita</label>
+        <InputData id="data-nascita" valore={dataNascita} required
+          onChange={(iso, testo) => { setDataNascita(iso); setDataScritta(testo) }}
+          className="w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white transition" />
+        <p id="data-nascita-aiuto" className="text-xs text-slate-500 mt-1 mb-4">Scrivi solo i numeri, es. 05032012: le barre si mettono da sole.</p>
 
         <label className="block text-sm font-semibold text-slate-600 mb-1">Sei...</label>
         <select value={role} onChange={(e) => setRole(e.target.value)}
@@ -137,6 +157,18 @@ export default function Registrati() {
           <option value="coach">Coach</option>
           <option value="genitore">Genitore</option>
         </select>
+
+        {role === 'atleta' && (
+          <>
+            <label htmlFor="sesso" className="block text-sm font-semibold text-slate-600 mb-1">Categoria nelle gare (facoltativo)</label>
+            <select id="sesso" value={sesso} onChange={(e) => setSesso(e.target.value)}
+              className="w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white transition">
+              <option value="">Preferisco non dirlo</option>
+              {SESSI.map(([v, n]) => <option key={v} value={v}>{n}</option>)}
+            </select>
+            <p className="text-xs text-slate-500 mt-1 mb-4">Serve solo a calcolare la tua categoria FIN (maschi e femmine hanno età diverse).</p>
+          </>
+        )}
 
         {role === 'coach' ? (
           <>
@@ -167,6 +199,7 @@ export default function Registrati() {
         <label className="block text-sm font-semibold text-slate-600 mb-1">Password (almeno 8 caratteri)</label>
         <InputPassword value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password"
           className="w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white transition mb-4" />
+        <BarraPassword password={password} />
 
         {minore && (
           <label className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-3 mb-3 cursor-pointer">

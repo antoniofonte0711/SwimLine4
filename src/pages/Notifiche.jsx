@@ -7,6 +7,8 @@ import AppShell from '../components/AppShell'
 const ICONA = {
   record: '🏅', gara_nuova: '📅', gara_modificata: '✏️', gara_cancellata: '❌',
   richiesta_genitore: '👨‍👩‍👧', risposta_genitore: '👨‍👩‍👧', incoraggiamento: '❤️',
+  domanda_squadra: '📩', squadra: '👥', tempi: '⏱️', fuori_piano: '🏊', fuori_piano_esito: '🏊',
+  segnalazione: '🛠️', email: '✉️', avviso: '📣',
 }
 
 function quando(s) {
@@ -47,7 +49,7 @@ export default function Notifiche() {
         <div className="bg-white rounded-3xl p-8 text-center">
           <p className="text-4xl mb-2">🔔</p>
           <p className="font-display text-xl font-extrabold text-abisso mb-1">Nessuna notifica</p>
-          <p className="text-sm text-slate-500">Qui arrivano i nuovi record, le gare in calendario e i messaggi della famiglia.</p>
+          <p className="text-sm text-slate-500">Qui arrivano i nuovi record, le gare in calendario, i tempi del coach, le risposte della squadra e i messaggi della famiglia.</p>
         </div>
       )}
       {lista?.map((n) => (

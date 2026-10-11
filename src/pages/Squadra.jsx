@@ -12,6 +12,7 @@ import { dataLocale } from '../lib/lavori'
 import { riepilogoPresenze, STATI } from '../lib/presenze'
 import { useMiaSquadra } from '../lib/pianoSquadra'
 import { useRegole } from '../lib/regole'
+import { categoriaFin } from '../lib/categorie'
 
 const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white'
 const dataIt = (s) => (s ? new Date(s + 'T12:00:00').toLocaleDateString('it-IT') : '')
@@ -48,11 +49,21 @@ export default function Squadra() {
       }
       setNomeSquadra(nome)
 
+      // categoria FIN per tutti; l'anno di nascita solo per il coach (ai compagni non arriva proprio)
       let q = isCoach
-        ? supabase.from('profiles').select('id, nome, cognome').in('role', ['atleta', 'admin'])
-        : supabase.from('compagni_squadra').select('id, nome, cognome')
+        ? supabase.from('profiles').select('id, nome, cognome, data_nascita, sesso').in('role', ['atleta', 'admin']).is('eliminato_il', null)
+        : supabase.from('compagni_squadra').select('id, nome, cognome, categoria')
       if (isCoach && squadraCoach) q = q.eq('squadra_id', squadraCoach.id)
-      const { data } = await q.order('cognome')
+      let { data } = await q.order('cognome')
+      if (isCoach && data?.length) {
+        // la categoria scritta dal coach nei Riferimenti vale più di quella calcolata
+        const { data: rif } = await supabase.from('atleta_riferimenti').select('atleta_id, categoria').in('atleta_id', data.map((a) => a.id))
+        const scritta = Object.fromEntries((rif || []).filter((r) => r.categoria?.trim()).map((r) => [r.atleta_id, r.categoria.trim()]))
+        data = data.map((a) => ({
+          ...a, categoria: scritta[a.id] || categoriaFin(a.data_nascita, a.sesso),
+          anno: a.data_nascita ? a.data_nascita.slice(0, 4) : null,
+        }))
+      }
       setAtleti(data || [])
       setScelto((s) => (data || []).some((a) => a.id === s) ? s : data?.[0]?.id || '')
     }
@@ -111,6 +122,8 @@ export default function Squadra() {
         )}
       </div>
 
+      {atleti.length > 0 && <ElencoCompagni atleti={atleti} coach={isCoach} scelto={scelto} onScegli={setScelto} />}
+
       {scelto && isCoach && vista === 'Oggi' && <OggiAtleta key={scelto} atletaId={scelto} />}
       {scelto && isCoach && vista === 'Presenze' && <PresenzeBreve key={scelto} atletaId={scelto} />}
       {scelto && isCoach && vista === 'Grafico tempi' && <SchedaProgressi key={scelto} atletaId={scelto} />}
@@ -132,13 +145,16 @@ export default function Squadra() {
           {gare.length === 0 && <p className="text-center text-slate-500 py-6">Nessuna gara ancora 🏆</p>}
           {gare.map((g) => (
             <div key={g.id} className="bg-white rounded-3xl p-5 mb-3 shadow-card">
-              <div className="flex justify-between gap-2">
-                <div>
+              <div className="flex justify-between gap-3">
+                <div className="min-w-0">
                   <p className="font-bold">{g.nome_gara}</p>
-                  <p className="text-sm text-slate-500">{dataIt(g.data_gara)} · {g.distanza} m {g.stile} · {testoVasca(vascaDi(g))}</p>
+                  <p className="text-sm text-slate-500 mt-0.5">{dataIt(g.data_gara)}</p>
                 </div>
-                <p className="text-xl font-extrabold text-blue-600">{g.tempo}</p>
+                <p className="text-xl font-extrabold text-blue-600 tabular-nums shrink-0">{g.tempo}</p>
               </div>
+              <p className="text-sm font-semibold text-slate-600 mt-1">
+                <span className="whitespace-nowrap">{g.distanza} m {g.stile}</span> · <span className="whitespace-nowrap">{testoVasca(vascaDi(g))}</span>
+              </p>
               {g.passaggi?.length > 0 && <p className="text-xs text-slate-500 mt-2">Passaggi: {g.passaggi.map((p) => p || '–').join(' · ')}</p>}
             </div>
           ))}
@@ -163,6 +179,38 @@ export default function Squadra() {
         </>
       )}
     </AppShell>
+  )
+}
+
+// Tutti i compagni con la categoria FIN (il coach vede anche l'anno di nascita). Toccando un nome lo si sceglie sopra.
+function ElencoCompagni({ atleti, coach, scelto, onScegli }) {
+  const [aperto, setAperto] = useState(atleti.length <= 12)
+  const visibili = aperto ? atleti : atleti.slice(0, 8)
+  return (
+    <section className="bg-white rounded-3xl p-5 mb-3 shadow-card" aria-label={coach ? 'Atleti della squadra' : 'Compagni di squadra'}>
+      <p className="font-bold">{coach ? 'Atleti' : 'Compagni di squadra'} ({atleti.length})</p>
+      <p className="text-xs text-slate-500 mb-2">
+        {coach ? 'Categoria FIN e anno di nascita. Tocca un nome per vederne i dati.' : 'Con la categoria FIN. Tocca un nome per vedere le sue gare.'}
+      </p>
+      <ul>
+        {visibili.map((a) => (
+          <li key={a.id} className="border-t border-slate-100 first:border-t-0">
+            <button type="button" onClick={() => onScegli(a.id)} aria-pressed={scelto === a.id}
+              className={`w-full min-h-[48px] flex items-center justify-between gap-3 text-left rounded-xl px-2 -mx-2 ${scelto === a.id ? 'bg-schiuma' : ''}`}>
+              <span className="text-[15px] font-semibold text-abisso truncate">{a.nome} {a.cognome}</span>
+              <span className="text-xs font-bold text-slate-500 text-right shrink-0">
+                {a.categoria || 'Categoria —'}{coach && a.anno ? ` · ${a.anno}` : ''}
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
+      {!aperto && (
+        <button type="button" onClick={() => setAperto(true)} className="w-full min-h-[44px] mt-1 text-sm font-bold text-blue-600">
+          Mostra tutti ({atleti.length})
+        </button>
+      )}
+    </section>
   )
 }
 

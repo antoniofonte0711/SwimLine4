@@ -92,11 +92,16 @@ export function useSettimanaSquadra(squadraId, giorno, atletaId) {
       atletaId
         ? supabase.from('presenze').select('data, stato').eq('atleta_id', atletaId).gte('data', lun).lte('data', dom)
         : Promise.resolve({ data: [] }),
-    ]).then(([{ data }, { data: presenze }]) => {
+      // allenamenti fuori piano accettati dal coach: contano nei km fatti
+      atletaId
+        ? supabase.from('allenamenti_extra').select('metri').eq('atleta_id', atletaId).eq('stato', 'accettato').gte('data', lun).lte('data', dom)
+        : Promise.resolve({ data: [] }),
+    ]).then(([{ data }, { data: presenze }, { data: extra }]) => {
       if (!attivo) return
       const presente = new Set((presenze || []).filter((p) => p.stato === 'presente').map((p) => p.data))
       const voti = {}
-      let metri = 0, fatti = 0, presenti = 0
+      let metri = 0, presenti = 0
+      let fatti = (extra || []).reduce((s, e) => s + (Number(e.metri) || 0), 0)
       ;(data || []).forEach((a) => {
         const d = difficoltaPiano(a.righe || [])
         if (!d) return

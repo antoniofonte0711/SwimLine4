@@ -31,6 +31,11 @@ async function chiavi() {
   return { pubblica: nuove.publicKey, privata: nuove.privateKey }
 }
 
+// Notifiche che arrivano senza suono né vibrazione (es. il coach decide con calma)
+const SILENZIOSE = ['fuori_piano']
+// Chi ha chiesto silenzio (Profilo › Notifiche) le trova solo nella campanella fino a quella data
+const inSilenzio = (fino?: string | null) => !!fino && new Date(fino).getTime() > Date.now()
+
 const giornoTesto = (d: string) =>
   new Date(d + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Rome' })
 
@@ -44,10 +49,14 @@ Deno.serve(async (req) => {
   if (corpo.interno) {
     const { data: s } = await admin.from('segreti').select('valore').eq('chiave', 'chiave_interna').maybeSingle()
     if (!s?.valore || s.valore !== corpo.interno) return risposta({ errore: 'Non autorizzato' }, 403)
-    const { data: n } = await admin.from('notifiche').select('destinatario_id, titolo, testo, link').eq('id', corpo.notifica_id).maybeSingle()
+    const { data: n } = await admin.from('notifiche').select('destinatario_id, tipo, titolo, testo, link').eq('id', corpo.notifica_id).maybeSingle()
     if (!n) return risposta({ inviate: 0 })
+    const { data: chi } = await admin.from('profiles').select('notifiche_silenzio_fino').eq('id', n.destinatario_id).maybeSingle()
+    if (inSilenzio(chi?.notifiche_silenzio_fino)) return risposta({ inviate: 0, silenzio: true })
     const { data: iscr } = await admin.from('push_iscrizioni').select('id, endpoint, p256dh, auth').eq('utente_id', n.destinatario_id)
-    return risposta({ inviate: await invia(k, iscr || [], { title: n.titolo, body: n.testo || '', url: n.link || '/dashboard' }) })
+    return risposta({ inviate: await invia(k, iscr || [], {
+      title: n.titolo, body: n.testo || '', url: n.link || '/dashboard', silenziosa: SILENZIOSE.includes(n.tipo),
+    }) })
   }
 
   // Chi sta chiamando? Deve essere il coach della squadra (o un admin)
@@ -74,8 +83,8 @@ Deno.serve(async (req) => {
   const giorni = (piani || []).map((p) => p.data).sort()
   if (!giorni.length) return risposta({ inviate: 0 })
 
-  const { data: persone } = await admin.from('profiles').select('id').eq('squadra_id', squadra_id).neq('id', user.id)
-  const ids = (persone || []).map((p) => p.id)
+  const { data: persone } = await admin.from('profiles').select('id, notifiche_silenzio_fino').eq('squadra_id', squadra_id).neq('id', user.id)
+  const ids = (persone || []).filter((p) => !inSilenzio(p.notifiche_silenzio_fino)).map((p) => p.id)
   if (!ids.length) return risposta({ inviate: 0 })
   const { data: iscrizioni } = await admin.from('push_iscrizioni').select('id, endpoint, p256dh, auth').in('utente_id', ids)
 
@@ -90,7 +99,7 @@ Deno.serve(async (req) => {
 })
 
 type Iscrizione = { id: string, endpoint: string, p256dh: string, auth: string }
-async function invia(k: { pubblica: string, privata: string }, iscrizioni: Iscrizione[], dati: Record<string, string>) {
+async function invia(k: { pubblica: string, privata: string }, iscrizioni: Iscrizione[], dati: Record<string, string | boolean>) {
   webpush.setVapidDetails('https://swim-line4.vercel.app', k.pubblica, k.privata)
   const messaggio = JSON.stringify(dati)
   let inviate = 0

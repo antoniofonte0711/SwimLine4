@@ -7,6 +7,7 @@ export const PREFERENZE_BASE = {
   testoGrande: false,
   stile: 'Stile libero', // stile già scelto quando registri i tempi
   tipoLavoro: 'C1', // tipo di lavoro già scelto quando registri i tempi
+  distanzaGara: '100', // distanza già scelta quando inserisci una gara
   schermoAcceso: true, // In vasca: lo schermo non si spegne
   vibrazione: true, // In vasca: vibra quando premi "Fatto"
 }

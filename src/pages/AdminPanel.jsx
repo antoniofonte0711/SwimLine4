@@ -76,10 +76,12 @@ export default function AdminPanel() {
   return (
     <div className="min-h-screen bg-bordo text-abisso">
       <header className="bg-white border-b border-slate-200 px-4 sm:px-6 py-3 flex items-center justify-between gap-3 flex-wrap pt-[max(env(safe-area-inset-top),0.75rem)]">
-        <div className="flex items-center gap-3 font-display text-[22px] font-extrabold">
+        {/* il nome riporta alla pagina iniziale del Pannello */}
+        <button type="button" onClick={() => vai('squadre')} aria-label="SwimLine4 Pannello, pagina iniziale"
+          className="flex items-center gap-3 font-display text-[22px] font-extrabold text-left">
           <span className="w-11 h-11 rounded-xl bg-blue-600 text-white flex items-center justify-center"><Icona nome="onde" /></span>
           <span>Swim<b className="text-blue-600">Line4</b> Pannello</span>
-        </div>
+        </button>
         <div className="flex items-center gap-2">
           <span className="hidden sm:inline text-[15px] font-semibold text-slate-600 mr-1">{profile?.nome} {profile?.cognome} · {user?.email}</span>
           <button type="button" onClick={() => setGuidaAperta(true)} aria-label="Come si usa il Pannello"

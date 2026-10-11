@@ -39,6 +39,57 @@ function EmailDaConfermare({ ricarica }) {
   )
 }
 
+// Account chiusi dai proprietari ("Elimina il mio account"): per 30 giorni si possono ripristinare,
+// poi la pulizia notturna li cancella per sempre (o subito, da qui)
+function AccountEliminati({ ricarica }) {
+  const [lista, setLista] = useState([])
+  const [esito, setEsito] = useState('')
+  const [lavoro, setLavoro] = useState('')
+  const carica = () => supabase.rpc('admin_account_eliminati').then(({ data }) => setLista(data || []))
+  useEffect(() => { carica() }, [])
+
+  const giorniRimasti = (p) => Math.max(0, 30 - Math.floor((Date.now() - new Date(p.eliminato_il)) / 86400000))
+
+  async function ripristina(p) {
+    if (!window.confirm(`Ripristinare l'account di ${nomeDi(p)}? Torna com'era${p.squadra_nome ? `, nella squadra ${p.squadra_nome}` : ''}.`)) return
+    setLavoro(p.id)
+    const { error } = await supabase.rpc('admin_ripristina_account', { p_persona: p.id })
+    setLavoro('')
+    setEsito(error ? 'Errore: ' + error.message : `${nomeDi(p)} può di nuovo entrare con la sua email e password.`)
+    carica()
+    ricarica()
+  }
+
+  async function cancellaOra(p) {
+    if (!window.confirm(`Cancellare PER SEMPRE ${nomeDi(p)} con tutti i suoi dati e documenti? Non si può tornare indietro.`)) return
+    setLavoro(p.id)
+    const { data, error } = await supabase.functions.invoke('pulizia', { body: { persona: p.id } })
+    setLavoro('')
+    setEsito(error || data?.errore ? 'Errore: ' + (data?.errore || error.message) : `${nomeDi(p)} è stato cancellato per sempre.`)
+    carica()
+  }
+
+  if (!lista.length && !esito) return null
+  return (
+    <Scheda titolo="Account eliminati" azioni={<Salvato stato={esito} />}
+      nota="Li hanno chiusi i proprietari. Sono nascosti a tutti e non possono entrare. Ripristinali se è stato uno sbaglio (es. un ragazzo); dopo 30 giorni si cancellano da soli.">
+      {lista.length === 0 && <p className="text-sm text-slate-500">Nessun account in attesa di cancellazione.</p>}
+      {lista.map((p) => (
+        <div key={p.id} className="flex flex-wrap items-center gap-3 py-3 border-t border-slate-100 first-of-type:border-t-0">
+          <span className="flex-1 min-w-[160px]">
+            <b className="block">{nomeDi(p)}</b>
+            <span className="text-[13px] text-slate-500 break-all">
+              {p.email}{p.squadra_nome ? ` · era in ${p.squadra_nome}` : ''} · eliminato il {new Date(p.eliminato_il).toLocaleDateString('it-IT')} · si cancella tra {giorniRimasti(p)} giorni
+            </span>
+          </span>
+          <button type="button" onClick={() => ripristina(p)} disabled={lavoro === p.id} className={BOTTONE_PIENO}>Ripristina</button>
+          <button type="button" onClick={() => cancellaOra(p)} disabled={lavoro === p.id} className={BOTTONE}>Cancella ora</button>
+        </div>
+      ))}
+    </Scheda>
+  )
+}
+
 // Tutti gli account dell'app: ruolo, squadra, accesso al loro posto (per aiutarli)
 export function TuttiUtenti({ dati, ricarica, io }) {
   const [cerca, setCerca] = useState('')
@@ -75,6 +126,7 @@ export function TuttiUtenti({ dati, ricarica, io }) {
     <>
       <h1 className="font-display text-[34px] font-extrabold leading-tight">Tutti gli utenti</h1>
       <EmailDaConfermare ricarica={ricarica} />
+      <AccountEliminati ricarica={ricarica} />
       <Scheda nota="Ogni account dell'app, in tutte le squadre." azioni={<Salvato stato={esito} />}>
         <input type="search" value={cerca} onChange={(e) => setCerca(e.target.value)} aria-label="Cerca per nome o squadra"
           placeholder="Cerca per nome o squadra…" className="w-full min-h-[46px] border border-slate-300 rounded-xl px-3.5 bg-slate-50 mb-3" />

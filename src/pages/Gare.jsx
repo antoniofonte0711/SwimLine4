@@ -9,6 +9,7 @@ import GareCoach from '../components/GareCoach'
 import { useFigli, useFiglioScelto } from '../lib/famiglia'
 import { aggiungiAlCalendario } from '../lib/ics'
 import { useRegole } from '../lib/regole'
+import { leggiPreferenze } from '../lib/preferenze'
 import Schede from '../components/Schede'
 import { ERRORE_TEMPO, erroreTempoImpossibile, normalizzaTempo, tempoPlausibile, tempoValido, passaggiCoerenti } from '../lib/tempo'
 import {
@@ -20,7 +21,11 @@ const TABELLA = 'gare'
 const VISTE = ['Nuova gara', 'Le mie gare']
 const DISTANZE = ['50', '100', '200', '400', '800', '1500']
 const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white'
-const VUOTO = { nome_gara: '', data_gara: dataLocale(), distanza: '100', stile: 'Stile libero', vasca: 25, tempo: '', passaggi: [], file: null }
+// modulo vuoto: la distanza parte da quella preferita (Profilo › Allenamento)
+const vuoto = () => {
+  const d = leggiPreferenze().distanzaGara
+  return { nome_gara: '', data_gara: dataLocale(), distanza: DISTANZE.includes(d) ? d : '100', stile: 'Stile libero', vasca: 25, tempo: '', passaggi: [], file: null }
+}
 
 const formattaDataGara = (s) => (s ? new Date(s + 'T12:00:00').toLocaleDateString('it-IT') : '')
 
@@ -75,7 +80,7 @@ function GareAtleta() {
   const [vista, setVista] = useState(viste[0])
   const [gare, setGare] = useState([])
   const [coda, setCoda] = useState([])
-  const [form, setForm] = useState(VUOTO)
+  const [form, setForm] = useState(vuoto)
   const [fileKey, setFileKey] = useState(0)
   const [errore, setErrore] = useState('')
   const [messaggio, setMessaggio] = useState('')
@@ -206,7 +211,7 @@ function GareAtleta() {
       })
     }
 
-    setForm(VUOTO)
+    setForm(vuoto())
     setFileKey((k) => k + 1)
     setCoda(leggiCoda(TABELLA, user.id))
     if (!inCoda) await carica()
@@ -336,19 +341,23 @@ function GareAtleta() {
           {tutte.length === 0 && <p className="text-center text-slate-500 py-8">Nessuna gara ancora 🏆</p>}
           {tutte.map((g) => (
             <div key={g.id} className="bg-white rounded-3xl p-5 mb-3 shadow-card">
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <p className="font-bold">{g.nome_gara}</p>
-                  <p className="text-sm text-slate-500">
-                    {formattaDataGara(g.data_gara)} · {g.distanza} m {g.stile} · {testoVasca(vascaDi(g))}
-                    {g.inAttesa && <span className="ml-2 text-xs text-yellow-700 bg-yellow-100 px-2 py-0.5 rounded-full">⏳ da inviare</span>}
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-bold text-abisso">{g.nome_gara}</p>
+                  <p className="text-sm text-slate-500 mt-0.5">
+                    {formattaDataGara(g.data_gara)}
+                    {g.inAttesa && <span className="ml-2 text-xs text-yellow-700 bg-yellow-100 px-2 py-0.5 rounded-full whitespace-nowrap">⏳ da inviare</span>}
                   </p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <p className="text-xl font-extrabold text-blue-600">{g.tempo}</p>
-                  {!genitore && <button onClick={() => elimina(g)} title="Elimina" aria-label="Elimina" className="text-slate-500 hover:text-red-500 transition">🗑️</button>}
+                <div className="flex items-center gap-1 shrink-0">
+                  <p className="text-xl font-extrabold text-blue-600 tabular-nums">{g.tempo}</p>
+                  {!genitore && <button onClick={() => elimina(g)} title="Elimina" aria-label="Elimina" className="w-11 h-11 -mr-2 rounded-full flex items-center justify-center text-slate-500 hover:text-red-500 transition">🗑️</button>}
                 </div>
               </div>
+              {/* distanza e stile restano insieme: si va a capo solo tra un pezzo e l'altro */}
+              <p className="text-sm font-semibold text-slate-600 mt-1">
+                <span className="whitespace-nowrap">{g.distanza} m {g.stile}</span> · <span className="whitespace-nowrap">{testoVasca(vascaDi(g))}</span>
+              </p>
               {g.passaggi?.length > 0 && <p className="text-xs text-slate-500 mt-2">Passaggi: {g.passaggi.join(' · ')}</p>}
             </div>
           ))}

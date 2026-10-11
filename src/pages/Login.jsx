@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabaseClient'
 import SfondoVasca from '../components/SfondoVasca'
 import Icona from '../components/Icona'
 import InputPassword from '../components/InputPassword'
+import ControllaEmail from '../components/ControllaEmail'
 import { erroreAuth } from '../lib/erroriAuth'
 import { registraErrore } from '../lib/registroErrori'
 
@@ -16,6 +17,7 @@ export default function Login() {
     : ''))
   const [ok, setOk] = useState('')
   const [invio, setInvio] = useState(false)
+  const [recupero, setRecupero] = useState(false) // email "Password dimenticata" partita: schermata del codice
   const navigate = useNavigate()
 
   async function handleLogin(e) {
@@ -36,12 +38,25 @@ export default function Login() {
       return
     }
     setError('')
-    // il link dell'email porta alla pagina dove si sceglie la nuova password
+    setInvio(true)
+    // il link dell'email porta alla pagina dove si sceglie la nuova password (oppure si scrive il codice qui)
     const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/nuova-password` })
+    setInvio(false)
     if (error) {
       if (/sending|not authorized|smtp/i.test(error.message || '')) registraErrore(error, 'Password dimenticata: email non inviata')
       setError(erroreAuth(error))
-    } else setOk('Ti abbiamo inviato un\'email per scegliere una nuova password (se non la trovi, guarda nello spam).')
+    } else setRecupero(true)
+  }
+
+  if (recupero) {
+    return (
+      <div className="min-h-screen relative overflow-hidden flex items-center justify-center bg-[#0a3fbf] px-4 py-8">
+        <SfondoVasca />
+        <div className="w-full max-w-sm relative bg-white rounded-[28px] shadow-[0_24px_60px_rgba(4,26,77,0.35)] p-7">
+          <ControllaEmail email={email} tipo="recovery" onFatto={() => navigate('/nuova-password')} onIndietro={() => setRecupero(false)} />
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -76,7 +91,8 @@ export default function Login() {
         <button
           type="button"
           onClick={handleResetPassword}
-          className="min-h-[44px] text-sm font-semibold text-blue-600 underline mb-2 block transition"
+          disabled={invio}
+          className="min-h-[44px] text-sm font-semibold text-blue-600 underline mb-2 block transition disabled:opacity-60"
         >
           Password dimenticata?
         </button>

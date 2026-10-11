@@ -105,7 +105,7 @@ export function NotificheApp({ dati }) {
 // Tutte le tabelle con dati (non le iscrizioni push, che contengono chiavi dei telefoni)
 const TABELLE_COPIA = ['squadre', 'profiles', 'allenamenti_squadra', 'presenze', 'allenamenti', 'gare', 'punti_movimenti',
   'punti_config', 'premi_catalogo', 'premi_atleta', 'genitori_figli', 'incoraggiamenti', 'notifiche', 'atleta_riferimenti',
-  'richieste_squadra', 'segnalazioni', 'accessi_admin', 'tipi_lavoro', 'tipi_lavoro_squadra', 'impostazioni_app', 'impostazioni_squadra']
+  'richieste_squadra', 'segnalazioni', 'accessi_admin', 'tipi_lavoro', 'tipi_lavoro_squadra', 'impostazioni_app', 'impostazioni_squadra', 'allenamenti_extra']
 
 export function Sicurezza() {
   const [stato, setStato] = useState('')

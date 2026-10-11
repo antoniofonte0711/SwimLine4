@@ -12,6 +12,7 @@ import BoxSquadra from '../components/BoxSquadra'
 import SquadreAdmin from '../components/SquadreAdmin'
 import RichiesteSquadra from '../components/RichiesteSquadra'
 import InputPassword from '../components/InputPassword'
+import BarraPassword from '../components/BarraPassword'
 import FigliGenitore from '../components/FigliGenitore'
 import GenitoriAtleta from '../components/GenitoriAtleta'
 import { CAMPO, Interruttore, Riga, Scelta, Sezione } from '../components/Impostazione'
@@ -20,6 +21,10 @@ import { useRegole } from '../lib/regole'
 import { svuotaCache } from '../lib/codaOffline'
 import { iMieiDati, scaricaJson } from '../lib/copiaDati'
 import { MESSAGGIO_RUBATA, volteRubata } from '../lib/passwordRubata'
+import { SESSI, categoriaFin } from '../lib/categorie'
+
+const DISTANZE_GARA = ['50', '100', '200', '400', '800', '1500']
+const SILENZI = [[1, '1 ora'], [8, '8 ore'], [24, '1 giorno'], [168, '1 settimana'], [-1, 'Sempre']]
 
 const BOTTONE = 'cliccabile text-sm font-bold text-blue-600 bg-schiuma rounded-full px-4 min-h-[44px]'
 const PRIMARIO = 'cliccabile w-full bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl min-h-[48px] disabled:opacity-50'
@@ -109,7 +114,8 @@ function CambiaPassword() {
       {aperto && (
         <form onSubmit={salva} className="mt-3">
           <label className="block text-xs text-slate-500 mb-1">Nuova password (almeno 8 caratteri)</label>
-          <InputPassword value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" className={CAMPO + ' mb-2'} />
+          <InputPassword value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" className={CAMPO + ' mb-4'} />
+          <BarraPassword password={password} />
           <label className="block text-xs text-slate-500 mb-1">Riscrivila uguale</label>
           <InputPassword value={conferma} onChange={(e) => setConferma(e.target.value)} autoComplete="new-password" className={CAMPO + ' mb-3'} />
           <div className="grid grid-cols-2 gap-2">
@@ -147,17 +153,91 @@ function Notifiche() {
     setLavoro(false)
   }
 
-  let nota = 'Vale solo per questo telefono: se usi l\'app anche su un altro, attivale anche lì.'
+  let nota = 'L\'interruttore vale solo per questo telefono: se usi l\'app anche su un altro, attivale anche lì. Il silenzio vale ovunque.'
   if (!supportate && serveHome()) nota = 'Su iPhone: tocca Condividi → "Aggiungi a Home", apri l\'app da lì e attivale qui.'
   else if (!supportate) nota = 'Questo browser non supporta le notifiche.'
 
   return (
     <Sezione titolo="Notifiche" nota={nota}>
-      <Riga etichetta="Nuovo allenamento" descrizione="Quando il coach pubblica l'allenamento">
-        <Interruttore acceso={attive} onCambia={cambia} etichetta="Notifica nuovo allenamento" disabilitato={!supportate || lavoro} />
+      <Riga etichetta="Notifiche su questo telefono" descrizione="Nuovo allenamento, gare, record, richieste e avvisi">
+        <Interruttore acceso={attive} onCambia={cambia} etichetta="Notifiche su questo telefono" disabilitato={!supportate || lavoro} />
       </Riga>
+      <Silenzio />
       {errore && <div className="py-3"><Messaggio errore={errore} /></div>}
     </Sezione>
+  )
+}
+
+// Silenzio per un po' (o per sempre): le notifiche restano nella campanella, ma il telefono non suona
+function Silenzio() {
+  const { profile, ricaricaProfilo } = useAuth()
+  const [errore, setErrore] = useState('')
+  const [lavoro, setLavoro] = useState(false)
+  const fino = profile?.notifiche_silenzio_fino ? new Date(profile.notifiche_silenzio_fino) : null
+  const attivo = fino && fino > new Date()
+  const sempre = attivo && fino.getFullYear() >= 2999
+
+  async function scegli(ore) {
+    setErrore('')
+    setLavoro(true)
+    const { error } = await supabase.rpc('silenzia_notifiche', { p_ore: ore })
+    if (error) setErrore('Non sono riuscito a salvare: ' + error.message)
+    else await ricaricaProfilo()
+    setLavoro(false)
+  }
+
+  return (
+    <div className="py-3.5">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[15px] font-semibold text-abisso">Silenzia</p>
+          <p className="text-xs text-slate-500 mt-0.5">
+            {!attivo ? 'Per un po\' niente suoni: le notifiche le ritrovi nella campanella.'
+              : sempre ? 'Silenziate per sempre: le trovi solo nella campanella.'
+              : `Silenziate fino a ${fino.toLocaleString('it-IT', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}.`}
+          </p>
+        </div>
+        {attivo && <button type="button" onClick={() => scegli(null)} disabled={lavoro} className={BOTTONE}>Riattiva</button>}
+      </div>
+      {!attivo && (
+        <div className="flex flex-wrap gap-2 mt-3" role="group" aria-label="Per quanto silenziare le notifiche">
+          {SILENZI.map(([ore, nome]) => (
+            <button key={ore} type="button" onClick={() => scegli(ore)} disabled={lavoro}
+              className="cliccabile min-h-[44px] px-4 rounded-full bg-bordo text-sm font-bold text-slate-600 disabled:opacity-60">
+              {nome}
+            </button>
+          ))}
+        </div>
+      )}
+      <Messaggio errore={errore} />
+    </div>
+  )
+}
+
+// Maschile o femminile: serve per la categoria FIN (cambia l'età delle categorie)
+function CategoriaGare() {
+  const { user, profile, ricaricaProfilo } = useAuth()
+  const [errore, setErrore] = useState('')
+  const categoria = categoriaFin(profile?.data_nascita, profile?.sesso)
+
+  async function cambia(valore) {
+    setErrore('')
+    const { error } = await supabase.rpc('imposta_sesso', { p_persona: user.id, p_sesso: valore || null })
+    if (error) return setErrore('Non sono riuscito a salvare: ' + error.message)
+    await ricaricaProfilo()
+  }
+
+  return (
+    <div>
+      <Riga etichetta="Categoria nelle gare" descrizione={categoria ? `Categoria FIN: ${categoria}` : 'Serve la data di nascita'}>
+        <select value={profile?.sesso || ''} onChange={(e) => cambia(e.target.value)} aria-label="Categoria nelle gare"
+          className="border border-linea bg-bordo rounded-campo px-3 min-h-[44px] text-sm font-semibold max-w-[160px]">
+          <option value="">Non indicata</option>
+          {SESSI.map(([v, n]) => <option key={v} value={v}>{n}</option>)}
+        </select>
+      </Riga>
+      {errore && <div className="pb-3"><Messaggio errore={errore} /></div>}
+    </div>
   )
 }
 
@@ -247,10 +327,11 @@ function ScaricaDati() {
   )
 }
 
-// Atleti e genitori chiudono da soli l'account; per un coach si cancellerebbe tutta la squadra
+// Atleti e genitori chiudono da soli l'account; per un coach si cancellerebbe tutta la squadra.
+// L'account si chiude subito (nascosto a tutti, non si entra più) ma per 30 giorni l'admin può recuperarlo
+// (es. un ragazzo che lo elimina per sbaglio); dopo si cancella tutto, documenti compresi.
 function EliminaAccount() {
   const navigate = useNavigate()
-  const { user } = useAuth()
   const [aperto, setAperto] = useState(false)
   const [conferma, setConferma] = useState('')
   const [errore, setErrore] = useState('')
@@ -258,9 +339,6 @@ function EliminaAccount() {
   async function elimina(e) {
     e.preventDefault()
     if (conferma.trim().toUpperCase() !== 'ELIMINA') return setErrore('Scrivi ELIMINA per confermare.')
-    // prima i documenti (certificato, tesserini): lo spazio file non si svuota da solo
-    const { data: file } = await supabase.storage.from('documenti-atleti').list(user.id)
-    if (file?.length) await supabase.storage.from('documenti-atleti').remove(file.map((f) => `${user.id}/${f.name}`))
     const { error } = await supabase.rpc('elimina_mio_account')
     if (error) return setErrore('Non sono riuscito a eliminarlo: ' + error.message)
     svuotaCache()
@@ -279,8 +357,9 @@ function EliminaAccount() {
     <form onSubmit={elimina} className="bg-white rounded-3xl p-5 border-2 border-red-200">
       <p className="font-bold text-red-700 mb-1">Eliminare l'account?</p>
       <p className="text-sm text-slate-600 mb-3">
-        Si cancellano per sempre il profilo, i tempi, le gare, le presenze, i punti, i documenti e i video. Non si può tornare indietro.
-        Se vuoi tenerne una copia, prima usa «I miei dati › Scarica».
+        L'account si chiude subito: sparisci dalla squadra e non puoi più entrare. Per <b>30 giorni</b> solo l'amministratore
+        può recuperarlo (se lo hai eliminato per sbaglio, chiedi al coach); poi si cancellano per sempre profilo, tempi,
+        gare, presenze, punti, documenti e video. Se vuoi tenerne una copia, prima usa «I miei dati › Scarica».
       </p>
       <label className="block text-xs text-slate-500 mb-1" htmlFor="conferma-elimina">Per confermare scrivi ELIMINA</label>
       <input id="conferma-elimina" value={conferma} onChange={(e) => setConferma(e.target.value)} autoComplete="off" className={CAMPO + ' mb-3'} />
@@ -369,6 +448,7 @@ export default function Profilo() {
         <CambiaNome />
         <Riga etichetta="Email" descrizione={user?.email} />
         <CambiaPassword />
+        {['atleta', 'admin'].includes(profile?.role) && <CategoriaGare />}
       </Sezione>
 
       {registraTempi && (
@@ -383,6 +463,12 @@ export default function Profilo() {
             <select value={pref.stile} onChange={(e) => salva({ stile: e.target.value })} aria-label="Stile preferito"
               className="border border-linea bg-bordo rounded-campo px-3 min-h-[44px] text-sm font-semibold max-w-[160px]">
               {STILI.map((s) => <option key={s}>{s}</option>)}
+            </select>
+          </Riga>
+          <Riga etichetta="Distanza preferita in gara" descrizione="Già scelta quando inserisci una gara">
+            <select value={pref.distanzaGara} onChange={(e) => salva({ distanzaGara: e.target.value })} aria-label="Distanza preferita in gara"
+              className="border border-linea bg-bordo rounded-campo px-3 min-h-[44px] text-sm font-semibold max-w-[160px]">
+              {DISTANZE_GARA.map((d) => <option key={d} value={d}>{d} m</option>)}
             </select>
           </Riga>
         </Sezione>

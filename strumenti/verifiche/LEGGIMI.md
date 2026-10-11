@@ -29,6 +29,7 @@ Utenti di prova dell'anteprima (dati inventati, `@swimline4.test`): coach `…00
 
 | `05_giro_pagine.js` (11/10 sera) | Come sopra + `/lavori` + **tasti troppo piccoli** sul telefono (sotto 24×24 px) | 176/176 senza errori dopo l'aggiornamento a react-router 7; tasti piccoli: 0 dopo le correzioni ✅ |
 | `07_prove_a_mano.md` | Telefoni veri (installazione, notifiche, offline, vasca) e prova con la coach esterna | da fare con persone vere |
+| `08_modifiche_30.sql` | Migrazione 30: categorie FIN, compagni senza data di nascita, domanda → notifica al coach e annullabile, risposta → notifica, tempi dal coach → notifica (una per allenamento), fuori piano (notifica, doppioni/futuro bloccati, solo coach risponde), segnalazione → admin, silenzio, sesso, email di recupero → notifica, account eliminato nascosto/bloccato e ripristino | tutto come atteso ✅ (11/10/2026 sera) |
 | `../ripristino/crea_sql_ripristino.mjs` | Da una copia .json a SQL di ripristino; con `prova` lo prova sull'anteprima e annulla | ✅ dopo la correzione: le colonne aggiunte dopo il backup prendono il valore di partenza |
 
 ### Controlli completi dell'11/10/2026 (sera)

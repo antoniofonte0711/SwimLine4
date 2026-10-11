@@ -23,6 +23,8 @@ const ICONE = {
   cuore: <path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z" />,
   pollice: <><path d="M7.5 10.5v9h-3v-9z" /><path d="M7.5 10.5 11 3.8a2 2 0 0 1 2.5 1.9V9h5a2 2 0 0 1 2 2.3l-1.2 6.8A2 2 0 0 1 17.3 20H7.5" /></>,
   freccia: <path d="M9 6l6 6-6 6" />,
+  busta: <><rect x="3" y="5.5" width="18" height="13" rx="2.5" /><path d="M3.5 7l8.5 6 8.5-6" /></>,
+  silenzio: <><path d="M6 16.5V11a6 6 0 0 1 9.5-4.9" /><path d="M18 10.5v6l1.5 2h-15" /><path d="M10 20.5a2 2 0 0 0 4 0" /><path d="M3.5 3.5l17 17" /></>,
 }
 
 export default function Icona({ nome, className = 'w-6 h-6', spessore = 1.9 }) {

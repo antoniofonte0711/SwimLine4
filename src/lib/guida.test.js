@@ -14,6 +14,13 @@ describe('guida', () => {
     })
   })
 
+  it('nessun tasto spiegato due volte nella stessa scheda (la pagina Guida li usa come chiave)', () => {
+    GUIDA.forEach((s) => {
+      const tasti = s.passi.map(([t]) => t)
+      expect(tasti.filter((t, i) => tasti.indexOf(t) !== i), s.id).toEqual([])
+    })
+  })
+
   it('il "?" mostra la scheda della pagina giusta per ogni ruolo', () => {
     const ids = (p, r) => guidaPagina(p, r).map((s) => s.id)
     expect(ids('/allenamenti', 'atleta')).toEqual(['allenamenti'])

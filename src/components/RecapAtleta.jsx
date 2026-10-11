@@ -25,11 +25,12 @@ export function useRecap(atletaId, squadraId, da, a) {
       supabase.from('allenamenti').select('id, data_allenamento, tipo_lavoro, distanza, stile, passaggi').eq('atleta_id', atletaId).gte('data_allenamento', storia).lte('data_allenamento', a),
       supabase.from('gare').select('id, nome_gara, distanza, stile, vasca, tempo, data_gara').eq('atleta_id', atletaId).gte('data_gara', storia).lte('data_gara', a),
       supabase.from('punti_movimenti').select('data, punti').eq('atleta_id', atletaId).gte('data', da).lte('data', a),
-    ]).then(([p, pr, al, g, pt]) => {
+      supabase.from('allenamenti_extra').select('data, metri').eq('atleta_id', atletaId).eq('stato', 'accettato').gte('data', da).lte('data', a),
+    ]).then(([p, pr, al, g, pt, ex]) => {
       if (!attivo) return
       setR(riepilogoPeriodo({
         piani: p.data || [], presenze: pr.data || [], allenamenti: al.data || [],
-        gare: (g.data || []).filter((x) => x.tempo), punti: pt.data || [], da, a,
+        gare: (g.data || []).filter((x) => x.tempo), punti: pt.data || [], extra: ex.data || [], da, a,
       }))
     })
     return () => { attivo = false }
@@ -167,9 +168,10 @@ export function RecapOggiFiglio({ squadraId, giorno }) {
 export function CardGiorno({ recap, oggi }) {
   if (!recap) return null
   const g = recap.giorni[0]
-  if (!g || (!g.stato && !g.tempi && !g.gare)) return null
+  if (!g || (!g.stato && !g.tempi && !g.gare && !g.extra)) return null
   const pezzi = []
   if (g.stato === 'presente' && g.metri) pezzi.push(`${km(g.metri)} km nuotati`)
+  if (g.extra) pezzi.push(`${km(g.extra)} km fuori piano`)
   if (g.stato === 'assente') pezzi.push('assente all\'allenamento')
   if (g.tempi) pezzi.push(`${g.tempi} ${g.tempi === 1 ? 'lavoro' : 'lavori'} con i tempi`)
   if (g.gare) pezzi.push(`${g.gare} ${g.gare === 1 ? 'gara' : 'gare'}`)

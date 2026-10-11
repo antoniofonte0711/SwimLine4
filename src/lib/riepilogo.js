@@ -6,11 +6,12 @@ import { recordPersonali, risultati } from './orgoglio'
 // piani: allenamenti pubblicati della squadra [{ data, righe }]
 // presenze: [{ data, stato }] · allenamenti: tempi registrati [{ id, data_allenamento, tipo_lavoro, distanza, stile, passaggi }]
 // gare: [{ id, data_gara, tempo, ... }] · punti: [{ data, punti }]
+// extra: allenamenti fuori piano accettati dal coach [{ data, metri }] (contano nei km fatti)
 // da, a: '2026-10-05', '2026-10-11' (compresi)
 
 const GG = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab']
 
-export function riepilogoPeriodo({ piani = [], presenze = [], allenamenti = [], gare = [], punti = [], da, a }) {
+export function riepilogoPeriodo({ piani = [], presenze = [], allenamenti = [], gare = [], punti = [], extra = [], da, a }) {
   const dentro = (d) => d && d >= da && d <= a
   const presenza = Object.fromEntries(presenze.filter((p) => dentro(p.data)).map((p) => [p.data, p.stato]))
   const pianiQui = piani.filter((p) => dentro(p.data))
@@ -27,6 +28,7 @@ export function riepilogoPeriodo({ piani = [], presenze = [], allenamenti = [], 
       stato: presenza[g] || null,
       tempi: allenamenti.filter((x) => x.data_allenamento === g).length,
       gare: gare.filter((x) => x.data_gara === g && x.tempo).length,
+      extra: extra.filter((x) => x.data === g).reduce((s, x) => s + (Number(x.metri) || 0), 0),
     })
   }
 
@@ -36,7 +38,8 @@ export function riepilogoPeriodo({ piani = [], presenze = [], allenamenti = [], 
 
   return {
     giorni,
-    metriFatti: presente.reduce((s, g) => s + g.metri, 0),
+    metriFatti: presente.reduce((s, g) => s + g.metri, 0) + giorni.reduce((s, g) => s + g.extra, 0),
+    metriExtra: giorni.reduce((s, g) => s + g.extra, 0),
     metriProgramma: giorni.reduce((s, g) => s + g.metri, 0),
     allenamentiProgramma: giorni.filter((g) => g.metri > 0).length,
     presenti: presente.length,

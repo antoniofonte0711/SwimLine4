@@ -23,6 +23,11 @@ export const NOTIFICHE_APP = [
   ['gare', 'Gara nuova, cambiata o cancellata', true],
   ['genitori', 'Richieste dei genitori', true],
   ['incoraggiamenti', 'Cuori e Bravo', true],
+  ['squadra', 'Richieste di entrare in squadra (al coach) e risposte', true],
+  ['tempi', 'Tempi inseriti dal coach (all\'atleta)', true],
+  ['fuori_piano', 'Allenamenti fuori piano (al coach, senza suono)', true],
+  ['segnalazioni', 'Segnalazioni dei problemi (all\'admin)', true],
+  ['email', '"Controlla la tua email" per la password dimenticata', true],
 ]
 
 export const PERMESSI_SQUADRA = [

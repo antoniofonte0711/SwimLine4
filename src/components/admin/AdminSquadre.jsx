@@ -18,7 +18,8 @@ export function useDatiSquadre() {
   const carica = useCallback(async () => {
     const [sq, pr, gf, al, imp] = await Promise.all([
       supabase.from('squadre').select('id, nome, coach_id, created_at').order('created_at'),
-      supabase.from('profiles').select('id, nome, cognome, role, squadra_id, created_at'),
+      // gli account chiusi dai proprietari stanno a parte (Tutti gli utenti › Account eliminati)
+      supabase.from('profiles').select('id, nome, cognome, role, squadra_id, created_at').is('eliminato_il', null),
       supabase.from('genitori_figli').select('id, genitore_id, atleta_id, stato'),
       supabase.from('allenamenti_squadra').select('squadra_id, pubblicato, data'),
       supabase.from('impostazioni_squadra').select('squadra_id, permessi'),

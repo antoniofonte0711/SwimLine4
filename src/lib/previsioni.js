@@ -21,18 +21,13 @@ export function stagione(oggi) {
   return { inizio: `${inizio}-09-01`, fine: `${inizio + 1}-07-31` }
 }
 
-// Scorciatoie per la data della previsione (la prossima fine di gennaio/aprile dopo oggi)
+// Le date della previsione: metà stagione (fine gennaio) e fine stagione (fine luglio).
+// Ad agosto, a stagione finita, si guarda già la prossima; la metà stagione già passata non si propone più.
 export function scorciatoie(oggi) {
-  const [y] = oggi.split('-').map(Number)
-  const prossima = (mmgg) => (`${y}-${mmgg}` > oggi ? `${y}-${mmgg}` : `${y + 1}-${mmgg}`)
-  const [yy, mm, dd] = oggi.split('-')
-  return [
-    ['Fine gennaio', prossima('01-31')],
-    ['Fine aprile', prossima('04-30')],
-    ['Fine stagione', stagione(oggi).fine],
-    ['Tra 1 anno', `${Number(yy) + 1}-${mm}-${dd}`],
-    ['Tra 4 anni', `${Number(yy) + 4}-${mm}-${dd}`],
-  ]
+  let s = stagione(oggi)
+  if (s.fine < oggi) s = stagione(`${s.fine.slice(0, 4)}-09-01`)
+  const meta = `${Number(s.inizio.slice(0, 4)) + 1}-01-31`
+  return [...(meta >= oggi ? [['Metà stagione', meta]] : []), ['Fine stagione', s.fine]]
 }
 
 // Raggruppa i tempi: gare per vasca+distanza+stile, lavori per tipo+distanza+stile. Un punto per giorno (il migliore).

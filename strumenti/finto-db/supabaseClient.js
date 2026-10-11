@@ -50,7 +50,9 @@ function query(nome) {
     // la vista compagni_squadra: atleti della mia squadra
     if (nome === 'compagni_squadra') {
       const io = (tabelle.profiles || []).find((p) => p.id === utente.id)
+      // come la vista vera: la categoria sì, la data di nascita no
       tabelle.compagni_squadra = (tabelle.profiles || []).filter((p) => ['atleta', 'admin'].includes(p.role) && p.squadra_id && p.squadra_id === io?.squadra_id)
+        .map(({ data_nascita, ...p }) => ({ ...p, categoria: data_nascita ? 'Ragazzi o Juniores' : null }))
     }
     const t = (tabelle[nome] ||= [])
     if (azione === 'ups') {
@@ -89,6 +91,37 @@ const RPC = {
     const p = (tabelle.profiles || []).find((r) => r.id === utente.id)
     if (p) Object.assign(p, { nome: p_nome.trim(), cognome: p_cognome?.trim() || null }, p_tempi_visibili == null ? {} : { tempi_visibili: p_tempi_visibili })
   },
+  // migrazione 30
+  mie_richieste() {
+    return (tabelle.richieste_squadra || []).filter((r) => r.persona_id === utente.id && r.stato === 'in_attesa')
+      .map((r) => ({ ...r, squadra_nome: tabelle.squadre.find((s) => s.id === r.squadra_id)?.nome, coach_nome: 'Coach Prova' }))
+  },
+  chiedi_di_entrare({ p_nome }) {
+    const s = tabelle.squadre.find((x) => x.nome.toLowerCase() === p_nome.trim().toLowerCase())
+    if (!s) return null
+    ;(tabelle.richieste_squadra ||= []).push({ id: crypto.randomUUID(), squadra_id: s.id, persona_id: utente.id, tipo: 'domanda', stato: 'in_attesa', created_at: new Date().toISOString() })
+    return s.nome
+  },
+  annulla_mia_domanda({ p_richiesta }) { tabelle.richieste_squadra = (tabelle.richieste_squadra || []).filter((r) => r.id !== p_richiesta) },
+  domande_squadra() { return [] },
+  silenzia_notifiche({ p_ore }) {
+    const p = tabelle.profiles.find((r) => r.id === utente.id)
+    const fino = p_ore == null ? null : p_ore < 0 ? '2999-12-31T00:00:00Z' : new Date(Date.now() + p_ore * 3600000).toISOString()
+    if (p) p.notifiche_silenzio_fino = fino
+    return fino
+  },
+  imposta_sesso({ p_persona, p_sesso }) { const p = tabelle.profiles.find((r) => r.id === p_persona); if (p) p.sesso = p_sesso },
+  proponi_allenamento_extra({ p_data, p_metri, p_minuti, p_descrizione }) {
+    const io = tabelle.profiles.find((r) => r.id === utente.id)
+    const id = crypto.randomUUID()
+    ;(tabelle.allenamenti_extra ||= []).push({ id, atleta_id: utente.id, squadra_id: io?.squadra_id, data: p_data, metri: p_metri, minuti: p_minuti, descrizione: p_descrizione, stato: 'in_attesa', created_at: new Date().toISOString() })
+    return id
+  },
+  rispondi_allenamento_extra({ p_id, p_accetta }) {
+    const e = (tabelle.allenamenti_extra || []).find((r) => r.id === p_id)
+    if (e) e.stato = p_accetta ? 'accettato' : 'rifiutato'
+  },
+  admin_account_eliminati() { return [] },
 }
 
 export const supabase = {
@@ -102,6 +135,14 @@ export const supabase = {
     onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
     signOut: async () => ({ error: null }),
     updateUser: async () => ({ data: { user: utente }, error: null }),
+    // registrazione e codici dell'email: il codice giusto è 123456
+    signUp: async () => ({ data: { user: utente, session: null }, error: null }),
+    signInWithPassword: async () => ({ data: { session: { user: utente } }, error: null }),
+    resetPasswordForEmail: async () => ({ data: {}, error: null }),
+    resend: async () => ({ data: {}, error: null }),
+    verifyOtp: async ({ token }) => (token === '123456'
+      ? { data: { session: { user: utente } }, error: null }
+      : { data: {}, error: { code: 'otp_expired', message: 'Token has expired or is invalid' } }),
   },
   storage: { from: () => ({ getPublicUrl: () => ({ data: { publicUrl: '' } }), upload: async () => ({ error: null }) }) },
   channel: () => ({ on() { return this }, subscribe() { return this } }),
