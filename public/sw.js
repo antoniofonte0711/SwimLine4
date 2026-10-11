@@ -1,6 +1,6 @@
 // Service worker SwimLine4: salva in cache i file dell'app (non i dati).
 // I dati di Supabase passano sempre dalla rete.
-const VERSIONE = 'v3'
+const VERSIONE = 'v4'
 const CACHE = `swimline4-${VERSIONE}`           // guscio dell'app (fisso)
 const RUNTIME = `swimline4-runtime-${VERSIONE}` // JS/CSS/icone scaricati usando l'app
 const MAX_RUNTIME = 60 // oltre questo numero tolgo i file più vecchi (es. JS di rilasci precedenti)
@@ -67,7 +67,7 @@ self.addEventListener('fetch', (event) => {
 
   // Pagine: prima la rete, se offline la versione in cache
   if (req.mode === 'navigate') {
-    event.respondWith(fetch(req).catch(() => caches.match('/index.html')))
+    event.respondWith(fetch(req).catch(() => caches.match('/index.html').then((r) => r || Response.error())))
     return
   }
 
@@ -81,7 +81,8 @@ self.addEventListener('fetch', (event) => {
       const rete = fetch(req).then((res) => {
         if (res.ok) event.waitUntil(salva(req, res.clone()))
         return res
-      }).catch(() => cached)
+        // senza rete e senza copia in cache: errore di rete pulito (mai "undefined", che il browser rifiuta)
+      }).catch(() => cached || Response.error())
       return cached || rete
     })
   )
