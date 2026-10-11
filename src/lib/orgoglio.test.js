@@ -13,6 +13,16 @@ const presenze = [
   { data: '2026-10-01', stato: 'presente' }, { data: '2026-10-02', stato: 'assente' }, { data: '2026-09-30', stato: 'presente' },
 ]
 
+describe('record e vasca', () => {
+  it('un tempo in vasca 25 non batte quello in vasca 50 (sono prove diverse)', () => {
+    const lista = risultati([], [
+      { id: 1, distanza: 100, stile: 'Stile libero', tempo: `1'05"00`, data_gara: '2026-07-10', vasca: 50 },
+      { id: 2, distanza: 100, stile: 'Stile libero', tempo: `1'02"00`, data_gara: '2026-10-02', vasca: 25 },
+    ])
+    expect(recordPersonali(lista)).toHaveLength(0)
+  })
+})
+
 describe('vista Orgoglio', () => {
   it('trova i record solo quando battono un tempo precedente', () => {
     const r = recordPersonali(risultati(allenamenti, gare))

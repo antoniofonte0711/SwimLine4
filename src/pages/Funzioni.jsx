@@ -95,6 +95,11 @@ export default function Funzioni() {
         })}
       </div>
 
+      <Link to="/guida" className="cliccabile flex items-center justify-center gap-2 min-h-[48px] mb-3 text-sm font-bold text-blue-600 bg-schiuma rounded-2xl">
+        <Icona nome="libro" className="w-5 h-5" />
+        Come si usa l'app? Apri la guida
+      </Link>
+
       {impostazioni && (
         <Link to={IMPOSTAZIONI}
           className="cliccabile flex items-center gap-3 min-h-[48px] px-1 border-t border-linea text-[14px] font-semibold text-slate-500 hover:text-abisso">

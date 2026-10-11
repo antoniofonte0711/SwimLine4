@@ -80,7 +80,7 @@ export default function StoricoAllenamenti({ atletaId }) {
             ) : (
               r.tempo_totale && <p className="text-xs text-slate-500 mt-1">{r.tempo_totale}</p>
             )}
-            {r.video_url && <a href={r.video_url} target="_blank" rel="noreferrer" className="text-xs text-blue-600">🎥 Guarda il video</a>}
+            {/^https:\/\//i.test(r.video_url || '') && <a href={r.video_url} target="_blank" rel="noreferrer" className="text-xs text-blue-600">🎥 Guarda il video</a>}
           </div>
           {!soloLettura && <button onClick={() => elimina(r)} title="Elimina" aria-label="Elimina" className="text-slate-500 hover:text-red-500 transition">🗑️</button>}
         </div>

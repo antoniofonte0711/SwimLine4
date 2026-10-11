@@ -35,7 +35,7 @@ export function scorciatoie(oggi) {
   ]
 }
 
-// Raggruppa i tempi: gare per distanza+stile, lavori per tipo+distanza+stile. Un punto per giorno (il migliore).
+// Raggruppa i tempi: gare per vasca+distanza+stile, lavori per tipo+distanza+stile. Un punto per giorno (il migliore).
 export function serieTempi(allenamenti = [], gare = []) {
   const serie = {}
   const aggiungi = (chiave, base, data, sec) => {
@@ -45,7 +45,8 @@ export function serieTempi(allenamenti = [], gare = []) {
   }
   gare.forEach((g) => {
     if (!g.distanza) return
-    aggiungi(`G|${g.distanza}|${g.stile}`, { fonte: 'gara', distanza: g.distanza, stile: g.stile }, g.data_gara, tempoInSecondi(g.tempo))
+    const vasca = Number(g.vasca) === 50 ? 50 : 25 // vasca corta e lunga: tempi diversi, serie diverse
+    aggiungi(`G|${vasca}|${g.distanza}|${g.stile}`, { fonte: 'gara', vasca, distanza: g.distanza, stile: g.stile }, g.data_gara, tempoInSecondi(g.tempo))
   })
   allenamenti.forEach((a) => {
     if (!a.distanza) return

@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import Icona from '../components/Icona'
+import GuidaPagina from '../components/GuidaPagina'
 import SegnalazioniAdmin from '../components/SegnalazioniAdmin'
 import { DettaglioSquadra, ElencoSquadre, useDatiSquadre } from '../components/admin/AdminSquadre'
 import { CoachDaApprovare, RegistroAccessi, TuttiUtenti } from '../components/admin/AdminUtenti'
@@ -59,6 +60,8 @@ export default function AdminPanel() {
   const squadraId = parametri.get('squadra')
   const [dati, ricarica] = useDatiSquadre()
   const [aperti, setAperti] = useState({ Amministrazione: true, Impostazioni: true })
+  const [guidaAperta, setGuidaAperta] = useState(false)
+  const chiudiGuida = useCallback(() => setGuidaAperta(false), [])
 
   const vai = (s, sq) => {
     const p = { sezione: s }
@@ -79,9 +82,12 @@ export default function AdminPanel() {
         </div>
         <div className="flex items-center gap-2">
           <span className="hidden sm:inline text-[15px] font-semibold text-slate-600 mr-1">{profile?.nome} {profile?.cognome} · {user?.email}</span>
+          <button type="button" onClick={() => setGuidaAperta(true)} aria-label="Come si usa il Pannello"
+            className="w-11 h-11 rounded-xl bg-schiuma text-blue-600 font-display text-xl font-extrabold flex items-center justify-center">?</button>
           <Link to="/dashboard" className="min-h-[44px] rounded-xl px-4 bg-schiuma text-blue-600 font-extrabold text-sm flex items-center">Torna all'app</Link>
         </div>
       </header>
+      {guidaAperta && <GuidaPagina onChiudi={chiudiGuida} />}
 
       <div className="flex flex-wrap gap-6 p-4 sm:p-6">
         <nav aria-label="Menu del pannello" className="flex-1 basis-[240px] max-w-full lg:max-w-[290px] self-start bg-white border border-slate-200 rounded-2xl overflow-hidden">

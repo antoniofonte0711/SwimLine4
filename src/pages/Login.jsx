@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabaseClient'
 import SfondoVasca from '../components/SfondoVasca'
 import Icona from '../components/Icona'
 import InputPassword from '../components/InputPassword'
+import { erroreAuth } from '../lib/erroriAuth'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -12,25 +13,32 @@ export default function Login() {
   const [error, setError] = useState(() => (new URLSearchParams(window.location.search).get('link') === 'scaduto'
     ? 'Il link dell\'email è scaduto o è già stato usato. Ogni nuova richiesta annulla i link precedenti: scrivi la tua email e premi "Password dimenticata" per riceverne uno nuovo, poi apri l\'email più recente.'
     : ''))
+  const [ok, setOk] = useState('')
+  const [invio, setInvio] = useState(false)
   const navigate = useNavigate()
 
   async function handleLogin(e) {
     e.preventDefault()
     setError('')
+    setOk('')
+    setInvio(true)
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) setError('Email o password non corretti.')
+    setInvio(false)
+    if (error) setError(erroreAuth(error))
     else navigate('/dashboard')
   }
 
   async function handleResetPassword() {
+    setOk('')
     if (!email) {
       setError('Inserisci la tua email qui sopra, poi premi di nuovo su "Password dimenticata".')
       return
     }
+    setError('')
     // il link dell'email porta alla pagina dove si sceglie la nuova password
     const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/nuova-password` })
-    if (error) setError('Errore nell\'invio dell\'email di recupero.')
-    else setError('Ti abbiamo inviato una email per reimpostare la password.')
+    if (error) setError(erroreAuth(error))
+    else setOk('Ti abbiamo inviato un\'email per scegliere una nuova password (se non la trovi, guarda nello spam).')
   }
 
   return (
@@ -65,23 +73,28 @@ export default function Login() {
         <button
           type="button"
           onClick={handleResetPassword}
-          className="text-sm font-semibold text-blue-600 underline mb-4 block transition"
+          className="min-h-[44px] text-sm font-semibold text-blue-600 underline mb-2 block transition"
         >
           Password dimenticata?
         </button>
 
-        {error && <p className="text-sm text-white bg-red-600 rounded-xl px-3 py-2 mb-4">{error}</p>}
+        {error && <p role="alert" className="text-sm text-white bg-red-600 rounded-xl px-3 py-2 mb-4">{error}</p>}
+        {ok && <p role="status" className="text-sm text-green-800 bg-green-50 border border-green-200 rounded-xl px-3 py-2 mb-4">{ok}</p>}
 
         <button
           type="submit"
-          className="w-full min-h-[52px] bg-blue-600 text-white font-display font-extrabold text-lg rounded-2xl hover:bg-blue-700 active:scale-[0.98] transition"
+          disabled={invio}
+          className="w-full min-h-[52px] bg-blue-600 text-white font-display font-extrabold text-lg rounded-2xl hover:bg-blue-700 active:scale-[0.98] transition disabled:opacity-60"
         >
-          Accedi
+          {invio ? 'Entro…' : 'Accedi'}
         </button>
 
         <p className="text-sm text-slate-500 text-center mt-5">
           Non hai un account?{' '}
           <Link to="/registrati" className="text-blue-600 font-bold hover:underline">Registrati</Link>
+        </p>
+        <p className="text-sm text-slate-500 text-center mt-2">
+          Prima volta? <Link to="/guida" className="text-blue-600 font-bold hover:underline">Leggi la guida</Link>
         </p>
       </form>
     </div>

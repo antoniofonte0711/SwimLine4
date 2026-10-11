@@ -2,7 +2,7 @@ import { secondiInTempo, tempoInSecondi } from './tempo'
 
 // Calcoli della vista "Orgoglio" del genitore: frasi semplici sui progressi del figlio.
 // allenamenti: [{ id, tipo_lavoro, distanza, stile, passaggi, data_allenamento }]
-// gare: [{ id, nome_gara, distanza, stile, tempo, data_gara }]
+// gare: [{ id, nome_gara, distanza, stile, vasca, tempo, data_gara }]
 // presenze: [{ data, stato }]
 
 const minimo = (lista) => {
@@ -17,9 +17,10 @@ export function risultati(allenamenti = [], gare = []) {
     etichetta: `${a.distanza} ${String(a.stile || '').toLowerCase()}`, tipo: a.tipo_lavoro,
     sec: minimo(a.passaggi), data: a.data_allenamento, gara: false,
   }))
+  // gare: vasca corta e lunga sono prove diverse (la vasca da 50 si dice nell'etichetta)
   const dg = (gare || []).map((g) => ({
-    rif: `gara:${g.id}`, chiave: `g|${g.distanza}|${g.stile}`,
-    etichetta: `${g.distanza} ${String(g.stile || '').toLowerCase()}`, nome: g.nome_gara,
+    rif: `gara:${g.id}`, chiave: `g|${Number(g.vasca) === 50 ? 50 : 25}|${g.distanza}|${g.stile}`,
+    etichetta: `${g.distanza} ${String(g.stile || '').toLowerCase()}${Number(g.vasca) === 50 ? ' (vasca 50)' : ''}`, nome: g.nome_gara,
     sec: tempoInSecondi(g.tempo), data: g.data_gara, gara: true,
   }))
   return [...da, ...dg].filter((r) => r.sec !== null && r.data)

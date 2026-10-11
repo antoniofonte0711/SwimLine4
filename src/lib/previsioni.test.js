@@ -27,6 +27,19 @@ describe('serieTempi', () => {
   })
 })
 
+describe('vasca corta e lunga', () => {
+  it('le gare in vasca 25 e 50 sono serie separate', () => {
+    const s = serieTempi([], [
+      { distanza: 100, stile: 'Stile libero', tempo: '1\'02"00', data_gara: '2026-10-02', vasca: 25 },
+      { distanza: 100, stile: 'Stile libero', tempo: '1\'04"00', data_gara: '2026-07-02', vasca: 50 },
+      { distanza: 100, stile: 'Stile libero', tempo: '1\'03"00', data_gara: '2026-06-02' }, // senza vasca = 25
+    ])
+    expect(s).toHaveLength(2)
+    expect(s.find((x) => x.vasca === 25).punti).toHaveLength(2)
+    expect(s.find((x) => x.vasca === 50).punti).toEqual([{ data: '2026-07-02', sec: 64 }])
+  })
+})
+
 describe('prevedi', () => {
   const oggi = '2026-10-11'
   it('con un solo tempo usa il miglioramento tipico', () => {

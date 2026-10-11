@@ -21,6 +21,8 @@ const Gare = lazy(() => import('./pages/Gare'))
 const Storico = lazy(() => import('./pages/Storico'))
 const Progressi = lazy(() => import('./pages/Progressi'))
 const Previsioni = lazy(() => import('./pages/Previsioni'))
+const Privacy = lazy(() => import('./pages/Privacy'))
+const Guida = lazy(() => import('./pages/Guida'))
 const Presenze = lazy(() => import('./pages/Presenze'))
 const Squadra = lazy(() => import('./pages/Squadra'))
 const Record = lazy(() => import('./pages/Record'))
@@ -54,6 +56,8 @@ export default function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/registrati" element={<Registrati />} />
               <Route path="/nuova-password" element={<NuovaPassword />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/guida" element={<Guida />} />
 
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/riepilogo" element={<ProtectedRoute><Riepilogo /></ProtectedRoute>} />

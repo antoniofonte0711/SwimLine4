@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import AppShell from '../components/AppShell'
-import { STILI, dataLocale } from '../lib/lavori'
+import { STILI, VASCHE, dataLocale, testoVasca, vascaDi } from '../lib/lavori'
 import { AVVISO_VIDEO, VIDEO_ATTIVI, puoModificare } from '../lib/permessi'
 import InputTempo from '../components/InputTempo'
 import GareCoach from '../components/GareCoach'
@@ -20,7 +20,7 @@ const TABELLA = 'gare'
 const VISTE = ['Nuova gara', 'Le mie gare']
 const DISTANZE = ['50', '100', '200', '400', '800', '1500']
 const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white'
-const VUOTO = { nome_gara: '', data_gara: dataLocale(), distanza: '100', stile: 'Stile libero', tempo: '', passaggi: [], file: null }
+const VUOTO = { nome_gara: '', data_gara: dataLocale(), distanza: '100', stile: 'Stile libero', vasca: 25, tempo: '', passaggi: [], file: null }
 
 const formattaDataGara = (s) => (s ? new Date(s + 'T12:00:00').toLocaleDateString('it-IT') : '')
 
@@ -40,7 +40,7 @@ function ProssimeGare({ gare }) {
       <h2 className="text-xs font-bold tracking-widest text-slate-500 uppercase px-1 mb-2">Prossime gare</h2>
       {lista.map((righe) => {
         const g = righe[0]
-        const prove = righe.sort((a, b) => (a.ordine ?? 0) - (b.ordine ?? 0)).map((r) => `${r.distanza} m ${r.stile}`).join(', ')
+        const prove = righe.sort((a, b) => (a.ordine ?? 0) - (b.ordine ?? 0)).map((r) => `${r.distanza} m ${r.stile}`).join(', ') + ` (${testoVasca(vascaDi(righe[0]))})`
         return (
           <div key={g.id} className="bg-white rounded-3xl p-5 mb-2.5">
             <p className="font-display text-xl font-extrabold text-abisso">{g.nome_gara}</p>
@@ -173,6 +173,7 @@ function GareAtleta() {
       nome_gara: form.nome_gara || 'Gara senza nome',
       distanza: d,
       stile: form.stile,
+      vasca: vascaDi(form),
       tempo,
       data_gara: form.data_gara,
       passaggi,
@@ -281,10 +282,20 @@ function GareAtleta() {
             </div>
           </div>
 
-          <label className="block text-xs text-slate-500 mb-1">Stile</label>
-          <select value={form.stile} onChange={(e) => setForm({ ...form, stile: e.target.value })} className={CAMPO + ' mb-3'}>
-            {STILI.map((s) => <option key={s}>{s}</option>)}
-          </select>
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            <div>
+              <label className="block text-xs text-slate-500 mb-1">Stile</label>
+              <select value={form.stile} onChange={(e) => setForm({ ...form, stile: e.target.value })} className={CAMPO}>
+                {STILI.map((s) => <option key={s}>{s}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-slate-500 mb-1">Vasca</label>
+              <select value={vascaDi(form)} onChange={(e) => setForm({ ...form, vasca: Number(e.target.value) })} className={CAMPO}>
+                {VASCHE.map(([v, nome]) => <option key={v} value={v}>{nome}</option>)}
+              </select>
+            </div>
+          </div>
 
           <div className="mb-4">
             <InputTempo etichetta="Tempo finale" value={form.tempo} onChange={(v) => setForm({ ...form, tempo: v })} />
@@ -329,7 +340,7 @@ function GareAtleta() {
                 <div>
                   <p className="font-bold">{g.nome_gara}</p>
                   <p className="text-sm text-slate-500">
-                    {formattaDataGara(g.data_gara)} · {g.distanza} m {g.stile}
+                    {formattaDataGara(g.data_gara)} · {g.distanza} m {g.stile} · {testoVasca(vascaDi(g))}
                     {g.inAttesa && <span className="ml-2 text-xs text-yellow-700 bg-yellow-100 px-2 py-0.5 rounded-full">⏳ da inviare</span>}
                   </p>
                 </div>

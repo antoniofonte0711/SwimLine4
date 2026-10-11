@@ -5,7 +5,7 @@ import AppShell from './AppShell'
 import InputTempo from './InputTempo'
 import SelettoreData from './SelettoreData'
 import { SenzaSquadra } from './PianoCard'
-import { STILI, dataLocale } from '../lib/lavori'
+import { STILI, VASCHE, dataLocale, testoVasca, vascaDi } from '../lib/lavori'
 import {
   normalizzaTempo, tempoValido, tempoInSecondi, secondiInTempo,
   passaggiCoerenti, tempoPlausibile, erroreTempoImpossibile, ERRORE_TEMPO_BREVE,
@@ -161,7 +161,7 @@ function ModificaTrofeo({ righe, onSalvato }) {
   const [errore, setErrore] = useState('')
 
   function apri() {
-    setF({ nome: g.nome_gara || '', data: g.data_gara, orario: (g.orario || '').slice(0, 5), luogo: g.luogo || '', note: g.note || '' })
+    setF({ nome: g.nome_gara || '', data: g.data_gara, orario: (g.orario || '').slice(0, 5), luogo: g.luogo || '', note: g.note || '', vasca: vascaDi(g) })
     setErrore('')
     setAperta(true)
   }
@@ -169,7 +169,7 @@ function ModificaTrofeo({ righe, onSalvato }) {
   async function salva() {
     if (!f.nome.trim()) return setErrore('Scrivi il nome della gara.')
     const { error } = await supabase.from('gare').update({
-      nome_gara: f.nome.trim(), data_gara: f.data, orario: f.orario || null, luogo: f.luogo.trim() || null, note: f.note.trim() || null,
+      nome_gara: f.nome.trim(), data_gara: f.data, orario: f.orario || null, luogo: f.luogo.trim() || null, note: f.note.trim() || null, vasca: f.vasca,
     }).in('id', righe.map((r) => r.id))
     if (error) return setErrore('Non sono riuscito a salvare: ' + error.message)
     setAperta(false)
@@ -182,6 +182,7 @@ function ModificaTrofeo({ righe, onSalvato }) {
         {(g.luogo || g.note) && (
           <p className="text-xs text-slate-500 mb-2">{[g.luogo && `📍 ${g.luogo}`, g.note].filter(Boolean).join(' · ')}</p>
         )}
+        <p className="text-xs font-semibold text-slate-600 mb-2 first-letter:uppercase">{testoVasca(vascaDi(g))}</p>
         <button onClick={apri} className="text-sm font-bold text-blue-600 bg-blue-50 rounded-full px-4 py-2">✏️ Modifica gara</button>
       </div>
     )
@@ -199,6 +200,10 @@ function ModificaTrofeo({ righe, onSalvato }) {
       </div>
       <label className="block text-xs text-slate-500 mb-1">Luogo</label>
       <input value={f.luogo} onChange={(e) => setF({ ...f, luogo: e.target.value })} className={CAMPO + ' mb-2'} />
+      <label className="block text-xs text-slate-500 mb-1">Vasca</label>
+      <select value={f.vasca} onChange={(e) => setF({ ...f, vasca: Number(e.target.value) })} className={CAMPO + ' mb-2'}>
+        {VASCHE.map(([v, n]) => <option key={v} value={v}>{n}</option>)}
+      </select>
       <label className="block text-xs text-slate-500 mb-1">Note</label>
       <textarea value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} rows={2} className={CAMPO + ' mb-2 resize-none'} />
       {errore && <p className="text-sm text-white bg-red-500 rounded-lg px-3 py-2 mb-2">{errore}</p>}
@@ -262,6 +267,7 @@ export default function GareCoach() {
   const [orario, setOrario] = useState('')
   const [luogo, setLuogo] = useState('')
   const [note, setNote] = useState('')
+  const [vasca, setVasca] = useState(25) // tutte le gare del trofeo si nuotano nella stessa vasca
   const [programma, setProgramma] = useState(() => [nuovaGara()]) // gare del trofeo, in ordine
   const [righe, setRighe] = useState({}) // { idAtleta: { incluso, iscr } }
   const [errore, setErrore] = useState('')
@@ -319,7 +325,7 @@ export default function GareCoach() {
       // il tempo di iscrizione vale per la prima gara del programma
       programma.forEach((g, k) => {
         records.push({
-          atleta_id: a.id, nome_gara: nome.trim(), distanza: Number(g.distanza), stile: g.stile,
+          atleta_id: a.id, nome_gara: nome.trim(), distanza: Number(g.distanza), stile: g.stile, vasca,
           data_gara: data, orario: orario || null, luogo: luogo.trim() || null, note: note.trim() || null,
           tempo: null, passaggi: [], ordine: k,
           ...(iscr && k === 0 ? { tempo_iscrizione: iscr } : {}),
@@ -383,6 +389,10 @@ export default function GareCoach() {
                   </div>
                   <label className="block text-xs text-slate-500 mb-1">Luogo (facoltativo)</label>
                   <input value={luogo} onChange={(e) => setLuogo(e.target.value)} placeholder="Es. Piscina Comunale, Via Roma 1" className={CAMPO + ' mb-3'} />
+                  <label className="block text-xs text-slate-500 mb-1">Vasca</label>
+                  <select value={vasca} onChange={(e) => setVasca(Number(e.target.value))} className={CAMPO + ' mb-3'}>
+                    {VASCHE.map(([v, n]) => <option key={v} value={v}>{n}</option>)}
+                  </select>
                   <label className="block text-xs text-slate-500 mb-1">Note per atleti e genitori (facoltativo)</label>
                   <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} placeholder="Es. ritrovo alle 8:30 all'ingresso" className={CAMPO + ' mb-3 resize-none'} />
                   <p className="text-sm font-bold mb-2">Gare del trofeo</p>
