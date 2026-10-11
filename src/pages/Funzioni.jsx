@@ -11,6 +11,7 @@ const GRUPPI = [
     ['/allenamenti', 'cronometro', 'Allenamenti'],
     ['/storico', 'libro', 'Storico'],
     ['/progressi', 'grafico', 'Progressi'],
+    ['/previsioni', 'futuro', 'Previsioni'],
     ['/record', 'medaglia', 'Record'],
   ]],
   ['Gare', [

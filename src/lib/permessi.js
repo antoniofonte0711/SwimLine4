@@ -9,7 +9,7 @@ export const RUOLI_VISTA = [
 ]
 
 const TUTTE = [
-  '/allenamenti', '/storico', '/gare', '/video', '/progressi',
+  '/allenamenti', '/storico', '/gare', '/video', '/progressi', '/previsioni',
   '/record', '/archivio', '/squadra', '/calendario', '/punti',
 ]
 // Solo admin e coach (anche quando l'admin guarda l'app come coach)

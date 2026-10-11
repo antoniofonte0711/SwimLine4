@@ -19,6 +19,7 @@ const Allenamenti = lazy(() => import('./pages/Allenamenti'))
 const Gare = lazy(() => import('./pages/Gare'))
 const Storico = lazy(() => import('./pages/Storico'))
 const Progressi = lazy(() => import('./pages/Progressi'))
+const Previsioni = lazy(() => import('./pages/Previsioni'))
 const Presenze = lazy(() => import('./pages/Presenze'))
 const Squadra = lazy(() => import('./pages/Squadra'))
 const Record = lazy(() => import('./pages/Record'))
@@ -62,6 +63,7 @@ export default function App() {
 
               <Route path="/storico" element={<ProtectedRoute><Storico /></ProtectedRoute>} />
               <Route path="/progressi" element={<ProtectedRoute><Progressi /></ProtectedRoute>} />
+              <Route path="/previsioni" element={<ProtectedRoute><Previsioni /></ProtectedRoute>} />
               <Route path="/squadra" element={<ProtectedRoute><Squadra /></ProtectedRoute>} />
               <Route path="/record" element={<ProtectedRoute><Record /></ProtectedRoute>} />
               <Route path="/presenze" element={<ProtectedRoute requireCoach><Presenze /></ProtectedRoute>} />

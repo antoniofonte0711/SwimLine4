@@ -2,6 +2,7 @@
 const ICONE = {
   onde: <><path d="M2 15c2 0 2-1.5 4-1.5s2 1.5 4 1.5 2-1.5 4-1.5 2 1.5 4 1.5 2-1.5 4-1.5" /><path d="M2 19.5c2 0 2-1.5 4-1.5s2 1.5 4 1.5 2-1.5 4-1.5 2 1.5 4 1.5 2-1.5 4-1.5" /><circle cx="15" cy="6" r="2.2" /><path d="M5 11.5 9 8l3 2.5" /></>,
   grafico: <><path d="M3 17l5-5 4 3 8-8" /><path d="M15 7h5v5" /></>,
+  futuro: <><path d="M3 18l5-5 3.5 2.5" /><path d="M11.5 15.5 20 7" strokeDasharray="2.2 2.4" /><circle cx="20" cy="6.5" r="1.6" /></>,
   griglia: <><rect x="4" y="4" width="6" height="6" rx="1.5" /><rect x="14" y="4" width="6" height="6" rx="1.5" /><rect x="4" y="14" width="6" height="6" rx="1.5" /><rect x="14" y="14" width="6" height="6" rx="1.5" /></>,
   persona: <><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" /></>,
   cronometro: <><circle cx="12" cy="13.5" r="7.5" /><path d="M12 9.5v4l2.5 2" /><path d="M10 2.5h4" /><path d="M12 2.5V6" /></>,
