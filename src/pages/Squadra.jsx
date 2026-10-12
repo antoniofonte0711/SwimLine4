@@ -38,11 +38,14 @@ export default function Squadra() {
       if (isCoach && !pronto) return
       // nome della squadra: per il coach quella che allena (per l'admin quella in cui è entrato),
       // altrimenti quella in cui sono
-      let nome = isCoach ? squadraCoach?.nome || '' : ''
-      if (!nome && profile?.squadra_id) {
-        const { data } = await supabase.from('squadre').select('nome').eq('id', profile.squadra_id).maybeSingle()
-        nome = data?.nome || ''
+      // con la società davanti, se il gruppo ne ha una ("Test Team · Esordienti")
+      let nome = ''
+      const idGruppo = (isCoach && squadraCoach?.id) || profile?.squadra_id
+      if (idGruppo) {
+        const { data } = await supabase.from('squadre').select('nome, societa(nome)').eq('id', idGruppo).maybeSingle()
+        if (data) nome = data.societa?.nome ? `${data.societa.nome} · ${data.nome}` : data.nome
       }
+      if (!nome && isCoach) nome = squadraCoach?.nome || ''
       if (!nome) {
         const { data } = await supabase.from('squadre').select('nome').eq('coach_id', user.id)
         nome = (data || []).map((s) => s.nome).join(', ')

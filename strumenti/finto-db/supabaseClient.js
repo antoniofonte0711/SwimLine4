@@ -23,6 +23,13 @@ const UTENTI = {
     id: 'all' + i, atleta_id: A, tipo_lavoro: 'C1', distanza: 100, ripetizioni: 4, stile: 'Stile libero',
     passaggi: [t(70 - i), t(70.5 - i), t(71 - i), t(71.2 - i)], data_allenamento: g(-12 + i * 4),
   }))
+  // società "Test Team" con i suoi gruppi (come vorremmo nel database vero)
+  tabelle.societa = [{ id: 'soc1', nome: 'Test Team', capo_id: UTENTI.admin, created_at: g(0) }]
+  tabelle.squadre.forEach((s) => { if (s.nome === 'Test Team') s.societa_id = 'soc1' })
+  tabelle.squadre.push(
+    { id: 'gr-mauri', nome: 'Test team Mauri', coach_id: null, societa_id: 'soc1', created_at: g(0) },
+    { id: 'gr-paura', nome: 'Test team Paura', coach_id: null, societa_id: 'soc1', created_at: g(0) },
+  )
   tabelle.notifiche = [
     { id: 'n1', destinatario_id: A, tipo: 'record', titolo: 'Nuovo primato!', testo: 'Hai nuotato i 100 SL in gara in 1\'03"20, -0"90 rispetto al record precedente.', link: '/gare', letta: false, created_at: new Date().toISOString() },
     { id: 'n2', destinatario_id: UTENTI.genitore, tipo: 'gara_nuova', titolo: 'Nuova gara in calendario', testo: "Trofeo d'Autunno, ore 09:30, Piscina Comunale.", link: '/gare', letta: false, created_at: new Date().toISOString() },
@@ -122,6 +129,31 @@ const RPC = {
     if (e) e.stato = p_accetta ? 'accettato' : 'rifiutato'
   },
   admin_account_eliminati() { return [] },
+  // migrazione 31: società e gruppi
+  admin_salva_societa({ p_id, p_nome, p_capo }) {
+    const t = (tabelle.societa ||= [])
+    if (p_id) { Object.assign(t.find((s) => s.id === p_id), { nome: p_nome.trim(), capo_id: p_capo }); return p_id }
+    const id = crypto.randomUUID()
+    t.push({ id, nome: p_nome.trim(), capo_id: p_capo, created_at: new Date().toISOString() })
+    return id
+  },
+  admin_elimina_societa({ p_id }) {
+    tabelle.squadre.forEach((s) => { if (s.societa_id === p_id) s.societa_id = null })
+    tabelle.societa = (tabelle.societa || []).filter((s) => s.id !== p_id)
+  },
+  admin_gruppo_societa({ p_squadra, p_societa }) { const s = tabelle.squadre.find((x) => x.id === p_squadra); if (s) s.societa_id = p_societa },
+  admin_sposta_persona({ p_persona, p_squadra }) {
+    tabelle.squadre.forEach((s) => { if (s.coach_id === p_persona && s.id !== p_squadra) s.coach_id = null })
+    const p = tabelle.profiles.find((x) => x.id === p_persona); if (p) p.squadra_id = p_squadra
+  },
+  admin_imposta_coach({ p_squadra, p_coach }) {
+    if (p_coach) {
+      tabelle.squadre.forEach((s) => { if (s.coach_id === p_coach && s.id !== p_squadra) s.coach_id = null })
+      const p = tabelle.profiles.find((x) => x.id === p_coach)
+      if (p) Object.assign(p, { squadra_id: p_squadra, role: ['admin', 'coach'].includes(p.role) ? p.role : 'coach' })
+    }
+    const s = tabelle.squadre.find((x) => x.id === p_squadra); if (s) s.coach_id = p_coach
+  },
 }
 
 export const supabase = {

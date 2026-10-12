@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { BOTTONE, BOTTONE_PIENO, ChipRuolo, Salvato, Scheda, Vuoto } from './ui'
+import { OpzioniGruppi } from './AdminSquadre'
 
 const nomeDi = (p) => `${p?.nome || ''} ${p?.cognome || ''}`.trim() || 'Senza nome'
 
@@ -98,7 +99,22 @@ export function TuttiUtenti({ dati, ricarica, io }) {
   const [apertura, setApertura] = useState(null)
   const [lavoro, setLavoro] = useState('')
 
-  const squadra = (id) => dati.squadre.find((s) => s.id === id)?.nome || 'Senza squadra'
+  const squadra = (id) => {
+    const s = dati.squadre.find((x) => x.id === id)
+    if (!s) return 'Senza gruppo'
+    const so = dati.societa.find((x) => x.id === s.societa_id)
+    return so ? `${so.nome} · ${s.nome}` : s.nome
+  }
+
+  async function spostaIn(p, nuova) {
+    if (nuova === (p.squadra_id || '')) return
+    const allena = dati.squadre.find((s) => s.coach_id === p.id)
+    const dove = nuova ? squadra(nuova) : 'nessun gruppo'
+    if (!window.confirm(`Spostare ${nomeDi(p)} in ${dove}?` + (allena ? ` È il coach di ${allena.nome}: quel gruppo resterà senza coach.` : ''))) return
+    const { error } = await supabase.rpc('admin_sposta_persona', { p_persona: p.id, p_squadra: nuova || null })
+    setEsito(error ? 'Errore: ' + error.message : `${nomeDi(p)} ora è in ${dove}.`)
+    ricarica()
+  }
   const q = cerca.trim().toLowerCase()
   const elenco = dati.persone
     .filter((p) => (ruolo === 'tutti' || p.role === ruolo) && (!q || `${nomeDi(p)} ${squadra(p.squadra_id)}`.toLowerCase().includes(q)))
@@ -128,8 +144,8 @@ export function TuttiUtenti({ dati, ricarica, io }) {
       <EmailDaConfermare ricarica={ricarica} />
       <AccountEliminati ricarica={ricarica} />
       <Scheda nota="Ogni account dell'app, in tutte le squadre." azioni={<Salvato stato={esito} />}>
-        <input type="search" value={cerca} onChange={(e) => setCerca(e.target.value)} aria-label="Cerca per nome o squadra"
-          placeholder="Cerca per nome o squadra…" className="w-full min-h-[46px] border border-slate-300 rounded-xl px-3.5 bg-slate-50 mb-3" />
+        <input type="search" value={cerca} onChange={(e) => setCerca(e.target.value)} aria-label="Cerca per nome, società o gruppo"
+          placeholder="Cerca per nome, società o gruppo…" className="w-full min-h-[46px] border border-slate-300 rounded-xl px-3.5 bg-slate-50 mb-3" />
         <div className="flex flex-wrap gap-2 mb-2">
           {[['tutti', 'Tutti'], ['atleta', 'Atleti'], ['coach', 'Coach'], ['genitore', 'Genitori'], ['admin', 'Admin']].map(([k, n]) => (
             <button key={k} type="button" onClick={() => setRuolo(k)} aria-pressed={ruolo === k}
@@ -145,6 +161,11 @@ export function TuttiUtenti({ dati, ricarica, io }) {
               <span className="text-[13px] text-slate-500">{squadra(p.squadra_id)}</span>
             </span>
             <ChipRuolo ruolo={p.role} />
+            <select aria-label={`Gruppo di ${nomeDi(p)}`} value={p.squadra_id || ''} onChange={(e) => spostaIn(p, e.target.value)}
+              className="min-h-[40px] max-w-[220px] border border-slate-300 rounded-xl px-2 text-sm font-semibold bg-white">
+              <option value="">Senza gruppo</option>
+              <OpzioniGruppi dati={dati} />
+            </select>
             <select aria-label={`Ruolo di ${nomeDi(p)}`} value={p.role} onChange={(e) => cambiaRuolo(p, e.target.value)}
               className="min-h-[40px] border border-slate-300 rounded-xl px-2 text-sm font-semibold bg-white">
               <option value="atleta">Atleta</option><option value="genitore">Genitore</option><option value="coach">Coach</option>

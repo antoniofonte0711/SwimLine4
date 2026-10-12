@@ -38,8 +38,10 @@ export default function Registrati() {
   const minore = role === 'atleta' && anni !== null && anni < ETA_CONSENSO
 
   useEffect(() => {
-    supabase.from('squadre').select('id, nome').then(({ data }) => {
-      if (data) setSquadre(data)
+    // il nome della società accanto al gruppo: due "Esordienti" di società diverse non si confondono
+    supabase.from('squadre').select('id, nome, societa(nome)').then(({ data }) => {
+      if (data) setSquadre(data.map((s) => ({ id: s.id, nome: s.societa?.nome ? `${s.nome} · ${s.societa.nome}` : s.nome }))
+        .sort((a, b) => a.nome.localeCompare(b.nome)))
     })
   }, [])
 

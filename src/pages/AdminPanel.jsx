@@ -11,7 +11,7 @@ import { FunzioniApp, NotificheApp, Sicurezza } from '../components/admin/AdminI
 import { Numero, Scheda } from '../components/admin/ui'
 
 const MENU = [
-  ['squadre', 'Squadre', 'onde'],
+  ['squadre', 'Società e gruppi', 'onde'],
   ['dashboard', 'Dashboard', 'grafico'],
   ['Amministrazione', 'gruppo', [['utenti', 'Tutti gli utenti'], ['approvazioni', 'Coach da approvare'], ['segnalazioni', 'Segnalazioni'], ['accessi', 'Registro accessi']]],
   ['Impostazioni', 'regolazioni', [['funzioni', 'Funzioni dell\'app'], ['notifiche', 'Notifiche e avvisi'], ['sicurezza', 'Sicurezza e backup']]],
