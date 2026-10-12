@@ -116,7 +116,7 @@ export default function Registrati() {
             <ControllaEmail email={email} tipo="signup" onFatto={() => navigate('/dashboard')} onIndietro={() => setSuccess(false)} />
           )}
           {role === 'coach' && (
-            <p className="text-sm text-slate-600 mt-4 text-center">Il profilo coach si attiva quando l'amministratore lo approva: fino ad allora entri come atleta.</p>
+            <p className="text-sm text-slate-600 mt-4 text-center">Sei coach: la tua squadra è già pronta. Dagli il nome agli atleti per farli entrare.</p>
           )}
           {role !== 'coach' && squadraScelta && (
             <p className="text-sm text-slate-600 mt-4 text-center">Il coach della squadra riceve la tua richiesta: entri quando la approva.</p>
@@ -183,7 +183,7 @@ export default function Registrati() {
             <input value={nomeSquadra} onChange={(e) => setNomeSquadra(e.target.value)}
               placeholder="Es. Delfini Nuoto Club"
               className="w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white transition mb-1" />
-            <p className="text-xs text-slate-500 mb-4">L'account coach va approvato dall'amministratore: dopo l'approvazione nasce la tua squadra.</p>
+            <p className="text-xs text-slate-500 mb-4">La tua squadra nasce subito, senza approvazioni: gli atleti la trovano con questo nome.</p>
           </>
         ) : (
           <>

@@ -371,7 +371,7 @@ export const GUIDA = [
       ['Cosa fare?', 'Per le persone selezionate: Cambia ruolo, Sposta in un\'altra squadra, Togli dalla squadra.'],
       ['Tutti gli utenti', '"Entra ›" apre l\'app come quella persona (link monouso, da aprire in una finestra privata). Ogni accesso resta nel Registro accessi.'],
       ['Account eliminati', 'Chi ha chiuso il proprio account: "Ripristina" se è stato uno sbaglio, "Cancella ora" per toglierlo subito. Dopo 30 giorni si cancellano da soli.'],
-      ['Coach da approvare', '"Approva" (nasce la sua squadra) o "Rifiuta".'],
+      ['Coach da approvare', 'Dal 12/10 i coach entrano subito con la loro squadra; qui restano solo eventuali richieste vecchie: "Approva" o "Rifiuta".'],
       ['Funzioni dell\'app', 'Accendi o spegni sezioni e notifiche per tutti.'],
       ['Invia avviso', 'Un messaggio a tutti, a un ruolo o a una squadra: arriva nella campanella.'],
       ['Scarica una copia dei dati', 'Backup dei dati in un file.'],
