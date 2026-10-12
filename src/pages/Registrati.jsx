@@ -84,6 +84,13 @@ export default function Registrati() {
       return
     }
 
+    // Email già registrata: Supabase non dà errore (per non rivelare chi è iscritto) e non manda email.
+    // Si riconosce perché l'utente restituito non ha nessuna identità.
+    if (data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+      setError('Esiste già un account con questa email: accedi, oppure usa "Password dimenticata?" nella pagina di accesso.')
+      return
+    }
+
     // Se Supabase non chiede la conferma dell'email l'account è già attivo: si entra subito.
     // Altrimenti la schermata "Controlla la tua email" (link o codice), senza uscire dall'app.
     const attivo = !!data?.session
