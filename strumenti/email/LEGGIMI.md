@@ -39,7 +39,7 @@ Le password le inserisci tu: Claude non può farlo.
 5. Authentication › **URL Configuration**: controlla che "Site URL" sia `https://swim-line4.vercel.app`
    (è l'indirizzo del link dentro le email).
 
-## 3. Testi delle email in italiano, con il codice (3 minuti — serve per il codice nell'app)
+## 3. Testi delle email in italiano (facoltativo, 3 minuti)
 
 Dall'11/10 l'app, dopo "Crea account" e "Password dimenticata", mostra la schermata **"Controlla la tua email"**:
 si può toccare il link **oppure scrivere nell'app il codice di 6 cifre** (più veloce: non si cambia app e funziona

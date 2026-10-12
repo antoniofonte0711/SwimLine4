@@ -18,5 +18,3 @@ export function casellaDi(email = '') {
   return trovata ? { url: trovata[1], nome: trovata[2] } : null
 }
 
-// Il codice dell'email: solo cifre (Supabase ne manda 6, a volte fino a 10)
-export const pulisciCodice = (testo) => String(testo || '').replace(/\D/g, '').slice(0, 10)

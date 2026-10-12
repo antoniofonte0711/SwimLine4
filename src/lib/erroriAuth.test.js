@@ -10,7 +10,7 @@ describe('erroreAuth', () => {
     expect(erroreAuth({ message: 'email rate limit exceeded' })).toMatch(/Troppi tentativi/)
   })
   it('codice dell\'email, account eliminato, email chiesta da poco', () => {
-    expect(erroreAuth({ code: 'otp_expired', message: 'Token has expired or is invalid' })).toMatch(/Codice sbagliato o scaduto/)
+    expect(erroreAuth({ code: 'otp_expired', message: 'Token has expired or is invalid' })).toMatch(/link è scaduto/)
     expect(erroreAuth({ code: 'user_banned', message: 'User is banned' })).toMatch(/account è stato eliminato/)
     expect(erroreAuth({ message: 'For security purposes, you can only request this after 52 seconds.' })).toMatch(/aspetta un minuto/)
   })
