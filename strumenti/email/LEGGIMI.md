@@ -41,19 +41,17 @@ Le password le inserisci tu: Claude non può farlo.
 
 ## 3. Testi delle email in italiano (facoltativo, 3 minuti)
 
-Dall'11/10 l'app, dopo "Crea account" e "Password dimenticata", mostra la schermata **"Controlla la tua email"**:
-si può toccare il link **oppure scrivere nell'app il codice di 6 cifre** (più veloce: non si cambia app e funziona
-anche se il link si apre nel browser sbagliato). Il codice c'è solo se lo metti nel testo dell'email (`{{ .Token }}`).
+Dopo "Crea account" e "Password dimenticata" l'app mostra la schermata **"Controlla la tua email"**: si apre
+l'email e si tocca il link (dal 12/10 niente codice da scrivere nell'app: bastava il link).
 
 Authentication › **Emails** › Templates. Testi brevi e senza pubblicità (finiscono meno nello spam):
 
-**Confirm signup** — oggetto: `Il tuo codice per SwimLine4`
+**Confirm signup** — oggetto: `Conferma il tuo account SwimLine4`
 
 ```html
 <p>Ciao!</p>
-<p>Per attivare il tuo account SwimLine4 scrivi questo codice nell'app:</p>
-<p style="font-size:28px;font-weight:bold;letter-spacing:6px">{{ .Token }}</p>
-<p>Oppure tocca il link: <a href="{{ .ConfirmationURL }}">Conferma il mio account</a></p>
+<p>Per attivare il tuo account SwimLine4 tocca il link qui sotto:</p>
+<p><a href="{{ .ConfirmationURL }}">Conferma il mio account</a></p>
 <p>Se non ti sei registrato tu, ignora questa email.</p>
 ```
 
@@ -61,13 +59,10 @@ Authentication › **Emails** › Templates. Testi brevi e senza pubblicità (fi
 
 ```html
 <p>Ciao!</p>
-<p>Hai chiesto una nuova password per SwimLine4. Scrivi questo codice nell'app:</p>
-<p style="font-size:28px;font-weight:bold;letter-spacing:6px">{{ .Token }}</p>
-<p>Oppure tocca il link: <a href="{{ .ConfirmationURL }}">Scegli una nuova password</a></p>
+<p>Hai chiesto una nuova password per SwimLine4. Tocca il link per sceglierla:</p>
+<p><a href="{{ .ConfirmationURL }}">Scegli una nuova password</a></p>
 <p>Se non l'hai chiesta tu, ignora questa email: la password resta quella di prima.</p>
 ```
-
-Se in Authentication › Providers › Email c'è "Email OTP Length", lascia **6**.
 
 **Avvisi già attivi nell'app** (non serve fare niente): schermata grande "Controlla la tua email" con "Apri Gmail"
 (o Outlook, Libero…) e "Rimanda l'email" dopo 60 secondi; per "Password dimenticata" arriva anche una notifica
