@@ -174,6 +174,8 @@ export function ElencoSquadre({ dati, onApri, ricarica }) {
   async function aggiungiGruppo(societaId, squadraId) {
     if (!squadraId) return
     setErrore('')
+    const gruppo = dati.squadre.find((s) => s.id === squadraId)
+    if (!societaId && !window.confirm(`Far uscire ${gruppo?.nome} da ${nomeSocieta(gruppo?.societa_id)}? Il gruppo resta com'è, senza società.`)) return
     const { error } = await supabase.rpc('admin_gruppo_societa', { p_squadra: squadraId, p_societa: societaId })
     if (error) return setErrore(error.message)
     ricarica()
@@ -253,6 +255,13 @@ export function ElencoSquadre({ dati, onApri, ricarica }) {
                       className="min-h-[40px] border border-slate-300 rounded-xl px-2 text-sm font-semibold bg-white">
                       <option value="">Aggiungi un gruppo esistente…</option>
                       {liberi.map((s) => <option key={s.id} value={s.id}>{s.nome}</option>)}
+                    </select>
+                  )}
+                  {gruppi.length > 0 && (
+                    <select aria-label={`Fai uscire un gruppo da ${so.nome}`} value="" onChange={(e) => aggiungiGruppo(null, e.target.value)}
+                      className="min-h-[40px] border border-slate-300 rounded-xl px-2 text-sm font-semibold bg-white">
+                      <option value="">Fai uscire un gruppo…</option>
+                      {gruppi.map((s) => <option key={s.id} value={s.id}>{s.nome}</option>)}
                     </select>
                   )}
                   <button type="button" onClick={() => setModulo({ tipo: 'gruppo', societa: so.id })} className="min-h-[40px] rounded-xl px-3 text-sm font-extrabold bg-schiuma text-blue-600">+ Gruppo</button>
