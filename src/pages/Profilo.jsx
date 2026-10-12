@@ -392,7 +392,7 @@ export default function Profilo() {
   }
 
   const registraTempi = puoModificare(ruolo) && puo('a_tempi')
-  const eAtleta = ['atleta', 'admin'].includes(profile?.role) && ruolo !== 'genitore' && ruolo !== 'ospite'
+  const eAtleta = ['atleta', 'admin'].includes(profile?.role) && ruolo !== 'genitore'
 
   return (
     <AppShell titolo="Profilo" attiva="profilo">
@@ -474,7 +474,7 @@ export default function Profilo() {
         </Sezione>
       )}
 
-      {ruolo !== 'ospite' && puo('vasca') && (
+      {puo('vasca') && (
         <Sezione titolo="In vasca">
           <Riga etichetta="Schermo sempre acceso" descrizione="Il telefono non si spegne mentre nuoti">
             <Interruttore acceso={pref.schermoAcceso} onCambia={(v) => salva({ schermoAcceso: v })} etichetta="Schermo sempre acceso" />

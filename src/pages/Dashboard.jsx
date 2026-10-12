@@ -150,20 +150,6 @@ function HomeAtleta() {
     return () => { attivo = false }
   }, [giorno, user.id])
 
-  if (ruolo === 'ospite') {
-    return (
-      <AppShell titolo="Home" attiva="home">
-        <div className="bg-white rounded-3xl p-8 text-center shadow-card">
-          <span className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-schiuma text-blue-600 flex items-center justify-center">
-            <Icona nome="onde" className="w-7 h-7" />
-          </span>
-          <p className="font-bold mb-1">Benvenuto in SwimLine4</p>
-          <p className="text-sm text-slate-500">Da ospite puoi vedere la squadra e il calendario gare.</p>
-        </div>
-      </AppShell>
-    )
-  }
-
   return (
     <AppShell titolo={titoloGiorno(giorno)} attiva="home" giorno={giorno} onGiorno={setGiorno} voti={settimana.voti}>
       {presenza && (

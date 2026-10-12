@@ -29,7 +29,7 @@ export default function AppShell({ titolo, attiva, indietro, giorno, onGiorno, v
   useTipiLavoro() // carica subito i lavori della squadra (colori e difficoltà in tutta l'app)
   // non quando l'admin guarda l'app come un altro: la coda sul telefono è di chi l'ha scritta
   useInvioAutomatico(supabase, staVedendoCome ? null : profile?.id)
-  const voci = VOCI.filter(([chiave]) => !(ruolo === 'ospite' && chiave === 'riepilogo'))
+  const voci = VOCI
   const iniziale = (profile?.nome || 'A').charAt(0).toUpperCase()
   const [calAperto, setCalAperto] = useState(false)
   const [guidaAperta, setGuidaAperta] = useState(false)
@@ -85,17 +85,15 @@ export default function AppShell({ titolo, attiva, indietro, giorno, onGiorno, v
               className="cliccabile w-11 h-11 rounded-full bg-white border border-linea text-blue-600 font-display text-xl font-extrabold flex items-center justify-center shadow-card">
               ?
             </button>
-            {ruolo !== 'ospite' && (
-              <Link to="/notifiche" aria-label={nonLette ? `Notifiche, ${nonLette} nuove` : 'Notifiche'}
-                className="cliccabile relative w-11 h-11 rounded-full bg-white border border-linea text-abisso flex items-center justify-center shadow-card">
-                <Icona nome="campanella" />
-                {nonLette > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 min-w-[20px] h-5 px-1 rounded-full bg-corsia text-white text-[11px] font-extrabold flex items-center justify-center">
-                    {nonLette > 9 ? '9+' : nonLette}
-                  </span>
-                )}
-              </Link>
-            )}
+            <Link to="/notifiche" aria-label={nonLette ? `Notifiche, ${nonLette} nuove` : 'Notifiche'}
+              className="cliccabile relative w-11 h-11 rounded-full bg-white border border-linea text-abisso flex items-center justify-center shadow-card">
+              <Icona nome="campanella" />
+              {nonLette > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[20px] h-5 px-1 rounded-full bg-corsia text-white text-[11px] font-extrabold flex items-center justify-center">
+                  {nonLette > 9 ? '9+' : nonLette}
+                </span>
+              )}
+            </Link>
             <Link to="/profilo" aria-label="Profilo"
               className="cliccabile w-11 h-11 rounded-full bg-abisso text-white font-display font-bold flex items-center justify-center">
               {iniziale}

@@ -8,7 +8,6 @@ describe('percorsoConsentito', () => {
       expect(percorsoConsentito('admin', p)).toBe(true)
       expect(percorsoConsentito('atleta', p)).toBe(false)
       expect(percorsoConsentito('genitore', p)).toBe(false)
-      expect(percorsoConsentito('ospite', p)).toBe(false)
     }
   })
   it('il genitore non inserisce allenamenti né punti', () => {
@@ -16,13 +15,12 @@ describe('percorsoConsentito', () => {
     expect(percorsoConsentito('genitore', '/punti')).toBe(false)
     expect(percorsoConsentito('genitore', '/gare')).toBe(true)
   })
-  it("l'ospite vede solo squadra e calendario", () => {
-    expect(funzioniConsentite('ospite')).toEqual(['/squadra', '/calendario'])
-    expect(percorsoConsentito('ospite', '/riepilogo')).toBe(false)
-    expect(percorsoConsentito('ospite', '/storico')).toBe(false)
+  it('la vista ospite non esiste più', () => {
+    expect(nomeRuolo('ospite')).toBe('ospite')
+    expect(funzioniConsentite('atleta')).toContain('/storico')
   })
   it('home, funzioni e profilo sono per tutti', () => {
-    for (const r of ['admin', 'coach', 'atleta', 'genitore', 'ospite']) {
+    for (const r of ['admin', 'coach', 'atleta', 'genitore']) {
       for (const p of ['/dashboard', '/funzioni', '/profilo']) expect(percorsoConsentito(r, p)).toBe(true)
     }
   })
@@ -30,8 +28,8 @@ describe('percorsoConsentito', () => {
 
 describe('puoModificare', () => {
   it('solo admin, coach e atleta inseriscono dati', () => {
-    expect(['admin', 'coach', 'atleta', 'genitore', 'ospite', undefined].map(puoModificare))
-      .toEqual([true, true, true, false, false, false])
+    expect(['admin', 'coach', 'atleta', 'genitore', undefined].map(puoModificare))
+      .toEqual([true, true, true, false, false])
   })
 })
 

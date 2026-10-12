@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 
 // Ruoli possibili: 'atleta' | 'coach' | 'genitore' | 'admin'
-// L'admin può anche "vedere come" un altro ruolo (coach, atleta, genitore, ospite):
+// L'admin può anche "vedere come" un altro ruolo (coach, atleta, genitore):
 // cambia solo ciò che compare sullo schermo, i dati e i permessi veri restano quelli del suo account.
 const AuthContext = createContext(null)
 const CHIAVE_VISTA = 'swimline4:vistaCome'
@@ -23,7 +23,9 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
   const [vistaCome, setVistaCome] = useState(() => {
     try {
-      return sessionStorage.getItem(CHIAVE_VISTA) || ''
+      // una vista non più esistente (es. "ospite", tolta il 12/10) riporta all'admin
+      const v = sessionStorage.getItem(CHIAVE_VISTA) || ''
+      return ['coach', 'atleta', 'genitore'].includes(v) ? v : ''
     } catch {
       return ''
     }
