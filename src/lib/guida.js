@@ -92,7 +92,7 @@ export const GUIDA = [
   {
     id: 'allenamenti', titolo: 'Scrivere i tempi', pagine: ['/allenamenti'], per: ATLETI,
     passi: [
-      ['I lavori del coach', 'Se il coach ha pubblicato l\'allenamento di oggi, sotto ogni lavoro ci sono le caselle: scrivi i tempi (anche solo alcuni) e premi "Salva i tempi". Un lavoro già salvato compare in verde; per cambiarlo toglilo dallo Storico (I miei tempi) e riscrivilo.'],
+      ['I lavori del coach', 'Se il coach ha pubblicato l\'allenamento di oggi, sotto ogni lavoro ci sono le caselle: scrivi i tempi (anche solo alcuni) e premi "Salva i tempi". Un lavoro già salvato compare in verde: "Correggi" riapre le caselle per cambiare un tempo.'],
       ['+ Ho fatto un lavoro diverso', 'Per un lavoro fuori programma: si apre il modulo qui sotto.'],
       ['Aggiungi lavoro / Storico (admin)', 'Due schede: la prima per scrivere, la seconda per vedere quello che hai già salvato.'],
       ['Tipo di lavoro', 'A2, B1, C1… come ha scritto il coach.'],
@@ -147,7 +147,16 @@ export const GUIDA = [
     ],
   },
   {
-    id: 'funzioni', titolo: 'Funzioni', pagine: ['/funzioni'], per: ['genitore', 'admin'],
+    id: 'altro-genitore', titolo: 'Altro (genitore)', pagine: ['/funzioni'], per: ['genitore'],
+    intro: 'Sotto ogni voce c\'è scritto a cosa serve. In basso hai già Oggi, Settimana e Gare di tuo figlio.',
+    passi: [
+      ['Come va tuo figlio', 'Progressi (grafico dei tempi), Record, Previsioni a fine stagione, Storico degli allenamenti.'],
+      ['La squadra', 'Calendario del mese e Compagni con le loro gare.'],
+      ['Come si usa l\'app?', 'In fondo: apre la guida completa.'],
+    ],
+  },
+  {
+    id: 'funzioni', titolo: 'Funzioni', pagine: ['/funzioni'], per: ['admin'],
     passi: [
       ['I riquadri', 'Ogni riquadro apre una sezione: Allenamenti, Storico, Progressi, Previsioni, Record, Gare, Squadra, Calendario, Punti…'],
       ['Vedi solo le tue', 'Ognuno vede solo le sezioni che gli servono (il genitore, per esempio, non scrive tempi).'],
@@ -316,7 +325,7 @@ export const GUIDA = [
   {
     id: 'presenze', titolo: 'Presenze (coach)', pagine: ['/presenze'], per: ['coach'],
     passi: [
-      ['Giorno / Settimana', 'Giorno: un atleta per riga, giorno dalla striscia in alto. Settimana: la tabella da lunedì a venerdì (P presente · A assente · G giustificato).'],
+      ['Giorno / Settimana', 'Giorno: un atleta per riga, giorno dalla striscia in alto. Settimana: la tabella da lunedì a venerdì (P presente · A assente · G giustificato); tocca una casella e scegli sotto.'],
       ['Tutti presenti', 'Segna presenti tutti quelli non ancora segnati; poi cambi solo chi manca.'],
       ['Presente / Assente / Giustificato', 'Un tocco per atleta. "Giustificato" per malattia, scuola, festività: non toglie punti.'],
       ['Si salva da solo', 'Le presenze contano per i punti e per il riepilogo.'],

@@ -60,6 +60,19 @@ const GRUPPI_ATLETA = [
     ['/allenamenti', 'cronometro', 'Scrivi i tempi', 'I tempi di oggi e i lavori fuori programma'],
   ]],
 ]
+// Genitore: Oggi, Settimana e Gare sono nella barra in basso; qui come va il figlio e la squadra
+const GRUPPI_GENITORE = [
+  ['Come va tuo figlio', [
+    ['/progressi', 'grafico', 'Progressi', 'Il grafico dei suoi tempi'],
+    ['/record', 'medaglia', 'Record', 'I suoi tempi migliori'],
+    ['/previsioni', 'futuro', 'Previsioni', 'Che tempi può fare a fine stagione'],
+    ['/storico', 'libro', 'Storico', 'Gli allenamenti già fatti'],
+  ]],
+  ['La squadra', [
+    ['/calendario', 'calendario', 'Calendario', 'Il mese: allenamenti, gare e presenze'],
+    ['/squadra', 'gruppo', 'Compagni', 'La squadra e le loro gare'],
+  ]],
+]
 // Fuori dai gruppi: voce discreta in fondo alla pagina
 const IMPOSTAZIONI = '/impostazioni'
 
@@ -99,14 +112,15 @@ export default function Funzioni() {
   const visibile = ([percorso]) => consentite.includes(percorso) && percorsoAttivo(percorso, ruolo, (k) => (IN_ARRIVO.includes(percorso) && mostraInArrivo) || puo(k))
   const coach = ruolo === 'coach'
   const atleta = ruolo === 'atleta'
-  const gruppi = (coach ? GRUPPI_COACH : atleta ? GRUPPI_ATLETA : GRUPPI)
+  const genitore = ruolo === 'genitore'
+  const gruppi = (coach ? GRUPPI_COACH : atleta ? GRUPPI_ATLETA : genitore ? GRUPPI_GENITORE : GRUPPI)
     .map(([nome, voci]) => [nome, voci.filter((v) => (coach && SEMPRE_COACH.includes(v[0])) || (atleta && v[0] === '/riepilogo') || visibile(v))])
     .filter(([, voci]) => voci.length > 0)
   // il coach ha già "Persone della squadra" nelle Impostazioni qui sopra
   const impostazioni = !coach && visibile([IMPOSTAZIONI])
 
   return (
-    <AppShell titolo={coach || atleta ? 'Altro' : 'Funzioni'} attiva="funzioni">
+    <AppShell titolo={coach || atleta || genitore ? 'Altro' : 'Funzioni'} attiva="funzioni">
       <div className="lg:grid lg:grid-cols-2 lg:gap-x-6 lg:items-start">
         {gruppi.map(([nome, voci]) => {
           const principali = voci.filter((v) => v[3])

@@ -42,6 +42,8 @@ const UTENTI = {
       ],
     })
   }
+  // certificato medico di Atleta Uno in scadenza tra 10 giorni (per provare "Da fare" del coach)
+  ;(tabelle.atleta_riferimenti ||= []).push({ atleta_id: A, certificato_scadenza: g(10) })
   tabelle.notifiche = [
     { id: 'n1', destinatario_id: A, tipo: 'record', titolo: 'Nuovo primato!', testo: 'Hai nuotato i 100 SL in gara in 1\'03"20, -0"90 rispetto al record precedente.', link: '/gare', letta: false, created_at: new Date().toISOString() },
     { id: 'n2', destinatario_id: UTENTI.genitore, tipo: 'gara_nuova', titolo: 'Nuova gara in calendario', testo: "Trofeo d'Autunno, ore 09:30, Piscina Comunale.", link: '/gare', letta: false, created_at: new Date().toISOString() },

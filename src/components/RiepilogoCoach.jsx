@@ -9,19 +9,21 @@ import { lunediDi } from '../lib/presenze'
 import { addGiorni, metriPiano, useMiaSquadra } from '../lib/pianoSquadra'
 
 const GG = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven']
-const CICLO = [null, 'presente', 'assente', 'non_penale']
+const SCELTE = [['presente', 'Presente'], ['assente', 'Assente'], ['non_penale', 'Giustificato']]
 const SIGLA = { presente: 'P', assente: 'A', non_penale: 'G' }
 const COLORE = {
   presente: 'bg-green-600 text-white', assente: 'bg-red-600 text-white',
   non_penale: 'bg-amber-500 text-white', vuoto: 'bg-gray-100 text-slate-500',
 }
 
-// Tabella delle presenze della settimana (lunedì-venerdì): ogni casella si cambia toccandola
+// Tabella delle presenze della settimana (lunedì-venerdì): toccando una casella sotto compaiono
+// i tre pulsanti scritti per esteso (niente tocchi ripetuti da indovinare)
 export function Bollettino({ squadra }) {
   const { user } = useAuth()
   const [atleti, setAtleti] = useState([])
   const [stati, setStati] = useState({})
   const [errore, setErrore] = useState('')
+  const [casella, setCasella] = useState(null) // { atleta, data } la casella toccata
   const lunedi = lunediDi()
   const giorni = GG.map((_, i) => addGiorni(lunedi, i))
 
@@ -39,21 +41,23 @@ export function Bollettino({ squadra }) {
 
   useEffect(() => { carica() }, [carica])
 
-  async function tocca(atletaId, data) {
+  // stato null = togli (giorno non segnato)
+  async function segna(atletaId, data, prossimo) {
     setErrore('')
     const k = atletaId + data
-    const prossimo = CICLO[(CICLO.indexOf(stati[k] || null) + 1) % CICLO.length]
     const { error } = prossimo
       ? await supabase.from('presenze').upsert({ atleta_id: atletaId, data, stato: prossimo, segnato_da: user.id }, { onConflict: 'atleta_id,data' })
       : await supabase.from('presenze').delete().eq('atleta_id', atletaId).eq('data', data)
     if (error) return setErrore('Non sono riuscito a salvare: ' + error.message)
     setStati({ ...stati, [k]: prossimo || undefined })
+    setCasella(null)
   }
+  const nomeGiorno = (d) => new Date(d + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric' })
 
   return (
     <div className="bg-white rounded-3xl p-5 mb-3 shadow-card">
       <p className="font-bold mb-1">Questa settimana</p>
-      <p className="text-xs text-slate-500 mb-3">Tocca una casella per cambiarla: P presente · A assente · G giustificato</p>
+      <p className="text-xs text-slate-500 mb-3">P presente · A assente · G giustificato. Tocca una casella per cambiarla.</p>
       {errore && <p className="text-sm text-white bg-red-600 rounded-lg px-3 py-2 mb-3">{errore}</p>}
       {atleti.length === 0 ? (
         <p className="text-sm text-slate-500">Nessun atleta nella squadra: compaiono quando la scelgono in registrazione.</p>
@@ -68,8 +72,9 @@ export function Bollettino({ squadra }) {
                   const s = stati[a.id + d]
                   return (
                     <td key={d} className="text-center py-1">
-                      <button onClick={() => tocca(a.id, d)} aria-label={`${a.nome}, ${d}`}
-                        className={`w-9 h-9 rounded-lg font-bold ${COLORE[s || 'vuoto']}`}>{s ? SIGLA[s] : '·'}</button>
+                      <button onClick={() => setCasella({ atleta: a, data: d })} aria-label={`${a.nome}, ${nomeGiorno(d)}`}
+                        aria-pressed={casella?.atleta.id === a.id && casella?.data === d}
+                        className={`w-9 h-9 rounded-lg font-bold ${COLORE[s || 'vuoto']} ${casella?.atleta.id === a.id && casella?.data === d ? 'ring-2 ring-offset-2 ring-blue-500' : ''}`}>{s ? SIGLA[s] : '·'}</button>
                     </td>
                   )
                 })}
@@ -77,6 +82,25 @@ export function Bollettino({ squadra }) {
             ))}
           </tbody>
         </table>
+      )}
+      {casella && (
+        // fisso sopra la barra in basso: si vede subito, senza scorrere
+        <div role="group" aria-label="Cambia presenza"
+          className="fixed inset-x-4 mx-auto max-w-sm bottom-[calc(92px+env(safe-area-inset-bottom))] lg:bottom-8 z-40 bg-white rounded-2xl p-3 shadow-flottante border border-linea">
+          <p className="text-sm font-bold text-abisso mb-2 first-letter:uppercase">{casella.atleta.nome} {casella.atleta.cognome} · {nomeGiorno(casella.data)}</p>
+          <div className="grid grid-cols-3 gap-2">
+            {SCELTE.map(([k, nome]) => (
+              <button key={k} onClick={() => segna(casella.atleta.id, casella.data, k)}
+                className={`min-h-[44px] rounded-xl text-sm font-bold ${stati[casella.atleta.id + casella.data] === k ? COLORE[k] : 'bg-bordo text-slate-600'}`}>
+                {nome}
+              </button>
+            ))}
+          </div>
+          <div className="flex justify-between mt-1">
+            <button onClick={() => segna(casella.atleta.id, casella.data, null)} className="min-h-[40px] px-2 text-sm font-semibold text-red-600">Togli</button>
+            <button onClick={() => setCasella(null)} className="min-h-[40px] px-2 text-sm font-semibold text-slate-500">Chiudi</button>
+          </div>
+        </div>
       )}
     </div>
   )

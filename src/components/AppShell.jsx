@@ -33,6 +33,14 @@ const VOCI_ATLETA = [
   ['funzioni', '/funzioni', 'griglia', 'Altro'],
   ['profilo', '/profilo', 'persona', 'Profilo'],
 ]
+// Il genitore: la giornata e la settimana del figlio, le gare; il resto in Altro
+const VOCI_GENITORE = [
+  ['home', '/dashboard', 'onde', 'Oggi'],
+  ['riepilogo', '/riepilogo', 'grafico', 'Settimana'],
+  ['gare', '/gare', 'coppa', 'Gare'],
+  ['funzioni', '/funzioni', 'griglia', 'Altro'],
+  ['profilo', '/profilo', 'persona', 'Profilo'],
+]
 const SIGLE = ['DOM', 'LUN', 'MAR', 'MER', 'GIO', 'VEN', 'SAB']
 
 // Struttura comune di tutte le schermate (layout Limpida): testata chiara, striscia dei giorni e menu in basso.
@@ -47,7 +55,8 @@ export default function AppShell({ titolo, attiva, indietro, giorno, onGiorno, v
   useInvioAutomatico(supabase, staVedendoCome ? null : profile?.id)
   const coach = ruolo === 'coach'
   const atleta = ruolo === 'atleta'
-  const voci = coach ? VOCI_COACH : atleta ? VOCI_ATLETA : VOCI
+  const genitore = ruolo === 'genitore'
+  const voci = coach ? VOCI_COACH : atleta ? VOCI_ATLETA : genitore ? VOCI_GENITORE : VOCI
   const iniziale = (profile?.nome || 'A').charAt(0).toUpperCase()
   const [calAperto, setCalAperto] = useState(false)
   const [guidaAperta, setGuidaAperta] = useState(false)
@@ -112,8 +121,8 @@ export default function AppShell({ titolo, attiva, indietro, giorno, onGiorno, v
                 </span>
               )}
             </Link>
-            {/* coach e atleta hanno Profilo nella barra in basso: niente doppione */}
-            {!coach && !atleta && <Link to="/profilo" aria-label="Profilo"
+            {/* solo l'admin ha ancora l'iniziale: gli altri hanno Profilo nella barra in basso */}
+            {!coach && !atleta && !genitore && <Link to="/profilo" aria-label="Profilo"
               className="cliccabile w-11 h-11 rounded-full bg-abisso text-white font-display font-bold flex items-center justify-center">
               {iniziale}
             </Link>}

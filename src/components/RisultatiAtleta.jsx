@@ -3,13 +3,13 @@ import { supabase } from '../lib/supabaseClient'
 import InputTempo from './InputTempo'
 import { coloreLavoro } from '../lib/lavori'
 import { blocchiPiano, chiaveRisultato as chiaveRiga, giriSerie, perGiro, ripartenzeDiRiga } from '../lib/pianoSquadra'
-import { aggiungiInCoda, erroreDiRete, leggiCoda } from '../lib/codaOffline'
+import { aggiungiInCoda, erroreDiRete, leggiCoda, rimuoviDaCoda } from '../lib/codaOffline'
 import { ERRORE_TEMPO_BREVE, erroreTempoImpossibile, normalizzaTempo, tempoPlausibile, tempoValido } from '../lib/tempo'
 
 // Il coach vede il piano del giorno e scrive i risultati di ogni passaggio per un atleta.
 // Funziona anche se l'atleta non ha ancora nessun tempo: si parte dalle righe del piano.
-// proprio: è l'atleta che scrive i suoi tempi. Può solo aggiungere (un lavoro già salvato si vede qui
-// e si toglie dallo Storico); senza connessione i tempi restano sul telefono e partono appena torna.
+// proprio: è l'atleta che scrive i suoi tempi. Un lavoro già salvato si vede in verde e si corregge con "Correggi"
+// (serve la connessione); i lavori nuovi senza connessione restano sul telefono e partono appena torna.
 export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = false }) {
   const righe = piano?.righe || []
   const [esistenti, setEsistenti] = useState([]) // righe già salvate in "allenamenti" per quel giorno
@@ -62,12 +62,14 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
     if (t) usatiOra.add(t.id)
     return t || null
   })
-  // l'atleta vede i tempi già salvati al posto delle caselle
-  const fisso = (i) => proprio && salvata[i]
-  const Salvati = ({ i }) => (
-    <p className="text-sm text-green-700 bg-green-50 rounded-xl px-3 py-2 mt-3">
-      Salvato: {(salvata[i].passaggi || []).map((p) => p || '–').join(' · ') || 'senza tempi'}
-    </p>
+  // l'atleta vede i tempi già salvati al posto delle caselle; "Correggi" riapre le caselle già compilate
+  const fisso = (i) => proprio && salvata[i] && !aperti.has(i)
+  const Salvati = ({ i, gruppo }) => (
+    <div className="flex items-center justify-between gap-2 text-sm text-green-700 bg-green-50 rounded-xl pl-3 pr-1 py-1 mt-3">
+      <span className="min-w-0">Salvato: {(salvata[i].passaggi || []).map((p) => p || '–').join(' · ') || 'senza tempi'}</span>
+      <button type="button" onClick={() => setAperti(new Set([...aperti, ...(gruppo || [i])]))}
+        className="cliccabile shrink-0 min-h-[40px] px-3 rounded-lg font-bold text-blue-600 hover:bg-white">Correggi</button>
+    </div>
   )
 
   async function salva() {
@@ -91,15 +93,45 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
 
     setSalvo(true)
     if (proprio) {
-      // l'atleta aggiunge solo i lavori non ancora salvati
+      // l'atleta aggiunge i lavori nuovi e corregge quelli riaperti con "Correggi"
       const nuove = righe.map((r, i) => (!salvata[i] && lavori[i].some(Boolean) ? {
         id: crypto.randomUUID(), atleta_id: atletaId, tipo_lavoro: r.tipo_lavoro, distanza: Number(r.distanza),
         ripetizioni: Number(r.ripetizioni) || 1, stile: r.stile, passaggi: lavori[i], data_allenamento: giorno,
         created_at: new Date().toISOString(),
       } : null)).filter(Boolean)
-      if (!nuove.length) {
+      const corrette = righe.map((_, i) => i).filter((i) => salvata[i] && aperti.has(i))
+      if (!nuove.length && !corrette.length) {
         setSalvo(false)
         return setErrore('Scrivi almeno un tempo.')
+      }
+      // un lavoro ancora in coda sul telefono (salvato senza connessione) si corregge lì, non nel database
+      const inCodaIds = new Set(leggiCoda('allenamenti', atletaId).map((r) => r.id))
+      if (corrette.some((i) => !inCodaIds.has(salvata[i].id)) && !navigator.onLine) {
+        setSalvo(false)
+        return setErrore('Per correggere un tempo già inviato serve la connessione: riprova appena torna.')
+      }
+      for (const i of corrette) {
+        if (inCodaIds.has(salvata[i].id)) {
+          rimuoviDaCoda('allenamenti', salvata[i].id)
+          aggiungiInCoda('allenamenti', { ...salvata[i], passaggi: lavori[i] })
+          continue
+        }
+        const { error } = await supabase.from('allenamenti').update({ passaggi: lavori[i] }).eq('id', salvata[i].id)
+        if (error) {
+          setSalvo(false)
+          return setErrore('Non sono riuscito a correggere: ' + error.message)
+        }
+      }
+      const aggiornate = esistenti.map((e) => {
+        const i = corrette.find((k) => salvata[k].id === e.id)
+        return i === undefined ? e : { ...e, passaggi: lavori[i] }
+      })
+      setAperti(new Set())
+      setValori(lavori.map((l) => [...l])) // "Correggi" riapre i tempi già nel formato giusto
+      if (!nuove.length) {
+        setEsistenti(aggiornate)
+        setSalvo(false)
+        return setOk('Tempi corretti.')
       }
       let inCoda = !navigator.onLine
       if (!inCoda) {
@@ -111,7 +143,7 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
         inCoda = !!error
       }
       if (inCoda) nuove.forEach((r) => aggiungiInCoda('allenamenti', r))
-      setEsistenti([...esistenti, ...nuove])
+      setEsistenti([...aggiornate, ...nuove])
       setSalvo(false)
       return setOk(inCoda ? 'Salvati sul telefono: partono appena torna la connessione.' : 'Tempi salvati.')
     }
@@ -170,11 +202,11 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
                   {r.ripartenza && ` · ↻ ${r.ripartenza}`}{r.note && ` · ${r.note}`}
                 </p>
               ))}
-              {b.righe.some(({ indice }) => fisso(indice)) && b.righe.filter(({ indice }) => fisso(indice)).map(({ indice }) => <Salvati key={indice} i={indice} />)}
-              {!b.righe.some(({ indice }) => fisso(indice)) && chiuso(b.righe[0].indice) && (
+              {b.righe.some(({ indice }) => fisso(indice)) && b.righe.filter(({ indice }) => fisso(indice)).map(({ indice }) => <Salvati key={indice} i={indice} gruppo={b.righe.map((x) => x.indice)} />)}
+              {!b.righe.some(({ indice }) => fisso(indice)) && b.righe.every(({ indice }) => chiuso(indice)) && (
                 <Apri i={b.righe[0].indice} n={giri * b.righe.reduce((s, { riga }) => s + perGiro(riga), 0)} />
               )}
-              {!b.righe.some(({ indice }) => fisso(indice)) && !chiuso(b.righe[0].indice) && Array.from({ length: giri }, (_, g) => (
+              {!b.righe.some(({ indice }) => fisso(indice)) && !b.righe.every(({ indice }) => chiuso(indice)) && Array.from({ length: giri }, (_, g) => (
                 <div key={g} className="bg-gray-50 rounded-2xl p-3 mt-3">
                   <p className="text-xs font-bold text-slate-600 mb-2">Giro {g + 1}</p>
                   <div className="grid grid-cols-2 gap-3">
