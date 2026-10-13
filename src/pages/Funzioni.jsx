@@ -28,17 +28,36 @@ const GRUPPI = [
     ['/punti', 'stella', 'Punti'],
   ]],
 ]
-// Coach: Oggi, Presenze e Atleti sono nella barra in basso; Progressi, Storico e Previsioni stanno nella scheda di ogni atleta.
-// Qui ("Altro") resta il resto.
+// Coach: Oggi, Presenze e Atleti sono nella barra in basso. Qui ("Altro") tutto il resto,
+// ogni voce con una riga che dice a cosa serve (chi non conosce l'app capisce senza aprire la guida)
 const GRUPPI_COACH = [
-  ['Squadra', [
-    ['/gare', 'coppa', 'Gare', 'Prossime gare e risultati'],
-    ['/calendario', 'calendario', 'Calendario'],
-    ['/punti', 'stella', 'Punti'],
-    ['/record', 'medaglia', 'Record'],
+  ['La squadra', [
+    ['/riepilogo', 'onde', 'La settimana', 'Km, presenze e allenamenti degli ultimi giorni'],
+    ['/gare', 'coppa', 'Gare', 'Gare in programma, iscritti e risultati'],
+    ['/calendario', 'calendario', 'Calendario', 'Il mese intero: allenamenti, gare e presenze'],
+  ]],
+  ['Come migliorano gli atleti', [
+    ['/progressi', 'grafico', 'Progressi', 'Il grafico dei tempi di ogni atleta'],
+    ['/previsioni', 'futuro', 'Previsioni', 'Che tempi può fare a fine stagione'],
+    ['/record', 'medaglia', 'Record', 'I migliori tempi della squadra'],
+    ['/punti', 'stella', 'Punti e premi', 'Premi per motivare gli atleti'],
+  ]],
+  ['Impostazioni', [
+    ['/impostazioni', 'regolazioni', 'Persone della squadra', 'Aggiungi o togli atleti e genitori'],
+    ['/lavori', 'griglia', 'Tipi di lavoro', 'Le sigle A1, A2, B1… e quanto stancano'],
+  ]],
+]
+const SEMPRE_COACH = ['/riepilogo', '/impostazioni']
+// Atleta: Oggi, I miei tempi e Gare sono nella barra in basso; qui il resto, con la riga che dice a cosa serve
+const GRUPPI_ATLETA = [
+  ['La squadra', [
+    ['/riepilogo', 'onde', 'La settimana', 'Km fatti e presenze, settimana per settimana'],
+    ['/calendario', 'calendario', 'Calendario', 'Il mese: allenamenti, gare e presenze'],
+    ['/squadra', 'gruppo', 'Compagni', 'La tua squadra e le loro gare'],
+    ['/punti', 'stella', 'Punti e premi', 'Come si guadagnano e i premi da aprire'],
   ]],
   ['Allenamento', [
-    ['/lavori', 'griglia', 'Tipi di lavoro'],
+    ['/allenamenti', 'cronometro', 'Scrivi i tempi', 'I tempi di oggi e i lavori fuori programma'],
   ]],
 ]
 // Fuori dai gruppi: voce discreta in fondo alla pagina
@@ -78,11 +97,16 @@ export default function Funzioni() {
   const consentite = funzioniConsentite(ruolo)
   // sezioni in arrivo: in sviluppo/anteprima sempre, per gli utenti solo se accese dal Pannello
   const visibile = ([percorso]) => consentite.includes(percorso) && percorsoAttivo(percorso, ruolo, (k) => (IN_ARRIVO.includes(percorso) && mostraInArrivo) || puo(k))
-  const gruppi = (ruolo === 'coach' ? GRUPPI_COACH : GRUPPI).map(([nome, voci]) => [nome, voci.filter(visibile)]).filter(([, voci]) => voci.length > 0)
-  const impostazioni = visibile([IMPOSTAZIONI])
+  const coach = ruolo === 'coach'
+  const atleta = ruolo === 'atleta'
+  const gruppi = (coach ? GRUPPI_COACH : atleta ? GRUPPI_ATLETA : GRUPPI)
+    .map(([nome, voci]) => [nome, voci.filter((v) => (coach && SEMPRE_COACH.includes(v[0])) || (atleta && v[0] === '/riepilogo') || visibile(v))])
+    .filter(([, voci]) => voci.length > 0)
+  // il coach ha già "Persone della squadra" nelle Impostazioni qui sopra
+  const impostazioni = !coach && visibile([IMPOSTAZIONI])
 
   return (
-    <AppShell titolo={ruolo === 'coach' ? 'Altro' : 'Funzioni'} attiva="funzioni">
+    <AppShell titolo={coach || atleta ? 'Altro' : 'Funzioni'} attiva="funzioni">
       <div className="lg:grid lg:grid-cols-2 lg:gap-x-6 lg:items-start">
         {gruppi.map(([nome, voci]) => {
           const principali = voci.filter((v) => v[3])

@@ -41,7 +41,7 @@ function RiepilogoAtleta() {
 
   if (genitore && pronto && !figlio) {
     return (
-      <AppShell titolo="Riepilogo" attiva="riepilogo">
+      <AppShell titolo="Riepilogo" attiva={ruolo === 'atleta' ? 'funzioni' : 'riepilogo'} indietro={ruolo === 'atleta' ? '/funzioni' : undefined}>
         <div className="bg-white rounded-3xl p-6 text-center">
           <p className="font-display text-xl font-extrabold mb-1">Collega tuo figlio</p>
           <p className="text-sm text-slate-500 mb-4">Qui vedrai com'è andata la sua settimana.</p>
@@ -52,7 +52,7 @@ function RiepilogoAtleta() {
   }
 
   return (
-    <AppShell titolo={genitore && figlio ? `Settimana di ${figlio.nome}` : 'La settimana'} attiva="riepilogo">
+    <AppShell titolo={genitore && figlio ? `Settimana di ${figlio.nome}` : 'La settimana'} attiva={ruolo === 'atleta' ? 'funzioni' : 'riepilogo'} indietro={ruolo === 'atleta' ? '/funzioni' : undefined}>
       {genitore && approvati.length > 1 && (
         <div className="flex gap-2 mb-3 overflow-x-auto" role="tablist" aria-label="Figlio">
           {approvati.map((f) => (

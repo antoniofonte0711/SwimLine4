@@ -4,7 +4,6 @@ import { infoLavoro } from '../lib/tipiLavoro'
 import { useTipiLavoro } from '../lib/useTipiLavoro'
 import Difficolta from './Difficolta'
 
-const BREVE = { 'Stile libero': 'SL', 'Proprio stile': 'PS' }
 // Sigla della zona sul blocco colorato (Riscaldamento -> RIS, Passo gara 200 -> PG 200).
 // I lavori aggiunti dalla squadra (es. EN2, A1L) restano come li ha scritti il coach fino a 5 caratteri.
 export const siglaLavoro = (t = '') => {
@@ -15,11 +14,12 @@ export const siglaLavoro = (t = '') => {
 }
 const metri = (n) => n.toLocaleString('it-IT')
 
-export function ChipZona({ tipo }) {
+// intero: il nome per esteso (Riscaldamento, Passo gara 100…) invece della sigla, per chi non conosce le sigle
+export function ChipZona({ tipo, intero = false }) {
   useTipiLavoro() // colore giusto anche per i lavori aggiunti dalla squadra
   return (
-    <span title={tipo} className={`inline-flex items-center justify-center min-w-[52px] h-7 px-1.5 rounded-[10px] text-xs font-extrabold ${coloreLavoro(tipo)}`}>
-      {siglaLavoro(tipo)}
+    <span title={tipo} className={`inline-flex items-center justify-center min-w-[52px] h-7 px-2 rounded-[10px] text-xs font-extrabold whitespace-nowrap ${coloreLavoro(tipo)}`}>
+      {intero ? tipo : siglaLavoro(tipo)}
     </span>
   )
 }
@@ -34,10 +34,10 @@ function RigaPiano({ r, inSerie }) {
     !inSerie && Number(r.minuti) > 0 && `⏱ ${Number(r.minuti)} min`,
   ].filter(Boolean).join('  ')
   return (
-    <div className="grid grid-cols-[52px_minmax(0,1fr)_auto] gap-3 items-center">
-      <ChipZona tipo={r.tipo_lavoro} />
+    <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] gap-3 items-center">
+      <ChipZona tipo={r.tipo_lavoro} intero />
       <span className="min-w-0">
-        <b className="text-[15px] text-abisso">{n > 1 ? `${n}×` : ''}{r.distanza} {BREVE[r.stile] || r.stile}</b>
+        <b className="text-[15px] text-abisso">{n > 1 ? `${n}×` : ''}{r.distanza} {r.stile}</b>
         {(r.note || dettagli) && (
           <span className="block text-[13px] text-slate-500 leading-snug">{[r.note, dettagli].filter(Boolean).join(' · ')}</span>
         )}

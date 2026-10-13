@@ -4,11 +4,12 @@ import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import AppShell from '../components/AppShell'
 import Schede from '../components/Schede'
+import { CalendarioFoglio } from '../components/SelettoreData'
 import { Bollettino } from '../components/RiepilogoCoach'
 import { SenzaSquadra } from '../components/PianoCard'
 import { dataLocale } from '../lib/lavori'
 import { STATI_BREVI, GIORNI_ALLENAMENTO } from '../lib/presenze'
-import { useMiaSquadra } from '../lib/pianoSquadra'
+import { addGiorni, useMiaSquadra } from '../lib/pianoSquadra'
 
 const COLORI = {
   presente: 'bg-green-600 text-white',
@@ -29,6 +30,7 @@ export default function Presenze() {
   const [stati, setStati] = useState({})
   const [errore, setErrore] = useState('')
   const [invio, setInvio] = useState(false)
+  const [cal, setCal] = useState(false)
 
   const carica = useCallback(async () => {
     if (!squadra) return
@@ -85,8 +87,8 @@ export default function Presenze() {
   ].filter(([n]) => n > 0).map(([n, t]) => `${n} ${t}`).join(' · ')
 
   return (
-    <AppShell titolo="Presenze" attiva="presenze" indietro={ruolo === 'coach' ? undefined : '/funzioni'}
-      giorno={vista === 'Giorno' ? giorno : undefined} onGiorno={vista === 'Giorno' ? setGiorno : undefined}>
+    <AppShell titolo="Presenze" attiva="presenze" indietro={ruolo === 'coach' ? '/dashboard' : '/funzioni'}
+      >
       <Schede valore={vista} opzioni={VISTE} onCambia={setVista} etichetta="Presenze" />
 
       {pronto && !squadra && <SenzaSquadra />}
@@ -94,6 +96,15 @@ export default function Presenze() {
 
       {vista === 'Giorno' && squadra && (
         <>
+          {/* Giorno compatto: frecce per il giorno prima e dopo, toccando la data si apre il calendario */}
+          <div className="flex items-center justify-between bg-white rounded-2xl p-1 mb-3 shadow-card">
+            <button onClick={() => setGiorno(addGiorni(giorno, -1))} aria-label="Giorno prima" className="cliccabile w-11 h-11 rounded-full text-slate-500 text-xl font-bold">‹</button>
+            <button onClick={() => setCal(true)} className="cliccabile min-h-[44px] px-3 rounded-full font-bold text-abisso first-letter:uppercase">
+              {giorno === dataLocale() ? 'Oggi, ' : ''}{new Date(giorno + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })} ▾
+            </button>
+            <button onClick={() => setGiorno(addGiorni(giorno, 1))} aria-label="Giorno dopo" className="cliccabile w-11 h-11 rounded-full text-slate-500 text-xl font-bold">›</button>
+          </div>
+          {cal && <CalendarioFoglio valore={giorno} onScegli={setGiorno} onChiudi={() => setCal(false)} />}
           {fuoriAllenamento && (
             <p className="text-xs text-amber-700 bg-amber-50 rounded-2xl px-4 py-2.5 mb-3">
               Questo non è un giorno di allenamento fisso (lunedì-venerdì).

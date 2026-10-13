@@ -30,6 +30,18 @@ const UTENTI = {
     { id: 'gr-mauri', nome: 'Test team Mauri', coach_id: null, societa_id: 'soc1', created_at: g(0) },
     { id: 'gr-paura', nome: 'Test team Paura', coach_id: null, societa_id: 'soc1', created_at: g(0) },
   )
+  // allenamento di oggi della squadra di Atleta Uno (righe del piano vero del 12/10 di Test team Mauri), pubblicato
+  const sqA = tabelle.profiles.find((p) => p.id === A)?.squadra_id
+  if (sqA) {
+    ;(tabelle.allenamenti_squadra ||= []).push({
+      id: 'piano-oggi', squadra_id: sqA, coach_id: UTENTI.coach, data: g(0), titolo: null, pubblicato: true, visibilita: 'squadra',
+      righe: [
+        { tipo_lavoro: 'Tecnica', distanza: 50, ripetizioni: 16, stile: 'Misti', note: '', minuti: null, ripartenza: null, ripartenze: null },
+        { tipo_lavoro: 'A2', distanza: 400, ripetizioni: 4, stile: 'Stile libero', note: '', minuti: null, ripartenza: '6\'00"', ripartenze: null },
+        { tipo_lavoro: 'C3', distanza: 25, ripetizioni: 12, stile: 'Stile libero', note: '', minuti: null, ripartenza: '40"', ripartenze: null },
+      ],
+    })
+  }
   tabelle.notifiche = [
     { id: 'n1', destinatario_id: A, tipo: 'record', titolo: 'Nuovo primato!', testo: 'Hai nuotato i 100 SL in gara in 1\'03"20, -0"90 rispetto al record precedente.', link: '/gare', letta: false, created_at: new Date().toISOString() },
     { id: 'n2', destinatario_id: UTENTI.genitore, tipo: 'gara_nuova', titolo: 'Nuova gara in calendario', testo: "Trofeo d'Autunno, ore 09:30, Piscina Comunale.", link: '/gare', letta: false, created_at: new Date().toISOString() },

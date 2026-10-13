@@ -3,17 +3,29 @@ import { supabase } from '../lib/supabaseClient'
 import InputTempo from './InputTempo'
 import { coloreLavoro } from '../lib/lavori'
 import { blocchiPiano, chiaveRisultato as chiaveRiga, giriSerie, perGiro, ripartenzeDiRiga } from '../lib/pianoSquadra'
+import { aggiungiInCoda, erroreDiRete, leggiCoda } from '../lib/codaOffline'
 import { ERRORE_TEMPO_BREVE, erroreTempoImpossibile, normalizzaTempo, tempoPlausibile, tempoValido } from '../lib/tempo'
 
 // Il coach vede il piano del giorno e scrive i risultati di ogni passaggio per un atleta.
 // Funziona anche se l'atleta non ha ancora nessun tempo: si parte dalle righe del piano.
-export default function RisultatiAtleta({ piano, atletaId, giorno }) {
+// proprio: è l'atleta che scrive i suoi tempi. Può solo aggiungere (un lavoro già salvato si vede qui
+// e si toglie dallo Storico); senza connessione i tempi restano sul telefono e partono appena torna.
+export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = false }) {
   const righe = piano?.righe || []
   const [esistenti, setEsistenti] = useState([]) // righe già salvate in "allenamenti" per quel giorno
   const [valori, setValori] = useState([])       // valori[i] = array di passaggi della riga i del piano
   const [errore, setErrore] = useState('')
   const [ok, setOk] = useState('')
   const [salvo, setSalvo] = useState(false)
+  // l'atleta apre solo i lavori di cui ha i tempi (16 caselle di tecnica chiuse non ingombrano)
+  const [aperti, setAperti] = useState(() => new Set())
+  const chiuso = (i) => proprio && !aperti.has(i)
+  const Apri = ({ i, n }) => (
+    <button type="button" onClick={() => setAperti(new Set([...aperti, i]))}
+      className="cliccabile w-full min-h-[44px] mt-3 rounded-xl text-sm font-bold text-blue-600 bg-schiuma">
+      + Scrivi i tempi ({n})
+    </button>
+  )
 
   useEffect(() => {
     let attivo = true
@@ -23,7 +35,7 @@ export default function RisultatiAtleta({ piano, atletaId, giorno }) {
     supabase.from('allenamenti').select('*').eq('atleta_id', atletaId).eq('data_allenamento', giorno).order('created_at')
       .then(({ data }) => {
         if (!attivo) return
-        const lista = data || []
+        const lista = [...(data || []), ...(proprio ? leggiCoda('allenamenti', atletaId).filter((r) => r.data_allenamento === giorno) : [])]
         setEsistenti(lista)
         const usati = new Set()
         setValori(righe.map((r) => {
@@ -42,6 +54,21 @@ export default function RisultatiAtleta({ piano, atletaId, giorno }) {
     copia[i][j] = v
     setValori(copia)
   }
+
+  // Per ogni riga del piano, il lavoro già salvato che le corrisponde (se c'è)
+  const usatiOra = new Set()
+  const salvata = righe.map((r) => {
+    const t = esistenti.find((e) => !usatiOra.has(e.id) && chiaveRiga(e) === chiaveRiga(r))
+    if (t) usatiOra.add(t.id)
+    return t || null
+  })
+  // l'atleta vede i tempi già salvati al posto delle caselle
+  const fisso = (i) => proprio && salvata[i]
+  const Salvati = ({ i }) => (
+    <p className="text-sm text-green-700 bg-green-50 rounded-xl px-3 py-2 mt-3">
+      Salvato: {(salvata[i].passaggi || []).map((p) => p || '–').join(' · ') || 'senza tempi'}
+    </p>
+  )
 
   async function salva() {
     setErrore('')
@@ -63,6 +90,31 @@ export default function RisultatiAtleta({ piano, atletaId, giorno }) {
     }
 
     setSalvo(true)
+    if (proprio) {
+      // l'atleta aggiunge solo i lavori non ancora salvati
+      const nuove = righe.map((r, i) => (!salvata[i] && lavori[i].some(Boolean) ? {
+        id: crypto.randomUUID(), atleta_id: atletaId, tipo_lavoro: r.tipo_lavoro, distanza: Number(r.distanza),
+        ripetizioni: Number(r.ripetizioni) || 1, stile: r.stile, passaggi: lavori[i], data_allenamento: giorno,
+        created_at: new Date().toISOString(),
+      } : null)).filter(Boolean)
+      if (!nuove.length) {
+        setSalvo(false)
+        return setErrore('Scrivi almeno un tempo.')
+      }
+      let inCoda = !navigator.onLine
+      if (!inCoda) {
+        const { error } = await supabase.from('allenamenti').insert(nuove)
+        if (error && !erroreDiRete(error)) {
+          setSalvo(false)
+          return setErrore('Non sono riuscito a salvare: ' + error.message)
+        }
+        inCoda = !!error
+      }
+      if (inCoda) nuove.forEach((r) => aggiungiInCoda('allenamenti', r))
+      setEsistenti([...esistenti, ...nuove])
+      setSalvo(false)
+      return setOk(inCoda ? 'Salvati sul telefono: partono appena torna la connessione.' : 'Tempi salvati.')
+    }
     const usati = new Set()
     for (let i = 0; i < righe.length; i++) {
       const r = righe[i]
@@ -99,7 +151,9 @@ export default function RisultatiAtleta({ piano, atletaId, giorno }) {
 
   return (
     <>
-      <p className="text-sm text-slate-500 mb-2 px-1">📋 {piano.titolo || 'Allenamento del giorno'}</p>
+      <p className="text-sm text-slate-500 mb-2 px-1">
+        {proprio ? 'Scrivi i tempi sotto ogni lavoro del coach: anche solo alcuni, il resto puoi lasciarlo vuoto.' : `📋 ${piano.titolo || 'Allenamento del giorno'}`}
+      </p>
       {blocchiPiano(righe).map((b) => {
         if (b.serie) {
           // Serie a giri: i tempi si scrivono giro per giro, nell'ordine in cui si nuotano
@@ -116,7 +170,11 @@ export default function RisultatiAtleta({ piano, atletaId, giorno }) {
                   {r.ripartenza && ` · ↻ ${r.ripartenza}`}{r.note && ` · ${r.note}`}
                 </p>
               ))}
-              {Array.from({ length: giri }, (_, g) => (
+              {b.righe.some(({ indice }) => fisso(indice)) && b.righe.filter(({ indice }) => fisso(indice)).map(({ indice }) => <Salvati key={indice} i={indice} />)}
+              {!b.righe.some(({ indice }) => fisso(indice)) && chiuso(b.righe[0].indice) && (
+                <Apri i={b.righe[0].indice} n={giri * b.righe.reduce((s, { riga }) => s + perGiro(riga), 0)} />
+              )}
+              {!b.righe.some(({ indice }) => fisso(indice)) && !chiuso(b.righe[0].indice) && Array.from({ length: giri }, (_, g) => (
                 <div key={g} className="bg-gray-50 rounded-2xl p-3 mt-3">
                   <p className="text-xs font-bold text-slate-600 mb-2">Giro {g + 1}</p>
                   <div className="grid grid-cols-2 gap-3">
@@ -143,19 +201,19 @@ export default function RisultatiAtleta({ piano, atletaId, giorno }) {
             <span className="text-sm text-slate-600 ml-2">{n}×{r.distanza} m {r.stile}</span>
             {ripartenzeDiRiga(r).length > 0 && <span className="text-xs text-slate-500 ml-2">↻ ripartenza {ripartenzeDiRiga(r).join(' · ')}</span>}
             {r.note && <p className="text-xs text-slate-500 mt-1">{r.note}</p>}
-            <div className="grid grid-cols-2 gap-3 mt-3">
+            {fisso(i) ? <Salvati i={i} /> : chiuso(i) ? <Apri i={i} n={n} /> : <div className="grid grid-cols-2 gap-3 mt-3">
               {Array.from({ length: n }, (_, j) => (
                 <InputTempo key={j} etichetta={`Passaggio ${j + 1}`} value={valori[i]?.[j] || ''} vuotoOk
                   onChange={(v) => cambia(i, j, v)} />
               ))}
-            </div>
+            </div>}
           </div>
         )
       })}
       {errore && <p className="text-sm text-white bg-red-600 rounded-lg px-3 py-2 mb-3">{errore}</p>}
       {ok && <p className="text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2 mb-3">{ok}</p>}
       <button onClick={salva} disabled={salvo} className="w-full font-bold text-white bg-blue-600 disabled:opacity-60 rounded-2xl py-3.5">
-        {salvo ? 'Salvo…' : 'Salva risultati'}
+        {salvo ? 'Salvo…' : proprio ? 'Salva i tempi' : 'Salva risultati'}
       </button>
     </>
   )

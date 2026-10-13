@@ -10,7 +10,7 @@ import { RIGA_VUOTA, STILI_COACH, abbinaTempi, addGiorni, blocchiPiano, metriPia
 import { normalizzaRipartenza, ripartenzaValida } from '../lib/tempo'
 import { avvisaSquadra } from '../lib/notifiche'
 import { useRegole } from '../lib/regole'
-import PianoCard, { siglaLavoro } from './PianoCard'
+import PianoCard from './PianoCard'
 import Difficolta from './Difficolta'
 import { FormLavoro } from './GestioneLavori'
 
@@ -159,7 +159,7 @@ function FoglioLavoro({ r, i, n, inSerie, squadraId, cambia, cambiaTipo, onSu, o
           <p className="text-xs font-bold tracking-widest text-slate-500 uppercase mb-2">Tipo</p>
           <div className="flex flex-wrap gap-2">
             {lavoriDaScegliere({ coach: true, tieni: r.tipo_lavoro }).map((t) => (
-              <Pillola key={t} attiva={t === r.tipo_lavoro} onClick={() => cambiaTipo(i, t)}>{siglaLavoro(t)}</Pillola>
+              <Pillola key={t} attiva={t === r.tipo_lavoro} onClick={() => cambiaTipo(i, t)}>{t}</Pillola>
             ))}
             {!nuovoTipo && <Pillola onClick={() => setNuovoTipo(true)} etichetta="Aggiungi un tipo di lavoro">+</Pillola>}
           </div>
@@ -222,23 +222,39 @@ function FoglioLavoro({ r, i, n, inSerie, squadraId, cambia, cambiaTipo, onSu, o
   )
 }
 
-// Un lavoro in una riga leggibile ("4 × 400 Stile libero"): toccandolo si apre il pannello
-function RigaBreve({ r, onApri, maniglia }) {
+// Un lavoro in una riga leggibile ("4 × 400 Stile libero", sotto il tipo per esteso): toccandolo si apre il pannello,
+// il cestino a destra lo toglie subito (si può annullare)
+function RigaBreve({ r, onApri, onTogli, maniglia }) {
   const sotto = [r.ripartenza && `partenza ${r.ripartenza}`, r.note].filter(Boolean).join(' · ')
+  const descrizione = `${Number(r.ripetizioni) > 1 ? `${r.ripetizioni} × ` : ''}${r.distanza} ${r.stile}`
   return (
     <div className="flex items-center gap-1">
       {maniglia}
-      <button type="button" onClick={onApri}
-        className="cliccabile flex-1 min-w-0 min-h-[56px] flex items-center justify-between gap-3 text-left py-1">
-        <span className="min-w-0">
-          <span className="block text-[17px] text-abisso truncate">
-            <b className="font-display font-extrabold">{Number(r.ripetizioni) > 1 ? `${r.ripetizioni} × ` : ''}{r.distanza}</b> {r.stile}
-          </span>
-          {sotto && <span className="block text-[13px] text-slate-500 truncate">{sotto}</span>}
+      <button type="button" onClick={onApri} aria-label={`Modifica ${descrizione}, ${r.tipo_lavoro}`}
+        className="cliccabile flex-1 min-w-0 min-h-[60px] flex flex-col justify-center text-left py-1.5">
+        <span className="block text-[17px] text-abisso truncate">
+          <b className="font-display font-extrabold">{Number(r.ripetizioni) > 1 ? `${r.ripetizioni} × ` : ''}{r.distanza}</b> {r.stile}
         </span>
-        <span className={`shrink-0 text-xs font-extrabold px-2.5 py-1.5 rounded-[10px] ${coloreLavoro(r.tipo_lavoro)}`}>{siglaLavoro(r.tipo_lavoro)}</span>
+        <span className="flex items-center gap-1.5 mt-0.5 min-w-0">
+          <span className={`shrink-0 text-[11px] font-extrabold px-2 py-0.5 rounded-md ${coloreLavoro(r.tipo_lavoro)}`}>{r.tipo_lavoro}</span>
+          {sotto && <span className="text-[13px] text-slate-500 truncate">{sotto}</span>}
+        </span>
       </button>
+      {onTogli && (
+        <button type="button" onClick={onTogli} aria-label={`Togli ${descrizione}`}
+          className="cliccabile shrink-0 w-11 h-11 rounded-full text-slate-400 hover:text-red-600 hover:bg-red-50 flex items-center justify-center">
+          <Cestino />
+        </button>
+      )}
     </div>
+  )
+}
+
+function Cestino() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="w-[22px] h-[22px]" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 7h16" /><path d="M10 11v6M14 11v6" /><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12" /><path d="M9 7V4.5h6V7" />
+    </svg>
   )
 }
 
@@ -250,12 +266,12 @@ function Maniglia({ controlli }) {
 }
 
 // Un lavoro singolo nella lista: si trascina dalla maniglia ⠿ (o con le frecce nel pannello)
-function RigaLavoro({ chiave, r, onApri }) {
+function RigaLavoro({ chiave, r, onApri, onTogli }) {
   const controlli = useDragControls()
   return (
     <Reorder.Item as="div" value={chiave} dragListener={false} dragControls={controlli} {...ANIMA}
-      className="relative bg-white rounded-3xl pl-2 pr-4 py-1.5 mb-2 shadow-card">
-      <RigaBreve r={r} onApri={onApri} maniglia={<Maniglia controlli={controlli} />} />
+      className="relative bg-white rounded-3xl pl-2 pr-1.5 py-1 mb-2 shadow-card">
+      <RigaBreve r={r} onApri={onApri} onTogli={onTogli} maniglia={<Maniglia controlli={controlli} />} />
     </Reorder.Item>
   )
 }
@@ -303,7 +319,7 @@ function CampoGiri({ giri, annulli, onGiri }) {
 
 // Serie a giri: un gruppo di lavori nuotati in sequenza e ripetuti N volte (es. 3 giri di 400-300-200).
 // Il Giro 1 definisce i lavori (si toccano per aprirli); ogni altro giro ha la sua casella, dove si può cambiare la ripartenza.
-function SerieGiri({ chiave, serie, righe, annulli, cambiaSerie, cambiaGiri, cambiaRipGiro, aggiungiInSerie, sciogli, onApri }) {
+function SerieGiri({ chiave, serie, righe, annulli, cambiaSerie, cambiaGiri, cambiaRipGiro, aggiungiInSerie, sciogli, onApri, onTogli }) {
   const controlli = useDragControls()
   const giri = Math.max(1, Number(serie.giri) || 1)
   return (
@@ -324,9 +340,9 @@ function SerieGiri({ chiave, serie, righe, annulli, cambiaSerie, cambiaGiri, cam
         </div>
       </div>
       <p className="text-sm font-bold text-blue-700 px-1 mt-3 mb-2">Giro 1 · tocca un lavoro per cambiarlo</p>
-      {righe.map(({ riga }) => (
-        <div key={riga._id} className="bg-white rounded-2xl px-3 py-1 mb-2">
-          <RigaBreve r={riga} onApri={() => onApri(riga._id)} />
+      {righe.map(({ riga, indice }) => (
+        <div key={riga._id} className="bg-white rounded-2xl pl-3 pr-1.5 py-0.5 mb-2">
+          <RigaBreve r={riga} onApri={() => onApri(riga._id)} onTogli={righe.length > 1 ? () => onTogli(indice) : null} />
         </div>
       ))}
       <div className="flex items-center justify-between gap-2 px-1 mb-3">
@@ -392,6 +408,7 @@ export default function EditorAllenamento({ squadra, giorno, onChiudi }) {
   const [annulli, setAnnulli] = useState(0)      // riporta il campo Giri al valore di prima dopo "Annulla"
   const [aperto, setAperto] = useState(null)     // _id del lavoro aperto nel pannello
   const [opzioni, setOpzioni] = useState(false)
+  const [tolto, setTolto] = useState(null)       // { riga, i } l'ultimo lavoro tolto, per "Annulla"
 
   async function caricaTempi() {
     const { data: atleti } = await supabase.from('profiles').select('id').eq('squadra_id', squadra.id)
@@ -530,7 +547,23 @@ export default function EditorAllenamento({ squadra, giorno, onChiudi }) {
     const { serie, ...resto } = r
     return { ...resto, ripetizioni: (Number(r.ripetizioni) || 1) * (Number(serie.giri) || 1) }
   }))
-  const togli = (i) => setRighe(righe.filter((_, k) => k !== i))
+  // Toglie subito un lavoro; per qualche secondo compare "Annulla" per rimetterlo dov'era
+  const togli = (i) => {
+    setTolto({ riga: righe[i], i })
+    setRighe(righe.filter((_, k) => k !== i))
+  }
+  const rimetti = () => {
+    if (!tolto) return
+    const copia = [...righe]
+    copia.splice(Math.min(tolto.i, copia.length), 0, tolto.riga)
+    setRighe(copia)
+    setTolto(null)
+  }
+  useEffect(() => {
+    if (!tolto) return
+    const t = setTimeout(() => setTolto(null), 6000)
+    return () => clearTimeout(t)
+  }, [tolto])
   // Tutti i giorni, weekend compreso: le due settimane dopo la data scelta
   const prossimi = Array.from({ length: 14 }, (_, i) => addGiorni(giorno, i + 1))
   const toggleExtra = (d) => setExtra((e) => (e.includes(d) ? e.filter((x) => x !== d) : [...e, d]))
@@ -656,7 +689,7 @@ export default function EditorAllenamento({ squadra, giorno, onChiudi }) {
         <button onClick={() => setModifica(true)} className="w-full font-bold text-blue-600 bg-blue-50 rounded-2xl py-3 mb-3">Modifica</button>
         {stato === 'pubblicato' && (
           <div className="text-right">
-            <Link to={`/risultati?data=${giorno}`} className="text-sm font-semibold text-blue-600">Scrivi i tempi degli atleti →</Link>
+            <Link to={`/risultati?data=${giorno}`} className="cliccabile inline-flex items-center min-h-[44px] px-2 text-sm font-semibold text-blue-600">Scrivi i tempi degli atleti →</Link>
           </div>
         )}
       </>
@@ -686,11 +719,11 @@ export default function EditorAllenamento({ squadra, giorno, onChiudi }) {
 
   return (
     <>
-      <div className="flex items-start justify-between gap-3 mb-3 px-1">
-        <div className="min-w-0">
-          <p className="font-display text-[22px] font-extrabold text-abisso leading-tight">Allenamento</p>
-          <p className="text-sm text-slate-500 first-letter:uppercase">{dataTesto} · {STATO[stato]}</p>
-        </div>
+      <div className="flex items-center justify-between gap-3 mb-3 px-1">
+        <p className="min-w-0 text-[15px] font-semibold text-slate-600 first-letter:uppercase">
+          {dataTesto}
+          <span className="ml-2 align-middle text-xs font-bold px-2.5 py-1 rounded-full bg-blue-50 text-blue-600">{STATO[stato]}</span>
+        </p>
         <button onClick={esci} className="cliccabile shrink-0 min-h-[44px] px-4 rounded-full bg-white text-sm font-bold text-slate-600 shadow-card">Chiudi</button>
       </div>
 
@@ -705,8 +738,8 @@ export default function EditorAllenamento({ squadra, giorno, onChiudi }) {
             const chiave = chiaveBlocco(b)
             return b.serie
               ? <SerieGiri key={chiave} chiave={chiave} serie={b.serie} righe={b.righe} annulli={annulli} cambiaSerie={cambiaSerie}
-                  cambiaGiri={cambiaGiri} cambiaRipGiro={cambiaRipGiro} aggiungiInSerie={aggiungiInSerie} sciogli={sciogli} onApri={setAperto} />
-              : <RigaLavoro key={chiave} chiave={chiave} r={b.riga} onApri={() => setAperto(b.riga._id)} />
+                  cambiaGiri={cambiaGiri} cambiaRipGiro={cambiaRipGiro} aggiungiInSerie={aggiungiInSerie} sciogli={sciogli} onApri={setAperto} onTogli={togli} />
+              : <RigaLavoro key={chiave} chiave={chiave} r={b.riga} onApri={() => setAperto(b.riga._id)} onTogli={() => togli(b.indice)} />
           })}
         </AnimatePresence>
       </Reorder.Group>
@@ -780,6 +813,15 @@ export default function EditorAllenamento({ squadra, giorno, onChiudi }) {
         <button onClick={elimina} className="w-full min-h-[44px] text-sm text-red-500 mt-3">Elimina l'allenamento di questo giorno</button>
       )}
       <AnimatePresence>{foglio}</AnimatePresence>
+      <AnimatePresence>
+        {tolto && (
+          <motion.div role="status" initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 30, opacity: 0 }}
+            className="fixed inset-x-4 mx-auto bottom-[calc(92px+env(safe-area-inset-bottom))] lg:bottom-8 z-40 max-w-sm bg-abisso text-white rounded-2xl pl-4 pr-2 py-2 flex items-center justify-between gap-3 shadow-flottante">
+            <span className="text-sm font-semibold truncate">Tolto: {Number(tolto.riga.ripetizioni) > 1 ? `${tolto.riga.ripetizioni} × ` : ''}{tolto.riga.distanza} {tolto.riga.stile}</span>
+            <button onClick={rimetti} className="shrink-0 min-h-[44px] px-4 rounded-xl font-bold text-blue-200 hover:bg-white/10">Annulla</button>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {conferma && (
         <Conferma titolo={conferma.titolo} testo={conferma.testo}
           si={() => { applicaGiri(conferma.id, conferma.giri); setConferma(null) }}

@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabaseClient'
 import { caricaTutto } from '../lib/caricaTutto'
 import { useAuth } from '../context/AuthContext'
 import AppShell from '../components/AppShell'
+import SchedeTempi, { useShellTempi } from '../components/SchedeTempi'
 import { STILI, VASCHE, vascaDi } from '../lib/lavori'
 import { tempoInSecondi, secondiInTempo, normalizzaTempo, tempoValido, tempoPlausibile, erroreTempoImpossibile, ERRORE_TEMPO_BREVE } from '../lib/tempo'
 import InputTempo from '../components/InputTempo'
@@ -14,6 +15,7 @@ const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl 
 // Fonte: Gare oppure Allenamenti. Ambito: i miei oppure la squadra.
 export default function Record() {
   const { user, profile, isCoach } = useAuth()
+  const shell = useShellTempi('Record')
   const visto = useAtletaVisto() // il genitore: "I miei" = i record del figlio scelto
   const [fonte, setFonte] = useState('Gare')
   const [ambito, setAmbito] = useState(isCoach ? 'Squadra' : 'I miei')
@@ -86,7 +88,8 @@ export default function Record() {
   const data = (s) => (s ? new Date(s + 'T12:00:00').toLocaleDateString('it-IT') : '')
 
   return (
-    <AppShell titolo="Record" attiva="funzioni" indietro="/funzioni">
+    <AppShell {...shell}>
+      <SchedeTempi />
       <SceltaFiglio visto={visto} cosa="i suoi record" />
       <div className="bg-white rounded-3xl p-5 mb-3 shadow-card">
         <div className="grid grid-cols-2 gap-3 mb-3">

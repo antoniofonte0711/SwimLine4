@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { useCarrello, filePerLavoro } from '../context/CarrelloContext'
 import { aggiungiInCoda, erroreDiRete } from '../lib/codaOffline'
 
-// Il carrello della giornata: qui vedi tutto quello che hai aggiunto e salvi in un colpo solo
+// La lista della giornata: qui vedi tutto quello che hai aggiunto e salvi in un colpo solo
 export default function CarrelloCard({ giorno, onSalvato }) {
   const { user } = useAuth()
   const { voci, rimuovi, sposta, svuota } = useCarrello()
@@ -86,7 +86,7 @@ export default function CarrelloCard({ giorno, onSalvato }) {
 
   return (
     <div className={`bg-white rounded-3xl p-5 mb-3 shadow-sm border-2 ${n ? 'border-blue-500' : 'border-gray-100'}`}>
-      <p className="text-sm text-slate-500 mb-2">Il tuo carrello di oggi</p>
+      <p className="text-sm text-slate-500 mb-2">Da salvare oggi</p>
 
       <div className="flex items-center gap-3 mb-2">
         <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${n ? 'bg-blue-600 text-white' : 'bg-gray-100 text-slate-500'}`}>

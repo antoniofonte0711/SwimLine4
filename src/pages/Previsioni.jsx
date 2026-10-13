@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabaseClient'
 import { caricaTutto } from '../lib/caricaTutto'
 import { useAuth } from '../context/AuthContext'
 import AppShell from '../components/AppShell'
+import SchedeTempi, { useShellTempi } from '../components/SchedeTempi'
 import Schede from '../components/Schede'
 import SelettoreData from '../components/SelettoreData'
 import SceltaFiglio, { useAtletaVisto } from '../components/SceltaFiglio'
@@ -171,8 +172,10 @@ function PrevisioniAtleta() {
 
 export default function Previsioni() {
   const { ruolo } = useAuth()
+  const shell = useShellTempi('Previsioni')
   return (
-    <AppShell titolo="Previsioni" attiva="funzioni" indietro="/funzioni">
+    <AppShell {...shell}>
+      <SchedeTempi />
       {ruolo === 'coach' ? <PrevisioniCoach /> : <PrevisioniAtleta />}
     </AppShell>
   )

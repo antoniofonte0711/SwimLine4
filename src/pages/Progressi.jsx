@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import AppShell from '../components/AppShell'
+import SchedeTempi, { useShellTempi } from '../components/SchedeTempi'
+import CardPunti from '../components/CardPunti'
+import { useRegole } from '../lib/regole'
 import SchedaProgressi from '../components/SchedaProgressi'
 import SceltaFiglio, { useAtletaVisto } from '../components/SceltaFiglio'
 import { SenzaSquadra } from '../components/PianoCard'
@@ -52,8 +55,13 @@ function ProgressiCoach() {
 // Atleta: i suoi progressi. Genitore: quelli del figlio scelto (sola lettura).
 function ProgressiAtleta() {
   const visto = useAtletaVisto()
+  const { ruolo } = useAuth()
+  const { puo } = useRegole()
+  const shell = useShellTempi(visto.genitore && visto.figlio ? `Progressi di ${visto.figlio.nome}` : 'Progressi')
   return (
-    <AppShell titolo={visto.genitore && visto.figlio ? `Progressi di ${visto.figlio.nome}` : 'Progressi'} attiva="funzioni" indietro="/funzioni">
+    <AppShell {...shell}>
+      <SchedeTempi />
+      {ruolo === 'atleta' && puo('a_punti') && <CardPunti />}
       <SceltaFiglio visto={visto} cosa="i suoi progressi" />
       {visto.atletaId && <SchedaProgressi key={visto.atletaId} atletaId={visto.atletaId} />}
     </AppShell>

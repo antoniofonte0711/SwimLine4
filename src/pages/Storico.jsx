@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import AppShell from '../components/AppShell'
+import SchedeTempi, { useShellTempi } from '../components/SchedeTempi'
 import StoricoAllenamenti from '../components/StoricoAllenamenti'
 import SceltaFiglio, { useAtletaVisto } from '../components/SceltaFiglio'
 import PianoCard, { SenzaSquadra } from '../components/PianoCard'
@@ -51,8 +52,10 @@ function StoricoAtleta() {
 
 export default function Storico() {
   const { ruolo } = useAuth()
+  const shell = useShellTempi('Storico')
   return (
-    <AppShell titolo="Storico" attiva="funzioni" indietro="/funzioni">
+    <AppShell {...shell}>
+      <SchedeTempi />
       {ruolo === 'coach' ? <StoricoCoach /> : <StoricoAtleta />}
     </AppShell>
   )

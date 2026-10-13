@@ -100,11 +100,11 @@ export default function RiepilogoCoach() {
     .filter((p) => p.data >= lunedi && p.data <= oggi)
     .reduce((s, p) => s + metriPiano(p.righe), 0) / 1000
 
-  if (!pronto) return <AppShell titolo="Riepilogo" attiva="riepilogo"><p className="text-center text-slate-500 py-8">Carico…</p></AppShell>
-  if (!squadra) return <AppShell titolo="Riepilogo" attiva="riepilogo"><SenzaSquadra /></AppShell>
+  if (!pronto) return <AppShell titolo="La settimana" attiva="funzioni" indietro="/funzioni"><p className="text-center text-slate-500 py-8">Carico…</p></AppShell>
+  if (!squadra) return <AppShell titolo="La settimana" attiva="funzioni" indietro="/funzioni"><SenzaSquadra /></AppShell>
 
   return (
-    <AppShell titolo="Riepilogo" attiva="riepilogo">
+    <AppShell titolo="La settimana" attiva="funzioni" indietro="/funzioni">
       <div className="bg-blue-600 text-white rounded-3xl p-5 mb-3 shadow-lg shadow-blue-200">
         <p className="text-sm text-blue-100">Chilometri di questa settimana</p>
         <p className="text-4xl font-extrabold mt-1">{kmSettimana.toFixed(1).replace('.', ',')} km</p>

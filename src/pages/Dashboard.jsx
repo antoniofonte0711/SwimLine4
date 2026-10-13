@@ -75,13 +75,14 @@ function EroeAllenamento({ piano, oggi, squadra, vasca, registra, onVasca }) {
         </div>
         <Difficolta righe={piano.righe} suBlu />
         {(vasca || registra) && (
-          <div className={`grid gap-2 mt-3 ${vasca && registra ? 'grid-cols-[minmax(0,1fr)_56px]' : 'grid-cols-1'}`}>
+          <div className="grid grid-cols-1 gap-2 mt-3">
             {vasca && <button onClick={onVasca} className="h-14 rounded-[18px] bg-white text-blue-600 font-display text-lg font-extrabold flex items-center justify-center gap-2.5">
               <svg viewBox="0 0 24 24" className="w-[22px] h-[22px]" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.4-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5Z" /></svg>
               Inizia in vasca
             </button>}
-            {registra && <Link to="/allenamenti" aria-label="Registra i tempi" className="h-14 rounded-[18px] bg-white/15 flex items-center justify-center">
+            {registra && <Link to="/allenamenti" className="h-14 rounded-[18px] bg-white/15 font-display text-lg font-extrabold flex items-center justify-center gap-2">
               <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="13" r="8" /><path d="M12 9v4l2.5 2M9.5 2.5h5" /></svg>
+              Scrivi i tempi
             </Link>}
           </div>
         )}
@@ -96,7 +97,7 @@ function BottoneRegistra() {
     <Link to="/allenamenti"
       className="cliccabile inline-flex items-center justify-center gap-2 w-full max-w-[320px] min-h-[48px] px-6 font-display font-extrabold text-white bg-blue-600 hover:bg-blue-700 rounded-campo">
       <Icona nome="cronometro" className="w-5 h-5" />
-      Registra i tuoi tempi
+      Scrivi i tuoi tempi
     </Link>
   )
 }
@@ -219,7 +220,8 @@ function HomeAtleta() {
         </div>
       )}
 
-      {ruolo !== 'genitore' && puo('a_punti') && <CardPunti />}
+      {/* l'atleta trova punti e premi in "I miei tempi" */}
+      {ruolo === 'admin' && puo('a_punti') && <CardPunti />}
 
       {righe.length > 0 && (
         <div className="bg-white rounded-3xl p-5 mb-3">
@@ -240,7 +242,6 @@ function HomeAtleta() {
         </div>
       )}
 
-      {registra && piano && <BottoneRegistra />}
 
       {/* nuotato da solo, fuori dal piano: lo propone al coach */}
       {registra && profile?.squadra_id && ruolo !== 'genitore' && (
@@ -252,27 +253,34 @@ function HomeAtleta() {
   )
 }
 
-// Azione grande della home del coach (Presenze, Atleti)
-function AzioneCoach({ to, icona, titolo, sotto }) {
+// Una riga del riquadro "Da fare": icona, cosa fare e perché; tutta la riga porta dove si fa
+function RigaDaFare({ to, icona, titolo, sotto, urgente }) {
   return (
-    <Link to={to} className="cliccabile bg-white rounded-3xl p-4 mb-3 flex items-center gap-4 text-abisso shadow-card">
-      <span className="w-12 h-12 shrink-0 rounded-2xl bg-blue-600 text-white flex items-center justify-center">
-        <Icona nome={icona} />
-      </span>
-      <span className="flex-1 min-w-0">
-        <span className="block font-display text-lg font-extrabold">{titolo}</span>
-        <span className="block text-[13px] text-slate-500">{sotto}</span>
-      </span>
-      <Icona nome="freccia" className="w-5 h-5 text-slate-500 shrink-0" />
-    </Link>
+    <li className="border-t border-slate-100 first:border-t-0">
+      <Link to={to} className="cliccabile flex items-center gap-3 min-h-[64px] py-2">
+        <span className={`w-10 h-10 shrink-0 rounded-2xl flex items-center justify-center ${urgente ? 'bg-red-50 text-red-600' : 'bg-schiuma text-blue-600'}`}>
+          <Icona nome={icona} className="w-[22px] h-[22px]" />
+        </span>
+        <span className="flex-1 min-w-0">
+          <span className="block text-[15px] font-bold text-abisso">{titolo}</span>
+          <span className={`block text-[13px] truncate ${urgente ? 'text-red-600 font-semibold' : 'text-slate-500'}`}>{sotto}</span>
+        </span>
+        <Icona nome="freccia" className="w-5 h-5 text-slate-400 shrink-0" />
+      </Link>
+    </li>
   )
 }
+
+const nomeBreve = (a) => `${a.nome}${a.cognome ? ' ' + a.cognome.charAt(0) + '.' : ''}`
+const giornoBreve = (d) => new Date(d + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' })
 
 // La giornata del coach: com'è messo l'allenamento, presenze e atleti. L'editor si apre solo quando serve.
 function OggiCoach({ squadra, giorno, settimana, onScrivi, avviso }) {
   const [piano, setPiano] = useState(undefined)
   const [atleti, setAtleti] = useState([])
   const [segnati, setSegnati] = useState(0)
+  const [certificati, setCertificati] = useState([]) // [{ nome, scadenza }] scaduti o in scadenza entro 30 giorni
+  const [gara, setGara] = useState(null)             // { nome, data, atleti } la prossima gara della squadra
   const oggi = giorno === dataLocale()
 
   useEffect(() => {
@@ -281,16 +289,33 @@ function OggiCoach({ squadra, giorno, settimana, onScrivi, avviso }) {
     async function carica() {
       const [{ data: p }, { data: a }] = await Promise.all([
         supabase.from('allenamenti_squadra').select('*').eq('squadra_id', squadra.id).eq('data', giorno).maybeSingle(),
-        supabase.from('profiles').select('id').in('role', ['atleta', 'admin']).eq('squadra_id', squadra.id).is('eliminato_il', null),
+        supabase.from('profiles').select('id, nome, cognome').in('role', ['atleta', 'admin']).eq('squadra_id', squadra.id).is('eliminato_il', null),
       ])
       const ids = (a || []).map((x) => x.id)
-      const { data: pr } = ids.length
-        ? await supabase.from('presenze').select('atleta_id').in('atleta_id', ids).eq('data', giorno)
-        : { data: [] }
+      const fra30 = new Date()
+      fra30.setDate(fra30.getDate() + 30)
+      const [{ data: pr }, { data: cert }, { data: gare }] = ids.length
+        ? await Promise.all([
+          supabase.from('presenze').select('atleta_id').in('atleta_id', ids).eq('data', giorno),
+          supabase.from('atleta_riferimenti').select('atleta_id, certificato_scadenza').in('atleta_id', ids)
+            .not('certificato_scadenza', 'is', null).lte('certificato_scadenza', dataLocale(fra30)),
+          supabase.from('gare').select('nome_gara, data_gara, atleta_id').in('atleta_id', ids)
+            .gte('data_gara', dataLocale()).order('data_gara').limit(200),
+        ])
+        : [{ data: [] }, { data: [] }, { data: [] }]
       if (!attivo) return
+      const perId = Object.fromEntries((a || []).map((x) => [x.id, x]))
       setPiano(p || null)
       setAtleti(ids)
       setSegnati((pr || []).length)
+      setCertificati((cert || []).filter((c) => perId[c.atleta_id])
+        .map((c) => ({ nome: nomeBreve(perId[c.atleta_id]), scadenza: c.certificato_scadenza }))
+        .sort((x, y) => x.scadenza.localeCompare(y.scadenza)))
+      const prima = (gare || [])[0]
+      setGara(prima ? {
+        nome: prima.nome_gara, data: prima.data_gara,
+        atleti: new Set(gare.filter((g) => g.data_gara === prima.data_gara && g.nome_gara === prima.nome_gara).map((g) => g.atleta_id)).size,
+      } : null)
     }
     carica()
     return () => { attivo = false }
@@ -299,9 +324,27 @@ function OggiCoach({ squadra, giorno, settimana, onScrivi, avviso }) {
   if (piano === undefined) return <p className="text-center text-slate-500 py-8">Carico…</p>
   const stato = !piano ? null : !piano.pubblicato ? 'Bozza' : piano.visibilita === 'coach' ? 'Solo coach' : 'Pubblicato'
   const min = piano ? minutiPiano(piano.righe || []) : 0
-  const presenze = !atleti.length ? 'Nessun atleta in squadra'
-    : segnati === 0 ? `${atleti.length} atleti · da segnare`
-    : segnati >= atleti.length ? `Tutti segnati (${atleti.length})` : `${segnati} su ${atleti.length} segnati`
+  // Le cose in sospeso, in ordine di urgenza
+  const passato = giorno <= dataLocale()
+  const scaduti = certificati.filter((c) => c.scadenza < dataLocale())
+  const daFare = [
+    passato && atleti.length > 0 && segnati < atleti.length && {
+      to: `/presenze?giorno=${giorno}`, icona: 'spunta', titolo: 'Segna le presenze',
+      sotto: segnati === 0 ? `Nessuno segnato su ${atleti.length}` : `${segnati} su ${atleti.length} segnati`,
+    },
+    piano?.pubblicato && passato && {
+      to: `/risultati?data=${giorno}`, icona: 'cronometro', titolo: 'Scrivi i tempi degli atleti', sotto: 'Dell\'allenamento di questo giorno',
+    },
+    certificati.length > 0 && {
+      to: '/squadra', icona: 'clessidra', urgente: scaduti.length > 0,
+      titolo: scaduti.length ? 'Certificato medico scaduto' : 'Certificato medico in scadenza',
+      sotto: certificati.map((c) => `${c.nome} ${c.scadenza < dataLocale() ? 'scaduto' : 'il ' + giornoBreve(c.scadenza)}`).join(' · '),
+    },
+    gara && {
+      to: '/gare', icona: 'coppa', titolo: `Prossima gara: ${giornoBreve(gara.data)}`,
+      sotto: `${gara.nome} · ${gara.atleti} ${gara.atleti === 1 ? 'atleta' : 'atleti'}`,
+    },
+  ].filter(Boolean)
 
   return (
     <div className="lg:grid lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:gap-6 lg:items-start">
@@ -344,6 +387,18 @@ function OggiCoach({ squadra, giorno, settimana, onScrivi, avviso }) {
           </div>
         )}
 
+        {/* Da fare: solo le cose in sospeso, non i collegamenti che sono già nella barra in basso */}
+        <section aria-label="Da fare" className="bg-white rounded-3xl px-4 pt-3 pb-1 mb-3 shadow-card">
+          <p className="text-xs font-bold tracking-widest text-slate-500 uppercase">Da fare</p>
+          {daFare.length === 0 ? (
+            <p className="flex items-center gap-2 min-h-[56px] text-[15px] font-semibold text-green-700">
+              <Icona nome="spunta" className="w-6 h-6" /> Niente in sospeso
+            </p>
+          ) : (
+            <ul>{daFare.map((r) => <RigaDaFare key={r.titolo} {...r} />)}</ul>
+          )}
+        </section>
+
         {piano && (
           <>
             <h2 className="font-display text-xl font-extrabold mt-5 mb-2 flex items-baseline justify-between">
@@ -356,11 +411,6 @@ function OggiCoach({ squadra, giorno, settimana, onScrivi, avviso }) {
       </div>
 
       <div className="mt-3 lg:mt-0">
-        <AzioneCoach to={`/presenze?giorno=${giorno}`} icona="spunta" titolo="Segna presenze" sotto={presenze} />
-        <AzioneCoach to="/squadra" icona="gruppo" titolo="Atleti" sotto="Tempi, presenze e gare di ognuno" />
-        {piano?.pubblicato && (
-          <AzioneCoach to={`/risultati?data=${giorno}`} icona="cronometro" titolo="Tempi degli atleti" sotto="Scrivi i tempi di questo allenamento" />
-        )}
         {settimana.giorni > 0 && (
           <div className="bg-white rounded-3xl p-4 mb-3 flex items-center justify-between shadow-card">
             <div>
@@ -388,7 +438,7 @@ function HomeCoach() {
 
   if (scrivi && squadra) {
     return (
-      <AppShell titolo={titoloGiorno(giorno)} attiva="home">
+      <AppShell titolo="Allenamento" attiva="home">
         <EditorAllenamento squadra={squadra} giorno={giorno}
           onChiudi={(msg) => { setAvviso(msg || ''); setScrivi(false); window.scrollTo(0, 0) }} />
       </AppShell>

@@ -33,10 +33,10 @@ function SquadraCompagni() {
   const [nomeSquadra, setNomeSquadra] = useState('')
   const [atleti, setAtleti] = useState([])
   const [scelto, setScelto] = useState('')
-  const [vista, setVista] = useState(isCoach ? 'Oggi' : 'Gare')
+  // qui arrivano solo atleti e genitori (il coach ha SquadraCoach): si vedono le gare del compagno
+  const vista = 'Gare'
   const [gare, setGare] = useState([])
   const [allenamenti, setAllenamenti] = useState([])
-  const viste = isCoach ? ['Oggi', 'Gare', 'Allenamenti', 'Presenze', 'Grafico tempi', 'Riferimenti'] : ['Gare']
 
   useEffect(() => {
     async function carica() {
@@ -73,7 +73,8 @@ function SquadraCompagni() {
         }))
       }
       setAtleti(data || [])
-      setScelto((s) => (data || []).some((a) => a.id === s) ? s : data?.[0]?.id || '')
+      // nessuno scelto all'inizio: prima l'elenco, poi si tocca un nome
+      setScelto((s) => (data || []).some((a) => a.id === s) ? s : '')
     }
     carica()
   }, [user.id, profile?.squadra_id, isCoach, pronto, squadraCoach?.id]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -101,36 +102,32 @@ function SquadraCompagni() {
     if (!migliori[k] || sec < migliori[k].sec) migliori[k] = { sec, tempo: g.tempo, dist: g.distanza, vasca: vascaDi(g) }
   })
   const elencoMigliori = Object.entries(migliori).sort((a, b) => a[1].vasca - b[1].vasca || a[1].dist - b[1].dist)
+  const compagno = atleti.find((a) => a.id === scelto)
 
   return (
-    <AppShell titolo="Squadra" attiva="funzioni" indietro="/funzioni">
-      <div className="bg-white rounded-3xl p-5 mb-3 shadow-card">
+    <AppShell titolo={compagno ? `${compagno.nome} ${compagno.cognome || ''}`.trim() : 'Compagni'} attiva="funzioni" indietro={compagno ? undefined : '/funzioni'}>
+      {compagno && (
+        <button type="button" onClick={() => setScelto('')}
+          className="cliccabile inline-flex items-center min-h-[44px] mb-3 text-sm font-semibold text-blue-600 bg-schiuma rounded-full px-4">
+          ‹ Tutti i compagni
+        </button>
+      )}
+      {!compagno && <div className="bg-white rounded-3xl p-5 mb-3 shadow-card">
         <p className="text-xs text-slate-500">Squadra</p>
         <p className="text-xl font-bold mb-3">{nomeSquadra || (isCoach ? 'Tutte le squadre' : 'Non sei ancora in una squadra')}</p>
 
         {nascosti ? (
           <p className="text-sm text-slate-500">In questa squadra i tempi dei compagni non sono visibili. I tuoi li trovi in Gare e Progressi.</p>
-        ) : atleti.length > 0 ? (
-          <>
-            <label className="block text-xs text-slate-500 mb-1">{isCoach ? 'Atleta' : 'Compagno'}</label>
-            <select value={scelto} onChange={(e) => setScelto(e.target.value)} className={CAMPO + ' mb-3'}>
-              {atleti.map((a) => <option key={a.id} value={a.id}>{a.nome} {a.cognome}</option>)}
-            </select>
-            <label className="block text-xs text-slate-500 mb-1">Cosa vuoi vedere?</label>
-            <select value={vista} onChange={(e) => setVista(e.target.value)} className={CAMPO}>
-              {viste.map((v) => <option key={v}>{v}</option>)}
-            </select>
-          </>
-        ) : (
+        ) : atleti.length > 0 ? null : (
           <p className="text-sm text-slate-500">
             {isCoach
               ? 'Nessun atleta nella tua squadra: compaiono quando scelgono la tua squadra in registrazione.'
               : 'Quando entri in una squadra qui vedrai i tempi dei compagni.'}
           </p>
         )}
-      </div>
+      </div>}
 
-      {atleti.length > 0 && <ElencoCompagni atleti={atleti} coach={isCoach} scelto={scelto} onScegli={setScelto} />}
+      {!compagno && atleti.length > 0 && <ElencoCompagni atleti={atleti} coach={isCoach} scelto={scelto} onScegli={(id) => { setScelto(id); window.scrollTo(0, 0) }} />}
 
       {scelto && isCoach && vista === 'Oggi' && <OggiAtleta key={scelto} atletaId={scelto} />}
       {scelto && isCoach && vista === 'Presenze' && <PresenzeBreve key={scelto} atletaId={scelto} />}
@@ -302,7 +299,7 @@ function SquadraCoach() {
 
   const atleta = atleti?.find((a) => a.id === scelto)
   const scegli = (id) => { setScelto(id); window.scrollTo(0, 0) }
-  const indietro = ruolo === 'coach' ? undefined : '/funzioni'
+  const indietro = ruolo === 'coach' ? '/dashboard' : '/funzioni'
 
   if (atleta) {
     return (

@@ -239,7 +239,7 @@ function GareAtleta() {
   )
 
   return (
-    <AppShell titolo="Gare" attiva="funzioni" indietro="/funzioni">
+    <AppShell titolo="Gare" attiva={ruolo === 'atleta' ? 'gare' : 'funzioni'} indietro={ruolo === 'atleta' ? undefined : '/funzioni'}>
       {!online && (
         <p className="text-sm bg-yellow-100 text-yellow-800 rounded-xl px-4 py-3 mb-3">
           📴 Sei offline: le gare vengono salvate sul telefono e inviate appena torna la connessione.

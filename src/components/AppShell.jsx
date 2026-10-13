@@ -25,10 +25,18 @@ const VOCI_COACH = [
   ['funzioni', '/funzioni', 'griglia', 'Altro'],
   ['profilo', '/profilo', 'persona', 'Profilo'],
 ]
+// L'atleta: oggi, come sta andando, le gare; il resto in Altro
+const VOCI_ATLETA = [
+  ['home', '/dashboard', 'onde', 'Oggi'],
+  ['tempi', '/progressi', 'grafico', 'I miei tempi'],
+  ['gare', '/gare', 'coppa', 'Gare'],
+  ['funzioni', '/funzioni', 'griglia', 'Altro'],
+  ['profilo', '/profilo', 'persona', 'Profilo'],
+]
 const SIGLE = ['DOM', 'LUN', 'MAR', 'MER', 'GIO', 'VEN', 'SAB']
 
 // Struttura comune di tutte le schermate (layout Limpida): testata chiara, striscia dei giorni e menu in basso.
-// attiva: 'home' | 'riepilogo' | 'funzioni' | 'profilo' (coach anche 'presenze' | 'atleti')
+// attiva: 'home' | 'riepilogo' | 'funzioni' | 'profilo' (coach anche 'presenze' | 'atleti'; atleta 'tempi' | 'gare')
 // indietro: percorso di riserva del tasto "Indietro" (facoltativo)
 // giorno + onGiorno: se presenti, mostrano la striscia dei giorni
 // voti: { '2026-10-08': 5.8 } difficoltà dei giorni, disegnata come barretta sotto ogni giorno (facoltativo)
@@ -38,7 +46,8 @@ export default function AppShell({ titolo, attiva, indietro, giorno, onGiorno, v
   // non quando l'admin guarda l'app come un altro: la coda sul telefono è di chi l'ha scritta
   useInvioAutomatico(supabase, staVedendoCome ? null : profile?.id)
   const coach = ruolo === 'coach'
-  const voci = coach ? VOCI_COACH : VOCI
+  const atleta = ruolo === 'atleta'
+  const voci = coach ? VOCI_COACH : atleta ? VOCI_ATLETA : VOCI
   const iniziale = (profile?.nome || 'A').charAt(0).toUpperCase()
   const [calAperto, setCalAperto] = useState(false)
   const [guidaAperta, setGuidaAperta] = useState(false)
@@ -103,8 +112,8 @@ export default function AppShell({ titolo, attiva, indietro, giorno, onGiorno, v
                 </span>
               )}
             </Link>
-            {/* il coach ha Profilo nella barra in basso: niente doppione */}
-            {!coach && <Link to="/profilo" aria-label="Profilo"
+            {/* coach e atleta hanno Profilo nella barra in basso: niente doppione */}
+            {!coach && !atleta && <Link to="/profilo" aria-label="Profilo"
               className="cliccabile w-11 h-11 rounded-full bg-abisso text-white font-display font-bold flex items-center justify-center">
               {iniziale}
             </Link>}

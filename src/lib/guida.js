@@ -47,11 +47,10 @@ export const GUIDA = [
       ['‹ e ›', 'Settimana prima e settimana dopo. "Mese ▾" apre il calendario per saltare a qualsiasi giorno.'],
       ['Riquadro blu', 'L\'allenamento del coach: chilometri, minuti e difficoltà. Tocca la difficoltà per vedere dove va la fatica.'],
       ['Inizia in vasca', 'Modalità piscina: un lavoro alla volta a caratteri grandi. "Fatto" quando finisci; alla fine "Registra i tempi" o "Torna a Oggi".'],
-      ['Cronometro nel riquadro blu', 'Scorciatoia per scrivere i tuoi tempi.'],
+      ['Scrivi i tempi', 'Nel riquadro blu: apre i lavori del coach con le caselle per i tuoi tempi. Se il coach non ha pubblicato niente, scrivi tu cosa hai fatto.'],
       ['Il programma', 'Tutti i lavori del giorno, in ordine.'],
       ['Com\'è andata oggi', 'Riassunto del giorno: km, tempi, record, punti. Sabato e domenica c\'è anche la card della settimana (la X la chiude).'],
-      ['Livello e punti', 'Quanti punti mancano al prossimo premio. Quando compare "Apri il tuo premio", toccalo per scoprire cosa hai vinto.'],
-      ['Registra i tuoi tempi', 'Porta alla pagina dove scrivi i tempi del giorno.'],
+      ['Barra in basso', 'Oggi, I miei tempi (progressi, record, previsioni, storico, punti), Gare, Altro e Profilo.'],
       ['Ho nuotato da solo (fuori piano)', 'Hai nuotato fuori dal piano del coach (negli ultimi 30 giorni)? Scrivi metri e cosa hai fatto e premi "Manda al coach": se lo accetta, conta nei tuoi km.'],
     ],
   },
@@ -76,12 +75,14 @@ export const GUIDA = [
       ['Scrivi l\'allenamento / Continua e pubblica / Modifica', 'Apre l\'allenamento del giorno.'],
       ['+ Aggiungi lavoro', 'Sale un pannello: ripetizioni con − e +, distanza, tipo e stile con un tocco. Con "+" scrivi una distanza o uno stile che non c\'è, o crei un tipo di lavoro nuovo.'],
       ['Ripartenza', 'Si scrive come vuoi (130 diventa 1\'30"). Note, minuti e ripartenze diverse sono in "+ Note, tempo…".'],
-      ['Toccare un lavoro', 'Lo riapre per cambiarlo. Nel pannello: frecce ↑ ↓ per spostarlo, "Togli" per eliminarlo. Si sposta anche trascinando ⠿.'],
+      ['Toccare un lavoro', 'Lo riapre per cambiarlo. Nel pannello: frecce ↑ ↓ per spostarlo. Si sposta anche trascinando ⠿.'],
+      ['Cestino', 'A destra di ogni lavoro: lo toglie subito. Per qualche secondo compare "Annulla" se hai sbagliato.'],
       ['+ Serie a giri', 'Lavori da ripetere più volte (es. 3 giri di 400-300-200), con giri e recupero.'],
       ['Opzioni', 'Titolo, chi lo vede (solo coach o tutta la squadra) e copia su altri giorni.'],
       ['Bozza / Pubblica', 'La bozza non la vede nessuno; "Pubblica" la manda alla squadra con una notifica.'],
       ['Chiudi', 'Torna alla giornata (se hai cambiato qualcosa ti chiede conferma).'],
-      ['Segna presenze · Atleti · Tempi degli atleti', 'Le azioni del giorno, a un tocco.'],
+      ['Da fare', 'Solo le cose in sospeso: presenze da segnare, tempi da scrivere, certificati medici scaduti o in scadenza, prossima gara. Tocca una riga per andarci.'],
+      ['Barra in basso', 'Oggi, Presenze, Atleti, Altro (tutto il resto, con una riga che dice a cosa serve) e Profilo.'],
       ['Domande per entrare', 'In alto compaiono le richieste di chi vuole entrare in squadra (ti arriva anche una notifica): Approva o Rifiuta.'],
       ['Allenamenti fuori piano', 'Quando un atleta ha nuotato da solo e te lo propone, ti arriva una notifica senza suono e qui compare il riquadro: Accetta (i metri contano nei suoi km) o Rifiuta.'],
     ],
@@ -89,17 +90,18 @@ export const GUIDA = [
 
   // ---------- Allenamenti (atleta) ----------
   {
-    id: 'allenamenti', titolo: 'Allenamenti: inserire i tempi', pagine: ['/allenamenti'], per: ATLETI,
+    id: 'allenamenti', titolo: 'Scrivere i tempi', pagine: ['/allenamenti'], per: ATLETI,
     passi: [
-      ['Aggiungi lavoro / Storico', 'Due schede: la prima per scrivere, la seconda per vedere quello che hai già salvato.'],
+      ['I lavori del coach', 'Se il coach ha pubblicato l\'allenamento di oggi, sotto ogni lavoro ci sono le caselle: scrivi i tempi (anche solo alcuni) e premi "Salva i tempi". Un lavoro già salvato compare in verde; per cambiarlo toglilo dallo Storico (I miei tempi) e riscrivilo.'],
+      ['+ Ho fatto un lavoro diverso', 'Per un lavoro fuori programma: si apre il modulo qui sotto.'],
+      ['Aggiungi lavoro / Storico (admin)', 'Due schede: la prima per scrivere, la seconda per vedere quello che hai già salvato.'],
       ['Tipo di lavoro', 'A2, B1, C1… come ha scritto il coach.'],
       ['Distanza e Passaggi', 'Quanti metri e quante ripetizioni (es. 4 × 100).'],
       ['Stile', 'Stile libero, dorso, rana, farfalla o misti.'],
       ['Risultato di ogni passaggio', 'Un tempo per ripetizione. Scrivili anche senza simboli: 5810 diventa 58"10, 12350 diventa 1\'23"50.'],
-      ['Aggiungi al carrello', 'Mette il lavoro nell\'elenco della giornata (non è ancora salvato). Puoi aggiungerne altri.'],
+      ['Aggiungi alla lista di oggi', 'Mette il lavoro nella lista "Da salvare oggi" (non è ancora salvato). Puoi aggiungerne altri.'],
       ['↑ ↓ ×', 'Nell\'elenco della giornata: sposta su, sposta giù, togli.'],
       ['Ho finito, salva la giornata', 'Salva tutto in una volta. Se sei offline, parte appena torna internet.'],
-      ['Video', 'Per ora non è in funzione.'],
     ],
   },
 
@@ -117,17 +119,35 @@ export const GUIDA = [
     ],
   },
   {
-    id: 'riepilogo-coach', titolo: 'Riepilogo (coach)', pagine: ['/riepilogo'], per: ['coach'],
+    id: 'riepilogo-coach', titolo: 'La settimana (coach)', pagine: ['/riepilogo'], per: ['coach'],
     passi: [
       ['Chilometri di questa settimana', 'Il totale della squadra.'],
-      ['Bollettino giorni', 'Tabella delle presenze da lunedì a venerdì: tocca una casella per cambiarla (P presente · A assente · G giustificato).'],
+      ['Questa settimana', 'Tabella delle presenze da lunedì a venerdì: tocca una casella per cambiarla (P presente · A assente · G giustificato).'],
       ['Lavori svolti', 'Gli allenamenti degli ultimi 14 giorni con lo stato (Bozza, Solo coach, Pubblicato): tocca per aprirlo.'],
     ],
   },
 
   // ---------- Funzioni ----------
   {
-    id: 'funzioni', titolo: 'Funzioni', pagine: ['/funzioni'], per: TUTTI,
+    id: 'altro-coach', titolo: 'Altro (coach)', pagine: ['/funzioni'], per: ['coach'],
+    intro: 'Tutto quello che non usi ogni giorno. Sotto ogni voce c\'è scritto a cosa serve.',
+    passi: [
+      ['La squadra', 'La settimana (km e presenze), Gare (in programma, iscritti, risultati), Calendario del mese.'],
+      ['Come migliorano gli atleti', 'Progressi (grafico dei tempi), Previsioni (tempi a fine stagione), Record della squadra, Punti e premi.'],
+      ['Impostazioni', 'Persone della squadra; Tipi di lavoro: le sigle (A1, A2, B1…) che compaiono quando scrivi l\'allenamento e quanto stanca ognuna, per calcolare la difficoltà.'],
+    ],
+  },
+  {
+    id: 'altro-atleta', titolo: 'Altro', pagine: ['/funzioni'], per: ['atleta'],
+    intro: 'Quello che non usi ogni giorno. Sotto ogni voce c\'è scritto a cosa serve.',
+    passi: [
+      ['La squadra', 'La settimana (km fatti e presenze), Calendario del mese, Compagni e le loro gare, Punti e premi.'],
+      ['Scrivi i tempi', 'Gli stessi tempi del pulsante nel riquadro blu di Oggi, più i lavori fuori programma.'],
+      ['Come si usa l\'app?', 'In fondo: apre la guida completa.'],
+    ],
+  },
+  {
+    id: 'funzioni', titolo: 'Funzioni', pagine: ['/funzioni'], per: ['genitore', 'admin'],
     passi: [
       ['I riquadri', 'Ogni riquadro apre una sezione: Allenamenti, Storico, Progressi, Previsioni, Record, Gare, Squadra, Calendario, Punti…'],
       ['Vedi solo le tue', 'Ognuno vede solo le sezioni che gli servono (il genitore, per esempio, non scrive tempi).'],
@@ -231,7 +251,7 @@ export const GUIDA = [
     id: 'squadra', titolo: 'Squadra', pagine: ['/squadra'], per: ['atleta', 'genitore', 'admin'],
     passi: [
       ['Compagni di squadra', 'Tutti i compagni con la categoria FIN (Esordienti, Ragazzi, Juniores…). L\'anno di nascita non si vede: lo sa solo il coach.'],
-      ['Compagno', 'Tocca un nome (o sceglilo dal menu) per vedere i suoi tempi di gara (solo se lo permette dal suo Profilo).'],
+      ['Compagno', 'Tocca un nome per vedere i suoi tempi di gara (solo se lo permette dal suo Profilo). "‹ Tutti i compagni" torna all\'elenco.'],
       ['Migliori tempi in gara', 'Il suo miglior tempo per ogni distanza, stile e vasca.'],
     ],
   },
@@ -307,7 +327,7 @@ export const GUIDA = [
     intro: 'Non tutti usano le stesse sigle: qui scegli i lavori della tua squadra e ne aggiungi di tuoi.',
     passi: [
       ['Spunta', 'Lavoro acceso: compare quando prepari l\'allenamento e quando gli atleti scrivono i tempi. Senza spunta sparisce dai menu; gli allenamenti già fatti restano come sono.'],
-      ['+ Aggiungi lavoro nuovo', 'Scrivi la sigla (es. A1) e che lavoro è.'],
+      ['+ Nuovo tipo di lavoro', 'Scrivi la sigla (es. A1) e che lavoro è.'],
       ['Quanto stanca?', 'Confrontalo con quelli che conosci: "Come B1", "Tra A2 e B1"… L\'app ne ricava la difficoltà e il tipo di fatica (puoi cambiarlo).'],
       ['Esempio sotto', 'Quanto varrebbe un allenamento di 4 km tutto di quel lavoro, per capire se l\'hai messo giusto.'],
       ['Modifica · Elimina', 'Solo per i lavori aggiunti dalla squadra. Se vuoi solo non vederlo più, basta togliere la spunta.'],
