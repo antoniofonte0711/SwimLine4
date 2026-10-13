@@ -1,4 +1,5 @@
 // Pezzi grafici del Pannello di controllo (stile "OAK": gruppi con linguetta, interruttori a pillola, numeri grandi)
+import { useEffect, useState } from 'react'
 
 export function Gruppo({ titolo, nota, children }) {
   return (
@@ -33,14 +34,37 @@ const TINTE = {
   arancio: 'bg-amber-50 text-amber-700', viola: 'bg-violet-50 text-violet-700',
 }
 
-export function Numero({ valore, etichetta, tinta = 'blu', icona }) {
+// "1 genitore", "3 genitori"
+export const plurale = (n, uno, molti) => `${n} ${n === 1 ? uno : molti}`
+
+// spiega: una riga piccola che dice cosa conta il numero
+export function Numero({ valore, etichetta, tinta = 'blu', icona, spiega }) {
   return (
     <div className="flex items-center gap-4 bg-white border border-slate-200 rounded-2xl px-5 py-4">
       {icona && <span className={`w-12 h-12 shrink-0 rounded-xl flex items-center justify-center ${TINTE[tinta]}`}>{icona}</span>}
-      <div>
+      <div className="min-w-0">
         <b className="block font-display text-[28px] leading-none text-abisso">{valore ?? '–'}</b>
         <span className="text-sm text-slate-600">{etichetta}</span>
+        {spiega && <span className="block text-xs text-slate-500 mt-0.5">{spiega}</span>}
       </div>
+    </div>
+  )
+}
+
+// Al posto di "Carico…": sagome grigie della forma del contenuto, solo se l'attesa supera 300 ms (niente lampeggi)
+export function Scheletro({ righe = 4, schede = 0 }) {
+  const [visibile, setVisibile] = useState(false)
+  useEffect(() => { const t = setTimeout(() => setVisibile(true), 300); return () => clearTimeout(t) }, [])
+  if (!visibile) return null
+  const blocco = 'bg-slate-200/70 rounded-2xl motion-safe:animate-pulse'
+  return (
+    <div role="status" aria-label="Caricamento" className="flex flex-col gap-3">
+      {schede > 0 && (
+        <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(290px,1fr))]">
+          {Array.from({ length: schede }, (_, i) => <div key={i} className={blocco + ' h-[110px]'} />)}
+        </div>
+      )}
+      {Array.from({ length: righe }, (_, i) => <div key={i} className={blocco + ' h-14'} />)}
     </div>
   )
 }

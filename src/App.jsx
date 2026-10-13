@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react'
+import { lazy as reactLazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { MotionConfig } from 'framer-motion'
 import { AuthProvider } from './context/AuthContext'
@@ -11,6 +11,9 @@ import Login from './pages/Login'
 
 // Le altre pagine si scaricano solo quando servono (bundle iniziale più leggero).
 // Dashboard è lazy anche lei: porta con sé framer-motion (~120 KB).
+// Dopo un nuovo rilascio main.jsx ricarica la pagina e l'import torna vuoto: si resta su "Carico…"
+// finché il ricaricamento parte, invece di rompere la pagina (errore "reading 'default'" del 12/10)
+const lazy = (carica) => reactLazy(() => carica().then((m) => m ?? new Promise(() => {})))
 const Dashboard = lazy(() => import('./pages/Dashboard'))
 const Registrati = lazy(() => import('./pages/Registrati'))
 const Riepilogo = lazy(() => import('./pages/Riepilogo'))

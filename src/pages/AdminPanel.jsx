@@ -5,10 +5,10 @@ import { useAuth } from '../context/AuthContext'
 import Icona from '../components/Icona'
 import GuidaPagina from '../components/GuidaPagina'
 import SegnalazioniAdmin from '../components/SegnalazioniAdmin'
-import { DettaglioSquadra, ElencoSquadre, useDatiSquadre } from '../components/admin/AdminSquadre'
+import { contaAllenamenti, DettaglioSquadra, ElencoSquadre, useDatiSquadre } from '../components/admin/AdminSquadre'
 import { CoachDaApprovare, RegistroAccessi, TuttiUtenti } from '../components/admin/AdminUtenti'
 import { FunzioniApp, NotificheApp, Sicurezza } from '../components/admin/AdminImpostazioni'
-import { Numero, Scheda } from '../components/admin/ui'
+import { Numero, plurale, Scheda, Scheletro } from '../components/admin/ui'
 
 const MENU = [
   ['squadre', 'Società e gruppi', 'onde'],
@@ -20,22 +20,24 @@ const MENU = [
 function Dashboard({ dati, vai }) {
   const [stat, setStat] = useState(null)
   useEffect(() => { supabase.rpc('admin_statistiche').then(({ data }) => setStat(data || {})) }, [])
-  if (!dati) return <p className="text-slate-500">Carico…</p>
+  if (!dati) return <Scheletro schede={4} righe={3} />
   const genitoriSoli = dati.persone.filter((p) => p.role === 'genitore' && !dati.collegamenti.some((c) => c.genitore_id === p.id && c.stato === 'approvato'))
   const controlli = [
     [!stat?.coach_in_attesa, 'Coach da approvare', stat?.coach_in_attesa ? `${stat.coach_in_attesa} in attesa` : 'Nessuno in attesa', 'approvazioni'],
     [!stat?.segnalazioni, 'Segnalazioni', stat?.segnalazioni ? `${stat.segnalazioni} da leggere` : 'Nessuna da leggere', 'segnalazioni'],
-    [genitoriSoli.length === 0, 'Genitori collegati ai figli', genitoriSoli.length ? `${genitoriSoli.length} genitori senza figli collegati` : 'Tutti collegati', 'squadre'],
-    [false, 'Protezione password rubate', 'Spenta: si accende su Supabase con il piano Pro', 'sicurezza'],
+    [genitoriSoli.length === 0, 'Genitori collegati ai figli', genitoriSoli.length ? `${plurale(genitoriSoli.length, 'genitore', 'genitori')} senza figli collegati` : 'Tutti collegati', 'squadre'],
+    // il controllo lo fa l'app con lib/passwordRubata.js (gratis), non il piano Pro di Supabase
+    [true, 'Protezione password rubate', 'Attiva: le password già finite online vengono rifiutate', 'sicurezza'],
   ]
+  const piani = contaAllenamenti(dati)
   return (
     <>
       <h1 className="font-display text-[34px] font-extrabold leading-tight">Dashboard</h1>
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-3.5">
-        <Numero valore={dati.persone.length} etichetta="Persone nell'app" />
-        <Numero valore={dati.squadre.length} etichetta="Squadre" />
-        <Numero valore={dati.piani.filter((p) => p.pubblicato).length} etichetta="Allenamenti pubblicati" />
-        <Numero valore={stat?.accessi_7gg} etichetta="Accessi (7 gg)" />
+        <Numero valore={dati.persone.length} etichetta="Persone nell'app" spiega="Account attivi, di tutti i ruoli" />
+        <Numero valore={dati.societa.length} etichetta="Società" spiega={plurale(dati.squadre.length, 'gruppo', 'gruppi') + ' in tutto'} />
+        <Numero valore={piani.pubblicati} etichetta="Allenamenti pubblicati" spiega={`In totale, anche passati · ${piani.inProgramma} da oggi in poi`} />
+        <Numero valore={stat?.accessi_7gg} etichetta="Accessi (7 gg)" spiega="Persone entrate negli ultimi 7 giorni" />
       </div>
       <Scheda titolo="Da controllare" nota={`${controlli.filter((c) => c[0]).length} di ${controlli.length} a posto`}>
         {controlli.map(([ok, titolo, dettaglio, dove]) => (
@@ -63,12 +65,16 @@ export default function AdminPanel() {
   const [guidaAperta, setGuidaAperta] = useState(false)
   const chiudiGuida = useCallback(() => setGuidaAperta(false), [])
 
+  // sul telefono il menu sta chiuso sotto un pulsante, così il contenuto si vede subito
+  const [menuAperto, setMenuAperto] = useState(false)
   const vai = (s, sq) => {
     const p = { sezione: s }
     if (sq) p.squadra = sq
     setParametri(p)
+    setMenuAperto(false)
     window.scrollTo(0, 0)
   }
+  const nomeSezione = MENU.flatMap((m) => (Array.isArray(m[2]) ? m[2] : [[m[0], m[1]]])).find(([id]) => id === sezione)?.[1] || 'Menu'
 
   const voce = (attiva) => `w-full flex items-center gap-3 min-h-[54px] px-4 border-b border-slate-100 text-left text-[15px] font-semibold ${attiva ? 'bg-schiuma text-blue-600' : 'text-abisso hover:bg-slate-50'}`
   const sottoVoce = (attiva) => `w-full min-h-[46px] pl-12 pr-4 border-b border-slate-100 text-left text-[15px] font-semibold ${attiva ? 'bg-schiuma text-blue-600' : 'bg-slate-50/60 text-slate-600'}`
@@ -92,7 +98,13 @@ export default function AdminPanel() {
       {guidaAperta && <GuidaPagina onChiudi={chiudiGuida} />}
 
       <div className="flex flex-wrap gap-6 p-4 sm:p-6">
-        <nav aria-label="Menu del pannello" className="flex-1 basis-[240px] max-w-full lg:max-w-[290px] self-start bg-white border border-slate-200 rounded-2xl overflow-hidden">
+        <button type="button" onClick={() => setMenuAperto(!menuAperto)} aria-expanded={menuAperto} aria-controls="menu-pannello"
+          className="lg:hidden w-full min-h-[48px] flex items-center gap-3 bg-white border border-slate-200 rounded-2xl px-4 font-bold text-left">
+          <span aria-hidden="true" className="text-xl leading-none">☰</span> {nomeSezione}
+          <span aria-hidden="true" className={`ml-auto text-slate-500 transition-transform ${menuAperto ? 'rotate-90' : ''}`}>›</span>
+        </button>
+        <nav id="menu-pannello" aria-label="Menu del pannello"
+          className={`${menuAperto ? '' : 'hidden'} lg:block flex-1 basis-[240px] max-w-full lg:max-w-[290px] self-start bg-white border border-slate-200 rounded-2xl overflow-hidden`}>
           {MENU.map((m) => {
             if (!Array.isArray(m[2])) {
               const [id, nome, icona] = m
@@ -123,6 +135,8 @@ export default function AdminPanel() {
             <DettaglioSquadra key={squadraId} dati={dati} ricarica={ricarica} squadraId={squadraId} onIndietro={() => vai('squadre')} />
           )}
           {sezione === 'dashboard' && <Dashboard dati={dati} vai={vai} />}
+          {!dati && sezione === 'squadre' && squadraId && <Scheletro />}
+          {!dati && ['utenti', 'accessi'].includes(sezione) && <Scheletro righe={6} />}
           {sezione === 'utenti' && dati && <TuttiUtenti dati={dati} ricarica={ricarica} io={user?.id} />}
           {sezione === 'approvazioni' && <CoachDaApprovare ricarica={ricarica} />}
           {sezione === 'segnalazioni' && (

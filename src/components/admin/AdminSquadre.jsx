@@ -6,7 +6,7 @@ import { PERMESSI_SQUADRA, ricaricaRegole } from '../../lib/regole'
 import Icona from '../Icona'
 import GestioneLavori from '../GestioneLavori'
 import { dataLocale } from '../../lib/lavori'
-import { BOTTONE_PIENO, ChipRuolo, Gruppo, Interruttore, Interruttori, Numero, Salvato, Scheda, Vuoto } from './ui'
+import { BOTTONE_PIENO, ChipRuolo, Gruppo, Interruttore, Interruttori, Numero, plurale, Salvato, Scheda, Scheletro, Vuoto } from './ui'
 
 const COLORI = ['#0b4fd9', '#0f6b3f', '#b45309', '#6d28c9', '#c2309f', '#0a1a2f']
 const sigla = (nome = '') => nome.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]).join('').toUpperCase() || '?'
@@ -45,6 +45,12 @@ export function OpzioniGruppi({ dati, escludi }) {
       <optgroup label="Senza società">{gruppi(null)}</optgroup>
     </>
   )
+}
+
+// Un solo conteggio degli allenamenti per Dashboard e Società, così i numeri non si contraddicono
+export function contaAllenamenti(dati) {
+  const pubblicati = dati.piani.filter((p) => p.pubblicato)
+  return { pubblicati: pubblicati.length, inProgramma: pubblicati.filter((p) => p.data >= dataLocale()).length }
 }
 
 // Nuova società o modifica di una esistente: nome e capo (uno solo)
@@ -195,7 +201,7 @@ export function ElencoSquadre({ dati, onApri, ricarica }) {
       <span className="min-w-0">
         <span className="block font-display font-extrabold text-[22px] underline underline-offset-4 decoration-2 truncate">{s.nome}</span>
         <span className="block text-sm text-slate-600 mt-1">Coach: {s.coach}</span>
-        <span className="block text-sm text-slate-600">{s.atleti} atleti · {s.genitori} genitori</span>
+        <span className="block text-sm text-slate-600">{plurale(s.atleti, 'atleta', 'atleti')} · {plurale(s.genitori, 'genitore', 'genitori')}</span>
       </span>
       <span className="ml-auto text-sm font-extrabold text-blue-600 whitespace-nowrap">Entra ›</span>
     </button>
@@ -215,13 +221,14 @@ export function ElencoSquadre({ dati, onApri, ricarica }) {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3.5">
-        <Numero tinta="blu" valore={stat?.allenamenti_in_programma} etichetta="Allenamenti in programma" icona={<Icona nome="calendario" />} />
-        <Numero tinta="verde" valore={stat?.nuovi_utenti_7gg} etichetta="Nuovi utenti (7 gg)" icona={<Icona nome="gruppo" />} />
-        <Numero tinta="arancio" valore={stat?.coach_in_attesa} etichetta="Coach da approvare" icona={<Icona nome="persona" />} />
-        <Numero tinta="viola" valore={stat?.accessi_7gg} etichetta="Accessi (7 gg)" icona={<Icona nome="spunta" />} />
+        <Numero tinta="blu" valore={dati ? contaAllenamenti(dati).inProgramma : null} etichetta="Allenamenti in programma"
+          spiega={dati ? `Pubblicati, da oggi in poi · ${contaAllenamenti(dati).pubblicati} in totale` : null} icona={<Icona nome="calendario" />} />
+        <Numero tinta="verde" valore={stat?.nuovi_utenti_7gg} etichetta="Nuovi utenti (7 gg)" spiega="Iscritti negli ultimi 7 giorni" icona={<Icona nome="gruppo" />} />
+        <Numero tinta="arancio" valore={stat?.coach_in_attesa} etichetta="Coach da approvare" spiega="Si sono iscritti come coach" icona={<Icona nome="persona" />} />
+        <Numero tinta="viola" valore={stat?.accessi_7gg} etichetta="Accessi (7 gg)" spiega="Persone entrate negli ultimi 7 giorni" icona={<Icona nome="spunta" />} />
       </div>
 
-      {!dati && <p className="text-slate-500 py-6">Carico…</p>}
+      {!dati && <Scheletro schede={3} righe={0} />}
       {dati && (
         <div className="flex gap-2 flex-wrap">
           <button type="button" onClick={() => setModulo({ tipo: 'societa', societa: null })} className={BOTTONE_PIENO}>+ Nuova società</button>
@@ -245,7 +252,7 @@ export function ElencoSquadre({ dati, onApri, ricarica }) {
               <div>
                 <h2 className="font-display text-[24px] font-extrabold leading-tight">{so ? so.nome : 'Senza società'}</h2>
                 <p className="text-sm text-slate-600">
-                  {so ? `Capo: ${capo ? nomeDi(capo) : 'nessuno'} · ` : ''}{gruppi.length} {gruppi.length === 1 ? 'gruppo' : 'gruppi'}
+                  {so ? `Capo: ${capo ? nomeDi(capo) : 'nessuno'} · ` : ''}{plurale(gruppi.length, 'gruppo', 'gruppi')}
                 </p>
               </div>
               {so && (
@@ -287,7 +294,7 @@ export function DettaglioSquadra({ dati, ricarica, squadraId, onIndietro }) {
   const squadra = dati.squadre.find((s) => s.id === squadraId)
   const membri = useMemo(() => dati.persone.filter((p) => p.squadra_id === squadraId)
     .sort((a, b) => ['coach', 'admin', 'atleta', 'genitore'].indexOf(a.role) - ['coach', 'admin', 'atleta', 'genitore'].indexOf(b.role) || nomeDi(a).localeCompare(nomeDi(b))), [dati, squadraId])
-  if (!squadra) return <Vuoto titolo="Squadra non trovata" />
+  if (!squadra) return <Vuoto titolo="Gruppo non trovato" />
   const coach = dati.persone.find((p) => p.id === squadra.coach_id)
   const societa = dati.societa.find((s) => s.id === squadra.societa_id)
   const piani = dati.piani.filter((p) => p.squadra_id === squadraId && p.pubblicato)
@@ -402,14 +409,15 @@ function PersoneSquadra({ dati, membri, squadra, ricarica }) {
     if (scelti.includes(squadra.coach_id) && azione !== 'ruolo'
       && !window.confirm(`Tra le persone scelte c'è il coach: ${squadra.nome} resterà senza coach. Continuare?`)) return
     if (azione === 'togli' && !window.confirm(`Togliere ${scelti.length} persone da ${squadra.nome}? I loro tempi restano salvati.`)) return
+    if (azione === 'ruolo' && !window.confirm(`Cambiare il ruolo di ${scelti.length === 1 ? 'questa persona' : `${scelti.length} persone`} in ${valore}?`)) return
+    // una per una, con le funzioni che lasciano traccia nel Registro accessi;
+    // se c'è il coach, il gruppo che allenava resta senza coach
     let error
-    if (azione === 'ruolo') ({ error } = await supabase.from('profiles').update(patch).in('id', scelti))
-    else {
-      // una per una: se c'è il coach, il gruppo che allenava resta senza coach
-      for (const id of scelti) {
-        ;({ error } = await supabase.rpc('admin_sposta_persona', { p_persona: id, p_squadra: patch.squadra_id }))
-        if (error) break
-      }
+    for (const id of scelti) {
+      ;({ error } = azione === 'ruolo'
+        ? await supabase.rpc('admin_cambia_ruolo', { p_persona: id, p_ruolo: valore })
+        : await supabase.rpc('admin_sposta_persona', { p_persona: id, p_squadra: patch.squadra_id }))
+      if (error) break
     }
     if (error) return setEsito('Errore: ' + error.message)
     setEsito(`Fatto su ${scelti.length} ${scelti.length === 1 ? 'persona' : 'persone'}.`)
@@ -510,7 +518,7 @@ function GenitoriSquadra({ dati, membri, ricarica }) {
 
   return (
     <Scheda titolo="Genitori e figli" nota="Il collegamento lo chiede il genitore e lo approva l'atleta. Da qui puoi toglierlo.">
-      {genitori.length === 0 && <Vuoto titolo="Nessun genitore in questa squadra" />}
+      {genitori.length === 0 && <Vuoto titolo="Nessun genitore in questo gruppo" />}
       {genitori.map((g) => {
         const suoi = dati.collegamenti.filter((c) => c.genitore_id === g.id)
         return (

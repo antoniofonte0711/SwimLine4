@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { leggiTutto, scaricaJson } from '../../lib/copiaDati'
 import { FUNZIONI_APP, NOTIFICHE_APP, ricaricaRegole } from '../../lib/regole'
-import { BOTTONE, BOTTONE_PIENO, Gruppo, Interruttore, Interruttori, Salvato, Scheda } from './ui'
+import { BOTTONE_PIENO, Gruppo, Interruttore, Interruttori, Salvato, Scheda, Scheletro } from './ui'
+import { OpzioniGruppi } from './AdminSquadre'
 
 // Interruttori salvati in impostazioni_app (chiave 'funzioni' o 'notifiche')
 function useImpostazione(chiave) {
@@ -34,7 +35,7 @@ export function FunzioniApp() {
         <h1 className="font-display text-[34px] font-extrabold leading-tight">Funzioni dell'app</h1>
         <Salvato stato={stato} />
       </div>
-      <Gruppo titolo="Per tutte le squadre" nota="Accese o spente per tutti, subito. Le voci «in arrivo» restano nascoste finché non sono pronte.">
+      <Gruppo titolo="Per tutti i gruppi" nota="Accese o spente per tutti, subito. Le voci «in arrivo» restano nascoste finché non sono pronte.">
         {valore === null ? <p className="text-slate-500 py-2">Carico…</p> : (
           <Interruttori>
             {FUNZIONI_APP.map(([k, nome, base]) => (
@@ -70,7 +71,7 @@ export function NotificheApp({ dati }) {
         <Salvato stato={stato} />
       </div>
       <Gruppo titolo="Avvisi automatici" nota="Partono da soli quando succede qualcosa. Spegnine uno e nessuno lo riceve più.">
-        {valore === null ? <p className="text-slate-500 py-2">Carico…</p> : (
+        {valore === null ? <Scheletro righe={2} /> : (
           <Interruttori>
             {NOTIFICHE_APP.map(([k, nome, base]) => (
               <Interruttore key={k} etichetta={nome} acceso={valore[k] ?? base} onCambia={(v) => cambia(k, v)} />
@@ -85,10 +86,10 @@ export function NotificheApp({ dati }) {
               <option value="tutti">Tutti</option><option value="atleta">Atleti</option><option value="genitore">Genitori</option><option value="coach">Coach</option>
             </select>
           </label>
-          <label className="text-sm text-slate-600">Squadra
+          <label className="text-sm text-slate-600">Gruppo
             <select value={squadra} onChange={(e) => setSquadra(e.target.value)} className="mt-1 w-full min-h-[44px] border border-slate-300 rounded-xl px-3 bg-white">
-              <option value="">Tutte le squadre</option>
-              {(dati?.squadre || []).map((s) => <option key={s.id} value={s.id}>{s.nome}</option>)}
+              <option value="">Tutti i gruppi</option>
+              {dati && <OpzioniGruppi dati={dati} />}
             </select>
           </label>
         </div>
@@ -103,7 +104,7 @@ export function NotificheApp({ dati }) {
 }
 
 // Tutte le tabelle con dati (non le iscrizioni push, che contengono chiavi dei telefoni)
-const TABELLE_COPIA = ['squadre', 'profiles', 'allenamenti_squadra', 'presenze', 'allenamenti', 'gare', 'punti_movimenti',
+const TABELLE_COPIA = ['societa', 'squadre', 'profiles', 'registro_modifiche', 'allenamenti_squadra', 'presenze', 'allenamenti', 'gare', 'punti_movimenti',
   'punti_config', 'premi_catalogo', 'premi_atleta', 'genitori_figli', 'incoraggiamenti', 'notifiche', 'atleta_riferimenti',
   'richieste_squadra', 'segnalazioni', 'accessi_admin', 'tipi_lavoro', 'tipi_lavoro_squadra', 'impostazioni_app', 'impostazioni_squadra', 'allenamenti_extra']
 
@@ -117,13 +118,26 @@ export function Sicurezza() {
     const errori = TABELLE_COPIA.filter((t) => copia[t]?.errore)
     scaricaJson(copia, `swimline4-copia-${new Date().toISOString().slice(0, 10)}.json`)
     setStato(errori.length ? `Errore: copia scaricata, ma non sono riuscito a leggere ${errori.join(', ')}` : 'Copia scaricata')
+    if (!errori.length) {
+      const ora = new Date().toISOString()
+      try { localStorage.setItem('ultima-copia-dati', ora) } catch { /* non disponibile */ }
+      setUltima(ora)
+    }
   }
 
+  // promemoria della copia mensile: la data dell'ultima copia resta su questo dispositivo
+  const [ultima, setUltima] = useState(() => { try { return localStorage.getItem('ultima-copia-dati') } catch { return null } })
+  const giorni = ultima ? Math.floor((Date.now() - new Date(ultima)) / 86400000) : null
+  const copiaRecente = giorni !== null && giorni <= 31
+
   const voci = [
-    ['Regole di accesso ai dati', 'Atleta vede sé, genitore i figli approvati, coach la sua squadra', true],
+    ['Regole di accesso ai dati', 'Atleta vede sé, genitore i figli approvati, coach il suo gruppo', true],
     ['Database di prova separato', 'Le prove si fanno sull\'anteprima, mai sui dati veri', true],
-    ['Accessi admin al posto di altri', 'Ognuno resta nel Registro accessi', true],
-    ['Protezione password rubate', 'Si accende su Supabase (Authentication › Email): serve il piano Pro', false],
+    ['Accessi admin al posto di altri', 'Ognuno resta nel Registro accessi, come i cambi di ruolo e di gruppo', true],
+    // gratis: lo fa l'app (lib/passwordRubata.js), non serve il piano Pro di Supabase
+    ['Protezione password rubate', 'Le password già finite online vengono rifiutate all\'iscrizione e al cambio password', true],
+    ['Copia dei dati del mese', ultima ? `Ultima copia scaricata da qui ${giorni === 0 ? 'oggi' : `${giorni} giorni fa`}. Scaricane una al mese.`
+      : 'Da questo dispositivo non hai ancora scaricato una copia. Scaricane una al mese.', copiaRecente],
   ]
   return (
     <>
@@ -137,9 +151,8 @@ export function Sicurezza() {
         ))}
         <div className="flex flex-wrap gap-2 mt-3">
           <button type="button" onClick={scarica} className={BOTTONE_PIENO}>Scarica una copia dei dati</button>
-          <a href="https://supabase.com/dashboard/project/_/auth/providers?provider=Email" target="_blank" rel="noreferrer" className={BOTTONE + ' inline-flex items-center'}>Apri le impostazioni di Supabase</a>
         </div>
-        <p className="text-xs text-slate-500 mt-2">La copia è un file da conservare al sicuro: contiene i dati di tutte le squadre.</p>
+        <p className="text-xs text-slate-500 mt-2">Il piano gratuito di Supabase non fa copie automatiche: questa è la nostra. È un file da conservare al sicuro (non sul telefono di tutti): contiene i dati di tutte le società e i gruppi.</p>
       </Scheda>
     </>
   )
