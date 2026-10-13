@@ -3,19 +3,21 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Reorder, AnimatePresence, motion, useDragControls } from 'framer-motion'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
-import { distanzaDaTipo } from '../lib/lavori'
+import { coloreLavoro, distanzaDaTipo } from '../lib/lavori'
 import { lavoriDaScegliere } from '../lib/tipiLavoro'
-import { useTipiLavoro } from '../lib/useTipiLavoro'
+import { ricaricaTipiLavoro, useTipiLavoro } from '../lib/useTipiLavoro'
 import { RIGA_VUOTA, STILI_COACH, abbinaTempi, addGiorni, blocchiPiano, metriPiano, minutiPiano, perGiro } from '../lib/pianoSquadra'
 import { normalizzaRipartenza, ripartenzaValida } from '../lib/tempo'
 import { avvisaSquadra } from '../lib/notifiche'
 import { useRegole } from '../lib/regole'
-import PianoCard from './PianoCard'
+import PianoCard, { siglaLavoro } from './PianoCard'
 import Difficolta from './Difficolta'
+import { FormLavoro } from './GestioneLavori'
 
 const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white'
 const GG = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab']
 const STATO = { nuovo: 'Nuovo', bozza: 'Bozza', pubblicato: 'Pubblicato' }
+const DISTANZE = [25, 50, 75, 100, 200, 400, 800]
 const ANIMA = {
   initial: { opacity: 0, y: 16, scale: 0.97 }, animate: { opacity: 1, y: 0, scale: 1 },
   exit: { opacity: 0, scale: 0.9, transition: { duration: 0.15 } },
@@ -49,97 +51,211 @@ function Frecce({ su, giu, primo, ultimo }) {
   return (
     <div className="flex gap-2">
       <button onClick={su} disabled={primo} aria-label="Sposta su"
-        className="w-9 h-9 rounded-full bg-gray-100 text-slate-600 font-bold disabled:opacity-30 active:scale-90 transition">↑</button>
+        className="w-11 h-11 rounded-full bg-gray-100 text-slate-600 font-bold disabled:opacity-30 active:scale-90 transition">↑</button>
       <button onClick={giu} disabled={ultimo} aria-label="Sposta giù"
-        className="w-9 h-9 rounded-full bg-gray-100 text-slate-600 font-bold disabled:opacity-30 active:scale-90 transition">↓</button>
+        className="w-11 h-11 rounded-full bg-gray-100 text-slate-600 font-bold disabled:opacity-30 active:scale-90 transition">↓</button>
     </div>
   )
 }
 
-// I campi di una riga di lavoro. Dentro una serie a giri le ripetizioni sono "per giro"
-// e il tempo si scrive una volta sola per tutta la serie.
-function CampiRiga({ r, i, inSerie, cambia, cambiaTipo }) {
+// Pulsante a pillola delle scelte del pannello (distanza, tipo, stile)
+function Pillola({ attiva, onClick, children, etichetta }) {
   return (
-    <>
-      <div className="grid grid-cols-2 lg:grid-cols-4 lg:items-end gap-2 mb-2">
-        <select value={r.tipo_lavoro} onChange={(e) => cambiaTipo(i, e.target.value)} className={CAMPO}>
-          {lavoriDaScegliere({ coach: true, tieni: r.tipo_lavoro }).map((t) => <option key={t}>{t}</option>)}
-        </select>
-        <select value={r.stile} onChange={(e) => cambia(i, 'stile', e.target.value)} className={CAMPO}>
-          {STILI_COACH.map((s) => <option key={s}>{s}</option>)}
-        </select>
-        <div>
-          <label className="block text-xs text-slate-500 mb-1">{inSerie ? 'Ripetizioni per giro' : 'Ripetizioni'}</label>
-          <input type="number" min="1" max="50" value={r.ripetizioni} onChange={(e) => cambia(i, 'ripetizioni', e.target.value)} className={CAMPO} />
-        </div>
-        <div>
-          <label className="block text-xs text-slate-500 mb-1">Distanza (m)</label>
-          <input type="number" min="25" step="25" value={r.distanza} onChange={(e) => cambia(i, 'distanza', e.target.value)} className={CAMPO} />
-        </div>
-      </div>
-      <div className={`grid grid-cols-2 gap-2 lg:items-end ${inSerie ? 'lg:grid-cols-[1fr_7rem]' : 'lg:grid-cols-[1fr_7rem_7rem]'}`}>
-        <div className="col-span-2 lg:col-span-1">
-          <label className="block text-xs text-slate-500 mb-1">Note (facoltative: recupero, ritmo...)</label>
-          <input value={r.note} onChange={(e) => cambia(i, 'note', e.target.value)} placeholder={'Es. rec 20", gambe veloci'} className={CAMPO} />
-        </div>
-        <InputRipartenza etichetta="Ripartenza" value={r.ripartenza} onChange={(v) => cambia(i, 'ripartenza', v)} />
-        {!inSerie && (
-          <div>
-            <label className="block text-xs text-slate-500 mb-1">Tempo (min)</label>
-            <input type="number" min="1" step="1" inputMode="numeric" value={r.minuti ?? ''} placeholder="Es. 10"
-              onChange={(e) => cambia(i, 'minuti', e.target.value)} className={CAMPO} />
-          </div>
-        )}
-      </div>
-    </>
+    <button type="button" onClick={onClick} aria-pressed={attiva} aria-label={etichetta}
+      className={`cliccabile min-h-[44px] min-w-[52px] px-3.5 rounded-full text-[15px] font-bold transition active:scale-95 ${
+        attiva ? 'bg-blue-600 text-white' : 'bg-bordo text-slate-600'
+      }`}>
+      {children}
+    </button>
   )
 }
 
-// Una riga di lavoro: si trascina dalla maniglia ⠿ oppure con le frecce, e si muove con un'animazione
-function RigaLavoro({ chiave, r, i, primo, ultimo, puoiTogliere, cambia, cambiaTipo, sposta, togli }) {
-  const controlli = useDragControls()
-  const n = Math.min(50, Math.max(1, Number(r.ripetizioni) || 1))
-  // Ripartenze personalizzate: una casella per ogni ripetizione (vuota = usa la ripartenza generale)
+// Scelte a pillole con "+" per scriverne una che non c'è
+function Scelte({ titolo, valori, valore, onScegli, testo = (v) => v, tipoCampo = 'text', segnaposto }) {
+  const [scrivi, setScrivi] = useState(false)
+  const [nuovo, setNuovo] = useState('')
+  const lista = valori.includes(valore) || valore === '' || valore == null ? valori : [...valori, valore]
+  const conferma = () => {
+    const v = tipoCampo === 'number' ? Number(nuovo) : nuovo.trim()
+    if (v) onScegli(v)
+    setScrivi(false)
+    setNuovo('')
+  }
+  return (
+    <div className="mb-4">
+      <p className="text-xs font-bold tracking-widest text-slate-500 uppercase mb-2">{titolo}</p>
+      <div className="flex flex-wrap gap-2">
+        {lista.map((v) => <Pillola key={v} attiva={v === valore} onClick={() => onScegli(v)}>{testo(v)}</Pillola>)}
+        {!scrivi && <Pillola onClick={() => setScrivi(true)} etichetta={`Aggiungi ${titolo.toLowerCase()}`}>+</Pillola>}
+      </div>
+      {scrivi && (
+        <div className="flex gap-2 mt-2">
+          <input autoFocus type={tipoCampo} inputMode={tipoCampo === 'number' ? 'numeric' : undefined} value={nuovo}
+            onChange={(e) => setNuovo(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && conferma()}
+            placeholder={segnaposto} className={CAMPO} />
+          <button type="button" onClick={conferma} className="shrink-0 min-h-[46px] px-4 rounded-2xl bg-blue-600 text-white font-bold">OK</button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Il pannello che sale dal basso per compilare un lavoro: pulsanti grandi al posto delle tendine
+function FoglioLavoro({ r, i, n, inSerie, squadraId, cambia, cambiaTipo, onSu, onGiu, primo, ultimo, onTogli, onChiudi }) {
+  const [altro, setAltro] = useState(!!(r.note || r.minuti || Array.isArray(r.ripartenze)))
+  const [nuovoTipo, setNuovoTipo] = useState(false)
+  const rip = Math.min(50, Math.max(1, Number(r.ripetizioni) || 1))
   const personali = Array.isArray(r.ripartenze)
   const cambiaRipartenza = (j, v) => {
-    const lista = Array.from({ length: n }, (_, k) => r.ripartenze?.[k] ?? '')
+    const lista = Array.from({ length: rip }, (_, k) => r.ripartenze?.[k] ?? '')
     lista[j] = v
     cambia(i, 'ripartenze', lista)
   }
+  // Tipo di lavoro nuovo, solo per questa squadra: poi è subito scelto
+  async function salvaTipo(v) {
+    const { error } = await supabase.from('tipi_lavoro').insert({
+      squadra_id: squadraId, sigla: v.sigla, descrizione: v.descrizione, peso: v.peso, gruppo: v.gruppo, colore: v.colore,
+    })
+    if (error) return error.code === '23505' ? `Esiste già un lavoro chiamato "${v.sigla}".` : 'Non sono riuscito a salvare: ' + error.message
+    ricaricaTipiLavoro()
+    cambiaTipo(i, v.sigla)
+    setNuovoTipo(false)
+    return ''
+  }
+
+  // Esc chiude il pannello
+  useEffect(() => {
+    const tasto = (e) => e.key === 'Escape' && onChiudi()
+    window.addEventListener('keydown', tasto)
+    return () => window.removeEventListener('keydown', tasto)
+  }, [onChiudi])
+
   return (
-    <Reorder.Item as="div" value={chiave} dragListener={false} dragControls={controlli} {...ANIMA}
-      className="relative bg-white rounded-3xl p-4 mb-3 shadow-card">
-      <div className="flex items-center justify-between mb-3">
-        <div onPointerDown={(e) => controlli.start(e)} style={{ touchAction: 'none' }}
-          className="flex items-center gap-2 cursor-grab active:cursor-grabbing select-none text-slate-500 text-sm font-semibold">
-          <span className="text-xl leading-none">⠿</span> Lavoro {i + 1}
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40" onClick={onChiudi}>
+      <motion.div role="dialog" aria-modal="true" aria-label={`Lavoro ${n}`} onClick={(e) => e.stopPropagation()}
+        initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ type: 'spring', stiffness: 420, damping: 36 }}
+        className="w-full max-w-md bg-white rounded-t-[28px] max-h-[90vh] overflow-y-auto px-5 pt-3 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
+        <div className="w-10 h-1.5 rounded-full bg-slate-200 mx-auto mb-3" />
+        <div className="flex items-center justify-between mb-4">
+          <p className="font-display text-xl font-extrabold text-abisso">{inSerie ? `${n}° della serie` : `Lavoro ${n}`}</p>
+          <Frecce su={onSu} giu={onGiu} primo={primo} ultimo={ultimo} />
         </div>
-        <Frecce su={() => sposta(chiave, -1)} giu={() => sposta(chiave, 1)} primo={primo} ultimo={ultimo} />
-      </div>
-      <CampiRiga r={r} i={i} cambia={cambia} cambiaTipo={cambiaTipo} />
-      {personali && n > 1 && (
-        <div className="bg-gray-50 rounded-2xl p-3 mt-3">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-slate-600">Ripartenza di ogni ripetizione</p>
-            <button onClick={() => cambia(i, 'ripartenze', undefined)} className="text-xs font-semibold text-red-600 px-2 min-h-[36px]">Togli</button>
+
+        <p className="text-xs font-bold tracking-widest text-slate-500 uppercase mb-2">{inSerie ? 'Ripetizioni per giro' : 'Ripetizioni'}</p>
+        <div className="flex items-center gap-3 mb-4">
+          <button type="button" onClick={() => cambia(i, 'ripetizioni', Math.max(1, rip - 1))} disabled={rip <= 1} aria-label="Una ripetizione in meno"
+            className="cliccabile w-12 h-12 rounded-full bg-schiuma text-blue-600 text-2xl font-bold disabled:opacity-30">−</button>
+          <input type="number" min="1" max="50" inputMode="numeric" value={r.ripetizioni} aria-label="Ripetizioni"
+            onChange={(e) => cambia(i, 'ripetizioni', e.target.value)}
+            className="w-20 min-h-[48px] text-center font-display text-3xl font-extrabold text-abisso bg-bordo rounded-2xl" />
+          <button type="button" onClick={() => cambia(i, 'ripetizioni', Math.min(50, rip + 1))} disabled={rip >= 50} aria-label="Una ripetizione in più"
+            className="cliccabile w-12 h-12 rounded-full bg-schiuma text-blue-600 text-2xl font-bold disabled:opacity-30">+</button>
+        </div>
+
+        <Scelte titolo="Distanza" valori={DISTANZE} valore={Number(r.distanza) || ''} testo={(v) => `${v}`}
+          onScegli={(v) => cambia(i, 'distanza', v)} tipoCampo="number" segnaposto="Metri, es. 150" />
+
+        <div className="mb-4">
+          <p className="text-xs font-bold tracking-widest text-slate-500 uppercase mb-2">Tipo</p>
+          <div className="flex flex-wrap gap-2">
+            {lavoriDaScegliere({ coach: true, tieni: r.tipo_lavoro }).map((t) => (
+              <Pillola key={t} attiva={t === r.tipo_lavoro} onClick={() => cambiaTipo(i, t)}>{siglaLavoro(t)}</Pillola>
+            ))}
+            {!nuovoTipo && <Pillola onClick={() => setNuovoTipo(true)} etichetta="Aggiungi un tipo di lavoro">+</Pillola>}
           </div>
-          <p className="text-xs text-slate-500 mb-2">Le caselle vuote usano la ripartenza generale.</p>
-          <div className="grid grid-cols-3 lg:grid-cols-6 gap-2">
-            {Array.from({ length: n }, (_, j) => (
-              <InputRipartenza key={j} etichetta={`${j + 1}° ${r.distanza || ''}`} value={r.ripartenze[j]}
-                placeholder={r.ripartenza || `1'30"`} onChange={(v) => cambiaRipartenza(j, v)} />
+          {nuovoTipo && (
+            <FormLavoro esistenti={[]} conSquadra onSalva={salvaTipo} onAnnulla={() => setNuovoTipo(false)} />
+          )}
+        </div>
+
+        <Scelte titolo="Stile" valori={STILI_COACH} valore={r.stile} onScegli={(v) => cambia(i, 'stile', v)} segnaposto="Es. Pinne" />
+
+        <InputRipartenza etichetta="Ripartenza (facoltativa)" value={r.ripartenza} onChange={(v) => cambia(i, 'ripartenza', v)} />
+
+        {!altro ? (
+          <button type="button" onClick={() => setAltro(true)} className="min-h-[44px] mt-2 text-sm font-semibold text-blue-600">
+            + Note, tempo in minuti, ripartenze diverse
+          </button>
+        ) : (
+          <div className="mt-3 space-y-3">
+            <div>
+              <label className="block text-xs text-slate-500 mb-1">Note (recupero, ritmo...)</label>
+              <input value={r.note} onChange={(e) => cambia(i, 'note', e.target.value)} placeholder={'Es. rec 20", gambe veloci'} className={CAMPO} />
+            </div>
+            {!inSerie && (
+              <div>
+                <label className="block text-xs text-slate-500 mb-1">Tempo (min)</label>
+                <input type="number" min="1" step="1" inputMode="numeric" value={r.minuti ?? ''} placeholder="Es. 10"
+                  onChange={(e) => cambia(i, 'minuti', e.target.value)} className={CAMPO} />
+              </div>
+            )}
+            {!inSerie && rip > 1 && (personali ? (
+              <div className="bg-gray-50 rounded-2xl p-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-slate-600">Ripartenza di ogni ripetizione</p>
+                  <button onClick={() => cambia(i, 'ripartenze', undefined)} className="text-xs font-semibold text-red-600 px-2 min-h-[36px]">Togli</button>
+                </div>
+                <p className="text-xs text-slate-500 mb-2">Le caselle vuote usano la ripartenza generale.</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {Array.from({ length: rip }, (_, j) => (
+                    <InputRipartenza key={j} etichetta={`${j + 1}° ${r.distanza || ''}`} value={r.ripartenze[j]}
+                      placeholder={r.ripartenza || `1'30"`} onChange={(v) => cambiaRipartenza(j, v)} />
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <button onClick={() => cambia(i, 'ripartenze', [])} className="text-sm font-semibold text-blue-600 min-h-[44px] text-left">
+                + Ripartenza diversa per ogni ripetizione
+              </button>
             ))}
           </div>
-        </div>
-      )}
-      {((!personali && n > 1) || puoiTogliere) && (
-        <div className="flex items-center justify-between gap-2 mt-2">
-          {!personali && n > 1
-            ? <button onClick={() => cambia(i, 'ripartenze', [])} className="text-xs font-semibold text-blue-600 min-h-[36px] text-left">+ Ripartenza diversa per ogni ripetizione</button>
+        )}
+
+        <div className="grid grid-cols-[1fr_2fr] gap-2 mt-5">
+          {onTogli
+            ? <button type="button" onClick={onTogli} className="font-bold text-red-600 bg-red-50 rounded-2xl min-h-[52px]">Togli</button>
             : <span />}
-          {puoiTogliere && <button onClick={() => togli(i)} className="text-xs text-red-500">Togli lavoro</button>}
+          <button type="button" onClick={onChiudi} className="font-display text-lg font-extrabold text-white bg-blue-600 rounded-2xl min-h-[52px]">Fatto</button>
         </div>
-      )}
+      </motion.div>
+    </div>
+  )
+}
+
+// Un lavoro in una riga leggibile ("4 × 400 Stile libero"): toccandolo si apre il pannello
+function RigaBreve({ r, onApri, maniglia }) {
+  const sotto = [r.ripartenza && `partenza ${r.ripartenza}`, r.note].filter(Boolean).join(' · ')
+  return (
+    <div className="flex items-center gap-1">
+      {maniglia}
+      <button type="button" onClick={onApri}
+        className="cliccabile flex-1 min-w-0 min-h-[56px] flex items-center justify-between gap-3 text-left py-1">
+        <span className="min-w-0">
+          <span className="block text-[17px] text-abisso truncate">
+            <b className="font-display font-extrabold">{Number(r.ripetizioni) > 1 ? `${r.ripetizioni} × ` : ''}{r.distanza}</b> {r.stile}
+          </span>
+          {sotto && <span className="block text-[13px] text-slate-500 truncate">{sotto}</span>}
+        </span>
+        <span className={`shrink-0 text-xs font-extrabold px-2.5 py-1.5 rounded-[10px] ${coloreLavoro(r.tipo_lavoro)}`}>{siglaLavoro(r.tipo_lavoro)}</span>
+      </button>
+    </div>
+  )
+}
+
+function Maniglia({ controlli }) {
+  return (
+    <span onPointerDown={(e) => controlli.start(e)} style={{ touchAction: 'none' }} aria-hidden="true"
+      className="w-7 shrink-0 text-xl text-slate-300 cursor-grab active:cursor-grabbing select-none text-center">⠿</span>
+  )
+}
+
+// Un lavoro singolo nella lista: si trascina dalla maniglia ⠿ (o con le frecce nel pannello)
+function RigaLavoro({ chiave, r, onApri }) {
+  const controlli = useDragControls()
+  return (
+    <Reorder.Item as="div" value={chiave} dragListener={false} dragControls={controlli} {...ANIMA}
+      className="relative bg-white rounded-3xl pl-2 pr-4 py-1.5 mb-2 shadow-card">
+      <RigaBreve r={r} onApri={onApri} maniglia={<Maniglia controlli={controlli} />} />
     </Reorder.Item>
   )
 }
@@ -186,19 +302,16 @@ function CampoGiri({ giri, annulli, onGiri }) {
 }
 
 // Serie a giri: un gruppo di lavori nuotati in sequenza e ripetuti N volte (es. 3 giri di 400-300-200).
-// Il Giro 1 definisce i lavori; ogni altro giro ha la sua casella, dove si può cambiare la ripartenza.
-function SerieGiri({ chiave, serie, righe, primo, ultimo, annulli, cambia, cambiaTipo, cambiaSerie, cambiaGiri, cambiaRipGiro, sposta, spostaInSerie, togli, aggiungiInSerie, sciogli }) {
+// Il Giro 1 definisce i lavori (si toccano per aprirli); ogni altro giro ha la sua casella, dove si può cambiare la ripartenza.
+function SerieGiri({ chiave, serie, righe, annulli, cambiaSerie, cambiaGiri, cambiaRipGiro, aggiungiInSerie, sciogli, onApri }) {
   const controlli = useDragControls()
   const giri = Math.max(1, Number(serie.giri) || 1)
   return (
     <Reorder.Item as="div" value={chiave} dragListener={false} dragControls={controlli} {...ANIMA}
-      className="relative bg-blue-50/60 border-2 border-blue-200 rounded-3xl p-3 mb-3 shadow-sm">
-      <div className="flex items-center justify-between mb-3 px-1">
-        <div onPointerDown={(e) => controlli.start(e)} style={{ touchAction: 'none' }}
-          className="flex items-center gap-2 cursor-grab active:cursor-grabbing select-none text-blue-700 text-sm font-bold">
-          <span className="text-xl leading-none">⠿</span> 🔁 Serie a giri
-        </div>
-        <Frecce su={() => sposta(chiave, -1)} giu={() => sposta(chiave, 1)} primo={primo} ultimo={ultimo} />
+      className="relative bg-blue-50/60 border-2 border-blue-200 rounded-3xl p-3 mb-2 shadow-sm">
+      <div className="flex items-center gap-1 mb-3">
+        <Maniglia controlli={controlli} />
+        <p className="text-blue-700 text-sm font-bold">Serie a giri</p>
       </div>
       <div className="grid grid-cols-[8.5rem_1fr_1fr] gap-2 mb-1 px-1">
         <CampoGiri giri={giri} annulli={annulli} onGiri={(n) => cambiaGiri(serie.id, n)} />
@@ -210,25 +323,15 @@ function SerieGiri({ chiave, serie, righe, primo, ultimo, annulli, cambia, cambi
             onChange={(e) => cambiaSerie(serie.id, 'minuti', e.target.value)} className={CAMPO} />
         </div>
       </div>
-      <p className="text-xs text-blue-700/70 mb-3 px-1">
-        Ogni giro: {righe.map(({ riga }) => `${Number(riga.ripetizioni) > 1 ? riga.ripetizioni + '×' : ''}${riga.distanza}`).join(' – ')}
-      </p>
-      <p className="text-sm font-bold text-blue-700 px-1 mb-2">Giro 1</p>
-      {righe.map(({ riga, indice }, k) => (
-        <div key={riga._id} className="bg-white border border-gray-100 rounded-2xl p-3 mb-2">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-semibold text-slate-500">{k + 1}° della serie</p>
-            <Frecce su={() => spostaInSerie(indice, -1)} giu={() => spostaInSerie(indice, 1)} primo={k === 0} ultimo={k === righe.length - 1} />
-          </div>
-          <CampiRiga r={riga} i={indice} inSerie cambia={cambia} cambiaTipo={cambiaTipo} />
-          <div className="text-right mt-2">
-            <button onClick={() => togli(indice)} className="text-xs text-red-500">Togli dalla serie</button>
-          </div>
+      <p className="text-sm font-bold text-blue-700 px-1 mt-3 mb-2">Giro 1 · tocca un lavoro per cambiarlo</p>
+      {righe.map(({ riga }) => (
+        <div key={riga._id} className="bg-white rounded-2xl px-3 py-1 mb-2">
+          <RigaBreve r={riga} onApri={() => onApri(riga._id)} />
         </div>
       ))}
-      <div className="flex items-center justify-between gap-2 px-1 pt-1 mb-3">
-        <button onClick={() => aggiungiInSerie(serie.id)} className="text-xs font-semibold text-blue-600">+ Lavoro nella serie</button>
-        <button onClick={() => sciogli(serie.id)} className="text-xs text-slate-500">Sciogli serie</button>
+      <div className="flex items-center justify-between gap-2 px-1 mb-3">
+        <button onClick={() => aggiungiInSerie(serie.id)} className="min-h-[44px] text-sm font-semibold text-blue-600">+ Lavoro nella serie</button>
+        <button onClick={() => sciogli(serie.id)} className="min-h-[44px] text-sm text-slate-500">Sciogli serie</button>
       </div>
       <AnimatePresence initial={false}>
         {Array.from({ length: giri - 1 }, (_, x) => x + 1).map((g) => (
@@ -238,7 +341,7 @@ function SerieGiri({ chiave, serie, righe, primo, ultimo, annulli, cambia, cambi
               <div className="flex items-center justify-between mb-1">
                 <p className="text-sm font-bold text-blue-700">Giro {g + 1}</p>
                 {g === giri - 1 && (
-                  <button onClick={() => cambiaGiri(serie.id, giri - 1)} className="text-xs text-red-500">✕ Togli giro</button>
+                  <button onClick={() => cambiaGiri(serie.id, giri - 1)} className="text-xs text-red-500 min-h-[36px]">✕ Togli giro</button>
                 )}
               </div>
               <p className="text-xs text-slate-500 mb-2">Stessi lavori del Giro 1. Cambia la ripartenza solo se in questo giro è diversa.</p>
@@ -260,21 +363,22 @@ function SerieGiri({ chiave, serie, righe, primo, ultimo, annulli, cambia, cambi
         ))}
       </AnimatePresence>
       <button onClick={() => cambiaGiri(serie.id, giri + 1)} disabled={giri >= 20}
-        className="w-full text-sm font-bold text-blue-600 bg-white border border-dashed border-blue-300 rounded-2xl py-2.5 disabled:opacity-40">
+        className="w-full min-h-[44px] text-sm font-bold text-blue-600 bg-white border border-dashed border-blue-300 rounded-2xl disabled:opacity-40">
         + Aggiungi giro
       </button>
     </Reorder.Item>
   )
 }
 
-// Il coach prepara l'allenamento di un giorno per la squadra (non un allenamento per sé)
-export default function EditorAllenamento({ squadra, giorno }) {
+// Il coach prepara l'allenamento di un giorno per la squadra (non un allenamento per sé).
+// onChiudi (facoltativo): chi apre l'editor (la home) lo richiude dopo Pubblica, Bozza o Esci.
+export default function EditorAllenamento({ squadra, giorno, onChiudi }) {
   const { user } = useAuth()
   useTipiLavoro() // i lavori accesi per questa squadra (anche quelli aggiunti dal coach)
   const { puo } = useRegole()
   const navigate = useNavigate()
   const [titolo, setTitolo] = useState('')
-  const [righe, setRighe] = useState(() => [nuovaRiga()])
+  const [righe, setRighe] = useState([])
   const [vis, setVis] = useState('squadra')
   const [stato, setStato] = useState('nuovo')
   const [extra, setExtra] = useState([])
@@ -282,10 +386,12 @@ export default function EditorAllenamento({ squadra, giorno }) {
   const [ok, setOk] = useState('')
   // Dopo la pubblicazione si vede la vista compatta; "Modifica" riapre l'editor
   const [modifica, setModifica] = useState(true)
-  const [salvato, setSalvato] = useState(() => fotografia('', righe, 'squadra'))
+  const [salvato, setSalvato] = useState(() => fotografia('', [], 'squadra'))
   const [tempi, setTempi] = useState([])         // tempi già registrati dagli atleti in questo giorno
   const [conferma, setConferma] = useState(null) // { id, giri, titolo, testo } quando togliere giri chiede conferma
   const [annulli, setAnnulli] = useState(0)      // riporta il campo Giri al valore di prima dopo "Annulla"
+  const [aperto, setAperto] = useState(null)     // _id del lavoro aperto nel pannello
+  const [opzioni, setOpzioni] = useState(false)
 
   async function caricaTempi() {
     const { data: atleti } = await supabase.from('profiles').select('id').eq('squadra_id', squadra.id)
@@ -300,7 +406,7 @@ export default function EditorAllenamento({ squadra, giorno }) {
     caricaTempi()
     const { data } = await supabase.from('allenamenti_squadra').select('*').eq('squadra_id', squadra.id).eq('data', giorno).maybeSingle()
     const t = data?.titolo || ''
-    const r = data?.righe?.length ? conId(data.righe) : [nuovaRiga()]
+    const r = data?.righe?.length ? conId(data.righe) : []
     const v = data?.visibilita || 'squadra'
     setTitolo(t)
     setRighe(r)
@@ -315,8 +421,9 @@ export default function EditorAllenamento({ squadra, giorno }) {
     setErrore('')
     setOk('')
     setExtra([])
+    setAperto(null)
     setModifica(true)
-    carica().then((data) => { if (attivo) setModifica(!data?.pubblicato) })
+    carica().then((data) => { if (attivo) setModifica(!!onChiudi || !data?.pubblicato) })
     return () => { attivo = false }
   }, [giorno, squadra.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -328,7 +435,8 @@ export default function EditorAllenamento({ squadra, giorno }) {
     setErrore('')
     setOk('')
     setExtra([])
-    if (stato === 'nuovo') return navigate('/funzioni')
+    if (onChiudi) return onChiudi()
+    if (stato === 'nuovo') return navigate('/dashboard')
     await carica()
     setModifica(false)
   }
@@ -357,10 +465,10 @@ export default function EditorAllenamento({ squadra, giorno }) {
     setRighe(copia)
   }
 
-  const cambia = (i, campo, v) => setRighe(righe.map((r, k) => (k === i ? { ...r, [campo]: v } : r)))
+  const cambia = (i, campo, v) => setRighe((rr) => rr.map((r, k) => (k === i ? { ...r, [campo]: v } : r)))
   const cambiaTipo = (i, tipo) => {
     const d = distanzaDaTipo(tipo)
-    setRighe(righe.map((r, k) => (k === i ? { ...r, tipo_lavoro: tipo, distanza: d ?? r.distanza } : r)))
+    setRighe((rr) => rr.map((r, k) => (k === i ? { ...r, tipo_lavoro: tipo, distanza: d ?? r.distanza } : r)))
   }
   const cambiaSerie = (id, campo, v) =>
     setRighe(righe.map((r) => (r.serie?.id === id ? { ...r, serie: { ...r.serie, [campo]: v } } : r)))
@@ -398,9 +506,11 @@ export default function EditorAllenamento({ squadra, giorno }) {
       testo: `Sei sicuro di voler togliere ${quali}? È già compilato: ${dati}. Togliendolo, quei dati non verranno più mostrati.`,
     })
   }
-  const aggiungiLavoro = (tipo) => {
-    const d = tipo ? distanzaDaTipo(tipo) : null
-    setRighe([...righe, nuovaRiga({ ...(tipo ? { tipo_lavoro: tipo } : {}), ...(d ? { distanza: d } : {}) })])
+  // Un lavoro nuovo in fondo: si apre subito il pannello per compilarlo
+  const aggiungiLavoro = () => {
+    const nuova = nuovaRiga()
+    setRighe([...righe, nuova])
+    setAperto(nuova._id)
   }
   const aggiungiSerie = () => {
     const serie = { id: crypto.randomUUID(), giri: 3, recupero: '', minuti: '' }
@@ -409,8 +519,10 @@ export default function EditorAllenamento({ squadra, giorno }) {
   const aggiungiInSerie = (id) => {
     const ultima = righe.findLastIndex((r) => r.serie?.id === id)
     const copia = [...righe]
-    copia.splice(ultima + 1, 0, nuovaRiga({ ripetizioni: 1, distanza: righe[ultima].distanza, serie: righe[ultima].serie }))
+    const nuova = nuovaRiga({ ripetizioni: 1, distanza: righe[ultima].distanza, serie: righe[ultima].serie })
+    copia.splice(ultima + 1, 0, nuova)
     setRighe(copia)
+    setAperto(nuova._id)
   }
   // La serie torna righe normali, con le ripetizioni di tutti i giri (i metri non cambiano)
   const sciogli = (id) => setRighe(righe.map((r) => {
@@ -433,14 +545,15 @@ export default function EditorAllenamento({ squadra, giorno }) {
   async function salva(pubblica) {
     setErrore('')
     setOk('')
+    if (!righe.length) return setErrore('Aggiungi almeno un lavoro.')
     const storta = righe.findIndex((r) => !(Number(r.distanza) >= 25))
     if (storta >= 0) {
-      setErrore(`Riga ${storta + 1}: scrivi la distanza (da 25 metri in su) nel campo "Distanza (m)".`)
+      setErrore(`Lavoro ${storta + 1}: scegli la distanza (da 25 metri in su).`)
       return
     }
     const ripTroppe = righe.findIndex((r) => { const n = Number(r.ripetizioni); return !(Number.isInteger(n) && n >= 1 && n <= 50) })
     if (ripTroppe >= 0) {
-      setErrore(`Riga ${ripTroppe + 1}: le ripetizioni vanno da 1 a 50.`)
+      setErrore(`Lavoro ${ripTroppe + 1}: le ripetizioni vanno da 1 a 50.`)
       return
     }
     // La ripartenza si salva (e si mostra) sempre nel formato standard, anche se non sei uscito dal campo
@@ -456,19 +569,19 @@ export default function EditorAllenamento({ squadra, giorno }) {
     }))
     const ripStorta = ordinate.findIndex((r) => !ripartenzaValida(r.ripartenza))
     if (ripStorta >= 0) {
-      setErrore(`Riga ${ripStorta + 1}: scrivi la ripartenza come 1'30" (oppure 45" sotto il minuto), o lasciala vuota.`)
+      setErrore(`Lavoro ${ripStorta + 1}: scrivi la ripartenza come 1'30" (oppure 45" sotto il minuto), o lasciala vuota.`)
       return
     }
     for (let k = 0; k < ordinate.length; k++) {
       const j = (ordinate[k].ripartenze || []).findIndex((x) => !ripartenzaValida(x))
       if (j >= 0) {
-        setErrore(`Riga ${k + 1}, ripetizione ${j + 1}: scrivi la ripartenza come 1'30" (oppure 45" sotto il minuto), o lasciala vuota.`)
+        setErrore(`Lavoro ${k + 1}, ripetizione ${j + 1}: scrivi la ripartenza come 1'30" (oppure 45" sotto il minuto), o lasciala vuota.`)
         return
       }
     }
     const serieStorta = ordinate.findIndex((r) => r.serie && !ripartenzaValida(r.serie.recupero))
     if (serieStorta >= 0) {
-      setErrore(`Riga ${serieStorta + 1}: scrivi il recupero tra i giri come 20" oppure 1'00", o lascialo vuoto.`)
+      setErrore(`Lavoro ${serieStorta + 1}: scrivi il recupero tra i giri come 20" oppure 1'00", o lascialo vuoto.`)
       return
     }
     // Delle ripartenze personalizzate si tengono solo quelle scritte (i vuoti in fondo non servono)
@@ -504,23 +617,26 @@ export default function EditorAllenamento({ squadra, giorno }) {
     if (error) return setErrore('Non sono riuscito a salvare: ' + error.message)
     // Notifica alla squadra solo alla prima pubblicazione (non a ogni correzione)
     if (pubblica && vis === 'squadra' && stato !== 'pubblicato') avvisaSquadra(squadra.id, giorni)
+    const messaggio = pubblica
+      ? (vis === 'squadra' ? (giorni.length > 1 ? `Pubblicato alla squadra su ${giorni.length} giorni.` : 'Pubblicato alla squadra.') : 'Salvato: lo vedi solo tu.')
+      : 'Bozza salvata.'
+    if (onChiudi) return onChiudi(messaggio)
     setStato(pubblica ? 'pubblicato' : 'bozza')
     setRighe(ordinate)
     setSalvato(fotografia(titolo, ordinate, vis))
     setModifica(!pubblica)
     setExtra([])
-    setOk(pubblica
-      ? (vis === 'squadra' ? `Pubblicato alla squadra su ${giorni.length} giorno/i.` : 'Salvato: lo vedi solo tu.')
-      : 'Bozza salvata.')
+    setOk(messaggio)
   }
 
   async function elimina() {
+    if (!window.confirm('Eliminare l\'allenamento di questo giorno?')) return
     const { error } = await supabase.from('allenamenti_squadra').delete().eq('squadra_id', squadra.id).eq('data', giorno)
     if (error) return setErrore('Non sono riuscito a eliminare: ' + error.message)
-    const vuote = [nuovaRiga()]
+    if (onChiudi) return onChiudi('Allenamento eliminato.')
     setTitolo('')
-    setRighe(vuote)
-    setSalvato(fotografia('', vuote, vis))
+    setRighe([])
+    setSalvato(fotografia('', [], vis))
     setStato('nuovo')
     setModifica(true)
     setOk('Allenamento eliminato.')
@@ -537,103 +653,133 @@ export default function EditorAllenamento({ squadra, giorno }) {
         </div>
         <PianoCard piano={{ titolo: titolo || 'Allenamento', righe: righeSalvate(righe) }} />
         {ok && <p className="text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2 mb-3">{ok}</p>}
-        <button onClick={() => setModifica(true)} className="w-full font-bold text-blue-600 bg-blue-50 rounded-2xl py-3 mb-3">✏️ Modifica</button>
+        <button onClick={() => setModifica(true)} className="w-full font-bold text-blue-600 bg-blue-50 rounded-2xl py-3 mb-3">Modifica</button>
         {stato === 'pubblicato' && (
           <div className="text-right">
-            <Link to={`/risultati?data=${giorno}`} className="text-sm font-semibold text-blue-600">
-              Entra nella registrazione risultati per ogni atleta →
-            </Link>
+            <Link to={`/risultati?data=${giorno}`} className="text-sm font-semibold text-blue-600">Scrivi i tempi degli atleti →</Link>
           </div>
         )}
       </>
     )
   }
 
+  // Il lavoro aperto nel pannello: posizione nella lista e frecce (dentro una serie si sposta nella serie)
+  const iAperto = righe.findIndex((r) => r._id === aperto)
+  const rAperto = righe[iAperto]
+  let foglio = null
+  if (rAperto) {
+    const inSerie = !!rAperto.serie
+    const bloccoIdx = blocchi.findIndex((b) => (b.serie ? b.righe.some((x) => x.indice === iAperto) : b.indice === iAperto))
+    const nellaSerie = inSerie ? blocchi[bloccoIdx].righe : null
+    const k = inSerie ? nellaSerie.findIndex((x) => x.indice === iAperto) : bloccoIdx
+    foglio = (
+      <FoglioLavoro key={aperto} r={rAperto} i={iAperto} n={k + 1} inSerie={inSerie} squadraId={squadra.id}
+        cambia={cambia} cambiaTipo={cambiaTipo}
+        onSu={() => (inSerie ? spostaInSerie(iAperto, -1) : sposta(chiavi[bloccoIdx], -1))}
+        onGiu={() => (inSerie ? spostaInSerie(iAperto, 1) : sposta(chiavi[bloccoIdx], 1))}
+        primo={k === 0} ultimo={inSerie ? k === nellaSerie.length - 1 : k === blocchi.length - 1}
+        onTogli={inSerie && nellaSerie.length <= 1 ? null : () => { togli(iAperto); setAperto(null) }}
+        onChiudi={() => setAperto(null)} />
+    )
+  }
+  const dataTesto = new Date(giorno + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })
+
   return (
     <>
-      <div className="bg-white rounded-3xl p-5 mb-3 shadow-card">
-        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-          <p className="font-bold">Allenamento di {squadra.nome}</p>
-          <div className="flex items-center gap-2 whitespace-nowrap">
-            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-blue-50 text-blue-600">{STATO[stato]}</span>
-            <button onClick={esci} className="text-xs font-bold px-3 py-1 rounded-full bg-gray-100 text-slate-600 active:scale-95 transition">✕ Esci senza salvare</button>
-          </div>
+      <div className="flex items-start justify-between gap-3 mb-3 px-1">
+        <div className="min-w-0">
+          <p className="font-display text-[22px] font-extrabold text-abisso leading-tight">Allenamento</p>
+          <p className="text-sm text-slate-500 first-letter:uppercase">{dataTesto} · {STATO[stato]}</p>
         </div>
-        <label className="block text-xs text-slate-500 mb-1">Titolo (facoltativo)</label>
-        <input value={titolo} onChange={(e) => setTitolo(e.target.value)} placeholder="Es. Resistenza aerobica" className={CAMPO} />
+        <button onClick={esci} className="cliccabile shrink-0 min-h-[44px] px-4 rounded-full bg-white text-sm font-bold text-slate-600 shadow-card">Chiudi</button>
       </div>
 
+      {righe.length === 0 && (
+        <p className="text-sm text-slate-500 bg-white rounded-3xl p-5 mb-2 text-center shadow-card">
+          Ancora nessun lavoro. Tocca "Aggiungi lavoro" e scegli ripetizioni, distanza, tipo e stile.
+        </p>
+      )}
       <Reorder.Group as="div" axis="y" values={chiavi} onReorder={riordina}>
         <AnimatePresence initial={false}>
-          {blocchi.map((b, k) => {
+          {blocchi.map((b) => {
             const chiave = chiaveBlocco(b)
-            const comuni = { chiave, primo: k === 0, ultimo: k === blocchi.length - 1, cambia, cambiaTipo, sposta, togli }
             return b.serie
-              ? <SerieGiri key={chiave} {...comuni} serie={b.serie} righe={b.righe} annulli={annulli} cambiaSerie={cambiaSerie}
-                  cambiaGiri={cambiaGiri} cambiaRipGiro={cambiaRipGiro}
-                  spostaInSerie={spostaInSerie} aggiungiInSerie={aggiungiInSerie} sciogli={sciogli} />
-              : <RigaLavoro key={chiave} {...comuni} r={b.riga} i={b.indice} puoiTogliere={righe.length > 1} />
+              ? <SerieGiri key={chiave} chiave={chiave} serie={b.serie} righe={b.righe} annulli={annulli} cambiaSerie={cambiaSerie}
+                  cambiaGiri={cambiaGiri} cambiaRipGiro={cambiaRipGiro} aggiungiInSerie={aggiungiInSerie} sciogli={sciogli} onApri={setAperto} />
+              : <RigaLavoro key={chiave} chiave={chiave} r={b.riga} onApri={() => setAperto(b.riga._id)} />
           })}
         </AnimatePresence>
       </Reorder.Group>
+
+      <button onClick={aggiungiLavoro}
+        className="cliccabile w-full min-h-[56px] mb-2 font-display text-lg font-extrabold text-blue-600 bg-schiuma border-2 border-dashed border-blue-200 rounded-3xl">
+        + Aggiungi lavoro
+      </button>
+      <div className="flex justify-center mb-3">
+        <button onClick={aggiungiSerie} className="min-h-[44px] px-4 text-sm font-semibold text-blue-600">+ Serie a giri</button>
+      </div>
+
       <div className="bg-white rounded-3xl p-4 mb-3 shadow-card">
-        <div className="grid grid-cols-2 gap-2 mb-3">
-          <button onClick={() => aggiungiLavoro()}
-            className="text-blue-600 font-bold bg-blue-50 rounded-2xl py-3">+ Aggiungi Lavoro</button>
-          <button onClick={aggiungiSerie}
-            className="text-blue-600 font-bold bg-blue-50 rounded-2xl py-3">+ Serie a giri 🔁</button>
+        <div className="flex items-center justify-between gap-3">
+          <p className="font-display text-2xl font-extrabold text-abisso">
+            {(metriPiano(righeSalvate(righe)) / 1000).toFixed(1).replace('.', ',')}<span className="text-base"> km</span>
+            {minutiPiano(righe) > 0 && <span className="text-base text-slate-500 font-semibold"> · {minutiPiano(righe)} min</span>}
+          </p>
+          <button onClick={() => setOpzioni(!opzioni)} aria-expanded={opzioni}
+            className="cliccabile min-h-[44px] px-3 rounded-full text-sm font-bold text-blue-600 bg-schiuma">
+            Opzioni {opzioni ? '▴' : '▾'}
+          </button>
         </div>
-        <p className="text-xs text-slate-500 mb-2">Oppure scegli subito il tipo di lavoro:</p>
-        <div className="flex flex-wrap gap-2">
-          {lavoriDaScegliere({ coach: true }).map((t) => (
-            <button key={t} onClick={() => aggiungiLavoro(t)}
-              className="text-xs font-semibold rounded-full px-3 py-1.5 bg-gray-100 text-slate-600 active:scale-95">+ {t}</button>
-          ))}
-        </div>
+        {righe.length > 0 && <div className="mt-2"><Difficolta righe={righeSalvate(righe)} /></div>}
+        {!opzioni && (
+          <p className="text-xs text-slate-500 mt-2">
+            {vis === 'coach' ? 'Lo vedi solo tu' : 'Lo vede tutta la squadra'}
+            {extra.length > 0 && ` · copiato su altri ${extra.length} giorni`}
+            {titolo.trim() && ` · ${titolo.trim()}`}
+          </p>
+        )}
+        {opzioni && (
+          <div className="mt-3 border-t border-slate-100 pt-3">
+            <label className="block text-sm font-bold mb-1">Titolo (facoltativo)</label>
+            <input value={titolo} onChange={(e) => setTitolo(e.target.value)} placeholder="Es. Resistenza aerobica" className={CAMPO + ' mb-4'} />
+            <p className="text-sm font-bold mb-2">Chi lo vede</p>
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              {[['coach', 'Solo coach'], ['squadra', 'Tutta la squadra']].map(([k, n]) => (
+                <button key={k} onClick={() => setVis(k)}
+                  className={`min-h-[44px] rounded-xl text-sm font-semibold ${vis === k ? 'bg-blue-600 text-white' : 'bg-gray-100 text-slate-600'}`}>{n}</button>
+              ))}
+            </div>
+            <p className="text-sm font-bold mb-2">Copia anche su altri giorni</p>
+            <div className="flex flex-wrap gap-2">
+              {prossimi.map((d) => (
+                <button key={d} onClick={() => toggleExtra(d)}
+                  className={`min-h-[36px] text-xs font-semibold rounded-full px-3 ${extra.includes(d) ? 'bg-blue-600 text-white' : 'bg-gray-100 text-slate-600'}`}>
+                  {GG[new Date(d + 'T12:00:00').getDay()]} {Number(d.slice(8))}
+                </button>
+              ))}
+            </div>
+            {extra.length > 0 && <p className="text-xs text-amber-700 mt-2">Se in quei giorni c'è già un allenamento, verrà sostituito.</p>}
+          </div>
+        )}
       </div>
 
-      <div className="bg-white rounded-3xl p-5 mb-3 shadow-card">
-        <p className="text-sm font-bold mb-2">Chi lo vede</p>
-        <div className="grid grid-cols-2 gap-2 mb-4">
-          {[['coach', '🔒 Solo coach'], ['squadra', '👥 Tutta la squadra']].map(([k, n]) => (
-            <button key={k} onClick={() => setVis(k)}
-              className={`rounded-xl py-2.5 text-sm font-semibold ${vis === k ? 'bg-blue-600 text-white' : 'bg-gray-100 text-slate-600'}`}>{n}</button>
-          ))}
-        </div>
-        <p className="text-sm font-bold mb-2">Copia anche su altri giorni</p>
-        <div className="flex flex-wrap gap-2">
-          {prossimi.map((d) => (
-            <button key={d} onClick={() => toggleExtra(d)}
-              className={`text-xs font-semibold rounded-full px-3 py-1.5 ${extra.includes(d) ? 'bg-blue-600 text-white' : 'bg-gray-100 text-slate-600'}`}>
-              {GG[new Date(d + 'T12:00:00').getDay()]} {Number(d.slice(8))}
-            </button>
-          ))}
-        </div>
-        {extra.length > 0 && <p className="text-xs text-amber-700 mt-2">Se in quei giorni c'è già un allenamento, verrà sostituito.</p>}
-        <p className="text-xs text-slate-500 mt-3">
-          Totale: {(metriPiano(righeSalvate(righe)) / 1000).toFixed(1).replace('.', ',')} km
-          {minutiPiano(righe) > 0 && ` · ${minutiPiano(righe)} min`}
-        </p>
-        <div className="mt-2"><Difficolta righe={righeSalvate(righe)} /></div>
-      </div>
-
-      {errore && <p className="text-sm text-white bg-red-600 rounded-lg px-3 py-2 mb-3">{errore}</p>}
+      {errore && <p role="alert" className="text-sm text-white bg-red-600 rounded-lg px-3 py-2 mb-3">{errore}</p>}
       {ok && <p className="text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2 mb-3">{ok}</p>}
 
       {puo('c_pubblica') ? (
-        <div className="grid grid-cols-2 gap-2">
-          <button onClick={() => salva(false)} className="font-bold text-blue-600 bg-blue-50 rounded-2xl py-3.5">Salva bozza</button>
-          <button onClick={() => salva(true)} className="font-bold text-white bg-blue-600 rounded-2xl py-3.5">
+        <div className="grid grid-cols-[1fr_2fr] gap-2">
+          <button onClick={() => salva(false)} className="font-bold text-blue-600 bg-schiuma rounded-2xl min-h-[56px]">Bozza</button>
+          <button onClick={() => salva(true)} className="font-display text-lg font-extrabold text-white bg-blue-600 rounded-2xl min-h-[56px]">
             {vis === 'squadra' ? 'Pubblica' : 'Salva'}
           </button>
         </div>
       ) : (
         <p className="text-sm text-amber-800 bg-amber-50 rounded-2xl px-4 py-3">La pubblicazione degli allenamenti è bloccata dall'amministratore per questa squadra.</p>
       )}
-      <button onClick={esci} className="w-full font-bold text-slate-600 bg-gray-100 rounded-2xl py-3 mt-2 active:scale-[0.98] transition">✕ Esci senza salvare</button>
       {stato !== 'nuovo' && (
-        <button onClick={elimina} className="w-full text-sm text-red-500 mt-3 py-2">Elimina allenamento di questo giorno</button>
+        <button onClick={elimina} className="w-full min-h-[44px] text-sm text-red-500 mt-3">Elimina l'allenamento di questo giorno</button>
       )}
+      <AnimatePresence>{foglio}</AnimatePresence>
       {conferma && (
         <Conferma titolo={conferma.titolo} testo={conferma.testo}
           si={() => { applicaGiri(conferma.id, conferma.giri); setConferma(null) }}

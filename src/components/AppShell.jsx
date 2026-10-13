@@ -17,10 +17,18 @@ const VOCI = [
   ['funzioni', '/funzioni', 'griglia', 'Funzioni'],
   ['profilo', '/profilo', 'persona', 'Profilo'],
 ]
+// Il coach ha in basso le tre cose di ogni giorno; il resto sta in Altro
+const VOCI_COACH = [
+  ['home', '/dashboard', 'onde', 'Oggi'],
+  ['presenze', '/presenze', 'spunta', 'Presenze'],
+  ['atleti', '/squadra', 'gruppo', 'Atleti'],
+  ['funzioni', '/funzioni', 'griglia', 'Altro'],
+  ['profilo', '/profilo', 'persona', 'Profilo'],
+]
 const SIGLE = ['DOM', 'LUN', 'MAR', 'MER', 'GIO', 'VEN', 'SAB']
 
 // Struttura comune di tutte le schermate (layout Limpida): testata chiara, striscia dei giorni e menu in basso.
-// attiva: 'home' | 'riepilogo' | 'funzioni' | 'profilo'
+// attiva: 'home' | 'riepilogo' | 'funzioni' | 'profilo' (coach anche 'presenze' | 'atleti')
 // indietro: percorso di riserva del tasto "Indietro" (facoltativo)
 // giorno + onGiorno: se presenti, mostrano la striscia dei giorni
 // voti: { '2026-10-08': 5.8 } difficoltà dei giorni, disegnata come barretta sotto ogni giorno (facoltativo)
@@ -29,7 +37,8 @@ export default function AppShell({ titolo, attiva, indietro, giorno, onGiorno, v
   useTipiLavoro() // carica subito i lavori della squadra (colori e difficoltà in tutta l'app)
   // non quando l'admin guarda l'app come un altro: la coda sul telefono è di chi l'ha scritta
   useInvioAutomatico(supabase, staVedendoCome ? null : profile?.id)
-  const voci = VOCI
+  const coach = ruolo === 'coach'
+  const voci = coach ? VOCI_COACH : VOCI
   const iniziale = (profile?.nome || 'A').charAt(0).toUpperCase()
   const [calAperto, setCalAperto] = useState(false)
   const [guidaAperta, setGuidaAperta] = useState(false)
@@ -94,10 +103,11 @@ export default function AppShell({ titolo, attiva, indietro, giorno, onGiorno, v
                 </span>
               )}
             </Link>
-            <Link to="/profilo" aria-label="Profilo"
+            {/* il coach ha Profilo nella barra in basso: niente doppione */}
+            {!coach && <Link to="/profilo" aria-label="Profilo"
               className="cliccabile w-11 h-11 rounded-full bg-abisso text-white font-display font-bold flex items-center justify-center">
               {iniziale}
-            </Link>
+            </Link>}
           </div>
         </div>
       </header>

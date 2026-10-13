@@ -28,6 +28,19 @@ const GRUPPI = [
     ['/punti', 'stella', 'Punti'],
   ]],
 ]
+// Coach: Oggi, Presenze e Atleti sono nella barra in basso; Progressi, Storico e Previsioni stanno nella scheda di ogni atleta.
+// Qui ("Altro") resta il resto.
+const GRUPPI_COACH = [
+  ['Squadra', [
+    ['/gare', 'coppa', 'Gare', 'Prossime gare e risultati'],
+    ['/calendario', 'calendario', 'Calendario'],
+    ['/punti', 'stella', 'Punti'],
+    ['/record', 'medaglia', 'Record'],
+  ]],
+  ['Allenamento', [
+    ['/lavori', 'griglia', 'Tipi di lavoro'],
+  ]],
+]
 // Fuori dai gruppi: voce discreta in fondo alla pagina
 const IMPOSTAZIONI = '/impostazioni'
 
@@ -65,11 +78,11 @@ export default function Funzioni() {
   const consentite = funzioniConsentite(ruolo)
   // sezioni in arrivo: in sviluppo/anteprima sempre, per gli utenti solo se accese dal Pannello
   const visibile = ([percorso]) => consentite.includes(percorso) && percorsoAttivo(percorso, ruolo, (k) => (IN_ARRIVO.includes(percorso) && mostraInArrivo) || puo(k))
-  const gruppi = GRUPPI.map(([nome, voci]) => [nome, voci.filter(visibile)]).filter(([, voci]) => voci.length > 0)
+  const gruppi = (ruolo === 'coach' ? GRUPPI_COACH : GRUPPI).map(([nome, voci]) => [nome, voci.filter(visibile)]).filter(([, voci]) => voci.length > 0)
   const impostazioni = visibile([IMPOSTAZIONI])
 
   return (
-    <AppShell titolo="Funzioni" attiva="funzioni">
+    <AppShell titolo={ruolo === 'coach' ? 'Altro' : 'Funzioni'} attiva="funzioni">
       <div className="lg:grid lg:grid-cols-2 lg:gap-x-6 lg:items-start">
         {gruppi.map(([nome, voci]) => {
           const principali = voci.filter((v) => v[3])

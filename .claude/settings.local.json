@@ -1,0 +1,1 @@
+﻿{ "permissions": { "allow": [ "mcp__dd098b50-f984-4532-a815-c0016617dacb__execute_sql", "mcp__dd098b50-f984-4532-a815-c0016617dacb__apply_migration", "mcp__dd098b50-f984-4532-a815-c0016617dacb__deploy_edge_function", "mcp__dd098b50-f984-4532-a815-c0016617dacb__list_migrations", "mcp__dd098b50-f984-4532-a815-c0016617dacb__get_advisors" ] } }

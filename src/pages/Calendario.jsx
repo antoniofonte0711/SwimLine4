@@ -157,7 +157,7 @@ export default function Calendario() {
             <li className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-blue-500" />allenamento</li>
             <li className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-green-500" />presente</li>
             <li className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-500" />assente</li>
-            <li className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-400" />assenza non penale</li>
+            <li className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-400" />assenza giustificata</li>
             <li className="flex items-center gap-1.5"><span>🏆</span>gara</li>
           </ul>
         )}

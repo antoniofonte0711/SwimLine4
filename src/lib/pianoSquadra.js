@@ -80,7 +80,8 @@ export function settimanaDi(giorno) {
 // { voti: { data: difficoltà }, metri: totale della settimana, giorni: numero di allenamenti }
 // Con atletaId anche fatti (metri dei giorni in cui l'atleta era presente) e presenti (quanti di quei giorni)
 const VUOTO = { voti: {}, metri: 0, giorni: 0, fatti: 0, presenti: 0 }
-export function useSettimanaSquadra(squadraId, giorno, atletaId) {
+// versione (facoltativa): cambiandola si ricarica (es. dopo che il coach ha pubblicato)
+export function useSettimanaSquadra(squadraId, giorno, atletaId, versione) {
   const [dati, setDati] = useState(VUOTO)
   const [lun, dom] = settimanaDi(giorno)
   useEffect(() => {
@@ -112,7 +113,7 @@ export function useSettimanaSquadra(squadraId, giorno, atletaId) {
       setDati({ voti, metri, giorni: Object.keys(voti).length, fatti, presenti })
     })
     return () => { attivo = false }
-  }, [squadraId, lun, dom, atletaId])
+  }, [squadraId, lun, dom, atletaId, versione])
   return dati
 }
 

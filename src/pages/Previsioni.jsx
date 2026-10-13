@@ -26,7 +26,7 @@ const dataIt = (s) => new Date(s + 'T12:00:00').toLocaleDateString('it-IT', { da
 
 // Statistiche future: per ogni stile e distanza (in gara e in allenamento) dove può arrivare l'atleta
 // alla data scelta, se continua ad allenarsi con costanza.
-function SchedaPrevisioni({ atletaId }) {
+export function SchedaPrevisioni({ atletaId }) {
   const oggi = dataLocale()
   const voci = scorciatoie(oggi)
   const [dati, setDati] = useState(null)

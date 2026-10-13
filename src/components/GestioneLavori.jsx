@@ -23,7 +23,7 @@ function Chip({ sigla, colore, base = false }) {
 }
 
 // Lavoro nuovo (o da modificare): sigla, cos'è, quanto stanca. Peso e tipo di fatica li deduce l'app.
-function FormLavoro({ iniziale, esistenti, admin, conSquadra, onSalva, onAnnulla }) {
+export function FormLavoro({ iniziale, esistenti, admin, conSquadra, onSalva, onAnnulla }) {
   const modifica = !!iniziale
   const [sigla, setSigla] = useState(iniziale?.sigla || '')
   const [descrizione, setDescrizione] = useState(iniziale?.descrizione || '')

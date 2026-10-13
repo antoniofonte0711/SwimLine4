@@ -10,43 +10,32 @@ import { addGiorni, metriPiano, useMiaSquadra } from '../lib/pianoSquadra'
 
 const GG = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven']
 const CICLO = [null, 'presente', 'assente', 'non_penale']
-const SIGLA = { presente: 'P', assente: 'A', non_penale: 'F' }
+const SIGLA = { presente: 'P', assente: 'A', non_penale: 'G' }
 const COLORE = {
   presente: 'bg-green-600 text-white', assente: 'bg-red-600 text-white',
   non_penale: 'bg-amber-500 text-white', vuoto: 'bg-gray-100 text-slate-500',
 }
 
-// Dashboard del coach: bollettino presenze, chilometri della settimana, lavori svolti
-export default function RiepilogoCoach() {
+// Tabella delle presenze della settimana (lunedì-venerdì): ogni casella si cambia toccandola
+export function Bollettino({ squadra }) {
   const { user } = useAuth()
-  const { squadra, pronto } = useMiaSquadra()
   const [atleti, setAtleti] = useState([])
   const [stati, setStati] = useState({})
-  const [piani, setPiani] = useState([])
   const [errore, setErrore] = useState('')
   const lunedi = lunediDi()
   const giorni = GG.map((_, i) => addGiorni(lunedi, i))
-  const oggi = dataLocale()
 
   const carica = useCallback(async () => {
-    if (!squadra) return
-    const [{ data: a }, { data: p }] = await Promise.all([
-      supabase.from('profiles').select('id, nome, cognome').in('role', ['atleta', 'admin']).eq('squadra_id', squadra.id).order('cognome'),
-      sups(),
-    ])
-    function sups() {
-      return supabase.from('allenamenti_squadra').select('*').eq('squadra_id', squadra.id)
-        .gte('data', addGiorni(oggi, -14)).order('data', { ascending: false })
-    }
+    const { data: a } = await supabase.from('profiles').select('id, nome, cognome').in('role', ['atleta', 'admin'])
+      .eq('squadra_id', squadra.id).is('eliminato_il', null).order('cognome')
     setAtleti(a || [])
-    setPiani(p || [])
     const ids = (a || []).map((x) => x.id)
     if (ids.length) {
       const { data: pr } = await supabase.from('presenze').select('atleta_id, data, stato')
         .in('atleta_id', ids).gte('data', giorni[0]).lte('data', giorni[4])
       setStati(Object.fromEntries((pr || []).map((r) => [r.atleta_id + r.data, r.stato])))
     }
-  }, [squadra?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [squadra.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { carica() }, [carica])
 
@@ -61,8 +50,54 @@ export default function RiepilogoCoach() {
     setStati({ ...stati, [k]: prossimo || undefined })
   }
 
+  return (
+    <div className="bg-white rounded-3xl p-5 mb-3 shadow-card">
+      <p className="font-bold mb-1">Questa settimana</p>
+      <p className="text-xs text-slate-500 mb-3">Tocca una casella per cambiarla: P presente · A assente · G giustificato</p>
+      {errore && <p className="text-sm text-white bg-red-600 rounded-lg px-3 py-2 mb-3">{errore}</p>}
+      {atleti.length === 0 ? (
+        <p className="text-sm text-slate-500">Nessun atleta nella squadra: compaiono quando la scelgono in registrazione.</p>
+      ) : (
+        <table className="w-full text-xs">
+          <thead><tr><th />{GG.map((g, i) => <th key={g} className="pb-2 font-semibold text-slate-500">{g}<br />{Number(giorni[i].slice(8))}</th>)}</tr></thead>
+          <tbody>
+            {atleti.map((a) => (
+              <tr key={a.id}>
+                <td className="py-1 pr-2 font-medium">{a.nome} {a.cognome?.charAt(0)}.</td>
+                {giorni.map((d) => {
+                  const s = stati[a.id + d]
+                  return (
+                    <td key={d} className="text-center py-1">
+                      <button onClick={() => tocca(a.id, d)} aria-label={`${a.nome}, ${d}`}
+                        className={`w-9 h-9 rounded-lg font-bold ${COLORE[s || 'vuoto']}`}>{s ? SIGLA[s] : '·'}</button>
+                    </td>
+                  )
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  )
+}
+
+// Riepilogo del coach: chilometri della settimana, presenze, lavori svolti
+export default function RiepilogoCoach() {
+  const { squadra, pronto } = useMiaSquadra()
+  const [piani, setPiani] = useState([])
+  const lunedi = lunediDi()
+  const oggi = dataLocale()
+
+  useEffect(() => {
+    if (!squadra) return
+    supabase.from('allenamenti_squadra').select('*').eq('squadra_id', squadra.id)
+      .gte('data', addGiorni(oggi, -14)).order('data', { ascending: false })
+      .then(({ data }) => setPiani(data || []))
+  }, [squadra?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const kmSettimana = piani
-    .filter((p) => p.data >= giorni[0] && p.data <= oggi)
+    .filter((p) => p.data >= lunedi && p.data <= oggi)
     .reduce((s, p) => s + metriPiano(p.righe), 0) / 1000
 
   if (!pronto) return <AppShell titolo="Riepilogo" attiva="riepilogo"><p className="text-center text-slate-500 py-8">Carico…</p></AppShell>
@@ -76,34 +111,7 @@ export default function RiepilogoCoach() {
         <p className="text-sm text-blue-100">{squadra.nome}</p>
       </div>
 
-      <div className="bg-white rounded-3xl p-5 mb-3 shadow-card">
-        <p className="font-bold mb-1">Bollettino giorni</p>
-        <p className="text-xs text-slate-500 mb-3">Tocca per cambiare: P presente · A assente · F festa (non penale)</p>
-        {errore && <p className="text-sm text-white bg-red-600 rounded-lg px-3 py-2 mb-3">{errore}</p>}
-        {atleti.length === 0 ? (
-          <p className="text-sm text-slate-500">Nessun atleta nella squadra: compaiono quando la scelgono in registrazione.</p>
-        ) : (
-          <table className="w-full text-xs">
-            <thead><tr><th />{GG.map((g, i) => <th key={g} className="pb-2 font-semibold text-slate-500">{g}<br />{Number(giorni[i].slice(8))}</th>)}</tr></thead>
-            <tbody>
-              {atleti.map((a) => (
-                <tr key={a.id}>
-                  <td className="py-1 pr-2 font-medium">{a.nome} {a.cognome?.charAt(0)}.</td>
-                  {giorni.map((d) => {
-                    const s = stati[a.id + d]
-                    return (
-                      <td key={d} className="text-center py-1">
-                        <button onClick={() => tocca(a.id, d)}
-                          className={`w-8 h-8 rounded-lg font-bold ${COLORE[s || 'vuoto']}`}>{s ? SIGLA[s] : '·'}</button>
-                      </td>
-                    )
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+      <Bollettino squadra={squadra} />
 
       <div className="bg-white rounded-3xl p-5 shadow-card">
         <p className="font-bold mb-2">Lavori svolti</p>

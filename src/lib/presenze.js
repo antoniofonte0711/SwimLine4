@@ -6,8 +6,10 @@ export const GIORNI_ALLENAMENTO = [1, 2, 3, 4, 5]
 export const STATI = {
   presente: 'Presente',
   assente: 'Assente',
-  non_penale: 'Assenza non penale',
+  non_penale: 'Assenza giustificata',
 }
+// Le stesse, corte, per i pulsanti delle presenze
+export const STATI_BREVI = { presente: 'Presente', assente: 'Assente', non_penale: 'Giustificato' }
 
 // Presenze su un elenco di righe { data, stato }.
 // L'assenza non penale (festività) non conta né a favore né contro.

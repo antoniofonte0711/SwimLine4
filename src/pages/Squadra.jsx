@@ -13,13 +13,18 @@ import { riepilogoPresenze, STATI } from '../lib/presenze'
 import { useMiaSquadra } from '../lib/pianoSquadra'
 import { useRegole } from '../lib/regole'
 import { categoriaFin } from '../lib/categorie'
+import Schede from '../components/Schede'
+import StoricoAllenamenti from '../components/StoricoAllenamenti'
+import Icona from '../components/Icona'
+import { SenzaSquadra } from '../components/PianoCard'
+import { SchedaPrevisioni } from './Previsioni'
 
 const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white'
 const dataIt = (s) => (s ? new Date(s + 'T12:00:00').toLocaleDateString('it-IT') : '')
 
 // Squadra: nome della squadra e tempi dei compagni.
 // Atleta: vede le gare dei compagni. Coach (e admin): vede anche gli allenamenti dei suoi atleti.
-export default function Squadra() {
+function SquadraCompagni() {
   const { user, profile, isCoach } = useAuth()
   const { squadra: squadraCoach, pronto } = useMiaSquadra()
   const { puo } = useRegole()
@@ -259,6 +264,191 @@ function PresenzeBreve({ atletaId }) {
       <div className="text-right">
         <Link to={`/squadra/presenze/${atletaId}`} className="text-sm font-semibold text-blue-600">Grafico completo delle presenze →</Link>
       </div>
+    </>
+  )
+}
+
+// Coach (e admin): l'elenco degli atleti; toccando un nome si apre la sua scheda
+export default function Squadra() {
+  const { isCoach } = useAuth()
+  return isCoach ? <SquadraCoach /> : <SquadraCompagni />
+}
+
+function SquadraCoach() {
+  const { ruolo } = useAuth()
+  const { squadra, pronto } = useMiaSquadra()
+  const [atleti, setAtleti] = useState(null)
+  const [scelto, setScelto] = useState('')
+
+  useEffect(() => {
+    if (!pronto) return
+    if (!squadra) return setAtleti([])
+    async function carica() {
+      let { data } = await supabase.from('profiles').select('id, nome, cognome, data_nascita, sesso')
+        .in('role', ['atleta', 'admin']).is('eliminato_il', null).eq('squadra_id', squadra.id).order('cognome')
+      if (data?.length) {
+        // la categoria scritta dal coach nei Riferimenti vale più di quella calcolata
+        const { data: rif } = await supabase.from('atleta_riferimenti').select('atleta_id, categoria').in('atleta_id', data.map((a) => a.id))
+        const scritta = Object.fromEntries((rif || []).filter((r) => r.categoria?.trim()).map((r) => [r.atleta_id, r.categoria.trim()]))
+        data = data.map((a) => ({
+          ...a, categoria: scritta[a.id] || categoriaFin(a.data_nascita, a.sesso),
+          anno: a.data_nascita ? a.data_nascita.slice(0, 4) : null,
+        }))
+      }
+      setAtleti(data || [])
+    }
+    carica()
+  }, [pronto, squadra?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const atleta = atleti?.find((a) => a.id === scelto)
+  const scegli = (id) => { setScelto(id); window.scrollTo(0, 0) }
+  const indietro = ruolo === 'coach' ? undefined : '/funzioni'
+
+  if (atleta) {
+    return (
+      <AppShell titolo={`${atleta.nome} ${atleta.cognome || ''}`.trim()} attiva="atleti">
+        <SchedaAtleta key={atleta.id} atleta={atleta} onIndietro={() => scegli('')} />
+      </AppShell>
+    )
+  }
+  return (
+    <AppShell titolo="Atleti" attiva="atleti" indietro={indietro}>
+      {!pronto || atleti === null ? <p className="text-center text-slate-500 py-8">Carico…</p>
+        : !squadra ? <SenzaSquadra />
+        : atleti.length === 0 ? (
+          <p className="text-sm text-slate-500 bg-white rounded-3xl p-6 text-center shadow-card">
+            Nessun atleta nella tua squadra: compaiono qui quando scelgono la tua squadra in registrazione.
+          </p>
+        ) : (
+          <>
+            <p className="text-sm font-semibold text-slate-500 mb-2 px-1">{squadra.nome} · {atleti.length} {atleti.length === 1 ? 'atleta' : 'atleti'}</p>
+            <ul className="bg-white rounded-3xl px-4 shadow-card">
+              {atleti.map((a) => (
+                <li key={a.id} className="border-t border-slate-100 first:border-t-0">
+                  <button type="button" onClick={() => scegli(a.id)}
+                    className="cliccabile w-full min-h-[60px] flex items-center justify-between gap-3 text-left py-2">
+                    <span className="min-w-0">
+                      <span className="block text-[17px] font-bold text-abisso truncate">{a.nome} {a.cognome}</span>
+                      <span className="block text-[13px] text-slate-500">{a.categoria || 'Categoria —'}{a.anno ? ` · ${a.anno}` : ''}</span>
+                    </span>
+                    <Icona nome="freccia" className="w-5 h-5 text-slate-500 shrink-0" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+    </AppShell>
+  )
+}
+
+const SCHEDE_ATLETA = ['Oggi', 'Tempi', 'Presenze', 'Gare']
+const SCHEDE_TEMPI = ['Grafico', 'Allenamenti', 'Previsioni', 'Riferimenti']
+
+// La scheda di un atleta: due numeri in alto e quattro schede
+function SchedaAtleta({ atleta, onIndietro }) {
+  const [vista, setVista] = useState(SCHEDE_ATLETA[0])
+  const [tempi, setTempi] = useState(SCHEDE_TEMPI[0])
+  const [presenze, setPresenze] = useState(null)
+  const [ultimo, setUltimo] = useState(undefined)
+
+  useEffect(() => {
+    const da = new Date()
+    da.setDate(da.getDate() - 27)
+    supabase.from('presenze').select('data, stato').eq('atleta_id', atleta.id).gte('data', dataLocale(da))
+      .then(({ data }) => setPresenze(riepilogoPresenze(data || []).percentuale))
+    supabase.from('allenamenti').select('data_allenamento').eq('atleta_id', atleta.id).order('data_allenamento', { ascending: false }).limit(1)
+      .then(({ data }) => setUltimo(data?.[0]?.data_allenamento || null))
+  }, [atleta.id])
+
+  return (
+    <>
+      <button type="button" onClick={onIndietro}
+        className="cliccabile inline-flex items-center min-h-[44px] mb-3 text-sm font-semibold text-blue-600 bg-schiuma rounded-full px-4">
+        ‹ Tutti gli atleti
+      </button>
+      <p className="text-sm text-slate-500 mb-3 px-1">{atleta.categoria || 'Categoria —'}{atleta.anno ? ` · nato nel ${atleta.anno}` : ''}</p>
+      <div className="grid grid-cols-2 gap-2 mb-3">
+        <div className="bg-white rounded-3xl p-4 shadow-card">
+          <p className="text-xs font-bold text-slate-500">Presenze · 4 settimane</p>
+          <p className="font-display text-3xl font-extrabold text-abisso mt-1">{presenze == null ? '—' : `${presenze}%`}</p>
+        </div>
+        <div className="bg-white rounded-3xl p-4 shadow-card">
+          <p className="text-xs font-bold text-slate-500">Ultimi tempi scritti</p>
+          <p className="font-display text-xl font-extrabold text-abisso mt-1.5 capitalize">{ultimo ? formattaGiorno(ultimo) : '—'}</p>
+        </div>
+      </div>
+
+      <Schede valore={vista} opzioni={SCHEDE_ATLETA} onCambia={setVista} etichetta="Dati dell'atleta" />
+
+      {vista === 'Oggi' && <OggiAtleta atletaId={atleta.id} />}
+      {vista === 'Presenze' && <PresenzeBreve atletaId={atleta.id} />}
+      {vista === 'Gare' && <GareDi atletaId={atleta.id} />}
+      {vista === 'Tempi' && (
+        <>
+          <div className="flex flex-wrap gap-2 mb-3" role="tablist" aria-label="Tempi">
+            {SCHEDE_TEMPI.map((t) => (
+              <button key={t} type="button" role="tab" aria-selected={tempi === t} onClick={() => setTempi(t)}
+                className={`cliccabile min-h-[40px] rounded-full px-4 text-sm font-bold ${tempi === t ? 'bg-abisso text-white' : 'bg-white text-slate-600 shadow-card'}`}>
+                {t}
+              </button>
+            ))}
+          </div>
+          {tempi === 'Grafico' && <SchedaProgressi atletaId={atleta.id} coach />}
+          {tempi === 'Allenamenti' && <StoricoAllenamenti atletaId={atleta.id} />}
+          {tempi === 'Previsioni' && <SchedaPrevisioni atletaId={atleta.id} />}
+          {tempi === 'Riferimenti' && <Riferimenti atletaId={atleta.id} />}
+        </>
+      )}
+    </>
+  )
+}
+
+// Le gare di un atleta con i migliori tempi (25 e 50 m sono prove diverse)
+function GareDi({ atletaId }) {
+  const [gare, setGare] = useState(null)
+  useEffect(() => {
+    supabase.from('gare').select('*').eq('atleta_id', atletaId).order('data_gara', { ascending: false }).limit(100)
+      .then(({ data }) => setGare(data || []))
+  }, [atletaId])
+  if (gare === null) return <p className="text-center text-slate-500 py-6">Carico…</p>
+  const migliori = {}
+  gare.forEach((g) => {
+    const sec = tempoInSecondi(g.tempo)
+    if (sec === null) return
+    const k = `${g.distanza} m ${g.stile} · ${testoVasca(vascaDi(g))}`
+    if (!migliori[k] || sec < migliori[k].sec) migliori[k] = { sec, tempo: g.tempo, dist: g.distanza, vasca: vascaDi(g) }
+  })
+  const elenco = Object.entries(migliori).sort((a, b) => a[1].vasca - b[1].vasca || a[1].dist - b[1].dist)
+  return (
+    <>
+      {elenco.length > 0 && (
+        <div className="bg-white rounded-3xl p-5 mb-3 shadow-card">
+          <p className="text-sm text-slate-500 mb-2">Migliori tempi in gara</p>
+          {elenco.map(([nome, m]) => (
+            <div key={nome} className="flex justify-between border-t border-gray-100 py-2.5 text-sm">
+              <span>{nome}</span>
+              <b className="text-blue-600">{m.tempo}</b>
+            </div>
+          ))}
+        </div>
+      )}
+      {gare.length === 0 && <p className="text-center text-slate-500 bg-white rounded-3xl p-6 shadow-card">Nessuna gara ancora.</p>}
+      {gare.map((g) => (
+        <div key={g.id} className="bg-white rounded-3xl p-5 mb-3 shadow-card">
+          <div className="flex justify-between gap-3">
+            <div className="min-w-0">
+              <p className="font-bold">{g.nome_gara}</p>
+              <p className="text-sm text-slate-500 mt-0.5">{dataIt(g.data_gara)}</p>
+            </div>
+            <p className="text-xl font-extrabold text-blue-600 tabular-nums shrink-0">{g.tempo}</p>
+          </div>
+          <p className="text-sm font-semibold text-slate-600 mt-1">
+            <span className="whitespace-nowrap">{g.distanza} m {g.stile}</span> · <span className="whitespace-nowrap">{testoVasca(vascaDi(g))}</span>
+          </p>
+          {g.passaggi?.length > 0 && <p className="text-xs text-slate-500 mt-2">Passaggi: {g.passaggi.map((p) => p || '–').join(' · ')}</p>}
+        </div>
+      ))}
     </>
   )
 }

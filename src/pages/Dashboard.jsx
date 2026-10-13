@@ -252,16 +252,158 @@ function HomeAtleta() {
   )
 }
 
-// Home del coach: l'allenamento della giornata per la squadra
+// Azione grande della home del coach (Presenze, Atleti)
+function AzioneCoach({ to, icona, titolo, sotto }) {
+  return (
+    <Link to={to} className="cliccabile bg-white rounded-3xl p-4 mb-3 flex items-center gap-4 text-abisso shadow-card">
+      <span className="w-12 h-12 shrink-0 rounded-2xl bg-blue-600 text-white flex items-center justify-center">
+        <Icona nome={icona} />
+      </span>
+      <span className="flex-1 min-w-0">
+        <span className="block font-display text-lg font-extrabold">{titolo}</span>
+        <span className="block text-[13px] text-slate-500">{sotto}</span>
+      </span>
+      <Icona nome="freccia" className="w-5 h-5 text-slate-500 shrink-0" />
+    </Link>
+  )
+}
+
+// La giornata del coach: com'è messo l'allenamento, presenze e atleti. L'editor si apre solo quando serve.
+function OggiCoach({ squadra, giorno, settimana, onScrivi, avviso }) {
+  const [piano, setPiano] = useState(undefined)
+  const [atleti, setAtleti] = useState([])
+  const [segnati, setSegnati] = useState(0)
+  const oggi = giorno === dataLocale()
+
+  useEffect(() => {
+    let attivo = true
+    setPiano(undefined)
+    async function carica() {
+      const [{ data: p }, { data: a }] = await Promise.all([
+        supabase.from('allenamenti_squadra').select('*').eq('squadra_id', squadra.id).eq('data', giorno).maybeSingle(),
+        supabase.from('profiles').select('id').in('role', ['atleta', 'admin']).eq('squadra_id', squadra.id).is('eliminato_il', null),
+      ])
+      const ids = (a || []).map((x) => x.id)
+      const { data: pr } = ids.length
+        ? await supabase.from('presenze').select('atleta_id').in('atleta_id', ids).eq('data', giorno)
+        : { data: [] }
+      if (!attivo) return
+      setPiano(p || null)
+      setAtleti(ids)
+      setSegnati((pr || []).length)
+    }
+    carica()
+    return () => { attivo = false }
+  }, [squadra.id, giorno])
+
+  if (piano === undefined) return <p className="text-center text-slate-500 py-8">Carico…</p>
+  const stato = !piano ? null : !piano.pubblicato ? 'Bozza' : piano.visibilita === 'coach' ? 'Solo coach' : 'Pubblicato'
+  const min = piano ? minutiPiano(piano.righe || []) : 0
+  const presenze = !atleti.length ? 'Nessun atleta in squadra'
+    : segnati === 0 ? `${atleti.length} atleti · da segnare`
+    : segnati >= atleti.length ? `Tutti segnati (${atleti.length})` : `${segnati} su ${atleti.length} segnati`
+
+  return (
+    <div className="lg:grid lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:gap-6 lg:items-start">
+      <div>
+        {avviso && <p role="status" className="text-sm font-semibold text-green-700 bg-green-50 rounded-2xl px-4 py-3 mb-3">{avviso}</p>}
+        {piano ? (
+          <section className="relative overflow-hidden rounded-[32px] bg-blue-600 text-white p-5 mb-3">
+            <Onde />
+            <div className="relative">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-bold tracking-[0.12em] text-blue-100 uppercase">{oggi ? 'Allenamento di oggi' : 'Allenamento'}</span>
+                <span className="text-xs font-bold bg-white/15 rounded-full px-2.5 py-1">{stato}</span>
+              </div>
+              {piano.titolo && <p className="text-[15px] font-semibold text-blue-100 mt-2 first-letter:uppercase">{piano.titolo}</p>}
+              <div className="flex items-end gap-5 mt-3.5 mb-4">
+                <p className="font-display text-[64px] font-extrabold leading-[0.88] tracking-[-0.05em]">
+                  {km(metriPiano(piano.righe || []))}<span className="text-2xl ml-1">km</span>
+                </p>
+                {min > 0 && <p className="font-display text-3xl font-bold pb-1">{min}<span className="text-base"> min</span></p>}
+              </div>
+              <Difficolta righe={piano.righe || []} suBlu />
+              <button onClick={onScrivi} className="cliccabile w-full h-14 mt-3 rounded-[18px] bg-white text-blue-600 font-display text-lg font-extrabold">
+                {piano.pubblicato ? 'Modifica' : 'Continua e pubblica'}
+              </button>
+            </div>
+          </section>
+        ) : (
+          <div className="bg-white rounded-3xl p-6 mb-3 flex flex-col items-center text-center gap-3 shadow-card">
+            <span className="w-12 h-12 rounded-2xl bg-schiuma text-blue-600 flex items-center justify-center">
+              <Icona nome="onde" className="w-7 h-7" />
+            </span>
+            <div>
+              <p className="font-display text-xl font-extrabold text-abisso mb-1">{oggi ? 'Nessun allenamento oggi' : 'Nessun allenamento'}</p>
+              <p className="text-sm text-slate-500">Scrivilo ora: la squadra lo vede appena lo pubblichi.</p>
+            </div>
+            <button onClick={onScrivi}
+              className="cliccabile w-full max-w-[320px] min-h-[52px] px-6 font-display text-lg font-extrabold text-white bg-blue-600 hover:bg-blue-700 rounded-campo">
+              Scrivi l'allenamento
+            </button>
+          </div>
+        )}
+
+        {piano && (
+          <>
+            <h2 className="font-display text-xl font-extrabold mt-5 mb-2 flex items-baseline justify-between">
+              Il programma
+              <span className="font-sans text-[13px] font-semibold text-slate-500 tracking-normal">{(piano.righe || []).length} lavori</span>
+            </h2>
+            <PianoCard piano={piano} senzaTesta />
+          </>
+        )}
+      </div>
+
+      <div className="mt-3 lg:mt-0">
+        <AzioneCoach to={`/presenze?giorno=${giorno}`} icona="spunta" titolo="Segna presenze" sotto={presenze} />
+        <AzioneCoach to="/squadra" icona="gruppo" titolo="Atleti" sotto="Tempi, presenze e gare di ognuno" />
+        {piano?.pubblicato && (
+          <AzioneCoach to={`/risultati?data=${giorno}`} icona="cronometro" titolo="Tempi degli atleti" sotto="Scrivi i tempi di questo allenamento" />
+        )}
+        {settimana.giorni > 0 && (
+          <div className="bg-white rounded-3xl p-4 mb-3 flex items-center justify-between shadow-card">
+            <div>
+              <p className="text-xs font-bold tracking-widest text-slate-500 uppercase">Questa settimana</p>
+              <p className="font-display text-3xl font-extrabold mt-1">{km(settimana.metri)}<span className="text-base"> km</span></p>
+            </div>
+            <p className="text-[13px] text-slate-500 text-right">
+              {settimana.giorni} {settimana.giorni === 1 ? 'allenamento pubblicato' : 'allenamenti pubblicati'}
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// Home del coach: la giornata della squadra; "Scrivi" apre l'editor al posto della giornata
 function HomeCoach() {
   const [giorno, setGiorno] = useState(dataLocale())
+  const [scrivi, setScrivi] = useState(false)
+  const [avviso, setAvviso] = useState('')
   const { squadra, pronto } = useMiaSquadra()
-  const settimana = useSettimanaSquadra(squadra?.id, giorno)
+  const settimana = useSettimanaSquadra(squadra?.id, giorno, undefined, avviso)
+  const cambiaGiorno = (g) => { setAvviso(''); setGiorno(g) }
+
+  if (scrivi && squadra) {
+    return (
+      <AppShell titolo={titoloGiorno(giorno)} attiva="home">
+        <EditorAllenamento squadra={squadra} giorno={giorno}
+          onChiudi={(msg) => { setAvviso(msg || ''); setScrivi(false); window.scrollTo(0, 0) }} />
+      </AppShell>
+    )
+  }
   return (
-    <AppShell titolo={titoloGiorno(giorno)} attiva="home" giorno={giorno} onGiorno={setGiorno} voti={settimana.voti}>
+    <AppShell titolo={titoloGiorno(giorno)} attiva="home" giorno={giorno} onGiorno={cambiaGiorno} voti={settimana.voti}>
       {!pronto ? <p className="text-center text-slate-500 py-8">Carico…</p>
         : !squadra ? <SenzaSquadra />
-        : <><DomandeIngresso squadra={squadra} /><ProposteFuoriPiano squadra={squadra} /><EditorAllenamento squadra={squadra} giorno={giorno} /></>}
+        : <>
+            <DomandeIngresso squadra={squadra} />
+            <ProposteFuoriPiano squadra={squadra} />
+            <OggiCoach key={giorno + avviso} squadra={squadra} giorno={giorno} settimana={settimana} avviso={avviso}
+              onScrivi={() => { setAvviso(''); setScrivi(true); window.scrollTo(0, 0) }} />
+          </>}
     </AppShell>
   )
 }
