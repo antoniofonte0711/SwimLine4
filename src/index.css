@@ -42,6 +42,17 @@ select:focus-visible,
   outline-offset: 2px;
 }
 
+/* Campi data su iPhone: Safari dà loro una larghezza minima propria e uscivano dalla cella;
+   vuoti restavano più alti degli altri campi. Qui stanno nella colonna e hanno l'altezza di un select. */
+input[type='date'] {
+  -webkit-appearance: none;
+  appearance: none;
+  min-width: 0;
+  max-width: 100%;
+  display: block;
+}
+input[type='date']::-webkit-date-and-time-value { text-align: left; min-height: 1.5em; }
+
 /* Testo più grande (Profilo → Aspetto): le misure in rem crescono tutte insieme */
 html.testo-grande { font-size: 112.5%; }
 

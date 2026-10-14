@@ -11,7 +11,7 @@ import { tempoInSecondi, secondiInTempo, formattaData, normalizzaTempo, tempoVal
 import { STILI_COACH } from '../lib/pianoSquadra'
 
 const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white'
-const FONTI = ['Allenamenti e gare', 'Solo allenamenti', 'Solo gare']
+const FONTI = ['Tutti i tempi', 'Solo allenamenti', 'Solo gare']
 const TUTTI = 'Tutti gli stili'
 
 // Distanza e stile con più tempi (a parità, quella nuotata più di recente): da lì si vede subito il grafico

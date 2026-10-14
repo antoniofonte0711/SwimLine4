@@ -748,9 +748,10 @@ export default function EditorAllenamento({ squadra, giorno, onChiudi }) {
         className="cliccabile w-full min-h-[56px] mb-2 font-display text-lg font-extrabold text-blue-600 bg-schiuma border-2 border-dashed border-blue-200 rounded-3xl">
         + Aggiungi lavoro
       </button>
-      <div className="flex justify-center mb-3">
-        <button onClick={aggiungiSerie} className="min-h-[44px] px-4 text-sm font-semibold text-blue-600">+ Serie a giri</button>
-      </div>
+      <button onClick={aggiungiSerie}
+        className="cliccabile w-full min-h-[48px] mb-3 font-display text-base font-extrabold text-blue-600 bg-schiuma border-2 border-dashed border-blue-200 rounded-3xl">
+        + Serie a giri
+      </button>
 
       <div className="bg-white rounded-3xl p-4 mb-3 shadow-card">
         <div className="flex items-center justify-between gap-3">

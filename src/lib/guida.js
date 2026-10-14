@@ -211,7 +211,7 @@ export const GUIDA = [
     id: 'progressi', titolo: 'Progressi', pagine: ['/progressi'], per: ['atleta', 'genitore', 'admin'],
     passi: [
       ['Distanza e Stile', 'Quale prova guardare.'],
-      ['Cosa mostrare', 'Allenamenti e gare, solo allenamenti o solo gare.'],
+      ['Cosa mostrare', 'Tutti i tempi (allenamenti e gare), solo allenamenti o solo gare.'],
       ['Vasca delle gare', '25 m o 50 m: le gare si guardano una vasca alla volta.'],
       ['Dal / Al', 'Il periodo (vuoto = tutto).'],
       ['Grafico', 'Più la linea scende, più sei veloce. Sopra c\'è il migliore del periodo.'],
