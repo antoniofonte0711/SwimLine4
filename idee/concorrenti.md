@@ -98,10 +98,32 @@ Nessuna fonte lo misura, ma è quello che hanno davanti tutti i coach. Lo confer
 - Strava (2025), Garmin (2026) e MySwimPro hanno già l'overlay. Il loro pezzo centrale è la **linea del percorso**: la nostra "striscia dell'allenamento" ne è l'equivalente per la piscina, e **nessuno dei concorrenti trovati ce l'ha** (fiducia media).
 - Kickly dimostra che **le società pagano per avere grafiche social pronte**. Quindi la versione "allenamento o risultati della squadra per la pagina della società" è anche un argomento di vendita, oltre che pubblicità.
 
+## Approfondimento: Strava e il nuoto in vasca
+
+Fatto il 14/10 su richiesta, dopo la v2. Ho letto il centro assistenza di Strava, la documentazione per sviluppatori e gli articoli sugli adesivi.
+
+### Cosa è certo
+- ✅ **Le nuotate in vasca su Strava non hanno mappa**: c'è solo l'elenco delle vasche. La lunghezza della vasca si imposta sull'orologio prima di partire e **dopo non si può più cambiare**. ([Swim Activities on Strava](https://support.strava.com/hc/en-us/articles/206645830-Swim-Activities-on-Strava))
+- ✅ **L'immagine con le statistiche da condividere si fa solo per le attività con GPS.** Testuale dal supporto: *"you won't be able to share stationary activities, indoor activities, or manually created activities"*. Per il nuoto le statistiche sono sempre le stesse tre: **tempo in movimento, distanza, passo**, e non si possono scegliere. ([Sharing Your Strava Activities](https://support.strava.com/hc/en-us/articles/221089587-Sharing-Your-Strava-Activities))
+- 🟡 **Sticker Stats** (dal 9 aprile 2025): adesivo trasparente da copiare negli appunti o mandare alla storia Instagram, con distanza, dislivello, tempo, **linea del percorso** e logo. L'attività deve essere pubblica o visibile ai follower. L'articolo **non dice per quali sport** funziona. ([BikeRadar](https://www.bikeradar.com/news/strava-sticker-stats-spring-2025-updates))
+
+### Cosa NON ho potuto vedere, e cosa ne deduco
+- ❓ **Se lo Sticker Stats compare per una nuotata in vasca.** La regola ufficiale (niente immagine con statistiche per le attività al chiuso) fa pensare di **no**. Un video su TikTok dice invece che si può salvare la versione trasparente anche per il nuoto, ma è una fonte non ufficiale e va contro il supporto. La pagina della community di Strava che lo spiega mi ha **bloccato l'accesso** (errore 403).
+- **La mia deduzione** (fiducia media): per chi nuota in piscina, Strava offre al massimo tre numeri, e senza la linea del percorso, che è proprio quello che rende bello il loro adesivo. **È un vuoto vero**, e la nostra "striscia dell'allenamento" lo riempie.
+- **Come verificarlo in 2 minuti** (serve un telefono con Strava e una nuotata in vasca registrata con l'orologio): apri l'attività → tasto Condividi → guarda se compaiono "Sticker"/"Stats sticker" o "Copia". Puoi farlo tu o un nuotatore della squadra che usa Strava.
+
+### Collegare SwimLine4 a Strava? Per ora no
+- ✅ Le API di Strava permettono di **creare un'attività manuale** (nome, tipo di sport, data, durata, distanza, descrizione), con il permesso `activity:write`. ([API reference, createActivity](https://developers.strava.com/docs/reference/)) In teoria potremmo mandare l'allenamento della giornata su Strava, con i lavori nella descrizione.
+- **Ma non conviene**, per tre motivi:
+  1. ✅ Le attività create a mano **non hanno l'immagine con le statistiche da condividere** (vedi sopra), quindi non guadagniamo niente sul fronte "overlay".
+  2. 🟡 **Da giugno 2026 per usare le API serve un abbonamento Strava a pagamento (~12 $/mese)**, e senza verifica si collegano solo **10 atleti**. ([heise, 2/6/2026](https://heise.de/-11315017); confermato da [TechRepublic](https://www.techrepublic.com/article/news-strava-api-scraping-crackdown/) e dall'email riportata sul [forum intervals.icu](https://forum.intervals.icu/t/strava-api-update-new-terms-subs-required-for-api-access/130240)). **È contro la regola "solo gratis"**, quindi è escluso.
+  3. 🟡 Dal novembre 2024 le regole di Strava permettono di mostrare i dati presi da Strava **solo all'atleta stesso** (niente coach o genitori), e ✅ il 1/9/2026 hanno tolto le funzioni dei club. ([changelog](https://developers.strava.com/docs/changelog/)) Strava si sta chiudendo verso le app esterne.
+- **Conclusione:** non ci colleghiamo a Strava. Il nostro report deve **funzionare da solo**: immagine creata sul telefono, condivisa direttamente su Instagram e WhatsApp. È anche più semplice e non costa niente.
+
 ## Cosa NON sono riuscito a verificare
 
 - Prezzi di SportEasy, CoachPeaking e TeamUnify.
-- Se Strava fa lo Sticker Stats anche per il nuoto in vasca.
+- Se Strava fa lo Sticker Stats anche per il nuoto in vasca: probabilmente no (vedi l'approfondimento su Strava), **va provato su un telefono**.
 - Chi c'è dietro NuotoMaster e quando esce davvero.
 - Quanti usano davvero AlèSwim su Android (la stima è solo iOS e USA).
 - Se esistono app italiane piccole, di una regione o di una società: **va chiesto a Mauri e alla coach esterna.**
