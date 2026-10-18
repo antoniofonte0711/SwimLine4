@@ -7,10 +7,10 @@ import { useAuth } from '../context/AuthContext'
 const OGNI = 60_000
 
 export function useSegnalaAttivita() {
-  const { user, staVedendoCome } = useAuth()
+  const { user } = useAuth()
   useEffect(() => {
-    // l'admin che guarda l'app "come" un altro non conta come attività di quella persona
-    if (!user || staVedendoCome) return
+    // Conta sempre l'account con cui si è entrati: col "cambio vista" è l'admin, con "Accedi come" è la persona
+    if (!user) return
     let timer = null
     const manda = (apertura = false) => {
       if (document.visibilityState !== 'visible') return
@@ -22,7 +22,7 @@ export function useSegnalaAttivita() {
     document.addEventListener('visibilitychange', cambia)
     cambia()
     return () => { document.removeEventListener('visibilitychange', cambia); ferma() }
-  }, [user, staVedendoCome])
+  }, [user])
 }
 
 // Per la dashboard admin: da una riga { giorni_attivi, minuti_totali } ai valori da mostrare
