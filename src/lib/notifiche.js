@@ -49,8 +49,3 @@ export async function disattivaNotifiche() {
   await supabase.from('push_iscrizioni').delete().eq('endpoint', iscr.endpoint)
   await iscr.unsubscribe()
 }
-
-// Il coach ha pubblicato: avvisa la squadra (se qualcosa non va, l'allenamento resta comunque pubblicato)
-export function avvisaSquadra(squadraId, date) {
-  return supabase.functions.invoke('notifiche', { body: { squadra_id: squadraId, date } }).catch(() => {})
-}

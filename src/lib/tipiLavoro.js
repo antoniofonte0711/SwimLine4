@@ -31,6 +31,7 @@ export const GRUPPI_LAVORO = [
 const b = (sigla, gruppo, peso, colore, descrizione, soloCoach = false) => ({ sigla, gruppo, peso, colore, descrizione, soloCoach, origine: 'base' })
 export const BASE = [
   b('Riscaldamento', 'recupero', 0.5, 'cielo', 'Per partire: si scaldano muscoli e fiato.', true),
+  b('Attivazione', 'recupero', 0.5, 'cielo', 'Pochi metri vivaci per svegliare i muscoli, senza stancarsi.', true),
   b('Tecnica', 'recupero', 0.7, 'cielo', 'Esercizi sul gesto, senza fretta.', true),
   b('Gambe', 'recupero', 0.9, 'cielo', 'Solo gambe, con o senza tavoletta.', true),
   b('Ipossia', 'recupero', 1.2, 'cielo', 'Respirazione ridotta: poche vasche ma il fiato si fa sentire.', true),

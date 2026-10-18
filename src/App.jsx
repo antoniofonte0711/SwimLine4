@@ -6,6 +6,7 @@ import { CarrelloProvider } from './context/CarrelloContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import AvvisoErrore from './components/AvvisoErrore'
 import { mostraInArrivo } from './lib/permessi'
+import { useSegnalaAttivita } from './lib/attivita'
 import Home from './pages/Home'
 import Login from './pages/Login'
 
@@ -46,11 +47,17 @@ const PROSSIMAMENTE = [
   ['/archivio', 'Archivio gare'],
 ]
 
+function SegnalaAttivita() {
+  useSegnalaAttivita()
+  return null
+}
+
 export default function App() {
   return (
     // reducedMotion="user": chi ha chiesto meno animazioni al telefono non vede movimenti
     <MotionConfig reducedMotion="user">
     <AuthProvider>
+      <SegnalaAttivita />
       <CarrelloProvider>
         <BrowserRouter>
           <AvvisoErrore />

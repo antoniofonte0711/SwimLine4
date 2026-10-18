@@ -35,6 +35,7 @@ export default function Privacy() {
           <p>Per gli atleti, se lo indichi: se gareggi nelle gare maschili o femminili (serve solo a calcolare la categoria FIN).</p>
           <p>Per gli atleti: tempi di allenamento e di gara, allenamenti fuori piano che proponi al coach, presenze, punti e premi, eventuali documenti caricati dal coach.</p>
           <p>Le notifiche dell'app e, se le attivi, l'indirizzo tecnico del telefono per le notifiche push.</p>
+          <p>Quanto tempo l'app resta aperta ogni giorno (solo i minuti totali, non le pagine che guardi). Lo vede l'amministratore per capire se l'app viene usata e come migliorarla.</p>
         </Paragrafo>
 
         <Paragrafo titolo="Perché li usiamo">

@@ -6,14 +6,14 @@ import Icona from '../components/Icona'
 import GuidaPagina from '../components/GuidaPagina'
 import SegnalazioniAdmin from '../components/SegnalazioniAdmin'
 import { contaAllenamenti, DettaglioSquadra, ElencoSquadre, useDatiSquadre } from '../components/admin/AdminSquadre'
-import { CoachDaApprovare, RegistroAccessi, TuttiUtenti } from '../components/admin/AdminUtenti'
+import { AttivitaUtenti, CoachDaApprovare, RegistroAccessi, TuttiUtenti } from '../components/admin/AdminUtenti'
 import { FunzioniApp, NotificheApp, Sicurezza } from '../components/admin/AdminImpostazioni'
 import { Numero, plurale, Scheda, Scheletro } from '../components/admin/ui'
 
 const MENU = [
   ['squadre', 'Società e gruppi', 'onde'],
   ['dashboard', 'Dashboard', 'grafico'],
-  ['Amministrazione', 'gruppo', [['utenti', 'Tutti gli utenti'], ['approvazioni', 'Coach da approvare'], ['segnalazioni', 'Segnalazioni'], ['accessi', 'Registro accessi']]],
+  ['Amministrazione', 'gruppo', [['utenti', 'Tutti gli utenti'], ['approvazioni', 'Coach da approvare'], ['segnalazioni', 'Segnalazioni'], ['attivita', 'Attività degli utenti'], ['accessi', 'Registro accessi']]],
   ['Impostazioni', 'regolazioni', [['funzioni', 'Funzioni dell\'app'], ['notifiche', 'Notifiche e avvisi'], ['sicurezza', 'Sicurezza e backup']]],
 ]
 
@@ -146,6 +146,8 @@ export default function AdminPanel() {
             </>
           )}
           {sezione === 'accessi' && dati && <RegistroAccessi dati={dati} />}
+          {sezione === 'attivita' && dati && <AttivitaUtenti dati={dati} />}
+          {!dati && sezione === 'attivita' && <Scheletro righe={6} />}
           {sezione === 'funzioni' && <FunzioniApp />}
           {sezione === 'notifiche' && <NotificheApp dati={dati} />}
           {sezione === 'sicurezza' && <Sicurezza />}

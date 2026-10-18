@@ -404,3 +404,60 @@ export function RegistroAccessi({ dati }) {
     </>
   )
 }
+
+// Quanto usano l'app: minuti al giorno stimati (segnale ogni minuto ad app aperta), ultimi 7 o 30 giorni
+export function AttivitaUtenti({ dati }) {
+  const [giorni, setGiorni] = useState(7)
+  const [righe, setRighe] = useState(null)
+  const [errore, setErrore] = useState('')
+  useEffect(() => {
+    setRighe(null)
+    supabase.rpc('admin_attivita', { p_giorni: giorni }).then(({ data, error }) => {
+      if (error) setErrore(error.message)
+      else setRighe(data || [])
+    })
+  }, [giorni])
+  const per = Object.fromEntries((righe || []).map((r) => [r.persona_id, r]))
+  const elenco = dati.persone
+    .filter((p) => !p.eliminato_il)
+    .map((p) => ({ p, r: per[p.id] }))
+    .sort((a, b) => (b.r?.minuti_totali || 0) - (a.r?.minuti_totali || 0))
+  const attivi = elenco.filter((x) => x.r)
+  const totMin = attivi.reduce((s, x) => s + x.r.minuti_totali, 0)
+  const fmt = (m) => (m >= 60 ? `${Math.floor(m / 60)} h ${m % 60} min` : `${m} min`)
+  return (
+    <>
+      <h1 className="font-display text-[34px] font-extrabold leading-tight">Attività degli utenti</h1>
+      <Scheda titolo="Quanto usano l'app"
+        nota="Minuti stimati: l'app manda un segnale ogni minuto mentre è aperta e in primo piano. Si parte a contare da oggi. Serve a capire quanto viene usata, non a controllare le persone.">
+        <div className="flex gap-2 mb-4">
+          {[7, 30].map((g) => (
+            <button key={g} type="button" onClick={() => setGiorni(g)} aria-pressed={giorni === g}
+              className={giorni === g ? BOTTONE_PIENO : BOTTONE}>Ultimi {g} giorni</button>
+          ))}
+        </div>
+        {errore && <p className="text-sm text-red-700">Errore: {errore}</p>}
+        {righe === null && !errore && <Scheletro righe={5} />}
+        {righe && (
+          <>
+            <p className="text-sm mb-3">
+              <b>{attivi.length}</b> persone su {elenco.length} hanno aperto l'app
+              {attivi.length > 0 && <> · in media <b>{fmt(Math.round(totMin / attivi.length / giorni))}</b> al giorno a testa</>}.
+            </p>
+            {elenco.map(({ p, r }) => (
+              <div key={p.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 py-2.5 border-t border-slate-100 first-of-type:border-t-0 text-sm">
+                <span className="flex-1 min-w-[150px]"><b>{nomeDi(p)}</b> {p.role && <ChipRuolo ruolo={p.role} />}</span>
+                {r ? (
+                  <span className="text-slate-600">
+                    <b>{fmt(Math.round(r.minuti_totali / giorni))}</b> al giorno · {r.giorni_attivi} giorni attivo · {r.aperture} aperture
+                    · ultimo: {new Date(r.ultimo_segnale).toLocaleString('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                ) : <span className="text-slate-400">mai aperta nel periodo</span>}
+              </div>
+            ))}
+          </>
+        )}
+      </Scheda>
+    </>
+  )
+}

@@ -8,7 +8,6 @@ import { lavoriDaScegliere } from '../lib/tipiLavoro'
 import { ricaricaTipiLavoro, useTipiLavoro } from '../lib/useTipiLavoro'
 import { RIGA_VUOTA, STILI_COACH, abbinaTempi, addGiorni, blocchiPiano, metriPiano, minutiPiano, perGiro } from '../lib/pianoSquadra'
 import { normalizzaRipartenza, ripartenzaValida } from '../lib/tempo'
-import { avvisaSquadra } from '../lib/notifiche'
 import { useRegole } from '../lib/regole'
 import PianoCard from './PianoCard'
 import Difficolta from './Difficolta'
@@ -648,8 +647,6 @@ export default function EditorAllenamento({ squadra, giorno, onChiudi }) {
       { onConflict: 'squadra_id,data' }
     )
     if (error) return setErrore('Non sono riuscito a salvare: ' + error.message)
-    // Notifica alla squadra solo alla prima pubblicazione (non a ogni correzione)
-    if (pubblica && vis === 'squadra' && stato !== 'pubblicato') avvisaSquadra(squadra.id, giorni)
     const messaggio = pubblica
       ? (vis === 'squadra' ? (giorni.length > 1 ? `Pubblicato alla squadra su ${giorni.length} giorni.` : 'Pubblicato alla squadra.') : 'Salvato: lo vedi solo tu.')
       : 'Bozza salvata.'

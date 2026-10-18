@@ -159,7 +159,7 @@ function Notifiche() {
 
   return (
     <Sezione titolo="Notifiche" nota={nota}>
-      <Riga etichetta="Notifiche su questo telefono" descrizione="Nuovo allenamento, gare, record, richieste e avvisi">
+      <Riga etichetta="Notifiche su questo telefono" descrizione="Nuovi record, assenze e avvisi importanti">
         <Interruttore acceso={attive} onCambia={cambia} etichetta="Notifiche su questo telefono" disabilitato={!supportate || lavoro} />
       </Riga>
       <Silenzio />

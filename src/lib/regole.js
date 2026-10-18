@@ -18,7 +18,7 @@ export const FUNZIONI_APP = [
 ]
 
 export const NOTIFICHE_APP = [
-  ['allenamento', 'Nuovo allenamento', true],
+  ['assenza', 'Assenza del figlio (al genitore)', true],
   ['record', 'Nuovo record personale', true],
   ['gare', 'Gara nuova, cambiata o cancellata', true],
   ['genitori', 'Richieste dei genitori', true],

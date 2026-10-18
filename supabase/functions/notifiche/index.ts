@@ -1,6 +1,5 @@
 // Edge Function "notifiche": notifiche push ai telefoni della squadra.
 // GET  -> { publicKey } chiave pubblica con cui i telefoni si iscrivono (creata al primo uso)
-// POST { squadra_id, date: ['2026-10-12', ...] } -> avvisa la squadra che il coach ha pubblicato l'allenamento
 // POST { interno, notifica_id } -> dal database: manda come push una notifica della campanella
 // Le chiavi stanno nella tabella "segreti", leggibile solo con la service_role (mai dal browser).
 // Pubblicata con verify_jwt = false: il database la chiama senza utente; ogni strada controlla da sé chi chiama.
@@ -32,12 +31,12 @@ async function chiavi() {
 }
 
 // Notifiche che arrivano senza suono né vibrazione (es. il coach decide con calma)
-const SILENZIOSE = ['fuori_piano']
+const SILENZIOSE: string[] = []
+// Sul telefono arrivano solo queste: nuovi primati, assenze, avvisi del coach e quel che serve per entrare/accedere.
+// Tutte le altre (allenamenti, gare, cuori…) restano solo nella campanella dell'app.
+const PUSH = ['record', 'assenza', 'avviso', 'domanda_squadra', 'squadra', 'richiesta_genitore', 'risposta_genitore', 'email']
 // Chi ha chiesto silenzio (Profilo › Notifiche) le trova solo nella campanella fino a quella data
 const inSilenzio = (fino?: string | null) => !!fino && new Date(fino).getTime() > Date.now()
-
-const giornoTesto = (d: string) =>
-  new Date(d + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Rome' })
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
@@ -50,7 +49,7 @@ Deno.serve(async (req) => {
     const { data: s } = await admin.from('segreti').select('valore').eq('chiave', 'chiave_interna').maybeSingle()
     if (!s?.valore || s.valore !== corpo.interno) return risposta({ errore: 'Non autorizzato' }, 403)
     const { data: n } = await admin.from('notifiche').select('destinatario_id, tipo, titolo, testo, link').eq('id', corpo.notifica_id).maybeSingle()
-    if (!n) return risposta({ inviate: 0 })
+    if (!n || !PUSH.includes(n.tipo)) return risposta({ inviate: 0, soloCampanella: true })
     const { data: chi } = await admin.from('profiles').select('notifiche_silenzio_fino').eq('id', n.destinatario_id).maybeSingle()
     if (inSilenzio(chi?.notifiche_silenzio_fino)) return risposta({ inviate: 0, silenzio: true })
     const { data: iscr } = await admin.from('push_iscrizioni').select('id, endpoint, p256dh, auth').eq('utente_id', n.destinatario_id)
@@ -59,43 +58,8 @@ Deno.serve(async (req) => {
     }) })
   }
 
-  // Chi sta chiamando? Deve essere il coach della squadra (o un admin)
-  const utente = createClient(url, anon, { global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } } })
-  const { data: { user } } = await utente.auth.getUser()
-  if (!user) return risposta({ errore: 'Non autenticato' }, 401)
-
-  const { squadra_id, date } = corpo
-  if (!squadra_id || !Array.isArray(date) || !date.length) return risposta({ errore: 'Mancano squadra o giorni' }, 400)
-
-  const [{ data: squadra }, { data: io }] = await Promise.all([
-    admin.from('squadre').select('coach_id, nome').eq('id', squadra_id).maybeSingle(),
-    admin.from('profiles').select('role').eq('id', user.id).maybeSingle(),
-  ])
-  if (!squadra || (squadra.coach_id !== user.id && io?.role !== 'admin')) return risposta({ errore: 'Solo il coach della squadra' }, 403)
-
-  // Interruttore del Pannello: Notifiche › Nuovo allenamento
-  const { data: imp } = await admin.from('impostazioni_app').select('valore').eq('chiave', 'notifiche').maybeSingle()
-  if (imp?.valore?.allenamento === false) return risposta({ inviate: 0, spenta: true })
-
-  // Solo allenamenti davvero pubblicati alla squadra
-  const { data: piani } = await admin.from('allenamenti_squadra').select('data')
-    .eq('squadra_id', squadra_id).eq('pubblicato', true).eq('visibilita', 'squadra').in('data', date)
-  const giorni = (piani || []).map((p) => p.data).sort()
-  if (!giorni.length) return risposta({ inviate: 0 })
-
-  const { data: persone } = await admin.from('profiles').select('id, notifiche_silenzio_fino').eq('squadra_id', squadra_id).neq('id', user.id)
-  const ids = (persone || []).filter((p) => !inSilenzio(p.notifiche_silenzio_fino)).map((p) => p.id)
-  if (!ids.length) return risposta({ inviate: 0 })
-  const { data: iscrizioni } = await admin.from('push_iscrizioni').select('id, endpoint, p256dh, auth').in('utente_id', ids)
-
-  const inviate = await invia(k, iscrizioni || [], {
-    title: 'Nuovo allenamento',
-    body: giorni.length === 1
-      ? `Il coach ha pubblicato l'allenamento di ${giornoTesto(giorni[0])}.`
-      : `Il coach ha pubblicato ${giorni.length} allenamenti, dal ${giornoTesto(giorni[0])}.`,
-    url: `/dashboard?giorno=${giorni[0]}`,
-  })
-  return risposta({ inviate })
+  // Altre chiamate non ce ne sono: il coach che pubblica un allenamento non manda più notifiche sul telefono
+  return risposta({ errore: 'Richiesta non valida' }, 400)
 })
 
 type Iscrizione = { id: string, endpoint: string, p256dh: string, auth: string }
