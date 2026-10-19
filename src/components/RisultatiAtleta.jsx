@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import PiuStili from './PiuStili'
-import { leggiMedia, scriviMedia } from '../lib/media'
+import { campiMedia, leggiMedia } from '../lib/media'
 import InputTempo from './InputTempo'
 import { coloreLavoro } from '../lib/lavori'
 import { blocchiPiano, chiaveRisultato as chiaveRiga, giriSerie, haVarianti, perGiro, ripartenzeDiRiga, ripetizioniDiRiga } from '../lib/pianoSquadra'
@@ -50,7 +50,7 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
             if (t) usati.add(t.id)
             return t
           })
-          trovate.forEach((t, k) => { if (leggiMedia(t?.commento)) medieTrovate[`${i}-${k}`] = leggiMedia(t.commento) })
+          trovate.forEach((t, k) => { if (leggiMedia(t)) medieTrovate[`${i}-${k}`] = leggiMedia(t) })
           return distribuisci(gruppi, trovate.map((t) => t?.passaggi || []))
         }))
         setMedie(medieTrovate)
@@ -75,7 +75,7 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
     return t || null
   }))
   const salvata = perStile.map((lista, i) => (lista.some(Boolean)
-    ? { passaggi: distribuisci(gruppiRighe[i], lista.map((t) => t?.passaggi || [])), medie: lista.map((t) => leggiMedia(t?.commento)).filter(Boolean) }
+    ? { passaggi: distribuisci(gruppiRighe[i], lista.map((t) => t?.passaggi || [])), medie: lista.map((t) => leggiMedia(t)).filter(Boolean) }
     : null))
   // l'atleta vede i tempi già salvati al posto delle caselle; "Correggi" riapre le caselle già compilate
   const fisso = (i) => proprio && salvata[i] && !aperti.has(i)
@@ -122,7 +122,7 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
     if (proprio) {
       // l'atleta aggiunge i lavori nuovi e corregge quelli riaperti con "Correggi"
       const nuove = pezzi.filter((x) => !x.riga && (x.passaggi.some(Boolean) || x.media)).map(({ r, g, passaggi, media }) => ({
-        commento: scriviMedia(media),
+        ...campiMedia(media),
         id: crypto.randomUUID(), atleta_id: atletaId, tipo_lavoro: r.tipo_lavoro, distanza: Number(r.distanza),
         ripetizioni: g.reps.length, stile: g.stile, passaggi, data_allenamento: giorno,
         created_at: new Date().toISOString(),
@@ -141,10 +141,10 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
       for (const x of corrette) {
         if (inCodaIds.has(x.riga.id)) {
           rimuoviDaCoda('allenamenti', x.riga.id)
-          aggiungiInCoda('allenamenti', { ...x.riga, passaggi: x.passaggi, commento: scriviMedia(x.media) })
+          aggiungiInCoda('allenamenti', { ...x.riga, passaggi: x.passaggi, ...campiMedia(x.media) })
           continue
         }
-        const { error } = await supabase.from('allenamenti').update({ passaggi: x.passaggi, commento: scriviMedia(x.media) }).eq('id', x.riga.id)
+        const { error } = await supabase.from('allenamenti').update({ passaggi: x.passaggi, ...campiMedia(x.media) }).eq('id', x.riga.id)
         if (error) {
           setSalvo(false)
           return setErrore('Non sono riuscito a correggere: ' + error.message)
@@ -152,7 +152,7 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
       }
       const aggiornate = esistenti.map((e) => {
         const x = corrette.find((c) => c.riga.id === e.id)
-        return x ? { ...e, passaggi: x.passaggi, commento: scriviMedia(x.media) } : e
+        return x ? { ...e, passaggi: x.passaggi, ...campiMedia(x.media) } : e
       })
       setAperti(new Set())
       setValori(lavori.map((l) => [...l])) // "Correggi" riapre i tempi già nel formato giusto
@@ -179,10 +179,10 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
       // I vuoti in mezzo restano (''), così ogni tempo resta nel suo passaggio o nel suo giro
       if (!passaggi.some(Boolean) && !media && !riga) continue // niente da salvare per questo stile
       const { error } = riga
-        ? await supabase.from('allenamenti').update({ passaggi, commento: scriviMedia(media), ripetizioni: g.reps.length }).eq('id', riga.id)
+        ? await supabase.from('allenamenti').update({ passaggi, ...campiMedia(media), ripetizioni: g.reps.length }).eq('id', riga.id)
         : await supabase.from('allenamenti').insert({
             atleta_id: atletaId, tipo_lavoro: r.tipo_lavoro, distanza: Number(r.distanza),
-            ripetizioni: g.reps.length, stile: g.stile, passaggi, commento: scriviMedia(media), data_allenamento: giorno,
+            ripetizioni: g.reps.length, stile: g.stile, passaggi, ...campiMedia(media), data_allenamento: giorno,
           })
       if (error) {
         setSalvo(false)

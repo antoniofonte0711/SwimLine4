@@ -177,7 +177,7 @@ function SquadraCompagni() {
               {r.passaggi?.length > 0 ? (
                 <p className="text-xs text-slate-500 mt-1">{r.passaggi.map((p) => p || '–').join(' · ')}</p>
               ) : (
-                r.tempo_totale && <p className="text-xs text-slate-500 mt-1">{r.tempo_totale}</p>
+                r.tempo_totale && <p className="text-xs text-slate-500 mt-1">{r.commento === 'Media' ? 'Media ' : ''}{r.tempo_totale}</p>
               )}
             </div>
           ))}

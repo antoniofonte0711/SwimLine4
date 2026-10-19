@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { coloreLavoro, formattaGiorno } from '../lib/lavori'
 import InputTempo from './InputTempo'
-import { leggiMedia, scriviMedia } from '../lib/media'
+import { campiMedia, leggiMedia } from '../lib/media'
 import { ERRORE_TEMPO_BREVE, normalizzaTempo, tempoValido } from '../lib/tempo'
 import { leggiCoda, rimuoviDaCoda, sincronizza, salvaCache, leggiCache, useOnline } from '../lib/codaOffline'
 
@@ -58,7 +58,7 @@ export default function StoricoAllenamenti({ atletaId }) {
 
   function apriModifica(r) {
     const n = Math.max(Number(r.ripetizioni) || 1, r.passaggi?.length || 0)
-    setModifica({ id: r.id, tempi: Array.from({ length: n }, (_, j) => r.passaggi?.[j] || ''), media: leggiMedia(r.commento), errore: '', salvo: false })
+    setModifica({ id: r.id, tempi: Array.from({ length: n }, (_, j) => r.passaggi?.[j] || ''), media: leggiMedia(r), errore: '', salvo: false })
   }
 
   async function salvaModifica() {
@@ -73,7 +73,7 @@ export default function StoricoAllenamenti({ atletaId }) {
     const media = normalizzaTempo(m.media)
     if (media && !tempoValido(media)) return setModifica({ ...m, errore: `Tempo medio: ${ERRORE_TEMPO_BREVE}` })
     setModifica({ ...m, errore: '', salvo: true })
-    const { error } = await supabase.from(TABELLA).update({ passaggi: tempi, commento: scriviMedia(media) }).eq('id', m.id)
+    const { error } = await supabase.from(TABELLA).update({ passaggi: tempi, ...campiMedia(media) }).eq('id', m.id)
     if (error) return setModifica({ ...m, errore: 'Non sono riuscito a salvare: ' + error.message, salvo: false })
     setModifica(null)
     carica()
@@ -123,9 +123,9 @@ export default function StoricoAllenamenti({ atletaId }) {
             ) : r.passaggi?.length > 0 ? (
               <p className="text-xs text-slate-500 mt-1">{r.passaggi.map((p) => p || '–').join(' · ')}</p>
             ) : (
-              r.tempo_totale && <p className="text-xs text-slate-500 mt-1">{r.tempo_totale}</p>
+              r.tempo_totale && <p className="text-xs text-slate-500 mt-1">{r.commento === 'Media' ? 'Media ' : ''}{r.tempo_totale}</p>
             )}
-            {modifica?.id !== r.id && leggiMedia(r.commento) && <p className="text-xs text-slate-500 mt-1">Media {leggiMedia(r.commento)}</p>}
+            {modifica?.id !== r.id && r.passaggi?.length > 0 && leggiMedia(r) && <p className="text-xs text-slate-500 mt-1">Media {leggiMedia(r)}</p>}
             {!soloLettura && !r.inAttesa && modifica?.id !== r.id && (
               <button type="button" onClick={() => apriModifica(r)} className="cliccabile min-h-[44px] mt-1 text-sm font-bold text-blue-600">Modifica i tempi</button>
             )}
