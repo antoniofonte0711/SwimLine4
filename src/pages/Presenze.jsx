@@ -18,7 +18,7 @@ const COLORI = {
 }
 const VISTE = ['Giorno', 'Settimana']
 
-// Solo il coach (e l'admin) segna le presenze. L'assenza giustificata (solo malattia vera o gita scolastica) non conta né a favore né contro.
+// Solo il coach (e l'admin) segna le presenze. L'assenza giustificata (malattia, festività...) non conta né a favore né contro.
 // "Tutti presenti" segna in un colpo chi non è ancora segnato; poi si cambiano solo le eccezioni.
 export default function Presenze() {
   const { user, ruolo } = useAuth()
@@ -119,7 +119,6 @@ export default function Presenze() {
           ) : (
             <>
               <p className="text-sm font-semibold text-slate-500 mb-2 px-1">{riassunto}</p>
-              <p className="text-xs text-slate-500 mb-2 px-1">Giustificato (giallo) solo se è davvero malato o la scuola lo porta in gita. Visite mediche e altri impegni sono assenze.</p>
               {daSegnare > 0 && (
                 <button onClick={tuttiPresenti} disabled={invio}
                   className="cliccabile w-full min-h-[56px] mb-3 font-display text-lg font-extrabold text-white bg-blue-600 hover:bg-blue-700 rounded-3xl disabled:opacity-60">

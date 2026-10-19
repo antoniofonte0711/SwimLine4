@@ -335,7 +335,7 @@ export const GUIDA = [
     passi: [
       ['Giorno / Settimana', 'Giorno: un atleta per riga, giorno dalla striscia in alto. Settimana: la tabella da lunedì a venerdì (P presente · A assente · G giustificato); tocca una casella e scegli sotto.'],
       ['Tutti presenti', 'Segna presenti tutti quelli non ancora segnati; poi cambi solo chi manca.'],
-      ['Presente / Assente / Giustificato', 'Un tocco per atleta. "Giustificato" (giallo) solo se l\'atleta è davvero malato o se la scuola lo porta in gita: non toglie punti. Visite mediche e altri impegni sono assenze. È una regola interna: non va spiegata agli atleti.'],
+      ['Presente / Assente / Giustificato', 'Un tocco per atleta. "Giustificato" (giallo) per malattia, scuola, festività: non toglie punti.'],
       ['Si salva da solo', 'Le presenze contano per i punti e per il riepilogo.'],
     ],
   },
