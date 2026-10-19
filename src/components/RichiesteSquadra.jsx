@@ -5,7 +5,8 @@ import Icona from './Icona'
 import FinestraAttesa, { attesaGiaVista } from './FinestraAttesa'
 
 const MIGRAZIONE = 'Manca un aggiornamento del database: esegui supabase/12_migrazione_fase12_richieste_admin.sql.'
-const messaggio = (error) => (/function|schema cache/i.test(error.message) ? MIGRAZIONE : error.message)
+const messaggio = (error) => (/function|schema cache/i.test(error.message) ? MIGRAZIONE
+  : /load failed|failed to fetch|network/i.test(error.message) ? 'Non riesco a collegarmi: controlla la connessione e riprova.' : error.message)
 
 // Richieste di squadra di chi non è coach: gli inviti dei coach (per gli admin, che entrano solo accettando)
 // e le domande di ingresso fatte dall'atleta, in attesa che il coach le approvi.
@@ -20,11 +21,17 @@ export default function RichiesteSquadra({ completo = false }) {
   const [finestra, setFinestra] = useState(null) // domanda appena fatta (es. in registrazione): finestra d'attesa
 
   const carica = useCallback(async () => {
-    const { data, error } = await supabase.rpc('mie_richieste')
+    let { data, error } = await supabase.rpc('mie_richieste')
+    // rete che balbetta (capita cambiando vista o squadra): un secondo tentativo prima di mostrare l'errore
+    if (error && /load failed|failed to fetch|network/i.test(error.message)) {
+      await new Promise((r) => setTimeout(r, 1500))
+      ;({ data, error } = await supabase.rpc('mie_richieste'))
+    }
     if (error) {
       if (completo) setErrore(messaggio(error))
       return
     }
+    setErrore('')
     setRichieste(data || [])
     if (!completo) setFinestra((f) => f || (data || []).find((r) => r.tipo === 'domanda' && !attesaGiaVista(r.id)) || null)
   }, [completo])

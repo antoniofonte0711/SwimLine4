@@ -142,10 +142,11 @@ function FoglioLavoro({ r, i, n, inSerie, squadraId, cambia, cambiaTipo, onSu, o
         initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ type: 'spring', stiffness: 420, damping: 36 }}
         className="w-full max-w-md bg-white rounded-t-[28px] max-h-[90vh] overflow-y-auto px-5 pt-3 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
         <div className="w-10 h-1.5 rounded-full bg-slate-200 mx-auto mb-3" />
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-1">
           <p className="font-display text-xl font-extrabold text-abisso">{inSerie ? `${n}° della serie` : `Lavoro ${n}`}</p>
           <Frecce su={onSu} giu={onGiu} primo={primo} ultimo={ultimo} />
         </div>
+        <button type="button" onClick={onChiudi} className="cliccabile min-h-[44px] mb-2 -ml-1 px-1 text-sm font-bold text-blue-600">← Indietro</button>
 
         <p className="text-xs font-bold tracking-widest text-slate-500 uppercase mb-2">{inSerie ? 'Ripetizioni per giro' : 'Ripetizioni'}</p>
         <div className="flex items-center gap-3 mb-4">
@@ -681,7 +682,7 @@ export default function EditorAllenamento({ squadra, giorno, onChiudi }) {
     const giorni = [giorno, ...extra]
     const { error } = await supabase.from('allenamenti_squadra').upsert(
       giorni.map((data) => ({
-        squadra_id: squadra.id, coach_id: user.id, data,
+        squadra_id: squadra.id, coach_id: squadra.coach_id || user.id, data, // se entra l'admin il piano risulta del coach della squadra
         titolo: titolo.trim() || null, righe: pulite, visibilita: vis, pubblicato: pubblica,
       })),
       { onConflict: 'squadra_id,data' }

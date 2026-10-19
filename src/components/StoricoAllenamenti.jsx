@@ -2,6 +2,9 @@ import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { coloreLavoro, formattaGiorno } from '../lib/lavori'
+import InputTempo from './InputTempo'
+import { leggiMedia, scriviMedia } from '../lib/media'
+import { ERRORE_TEMPO_BREVE, normalizzaTempo, tempoValido } from '../lib/tempo'
 import { leggiCoda, rimuoviDaCoda, sincronizza, salvaCache, leggiCache, useOnline } from '../lib/codaOffline'
 
 const TABELLA = 'allenamenti'
@@ -15,6 +18,7 @@ export default function StoricoAllenamenti({ atletaId }) {
   const online = useOnline()
   const [righe, setRighe] = useState([])
   const [coda, setCoda] = useState([])
+  const [modifica, setModifica] = useState(null) // { id, tempi: [...], media, errore, salvo }
 
   const carica = useCallback(async () => {
     if (!soloLettura && navigator.onLine) await sincronizza(supabase, TABELLA, id)
@@ -52,6 +56,29 @@ export default function StoricoAllenamenti({ atletaId }) {
     carica()
   }
 
+  function apriModifica(r) {
+    const n = Math.max(Number(r.ripetizioni) || 1, r.passaggi?.length || 0)
+    setModifica({ id: r.id, tempi: Array.from({ length: n }, (_, j) => r.passaggi?.[j] || ''), media: leggiMedia(r.commento), errore: '', salvo: false })
+  }
+
+  async function salvaModifica() {
+    const m = modifica
+    const tempi = []
+    for (let j = 0; j < m.tempi.length; j++) {
+      const t = normalizzaTempo(m.tempi[j])
+      if (t && !tempoValido(t)) return setModifica({ ...m, errore: `Passaggio ${j + 1}: ${ERRORE_TEMPO_BREVE}` })
+      tempi.push(t)
+    }
+    while (tempi.length && !tempi[tempi.length - 1]) tempi.pop()
+    const media = normalizzaTempo(m.media)
+    if (media && !tempoValido(media)) return setModifica({ ...m, errore: `Tempo medio: ${ERRORE_TEMPO_BREVE}` })
+    setModifica({ ...m, errore: '', salvo: true })
+    const { error } = await supabase.from(TABELLA).update({ passaggi: tempi, commento: scriviMedia(media) }).eq('id', m.id)
+    if (error) return setModifica({ ...m, errore: 'Non sono riuscito a salvare: ' + error.message, salvo: false })
+    setModifica(null)
+    carica()
+  }
+
   const tutte = [...coda.map((r) => ({ ...r, inAttesa: true })), ...righe]
   const perGiorno = {}
   tutte.forEach((r) => {
@@ -75,10 +102,32 @@ export default function StoricoAllenamenti({ atletaId }) {
               {r.ripetizioni ? `${r.ripetizioni}×` : ''}{r.distanza} m {r.stile || ''}
             </span>
             {r.inAttesa && <span className="text-xs text-yellow-700 bg-yellow-100 px-2 py-0.5 rounded-full ml-2">⏳ da inviare</span>}
-            {r.passaggi?.length > 0 ? (
+            {modifica?.id === r.id ? (
+              <div className="mt-3">
+                <div className="grid grid-cols-2 gap-3">
+                  {modifica.tempi.map((t, j) => (
+                    <InputTempo key={j} etichetta={`Passaggio ${j + 1}`} value={t} vuotoOk
+                      onChange={(v) => setModifica({ ...modifica, errore: '', tempi: modifica.tempi.map((x, k) => (k === j ? v : x)) })} />
+                  ))}
+                </div>
+                <div className="mt-3">
+                  <InputTempo etichetta="Tempo medio (se non ricordi i singoli)" value={modifica.media} vuotoOk
+                    onChange={(v) => setModifica({ ...modifica, errore: '', media: v })} />
+                </div>
+                {modifica.errore && <p className="text-sm text-white bg-red-600 rounded-lg px-3 py-2 mt-3">{modifica.errore}</p>}
+                <div className="grid grid-cols-2 gap-2 mt-3">
+                  <button type="button" onClick={() => setModifica(null)} className="min-h-[48px] font-bold text-slate-600 bg-bordo rounded-2xl">Annulla</button>
+                  <button type="button" onClick={salvaModifica} disabled={modifica.salvo} className="min-h-[48px] font-bold text-white bg-blue-600 disabled:opacity-60 rounded-2xl">{modifica.salvo ? 'Salvo…' : 'Salva i tempi'}</button>
+                </div>
+              </div>
+            ) : r.passaggi?.length > 0 ? (
               <p className="text-xs text-slate-500 mt-1">{r.passaggi.map((p) => p || '–').join(' · ')}</p>
             ) : (
               r.tempo_totale && <p className="text-xs text-slate-500 mt-1">{r.tempo_totale}</p>
+            )}
+            {modifica?.id !== r.id && leggiMedia(r.commento) && <p className="text-xs text-slate-500 mt-1">Media {leggiMedia(r.commento)}</p>}
+            {!soloLettura && !r.inAttesa && modifica?.id !== r.id && (
+              <button type="button" onClick={() => apriModifica(r)} className="cliccabile min-h-[44px] mt-1 text-sm font-bold text-blue-600">Modifica i tempi</button>
             )}
             {/^https:\/\//i.test(r.video_url || '') && <a href={r.video_url} target="_blank" rel="noreferrer" className="text-xs text-blue-600">🎥 Guarda il video</a>}
           </div>

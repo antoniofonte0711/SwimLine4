@@ -93,7 +93,7 @@ export default function AppShell({ titolo, attiva, indietro, giorno, onGiorno, v
             <span>Stai vedendo l'app come: <b>{nomeRuolo(ruolo)}</b>
               {squadraGestita && <> · squadra <b>{squadraGestita.nome}</b></>}</span>
           </span>
-          <button onClick={() => cambiaVista('admin')} className="font-bold bg-black text-white rounded-full px-3 min-h-[44px]">Torna admin</button>
+          <button onClick={() => cambiaVista('admin')} className="font-bold bg-black text-white rounded-full px-3 min-h-[44px]">{profile?.role === 'coach' ? 'Torna coach' : 'Torna admin'}</button>
         </div>
       )}
       {/* Intestazione uguale su tutte le pagine: logo, titolo, (data), campanella e avatar */}

@@ -130,15 +130,15 @@ export function useMiaSquadra() {
     async function carica() {
       if (squadraGestita) {
         // ricarico il nome dal database: potrebbe essere cambiato dopo l'ingresso
-        const { data } = await supabase.from('squadre').select('id, nome').eq('id', squadraGestita.id).limit(1)
+        const { data } = await supabase.from('squadre').select('id, nome, coach_id').eq('id', squadraGestita.id).limit(1)
         if (!attivo) return
         setSquadra(data?.[0] || squadraGestita)
         setPronto(true)
         return
       }
-      let { data } = await supabase.from('squadre').select('id, nome').eq('coach_id', user.id).limit(1)
+      let { data } = await supabase.from('squadre').select('id, nome, coach_id').eq('coach_id', user.id).limit(1)
       if (!data?.length && profile?.squadra_id) {
-        ;({ data } = await supabase.from('squadre').select('id, nome').eq('id', profile.squadra_id).limit(1))
+        ;({ data } = await supabase.from('squadre').select('id, nome, coach_id').eq('id', profile.squadra_id).limit(1))
       }
       if (!attivo) return
       setSquadra(data?.[0] || null)

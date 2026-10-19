@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import PiuStili from './PiuStili'
+import { leggiMedia, scriviMedia } from '../lib/media'
 import InputTempo from './InputTempo'
 import { coloreLavoro } from '../lib/lavori'
 import { blocchiPiano, chiaveRisultato as chiaveRiga, giriSerie, haVarianti, perGiro, ripartenzeDiRiga, ripetizioniDiRiga } from '../lib/pianoSquadra'
@@ -16,6 +17,7 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
   const righe = piano?.righe || []
   const [esistenti, setEsistenti] = useState([]) // righe già salvate in "allenamenti" per quel giorno
   const [valori, setValori] = useState([])       // valori[i] = array di passaggi della riga i del piano
+  const [medie, setMedie] = useState({})         // tempo medio di un lavoro (per chi non ricorda i singoli): chiave "riga-stile"
   const [errore, setErrore] = useState('')
   const [ok, setOk] = useState('')
   const [salvo, setSalvo] = useState(false)
@@ -40,15 +42,18 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
         const lista = [...(data || []), ...(proprio ? leggiCoda('allenamenti', atletaId).filter((r) => r.data_allenamento === giorno) : [])]
         setEsistenti(lista)
         const usati = new Set()
-        setValori(righe.map((r) => {
+        const medieTrovate = {}
+        setValori(righe.map((r, i) => {
           const gruppi = gruppiPerStile(r)
           const trovate = gruppi.map((g) => {
             const t = lista.find((e) => !usati.has(e.id) && chiaveRiga(e) === chiaveRiga({ ...r, stile: g.stile }))
             if (t) usati.add(t.id)
             return t
           })
+          trovate.forEach((t, k) => { if (leggiMedia(t?.commento)) medieTrovate[`${i}-${k}`] = leggiMedia(t.commento) })
           return distribuisci(gruppi, trovate.map((t) => t?.passaggi || []))
         }))
+        setMedie(medieTrovate)
       })
     return () => { attivo = false }
   }, [atletaId, giorno, piano?.id]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -70,13 +75,13 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
     return t || null
   }))
   const salvata = perStile.map((lista, i) => (lista.some(Boolean)
-    ? { passaggi: distribuisci(gruppiRighe[i], lista.map((t) => t?.passaggi || [])) }
+    ? { passaggi: distribuisci(gruppiRighe[i], lista.map((t) => t?.passaggi || [])), medie: lista.map((t) => leggiMedia(t?.commento)).filter(Boolean) }
     : null))
   // l'atleta vede i tempi già salvati al posto delle caselle; "Correggi" riapre le caselle già compilate
   const fisso = (i) => proprio && salvata[i] && !aperti.has(i)
   const Salvati = ({ i, gruppo }) => (
     <div className="flex items-center justify-between gap-2 text-sm text-green-700 bg-green-50 rounded-xl pl-3 pr-1 py-1 mt-3">
-      <span className="min-w-0">Salvato: {(salvata[i].passaggi || []).map((p) => p || '–').join(' · ') || 'senza tempi'}</span>
+      <span className="min-w-0">Salvato: {[(salvata[i].passaggi || []).map((p) => p || '–').join(' · '), ...salvata[i].medie.map((m) => `media ${m}`)].filter(Boolean).join(' · ') || 'senza tempi'}</span>
       <button type="button" onClick={() => setAperti(new Set([...aperti, ...(gruppo || [i])]))}
         className="cliccabile shrink-0 min-h-[40px] px-3 rounded-lg font-bold text-blue-600 hover:bg-white">Correggi</button>
     </div>
@@ -100,15 +105,24 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
       while (pulito.length && !pulito[pulito.length - 1]) pulito.pop()
       lavori.push(pulito)
     }
+    // tempo medio di ogni stile (facoltativo)
+    const medieOk = {}
+    for (const [chiave, v] of Object.entries(medie)) {
+      const t = normalizzaTempo(v || '')
+      if (!t) continue
+      if (!tempoValido(t)) return setErrore(`Tempo medio del lavoro ${Number(chiave.split('-')[0]) + 1}: ${ERRORE_TEMPO_BREVE}`)
+      medieOk[chiave] = t
+    }
 
     setSalvo(true)
     // Un lavoro per ogni stile della riga: [{ i, g, riga: lavoro già salvato | null, passaggi }]
     const pezzi = righe.flatMap((r, i) => gruppiRighe[i].map((g, k) => ({
-      i, g, r, riga: perStile[i][k], passaggi: raccogli(g, lavori[i]),
+      i, g, r, riga: perStile[i][k], passaggi: raccogli(g, lavori[i]), media: medieOk[`${i}-${k}`] || '',
     })))
     if (proprio) {
       // l'atleta aggiunge i lavori nuovi e corregge quelli riaperti con "Correggi"
-      const nuove = pezzi.filter((x) => !x.riga && x.passaggi.some(Boolean)).map(({ r, g, passaggi }) => ({
+      const nuove = pezzi.filter((x) => !x.riga && (x.passaggi.some(Boolean) || x.media)).map(({ r, g, passaggi, media }) => ({
+        commento: scriviMedia(media),
         id: crypto.randomUUID(), atleta_id: atletaId, tipo_lavoro: r.tipo_lavoro, distanza: Number(r.distanza),
         ripetizioni: g.reps.length, stile: g.stile, passaggi, data_allenamento: giorno,
         created_at: new Date().toISOString(),
@@ -127,10 +141,10 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
       for (const x of corrette) {
         if (inCodaIds.has(x.riga.id)) {
           rimuoviDaCoda('allenamenti', x.riga.id)
-          aggiungiInCoda('allenamenti', { ...x.riga, passaggi: x.passaggi })
+          aggiungiInCoda('allenamenti', { ...x.riga, passaggi: x.passaggi, commento: scriviMedia(x.media) })
           continue
         }
-        const { error } = await supabase.from('allenamenti').update({ passaggi: x.passaggi }).eq('id', x.riga.id)
+        const { error } = await supabase.from('allenamenti').update({ passaggi: x.passaggi, commento: scriviMedia(x.media) }).eq('id', x.riga.id)
         if (error) {
           setSalvo(false)
           return setErrore('Non sono riuscito a correggere: ' + error.message)
@@ -138,7 +152,7 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
       }
       const aggiornate = esistenti.map((e) => {
         const x = corrette.find((c) => c.riga.id === e.id)
-        return x ? { ...e, passaggi: x.passaggi } : e
+        return x ? { ...e, passaggi: x.passaggi, commento: scriviMedia(x.media) } : e
       })
       setAperti(new Set())
       setValori(lavori.map((l) => [...l])) // "Correggi" riapre i tempi già nel formato giusto
@@ -161,14 +175,14 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
       setSalvo(false)
       return setOk(inCoda ? 'Salvati sul telefono: partono appena torna la connessione.' : 'Tempi salvati.')
     }
-    for (const { r, g, riga, passaggi } of pezzi) {
+    for (const { r, g, riga, passaggi, media } of pezzi) {
       // I vuoti in mezzo restano (''), così ogni tempo resta nel suo passaggio o nel suo giro
-      if (!passaggi.some(Boolean) && !riga) continue // niente da salvare per questo stile
+      if (!passaggi.some(Boolean) && !media && !riga) continue // niente da salvare per questo stile
       const { error } = riga
-        ? await supabase.from('allenamenti').update({ passaggi, ripetizioni: g.reps.length }).eq('id', riga.id)
+        ? await supabase.from('allenamenti').update({ passaggi, commento: scriviMedia(media), ripetizioni: g.reps.length }).eq('id', riga.id)
         : await supabase.from('allenamenti').insert({
             atleta_id: atletaId, tipo_lavoro: r.tipo_lavoro, distanza: Number(r.distanza),
-            ripetizioni: g.reps.length, stile: g.stile, passaggi, data_allenamento: giorno,
+            ripetizioni: g.reps.length, stile: g.stile, passaggi, commento: scriviMedia(media), data_allenamento: giorno,
           })
       if (error) {
         setSalvo(false)
@@ -242,12 +256,29 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
             <span className="text-sm text-slate-600 ml-2">{n}×{r.distanza} m {r.stile}</span>
             {ripartenzeDiRiga(r).length > 0 && <span className="text-xs text-slate-500 ml-2">↻ ripartenza {ripartenzeDiRiga(r).join(' · ')}</span>}
             {r.note && <p className="text-xs text-slate-500 mt-1">{r.note}</p>}
-            {fisso(i) ? <Salvati i={i} /> : chiuso(i) ? <Apri i={i} n={n} /> : <div className="grid grid-cols-2 gap-3 mt-3">
+            {fisso(i) ? <Salvati i={i} /> : chiuso(i) ? <Apri i={i} n={n} /> : <><div className="grid grid-cols-2 gap-3 mt-3">
               {Array.from({ length: n }, (_, j) => (
                 <InputTempo key={j} etichetta={haVarianti(r) ? `${j + 1}ª · ${ripetizioniDiRiga(r)[j].stile}${ripetizioniDiRiga(r)[j].nota ? ` · ${ripetizioniDiRiga(r)[j].nota}` : ''}` : `Passaggio ${j + 1}`} value={valori[i]?.[j] || ''} vuotoOk
                   onChange={(v) => cambia(i, j, v)} />
               ))}
-            </div>}
+            </div>
+            {gruppiRighe[i].map((g, k) => {
+              const chiave = `${i}-${k}`
+              const nome = gruppiRighe[i].length > 1 ? ` · ${g.stile}` : ''
+              return chiave in medie ? (
+                <div key={chiave} className="mt-3">
+                  <InputTempo etichetta={`Tempo medio${nome}`} value={medie[chiave] || ''} vuotoOk
+                    onChange={(v) => setMedie({ ...medie, [chiave]: v })} />
+                  <button type="button" onClick={() => { const { [chiave]: _tolta, ...resto } = medie; setMedie(resto) }}
+                    className="cliccabile min-h-[44px] text-xs font-bold text-slate-500">Togli la media</button>
+                </div>
+              ) : (
+                <button key={chiave} type="button" onClick={() => setMedie({ ...medie, [chiave]: '' })}
+                  className="cliccabile min-h-[44px] mt-2 text-sm font-semibold text-blue-600 text-left">
+                  Non ricordo tutti i tempi: scrivo la media{nome}
+                </button>
+              )
+            })}</>}
           </div>
         )
       })}

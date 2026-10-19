@@ -108,7 +108,8 @@ export function AuthProvider({ children }) {
   }
 
   const adminReale = profile?.role === 'admin'
-  const staVedendoCome = adminReale && !!vistaCome
+  // anche il coach può vedere l'app come un atleta (solo come anteprima: i dati restano i suoi)
+  const staVedendoCome = (adminReale || profile?.role === 'coach') && !!vistaCome
   const ruolo = staVedendoCome ? vistaCome : profile?.role
   const isAdmin = ruolo === 'admin'
   const isCoach = ruolo === 'coach' || isAdmin

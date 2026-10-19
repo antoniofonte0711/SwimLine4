@@ -387,7 +387,7 @@ export default function Profilo() {
   }
 
   function vediCome(r) {
-    cambiaVista(r)
+    cambiaVista(profile?.role === 'coach' && r === 'coach' ? 'admin' : r) // per il coach "Coach" è la vista normale
     navigate('/dashboard')
   }
 
@@ -416,14 +416,14 @@ export default function Profilo() {
       {ruolo === 'genitore' && <FigliGenitore />}
       {['atleta', 'admin'].includes(profile?.role) && ['atleta', 'admin'].includes(ruolo) && <GenitoriAtleta />}
 
-      {adminReale && (
+      {(adminReale || profile?.role === 'coach') && (
         <div className="bg-white rounded-3xl p-5 mb-4 shadow-card">
           <p className="font-bold mb-1">Vedi l'app come</p>
           <p className="text-xs text-slate-500 mb-3">
             Cambia solo cosa si vede sullo schermo e cosa si può fare. I dati restano i tuoi.
           </p>
           <div className="grid grid-cols-2 gap-2">
-            {RUOLI_VISTA.map(([chiave, nome]) => (
+            {RUOLI_VISTA.filter(([chiave]) => adminReale || ['coach', 'atleta'].includes(chiave)).map(([chiave, nome]) => (
               <button key={chiave} onClick={() => vediCome(chiave)}
                 className={`cliccabile text-sm font-semibold rounded-xl min-h-[48px] ${
                   ruolo === chiave ? 'bg-blue-600 text-white' : 'bg-bordo text-slate-600'
