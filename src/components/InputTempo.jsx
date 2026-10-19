@@ -14,14 +14,27 @@ export default function InputTempo({ value, onChange, etichetta, ariaLabel, vuot
     setErrore(!tempoValido(n))
   }
 
+  const n = normalizzaTempo(value)
+  const anteprima = n && n !== value && tempoValido(n) ? n : ''
+
   return (
     <div>
       {etichetta && <label className="block text-xs text-slate-500 mb-1">{etichetta}</label>}
-      <input value={value || ''} placeholder={ESEMPIO_TEMPO} aria-label={ariaLabel || etichetta}
-        inputMode="decimal" autoComplete="off"
-        onChange={(e) => { setErrore(false); onChange(e.target.value) }} onBlur={alUscire}
-        className={`${CAMPO} ${extra} ${errore ? 'border-red-400 ring-red-200 focus:ring-red-300' : 'border-gray-200 focus:ring-blue-400'}`} />
-      {errore && <p className="text-xs text-red-500 mt-1">{ERRORE_TEMPO_BREVE}</p>}
+      <div className="flex gap-1.5">
+        <input value={value || ''} placeholder={ESEMPIO_TEMPO} aria-label={ariaLabel || etichetta}
+          inputMode="decimal" autoComplete="off"
+          onChange={(e) => { setErrore(false); onChange(e.target.value) }} onBlur={alUscire}
+          className={`${CAMPO} ${extra} min-w-0 ${errore ? 'border-red-400 ring-red-200 focus:ring-red-300' : 'border-gray-200 focus:ring-blue-400'}`} />
+        {[["'", 'minuti'], ['"', 'secondi']].map(([c, nome]) => (
+          <button key={c} type="button" aria-label={`Inserisci ${nome}`}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => onChange((value || '') + c)}
+            className="shrink-0 w-9 rounded-xl border border-gray-200 bg-gray-50 text-slate-600 font-semibold">{c}</button>
+        ))}
+      </div>
+      {errore
+        ? <p className="text-xs text-red-500 mt-1">{ERRORE_TEMPO_BREVE}</p>
+        : anteprima && <p className="text-xs text-slate-500 mt-1">Capito: {anteprima} <span className="opacity-70">(' = minuti, " = secondi)</span></p>}
     </div>
   )
 }

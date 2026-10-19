@@ -29,12 +29,16 @@ export function normalizzaTempo(t) {
   let m, sec, cent
   if (/^\d+$/.test(s)) {
     if (s.length <= 2) { m = 0; sec = Number(s); cent = '00' }
+    else if (s.length === 3) { m = Number(s[0]); sec = Number(s.slice(1)); cent = '00' } // 120 = 1'20"
     else {
       cent = s.slice(-2)
       const resto = s.slice(0, -2)
       sec = Number(resto.slice(-2))
       m = resto.length > 2 ? Number(resto.slice(0, -2)) : 0
     }
+  } else if ((m = s.match(/^([1-8])[.,](\d{2})$/)) && Number(m[2]) <= 59) {
+    // 1.20 o 1,20 con la tastiera numerica = 1'20" (nessuno fa 1 secondo e 20 centesimi)
+    sec = Number(m[2]); cent = '00'; m = Number(m[1])
   } else if ((m = s.match(/^(\d{1,2})[.,"](\d{1,2})$/))) {
     sec = Number(m[1]); cent = cc2(m[2]); m = 0
   } else if ((m = s.match(/^(\d{1,2})[:'.,](\d{1,2})[.,"](\d{1,2})$/))) {
