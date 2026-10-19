@@ -19,6 +19,8 @@ export function ripartenzeDiRiga(r) {
   return Array.from({ length: n }, (_, k) => lista[k] || r.ripartenza || '–')
 }
 
+export { haVarianti, ripetizioniDiRiga, riassuntoVarianti } from './varianti'
+
 // Serie a giri: righe consecutive con lo stesso serie.id si ripetono in sequenza per serie.giri volte
 // (es. 3 giri di 400-300-200). Su ogni riga "ripetizioni" è il totale (per giro × giri), così metri
 // e risultati restano come per le righe normali; il passaggio k del giro g sta in posizione g × perGiro + k.

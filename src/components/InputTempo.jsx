@@ -6,6 +6,7 @@ const CAMPO = 'w-full border bg-gray-50 rounded-xl px-3 py-2.5 focus:outline-non
 // Campo tempo unico per tutta l'app: completa e formatta da solo quando esci dal campo
 export default function InputTempo({ value, onChange, etichetta, ariaLabel, vuotoOk = false, extra = '' }) {
   const [errore, setErrore] = useState(false)
+  const [attivo, setAttivo] = useState(false)
 
   function alUscire() {
     const n = normalizzaTempo(value)
@@ -20,17 +21,22 @@ export default function InputTempo({ value, onChange, etichetta, ariaLabel, vuot
   return (
     <div>
       {etichetta && <label className="block text-xs text-slate-500 mb-1">{etichetta}</label>}
-      <div className="flex gap-1.5">
+      <div className="relative">
         <input value={value || ''} placeholder={ESEMPIO_TEMPO} aria-label={ariaLabel || etichetta}
           inputMode="decimal" autoComplete="off"
-          onChange={(e) => { setErrore(false); onChange(e.target.value) }} onBlur={alUscire}
-          className={`${CAMPO} ${extra} min-w-0 ${errore ? 'border-red-400 ring-red-200 focus:ring-red-300' : 'border-gray-200 focus:ring-blue-400'}`} />
-        {[["'", 'minuti'], ['"', 'secondi']].map(([c, nome]) => (
-          <button key={c} type="button" aria-label={`Inserisci ${nome}`}
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => onChange((value || '') + c)}
-            className="shrink-0 w-9 rounded-xl border border-gray-200 bg-gray-50 text-slate-600 font-semibold">{c}</button>
-        ))}
+          onChange={(e) => { setErrore(false); onChange(e.target.value) }}
+          onFocus={() => setAttivo(true)} onBlur={() => { setAttivo(false); alUscire() }}
+          className={`${CAMPO} ${extra} ${attivo ? "pr-20" : ""} ${errore ? 'border-red-400 ring-red-200 focus:ring-red-300' : 'border-gray-200 focus:ring-blue-400'}`} />
+        {attivo && (
+          <span className="absolute right-1.5 top-1/2 -translate-y-1/2 flex gap-1">
+            {[["'", "minuti"], ['"', "secondi"]].map(([c, nome]) => (
+              <button key={c} type="button" aria-label={`Inserisci ${nome}`} tabIndex={-1}
+                onPointerDown={(e) => e.preventDefault()} onMouseDown={(e) => e.preventDefault()}
+                onClick={() => onChange((value || "") + c)}
+                className="w-8 h-8 rounded-lg bg-white border border-gray-200 text-slate-600 font-semibold">{c}</button>
+            ))}
+          </span>
+        )}
       </div>
       {errore
         ? <p className="text-xs text-red-500 mt-1">{ERRORE_TEMPO_BREVE}</p>

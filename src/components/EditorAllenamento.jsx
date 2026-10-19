@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { coloreLavoro, distanzaDaTipo } from '../lib/lavori'
 import { lavoriDaScegliere } from '../lib/tipiLavoro'
 import { ricaricaTipiLavoro, useTipiLavoro } from '../lib/useTipiLavoro'
-import { RIGA_VUOTA, STILI_COACH, abbinaTempi, addGiorni, blocchiPiano, metriPiano, minutiPiano, perGiro } from '../lib/pianoSquadra'
+import { RIGA_VUOTA, STILI_COACH, abbinaTempi, addGiorni, blocchiPiano, metriPiano, minutiPiano, perGiro, riassuntoVarianti } from '../lib/pianoSquadra'
 import { normalizzaRipartenza, ripartenzaValida } from '../lib/tempo'
 import { useRegole } from '../lib/regole'
 import PianoCard from './PianoCard'
@@ -105,6 +105,12 @@ function FoglioLavoro({ r, i, n, inSerie, squadraId, cambia, cambiaTipo, onSu, o
   const [nuovoTipo, setNuovoTipo] = useState(false)
   const rip = Math.min(50, Math.max(1, Number(r.ripetizioni) || 1))
   const personali = Array.isArray(r.ripartenze)
+  const variante = Array.isArray(r.stili) || Array.isArray(r.note_rip)
+  const cambiaVariante = (campo, j, v) => {
+    const lista = Array.from({ length: rip }, (_, k) => r[campo]?.[k] ?? '')
+    lista[j] = v
+    cambia(i, campo, lista)
+  }
   const cambiaRipartenza = (j, v) => {
     const lista = Array.from({ length: rip }, (_, k) => r.ripartenze?.[k] ?? '')
     lista[j] = v
@@ -169,6 +175,35 @@ function FoglioLavoro({ r, i, n, inSerie, squadraId, cambia, cambiaTipo, onSu, o
 
         <Scelte titolo="Stile" valori={STILI_COACH} valore={r.stile} onScegli={(v) => cambia(i, 'stile', v)} segnaposto="Es. Pinne" />
 
+        {!inSerie && rip > 1 && (variante ? (
+          <div className="bg-gray-50 rounded-2xl p-3 mb-4">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold text-slate-600">Stile e nota di ogni ripetizione</p>
+              <button type="button" onClick={() => { cambia(i, 'stili', undefined); cambia(i, 'note_rip', undefined) }} className="text-xs font-semibold text-red-600 px-2 min-h-[36px]">Togli</button>
+            </div>
+            <p className="text-xs text-slate-500 mb-2">Dove non scegli nulla vale lo stile generale ({r.stile}). Esempio: 1ª Stile libero "forte", 2ª Proprio stile "piano".</p>
+            <div className="space-y-2">
+              {Array.from({ length: rip }, (_, j) => (
+                <div key={j} className="grid grid-cols-[2rem_1fr_1fr] gap-2 items-center">
+                  <span className="text-sm font-bold text-slate-500">{j + 1}ª</span>
+                  <select value={r.stili?.[j] || ''} aria-label={`Stile della ripetizione ${j + 1}`}
+                    onChange={(e) => cambiaVariante('stili', j, e.target.value)} className={CAMPO}>
+                    <option value="">Come sopra</option>
+                    {STILI_COACH.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                  <input value={r.note_rip?.[j] || ''} placeholder="forte, piano…" aria-label={`Nota della ripetizione ${j + 1}`}
+                    onChange={(e) => cambiaVariante('note_rip', j, e.target.value)} className={CAMPO} />
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <button type="button" onClick={() => { cambia(i, 'stili', []); cambia(i, 'note_rip', []) }}
+            className="cliccabile w-full min-h-[48px] mb-4 rounded-2xl text-sm font-bold text-blue-600 bg-schiuma">
+            Stili diversi nelle ripetizioni (es. 2 stile e 2 proprio stile)
+          </button>
+        ))}
+
         <InputRipartenza etichetta="Ripartenza (facoltativa)" value={r.ripartenza} onChange={(v) => cambia(i, 'ripartenza', v)} />
 
         {!altro ? (
@@ -224,7 +259,7 @@ function FoglioLavoro({ r, i, n, inSerie, squadraId, cambia, cambiaTipo, onSu, o
 // Un lavoro in una riga leggibile ("4 × 400 Stile libero", sotto il tipo per esteso): toccandolo si apre il pannello,
 // il cestino a destra lo toglie subito (si può annullare)
 function RigaBreve({ r, onApri, onTogli, maniglia }) {
-  const sotto = [r.ripartenza && `partenza ${r.ripartenza}`, r.note].filter(Boolean).join(' · ')
+  const sotto = [riassuntoVarianti(r), r.ripartenza && `partenza ${r.ripartenza}`, r.note].filter(Boolean).join(' · ')
   const descrizione = `${Number(r.ripetizioni) > 1 ? `${r.ripetizioni} × ` : ''}${r.distanza} ${r.stile}`
   return (
     <div className="flex items-center gap-1">
@@ -631,6 +666,9 @@ export default function EditorAllenamento({ squadra, giorno, onChiudi }) {
       minuti: !r.serie && Number(r.minuti) > 0 ? Number(r.minuti) : null,
       ripartenza: r.ripartenza || null,
       ripartenze: Number(r.ripetizioni) > 1 ? soloScritte(r.ripartenze) : null,
+      // stile e nota di ogni ripetizione (non nelle serie a giri), tagliati al numero di ripetizioni attuale
+      stili: !r.serie && Number(r.ripetizioni) > 1 ? soloScritte((r.stili || []).slice(0, Number(r.ripetizioni))) : null,
+      note_rip: !r.serie && Number(r.ripetizioni) > 1 ? soloScritte((r.note_rip || []).map((x) => (x || '').trim()).slice(0, Number(r.ripetizioni))) : null,
       ...(r.serie && {
         serie: {
           id: r.serie.id, giri: r.serie.giri, recupero: r.serie.recupero || null,

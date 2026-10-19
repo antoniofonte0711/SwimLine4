@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { coloreLavoro } from '../lib/lavori'
-import { blocchiPiano, perGiro, ripartenzeDiRiga } from '../lib/pianoSquadra'
+import { blocchiPiano, perGiro, riassuntoVarianti, ripartenzeDiRiga } from '../lib/pianoSquadra'
 import { siglaLavoro } from './PianoCard'
 import { usePreferenze } from '../lib/preferenze'
 
@@ -22,7 +22,7 @@ function passi(righe) {
     }
     const x = b.riga
     return {
-      titolo: NOMI[x.tipo_lavoro] || 'Lavoro', set: `${x.ripetizioni > 1 ? x.ripetizioni + '×' : ''}${x.distanza}`, det: x.stile,
+      titolo: NOMI[x.tipo_lavoro] || 'Lavoro', set: `${x.ripetizioni > 1 ? x.ripetizioni + '×' : ''}${x.distanza}`, det: riassuntoVarianti(x) || x.stile,
       tipo: x.tipo_lavoro, rip: ripartenzeDiRiga(x).join(' · '), nota: x.note, metri: x.distanza * x.ripetizioni,
     }
   })

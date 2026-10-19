@@ -24,7 +24,7 @@ function iniziale() {
 }
 
 // Scegli il lavoro, la distanza, quanti passaggi fai e scrivi il risultato di ognuno
-export default function FormLavoro() {
+export default function FormLavoro({ titolo }) {
   const { aggiungi } = useCarrello()
   const [f, setF] = useState(iniziale)
   const [fileKey, setFileKey] = useState(0)
@@ -86,7 +86,7 @@ export default function FormLavoro() {
 
   return (
     <form onSubmit={aggiungiAlCarrello} className="bg-white rounded-3xl p-5 mb-3 shadow-card">
-      <p className="text-sm text-slate-500 mb-3">Scegli il tuo lavoro</p>
+      <p className="text-sm text-slate-500 mb-3">{titolo || "Scegli il tuo lavoro"}</p>
 
       <label className="block text-xs text-slate-500 mb-1">Tipo di lavoro</label>
       <select value={f.tipo_lavoro} onChange={(e) => cambiaTipo(e.target.value)} className={CAMPO + ' mb-3'}>

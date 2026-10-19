@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import InputTempo from './InputTempo'
 import { coloreLavoro } from '../lib/lavori'
-import { blocchiPiano, chiaveRisultato as chiaveRiga, giriSerie, perGiro, ripartenzeDiRiga } from '../lib/pianoSquadra'
+import { blocchiPiano, chiaveRisultato as chiaveRiga, giriSerie, haVarianti, perGiro, ripartenzeDiRiga, ripetizioniDiRiga } from '../lib/pianoSquadra'
 import { aggiungiInCoda, erroreDiRete, leggiCoda, rimuoviDaCoda } from '../lib/codaOffline'
+import { distribuisci, gruppiPerStile, raccogli } from '../lib/varianti'
 import { ERRORE_TEMPO_BREVE, erroreTempoImpossibile, normalizzaTempo, tempoPlausibile, tempoValido } from '../lib/tempo'
 
 // Il coach vede il piano del giorno e scrive i risultati di ogni passaggio per un atleta.
@@ -39,10 +40,13 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
         setEsistenti(lista)
         const usati = new Set()
         setValori(righe.map((r) => {
-          const k = chiaveRiga(r)
-          const trovata = lista.find((e) => !usati.has(e.id) && chiaveRiga(e) === k)
-          if (trovata) usati.add(trovata.id)
-          return [...(trovata?.passaggi || [])]
+          const gruppi = gruppiPerStile(r)
+          const trovate = gruppi.map((g) => {
+            const t = lista.find((e) => !usati.has(e.id) && chiaveRiga(e) === chiaveRiga({ ...r, stile: g.stile }))
+            if (t) usati.add(t.id)
+            return t
+          })
+          return distribuisci(gruppi, trovate.map((t) => t?.passaggi || []))
         }))
       })
     return () => { attivo = false }
@@ -56,12 +60,17 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
   }
 
   // Per ogni riga del piano, il lavoro già salvato che le corrisponde (se c'è)
+  // Ogni stile di una riga è un lavoro salvato a sé: il tempo resta nella categoria del suo stile
   const usatiOra = new Set()
-  const salvata = righe.map((r) => {
-    const t = esistenti.find((e) => !usatiOra.has(e.id) && chiaveRiga(e) === chiaveRiga(r))
+  const gruppiRighe = righe.map(gruppiPerStile)
+  const perStile = righe.map((r, i) => gruppiRighe[i].map((g) => {
+    const t = esistenti.find((e) => !usatiOra.has(e.id) && chiaveRiga(e) === chiaveRiga({ ...r, stile: g.stile }))
     if (t) usatiOra.add(t.id)
     return t || null
-  })
+  }))
+  const salvata = perStile.map((lista, i) => (lista.some(Boolean)
+    ? { passaggi: distribuisci(gruppiRighe[i], lista.map((t) => t?.passaggi || [])) }
+    : null))
   // l'atleta vede i tempi già salvati al posto delle caselle; "Correggi" riapre le caselle già compilate
   const fisso = (i) => proprio && salvata[i] && !aperti.has(i)
   const Salvati = ({ i, gruppo }) => (
@@ -92,39 +101,43 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
     }
 
     setSalvo(true)
+    // Un lavoro per ogni stile della riga: [{ i, g, riga: lavoro già salvato | null, passaggi }]
+    const pezzi = righe.flatMap((r, i) => gruppiRighe[i].map((g, k) => ({
+      i, g, r, riga: perStile[i][k], passaggi: raccogli(g, lavori[i]),
+    })))
     if (proprio) {
       // l'atleta aggiunge i lavori nuovi e corregge quelli riaperti con "Correggi"
-      const nuove = righe.map((r, i) => (!salvata[i] && lavori[i].some(Boolean) ? {
+      const nuove = pezzi.filter((x) => !x.riga && x.passaggi.some(Boolean)).map(({ r, g, passaggi }) => ({
         id: crypto.randomUUID(), atleta_id: atletaId, tipo_lavoro: r.tipo_lavoro, distanza: Number(r.distanza),
-        ripetizioni: Number(r.ripetizioni) || 1, stile: r.stile, passaggi: lavori[i], data_allenamento: giorno,
+        ripetizioni: g.reps.length, stile: g.stile, passaggi, data_allenamento: giorno,
         created_at: new Date().toISOString(),
-      } : null)).filter(Boolean)
-      const corrette = righe.map((_, i) => i).filter((i) => salvata[i] && aperti.has(i))
+      }))
+      const corrette = pezzi.filter((x) => x.riga && aperti.has(x.i))
       if (!nuove.length && !corrette.length) {
         setSalvo(false)
         return setErrore('Scrivi almeno un tempo.')
       }
       // un lavoro ancora in coda sul telefono (salvato senza connessione) si corregge lì, non nel database
       const inCodaIds = new Set(leggiCoda('allenamenti', atletaId).map((r) => r.id))
-      if (corrette.some((i) => !inCodaIds.has(salvata[i].id)) && !navigator.onLine) {
+      if (corrette.some((x) => !inCodaIds.has(x.riga.id)) && !navigator.onLine) {
         setSalvo(false)
         return setErrore('Per correggere un tempo già inviato serve la connessione: riprova appena torna.')
       }
-      for (const i of corrette) {
-        if (inCodaIds.has(salvata[i].id)) {
-          rimuoviDaCoda('allenamenti', salvata[i].id)
-          aggiungiInCoda('allenamenti', { ...salvata[i], passaggi: lavori[i] })
+      for (const x of corrette) {
+        if (inCodaIds.has(x.riga.id)) {
+          rimuoviDaCoda('allenamenti', x.riga.id)
+          aggiungiInCoda('allenamenti', { ...x.riga, passaggi: x.passaggi })
           continue
         }
-        const { error } = await supabase.from('allenamenti').update({ passaggi: lavori[i] }).eq('id', salvata[i].id)
+        const { error } = await supabase.from('allenamenti').update({ passaggi: x.passaggi }).eq('id', x.riga.id)
         if (error) {
           setSalvo(false)
           return setErrore('Non sono riuscito a correggere: ' + error.message)
         }
       }
       const aggiornate = esistenti.map((e) => {
-        const i = corrette.find((k) => salvata[k].id === e.id)
-        return i === undefined ? e : { ...e, passaggi: lavori[i] }
+        const x = corrette.find((c) => c.riga.id === e.id)
+        return x ? { ...e, passaggi: x.passaggi } : e
       })
       setAperti(new Set())
       setValori(lavori.map((l) => [...l])) // "Correggi" riapre i tempi già nel formato giusto
@@ -147,20 +160,14 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
       setSalvo(false)
       return setOk(inCoda ? 'Salvati sul telefono: partono appena torna la connessione.' : 'Tempi salvati.')
     }
-    const usati = new Set()
-    for (let i = 0; i < righe.length; i++) {
-      const r = righe[i]
-      const k = chiaveRiga(r)
-      const trovata = esistenti.find((e) => !usati.has(e.id) && chiaveRiga(e) === k)
-      if (trovata) usati.add(trovata.id)
+    for (const { r, g, riga, passaggi } of pezzi) {
       // I vuoti in mezzo restano (''), così ogni tempo resta nel suo passaggio o nel suo giro
-      const passaggi = lavori[i]
-      if (!passaggi.some(Boolean) && !trovata) continue // niente da salvare per questa riga
-      const { error } = trovata
-        ? await supabase.from('allenamenti').update({ passaggi, ripetizioni: Number(r.ripetizioni) || 1 }).eq('id', trovata.id)
+      if (!passaggi.some(Boolean) && !riga) continue // niente da salvare per questo stile
+      const { error } = riga
+        ? await supabase.from('allenamenti').update({ passaggi, ripetizioni: g.reps.length }).eq('id', riga.id)
         : await supabase.from('allenamenti').insert({
             atleta_id: atletaId, tipo_lavoro: r.tipo_lavoro, distanza: Number(r.distanza),
-            ripetizioni: Number(r.ripetizioni) || 1, stile: r.stile, passaggi, data_allenamento: giorno,
+            ripetizioni: g.reps.length, stile: g.stile, passaggi, data_allenamento: giorno,
           })
       if (error) {
         setSalvo(false)
@@ -235,7 +242,7 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
             {r.note && <p className="text-xs text-slate-500 mt-1">{r.note}</p>}
             {fisso(i) ? <Salvati i={i} /> : chiuso(i) ? <Apri i={i} n={n} /> : <div className="grid grid-cols-2 gap-3 mt-3">
               {Array.from({ length: n }, (_, j) => (
-                <InputTempo key={j} etichetta={`Passaggio ${j + 1}`} value={valori[i]?.[j] || ''} vuotoOk
+                <InputTempo key={j} etichetta={haVarianti(r) ? `${j + 1}ª · ${ripetizioniDiRiga(r)[j].stile}${ripetizioniDiRiga(r)[j].nota ? ` · ${ripetizioniDiRiga(r)[j].nota}` : ''}` : `Passaggio ${j + 1}`} value={valori[i]?.[j] || ''} vuotoOk
                   onChange={(v) => cambia(i, j, v)} />
               ))}
             </div>}

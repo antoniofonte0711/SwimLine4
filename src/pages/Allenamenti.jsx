@@ -50,13 +50,13 @@ function AllenamentiAtleta() {
             {piano && <RisultatiAtleta piano={piano} atletaId={user.id} giorno={oggi} proprio />}
             {piano && !libero ? (
               <button onClick={() => setLibero(true)} className="cliccabile w-full min-h-[48px] mt-3 text-sm font-bold text-blue-600 bg-schiuma rounded-2xl">
-                + Ho fatto un lavoro diverso
+                + Lavoro oltre l'allenamento
               </button>
             ) : (
               <>
                 {!piano && <p className="text-sm text-slate-500 mb-3 px-1">Oggi il coach non ha pubblicato un allenamento: scrivi tu cosa hai fatto.</p>}
-                {piano && <p className="font-display text-lg font-extrabold text-abisso mt-5 mb-2 px-1">Un lavoro diverso</p>}
-                <FormLavoro />
+                {piano && <p className="font-display text-lg font-extrabold text-abisso mt-5 mb-2 px-1">Lavoro oltre l'allenamento</p>}
+                <FormLavoro titolo={piano ? "Aggiungi un lavoro che non era nel programma. Quelli del coach sopra non si cambiano." : undefined} />
                 <CarrelloCard giorno={oggi} />
               </>
             )}

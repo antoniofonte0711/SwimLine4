@@ -1,5 +1,5 @@
 import { coloreLavoro } from '../lib/lavori'
-import { blocchiPiano, giriSerie, metriPiano, minutiPiano, perGiro, ripartenzeDiRiga } from '../lib/pianoSquadra'
+import { blocchiPiano, giriSerie, metriPiano, minutiPiano, perGiro, riassuntoVarianti, ripartenzeDiRiga } from '../lib/pianoSquadra'
 import { infoLavoro } from '../lib/tipiLavoro'
 import { useTipiLavoro } from '../lib/useTipiLavoro'
 import Difficolta from './Difficolta'
@@ -30,6 +30,7 @@ function RigaPiano({ r, inSerie }) {
   const rip = ripartenzeDiRiga(r)
   const n = inSerie ? perGiro(r) : r.ripetizioni
   const dettagli = [
+    !inSerie && riassuntoVarianti(r),
     rip.length > 0 && `↻ ${rip.join(' · ')}`,
     !inSerie && Number(r.minuti) > 0 && `⏱ ${Number(r.minuti)} min`,
   ].filter(Boolean).join('  ')
