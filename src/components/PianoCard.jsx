@@ -1,4 +1,5 @@
 import { coloreLavoro } from '../lib/lavori'
+import PiuStili from './PiuStili'
 import { blocchiPiano, giriSerie, metriPiano, minutiPiano, perGiro, riassuntoVarianti, ripartenzeDiRiga } from '../lib/pianoSquadra'
 import { infoLavoro } from '../lib/tipiLavoro'
 import { useTipiLavoro } from '../lib/useTipiLavoro'
@@ -30,7 +31,7 @@ function RigaPiano({ r, inSerie }) {
   const rip = ripartenzeDiRiga(r)
   const n = inSerie ? perGiro(r) : r.ripetizioni
   const dettagli = [
-    !inSerie && riassuntoVarianti(r),
+    riassuntoVarianti(r),
     rip.length > 0 && `↻ ${rip.join(' · ')}`,
     !inSerie && Number(r.minuti) > 0 && `⏱ ${Number(r.minuti)} min`,
   ].filter(Boolean).join('  ')
@@ -38,7 +39,7 @@ function RigaPiano({ r, inSerie }) {
     <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] gap-3 items-center">
       <ChipZona tipo={r.tipo_lavoro} intero />
       <span className="min-w-0">
-        <b className="text-[15px] text-abisso">{n > 1 ? `${n}×` : ''}{r.distanza} {r.stile}</b>
+        <b className="text-[15px] text-abisso">{n > 1 ? `${n}×` : ''}{r.distanza} {r.stile}</b> <PiuStili r={r} />
         {(r.note || dettagli) && (
           <span className="block text-[13px] text-slate-500 leading-snug">{[r.note, dettagli].filter(Boolean).join(' · ')}</span>
         )}

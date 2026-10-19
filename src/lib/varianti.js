@@ -3,14 +3,21 @@
 export const haVarianti = (r) =>
   (Array.isArray(r?.stili) && r.stili.some(Boolean)) || (Array.isArray(r?.note_rip) && r.note_rip.some(Boolean))
 
+// Ripetizioni di un giro: nelle serie a giri "ripetizioni" è il totale, e lo schema di stili vale per ogni giro
+const perGiroRiga = (r) => {
+  const n = Math.max(1, Number(r.ripetizioni) || 1)
+  return r.serie ? Math.max(1, Math.round(n / Math.max(1, Number(r.serie.giri) || 1))) : n
+}
+
 export function ripetizioniDiRiga(r) {
   const n = Math.max(1, Number(r.ripetizioni) || 1)
-  return Array.from({ length: n }, (_, k) => ({ stile: r.stili?.[k] || r.stile, nota: r.note_rip?.[k] || '' }))
+  const pg = perGiroRiga(r)
+  return Array.from({ length: n }, (_, j) => ({ stile: r.stili?.[j % pg] || r.stile, nota: r.note_rip?.[j % pg] || '' }))
 }
 
 // "Stile libero forte · Proprio stile piano" per la scheda del lavoro; '' se la riga non ha varianti
 export const riassuntoVarianti = (r) =>
-  haVarianti(r) ? ripetizioniDiRiga(r).map((v) => v.stile + (v.nota ? ` ${v.nota}` : '')).join(' · ') : ''
+  haVarianti(r) ? ripetizioniDiRiga(r).slice(0, perGiroRiga(r)).map((v) => v.stile + (v.nota ? ` ${v.nota}` : '')).join(' · ') : ''
 
 // Le ripetizioni della riga raggruppate per stile reale, nell'ordine in cui compaiono:
 // [{ stile, reps: [posizioni] }]. Ogni gruppo si salva come un lavoro a sé, così il tempo finisce

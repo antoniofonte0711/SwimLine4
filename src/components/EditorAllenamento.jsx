@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { coloreLavoro, distanzaDaTipo } from '../lib/lavori'
 import { lavoriDaScegliere } from '../lib/tipiLavoro'
 import { ricaricaTipiLavoro, useTipiLavoro } from '../lib/useTipiLavoro'
+import PiuStili from './PiuStili'
 import { RIGA_VUOTA, STILI_COACH, abbinaTempi, addGiorni, blocchiPiano, metriPiano, minutiPiano, perGiro, riassuntoVarianti } from '../lib/pianoSquadra'
 import { normalizzaRipartenza, ripartenzaValida } from '../lib/tempo'
 import { useRegole } from '../lib/regole'
@@ -175,7 +176,7 @@ function FoglioLavoro({ r, i, n, inSerie, squadraId, cambia, cambiaTipo, onSu, o
 
         <Scelte titolo="Stile" valori={STILI_COACH} valore={r.stile} onScegli={(v) => cambia(i, 'stile', v)} segnaposto="Es. Pinne" />
 
-        {!inSerie && rip > 1 && (variante ? (
+        {rip > 1 && (variante ? (
           <div className="bg-gray-50 rounded-2xl p-3 mb-4">
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold text-slate-600">Stile e nota di ogni ripetizione</p>
@@ -271,6 +272,7 @@ function RigaBreve({ r, onApri, onTogli, maniglia }) {
         </span>
         <span className="flex items-center gap-1.5 mt-0.5 min-w-0">
           <span className={`shrink-0 text-[11px] font-extrabold px-2 py-0.5 rounded-md ${coloreLavoro(r.tipo_lavoro)}`}>{r.tipo_lavoro}</span>
+          <PiuStili r={r} />
           {sotto && <span className="text-[13px] text-slate-500 truncate">{sotto}</span>}
         </span>
       </button>
@@ -667,8 +669,8 @@ export default function EditorAllenamento({ squadra, giorno, onChiudi }) {
       ripartenza: r.ripartenza || null,
       ripartenze: Number(r.ripetizioni) > 1 ? soloScritte(r.ripartenze) : null,
       // stile e nota di ogni ripetizione (non nelle serie a giri), tagliati al numero di ripetizioni attuale
-      stili: !r.serie && Number(r.ripetizioni) > 1 ? soloScritte((r.stili || []).slice(0, Number(r.ripetizioni))) : null,
-      note_rip: !r.serie && Number(r.ripetizioni) > 1 ? soloScritte((r.note_rip || []).map((x) => (x || '').trim()).slice(0, Number(r.ripetizioni))) : null,
+      stili: perGiro(r) > 1 ? soloScritte((r.stili || []).slice(0, perGiro(r))) : null,
+      note_rip: perGiro(r) > 1 ? soloScritte((r.note_rip || []).map((x) => (x || '').trim()).slice(0, perGiro(r))) : null,
       ...(r.serie && {
         serie: {
           id: r.serie.id, giri: r.serie.giri, recupero: r.serie.recupero || null,

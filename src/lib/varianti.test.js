@@ -33,3 +33,13 @@ describe('tempi per stile', () => {
     expect(distribuisci(g, [['1\'00"00', '1\'01"00'], ['1\'10"00']])).toEqual(['1\'00"00', '1\'10"00', '1\'01"00'])
   })
 })
+
+describe('serie a giri', () => {
+  // 3 giri da 2 ripetizioni: lo schema (stile, proprio stile) si ripete a ogni giro
+  const r = { ripetizioni: 6, stile: 'Stile libero', stili: ['', 'Proprio stile'], serie: { id: 'a', giri: 3 } }
+  it('lo schema di stili vale per ogni giro', () => {
+    expect(ripetizioniDiRiga(r).map((v) => v.stile)).toEqual(['Stile libero', 'Proprio stile', 'Stile libero', 'Proprio stile', 'Stile libero', 'Proprio stile'])
+    expect(gruppiPerStile(r)).toEqual([{ stile: 'Stile libero', reps: [0, 2, 4] }, { stile: 'Proprio stile', reps: [1, 3, 5] }])
+    expect(riassuntoVarianti(r)).toBe('Stile libero · Proprio stile')
+  })
+})

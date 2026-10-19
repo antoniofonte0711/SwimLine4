@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import PiuStili from './PiuStili'
 import InputTempo from './InputTempo'
 import { coloreLavoro } from '../lib/lavori'
 import { blocchiPiano, chiaveRisultato as chiaveRiga, giriSerie, haVarianti, perGiro, ripartenzeDiRiga, ripetizioniDiRiga } from '../lib/pianoSquadra'
@@ -222,7 +223,7 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
                       // ripartenza di questo giro, se il coach l'ha cambiata rispetto a quella generale
                       const rip = r.ripartenze?.[j] && r.ripartenze[j] !== r.ripartenza ? ` ↻ ${r.ripartenze[j]}` : ''
                       return (
-                        <InputTempo key={`${i}-${j}`} etichetta={`${r.distanza} m${perGiro(r) > 1 ? ` (${k + 1})` : ''}${rip}`}
+                        <InputTempo key={`${i}-${j}`} etichetta={`${r.distanza} m${haVarianti(r) ? ` ${ripetizioniDiRiga(r)[j].stile}${ripetizioniDiRiga(r)[j].nota ? ` ${ripetizioniDiRiga(r)[j].nota}` : ''}` : ''}${perGiro(r) > 1 ? ` (${k + 1})` : ''}${rip}`}
                           value={valori[i]?.[j] || ''} vuotoOk onChange={(v) => cambia(i, j, v)} />
                       )
                     }))}
@@ -237,6 +238,7 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
         return (
           <div key={i} className="bg-white rounded-3xl p-4 mb-3 shadow-card">
             <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${coloreLavoro(r.tipo_lavoro)}`}>{r.tipo_lavoro}</span>
+            <span className="ml-1.5"><PiuStili r={r} /></span>
             <span className="text-sm text-slate-600 ml-2">{n}×{r.distanza} m {r.stile}</span>
             {ripartenzeDiRiga(r).length > 0 && <span className="text-xs text-slate-500 ml-2">↻ ripartenza {ripartenzeDiRiga(r).join(' · ')}</span>}
             {r.note && <p className="text-xs text-slate-500 mt-1">{r.note}</p>}
