@@ -56,13 +56,10 @@ describe('tempoInSecondi / secondiInTempo', () => {
 })
 
 describe('tempoPlausibile', () => {
-  it('blocca i tempi impossibili (meno di 9" ogni 25 m)', () => {
-    expect(tempoPlausibile('3"67', 100)).toBe(false)
-    expect(tempoPlausibile(`1'03"67`, 100)).toBe(true)
-    expect(tempoPlausibile('36"00', 100)).toBe(true)
-  })
-  it('senza distanza o tempo non controlla', () => {
-    expect(tempoPlausibile('3"67', null)).toBe(true)
+  it('non blocca mai nessun tempo (libertà totale)', () => {
+    expect(tempoPlausibile('3"67', 100)).toBe(true)
+    expect(tempoPlausibile('20"00', 75)).toBe(true)
+    expect(tempoPlausibile(`50'00"00`, 25)).toBe(true)
     expect(tempoPlausibile('', 100)).toBe(true)
   })
 })

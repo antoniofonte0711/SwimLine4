@@ -86,14 +86,10 @@ export function tempoValido(t) {
   return false
 }
 
-// Un tempo è plausibile se non è più veloce di 9" ogni 25 m (i record del mondo stanno sopra i 10" a vasca).
-// Blocca gli errori di battitura tipo 3"67 su un 100 invece di 1'03"67. Senza distanza non si controlla.
-const SECONDI_MINIMI_OGNI_25 = 9
-export function tempoPlausibile(t, distanza) {
-  const sec = tempoInSecondi(t)
-  const d = Number(distanza)
-  if (sec === null || !(d > 0)) return true
-  return sec >= (d / 25) * SECONDI_MINIMI_OGNI_25
+// Nessun limite di velocità: l'atleta (o il coach) può scrivere qualsiasi tempo, per qualsiasi distanza.
+// Il controllo sul formato lo fa tempoValido; qui non si blocca mai.
+export function tempoPlausibile() {
+  return true
 }
 export const erroreTempoImpossibile = (distanza) =>
   `Tempo troppo veloce per ${distanza} m: controlla di averlo scritto bene (es. 1'03"67, non 3"67).`
