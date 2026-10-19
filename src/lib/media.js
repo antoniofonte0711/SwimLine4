@@ -8,3 +8,7 @@ export const leggiMedia = (riga) => (riga?.commento === MARCATORE ? riga.tempo_t
   : typeof riga?.commento === 'string' && riga.commento.startsWith(MARCATORE + ' ') ? riga.commento.slice(MARCATORE.length + 1) : '')
 // campi da salvare nel lavoro
 export const campiMedia = (tempo) => (tempo ? { commento: MARCATORE, tempo_totale: tempo } : { commento: null, tempo_totale: null })
+
+// Cosa scrivere nel lavoro già salvato: se non c'è media (né prima né ora) non si tocca niente,
+// così un tempo totale normale (es. scritto da Progressi) non viene cancellato.
+export const aggiornaMedia = (riga, tempo) => (tempo || leggiMedia(riga) ? campiMedia(tempo) : {})
