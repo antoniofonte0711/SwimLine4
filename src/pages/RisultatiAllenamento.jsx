@@ -18,6 +18,7 @@ export default function RisultatiAllenamento() {
   const [atleti, setAtleti] = useState([])
   const [atleta, setAtleta] = useState('')
   const [piano, setPiano] = useState(null)
+  const [presenze, setPresenze] = useState([]) // presenze segnate per quel giorno
 
   useEffect(() => {
     if (!squadra) return
@@ -31,10 +32,19 @@ export default function RisultatiAllenamento() {
   useEffect(() => {
     if (!squadra) return
     let attivo = true
+    supabase.from('presenze').select('atleta_id, stato').eq('data', giorno)
+      .then(({ data }) => { if (attivo) setPresenze(data || []) })
     supabase.from('allenamenti_squadra').select('*').eq('squadra_id', squadra.id).eq('data', giorno).maybeSingle()
       .then(({ data }) => { if (attivo) setPiano(data || null) })
     return () => { attivo = false }
   }, [squadra?.id, giorno]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Con le presenze segnate si scrivono i tempi solo dei presenti; senza presenze segnate si vedono tutti
+  const segnati = new Set(presenze.map((x) => x.atleta_id))
+  const haPresenze = atleti.some((a) => segnati.has(a.id))
+  const presenti = new Set(presenze.filter((x) => x.stato === 'presente').map((x) => x.atleta_id))
+  const visibili = haPresenze ? atleti.filter((a) => presenti.has(a.id)) : atleti
+  const scelto = visibili.some((a) => a.id === atleta) ? atleta : visibili[0]?.id || ''
 
   return (
     <AppShell titolo="Risultati" attiva="funzioni" indietro={`/allenamenti?data=${giorno}`}>
@@ -45,12 +55,13 @@ export default function RisultatiAllenamento() {
             <div className="bg-white rounded-3xl p-5 mb-3 shadow-card">
               <SelettoreData etichetta="Data dell'allenamento" valore={giorno} onChange={setGiorno} />
               <label className="block text-xs text-slate-500 mt-3 mb-1">Atleta</label>
-              <select value={atleta} onChange={(e) => setAtleta(e.target.value)} className={CAMPO}>
-                {atleti.length === 0 && <option value="">Nessun atleta nella squadra</option>}
-                {atleti.map((a) => <option key={a.id} value={a.id}>{a.nome} {a.cognome}</option>)}
+              <select value={scelto} onChange={(e) => setAtleta(e.target.value)} className={CAMPO}>
+                {visibili.length === 0 && <option value="">{atleti.length ? 'Nessun atleta presente' : 'Nessun atleta nella squadra'}</option>}
+                {visibili.map((a) => <option key={a.id} value={a.id}>{a.nome} {a.cognome}</option>)}
               </select>
             </div>
-            {atleta && <RisultatiAtleta key={atleta + giorno} piano={piano} atletaId={atleta} giorno={giorno} />}
+            {haPresenze && <p className="text-xs text-slate-500 mb-2 px-1">Si vedono solo i presenti ({visibili.length} su {atleti.length}).</p>}
+            {scelto && <RisultatiAtleta key={scelto + giorno} piano={piano} atletaId={scelto} giorno={giorno} />}
           </>
         )}
     </AppShell>
