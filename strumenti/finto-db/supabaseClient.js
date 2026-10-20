@@ -36,6 +36,8 @@ const UTENTI = {
     ;(tabelle.allenamenti_squadra ||= []).push({
       id: 'piano-oggi', squadra_id: sqA, coach_id: UTENTI.coach, data: g(0), titolo: null, pubblicato: true, visibilita: 'squadra',
       righe: [
+        { tipo_lavoro: 'B1', distanza: 200, ripetizioni: 4, stile: 'Stile libero', note: '', minuti: null, ripartenza: null, ripartenze: null, serie: { id: 's1', giri: 2, recupero: null, minuti: null } },
+        { tipo_lavoro: 'B1', distanza: 100, ripetizioni: 2, stile: 'Dorso', note: '', minuti: null, ripartenza: null, ripartenze: null, serie: { id: 's1', giri: 2, recupero: null, minuti: null } },
         { tipo_lavoro: 'C1', distanza: 75, ripetizioni: 4, stile: 'Stile libero', stili: ['', 'Proprio stile', '', 'Proprio stile'], note_rip: ['forte', 'piano', 'forte', 'piano'], note: '', minuti: null, ripartenza: null, ripartenze: null },
         { tipo_lavoro: 'Tecnica', distanza: 50, ripetizioni: 16, stile: 'Misti', note: '', minuti: null, ripartenza: null, ripartenze: null },
         { tipo_lavoro: 'A2', distanza: 400, ripetizioni: 4, stile: 'Stile libero', note: '', minuti: null, ripartenza: '6\'00"', ripartenze: null },

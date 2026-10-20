@@ -87,6 +87,25 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
     </div>
   )
 
+  // Tempo medio (per chi non ricorda i singoli passaggi): uno per ogni stile del lavoro
+  const mediaDi = (i, r, conDistanza = false) => gruppiRighe[i].map((g, k) => {
+    const chiave = `${i}-${k}`
+    const nome = (conDistanza ? ` ${r.distanza} m` : '') + (gruppiRighe[i].length > 1 ? ` · ${g.stile}` : '')
+    return chiave in medie ? (
+      <div key={chiave} className="mt-3">
+        <InputTempo etichetta={`Tempo medio${nome}`} value={medie[chiave] || ''} vuotoOk
+          onChange={(v) => setMedie({ ...medie, [chiave]: v })} />
+        <button type="button" onClick={() => { const { [chiave]: _tolta, ...resto } = medie; setMedie(resto) }}
+          className="cliccabile min-h-[44px] text-xs font-bold text-slate-500">Togli la media</button>
+      </div>
+    ) : (
+      <button key={chiave} type="button" onClick={() => setMedie({ ...medie, [chiave]: '' })}
+        className="cliccabile min-h-[44px] mt-2 block text-sm font-semibold text-blue-600 text-left">
+        Non ricordo tutti i tempi: scrivo la media{nome}
+      </button>
+    )
+  })
+
   async function salva() {
     setErrore('')
     setOk('')
@@ -244,6 +263,7 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
                   </div>
                 </div>
               ))}
+              {!b.righe.some(({ indice }) => fisso(indice)) && !b.righe.every(({ indice }) => chiuso(indice)) && b.righe.map(({ riga: r, indice: i }) => <div key={i}>{mediaDi(i, r, true)}</div>)}
             </div>
           )
         }
@@ -262,23 +282,7 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
                   onChange={(v) => cambia(i, j, v)} />
               ))}
             </div>
-            {gruppiRighe[i].map((g, k) => {
-              const chiave = `${i}-${k}`
-              const nome = gruppiRighe[i].length > 1 ? ` · ${g.stile}` : ''
-              return chiave in medie ? (
-                <div key={chiave} className="mt-3">
-                  <InputTempo etichetta={`Tempo medio${nome}`} value={medie[chiave] || ''} vuotoOk
-                    onChange={(v) => setMedie({ ...medie, [chiave]: v })} />
-                  <button type="button" onClick={() => { const { [chiave]: _tolta, ...resto } = medie; setMedie(resto) }}
-                    className="cliccabile min-h-[44px] text-xs font-bold text-slate-500">Togli la media</button>
-                </div>
-              ) : (
-                <button key={chiave} type="button" onClick={() => setMedie({ ...medie, [chiave]: '' })}
-                  className="cliccabile min-h-[44px] mt-2 text-sm font-semibold text-blue-600 text-left">
-                  Non ricordo tutti i tempi: scrivo la media{nome}
-                </button>
-              )
-            })}</>}
+            {mediaDi(i, r)}</>}
           </div>
         )
       })}

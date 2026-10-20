@@ -25,11 +25,15 @@ function AllenamentiAtleta() {
   const [vista, setVista] = useState(VISTE[0])
   const [piano, setPiano] = useState(undefined)
   const [libero, setLibero] = useState(false)
-  const oggi = dataLocale()
-  const nuovo = ruolo === 'atleta'
+  const [params] = useSearchParams()
+  // il giorno dei tempi: oggi, o un altro giorno scelto (anche dal link ?data=)
+  const [oggi, setOggi] = useState(() => (/^\d{4}-\d{2}-\d{2}$/.test(params.get('data') || '') ? params.get('data') : dataLocale()))
+  // anche l'admin, che usa l'app come atleta, entra nell'allenamento del giorno (non in un modulo vuoto)
+  const nuovo = ['atleta', 'admin'].includes(ruolo)
 
   useEffect(() => {
     if (!nuovo) return
+    setPiano(undefined)
     if (!profile?.squadra_id) return setPiano(null)
     supabase.from('allenamenti_squadra').select('*').eq('squadra_id', profile.squadra_id).eq('data', oggi).eq('pubblicato', true).limit(1)
       .then(({ data }) => setPiano(data?.[0] || null))
@@ -45,6 +49,9 @@ function AllenamentiAtleta() {
     return (
       <AppShell titolo="Scrivi i tempi" attiva="home" indietro="/dashboard">
         {avvisoOffline}
+        <div className="bg-white rounded-3xl p-5 mb-3 shadow-card">
+          <SelettoreData etichetta="Giorno dell'allenamento" valore={oggi} onChange={setOggi} />
+        </div>
         {piano === undefined ? <p className="text-center text-slate-500 py-8">Carico…</p> : (
           <>
             {piano && <RisultatiAtleta piano={piano} atletaId={user.id} giorno={oggi} proprio />}
@@ -54,7 +61,7 @@ function AllenamentiAtleta() {
               </button>
             ) : (
               <>
-                {!piano && <p className="text-sm text-slate-500 mb-3 px-1">Oggi il coach non ha pubblicato un allenamento: scrivi tu cosa hai fatto.</p>}
+                {!piano && <p className="text-sm text-slate-500 mb-3 px-1">In questo giorno il coach non ha pubblicato un allenamento: scrivi tu cosa hai fatto.</p>}
                 {piano && <p className="font-display text-lg font-extrabold text-abisso mt-5 mb-2 px-1">Lavoro oltre l'allenamento</p>}
                 <FormLavoro titolo={piano ? "Aggiungi un lavoro che non era nel programma. Quelli del coach sopra non si cambiano." : undefined} />
                 <CarrelloCard giorno={oggi} />

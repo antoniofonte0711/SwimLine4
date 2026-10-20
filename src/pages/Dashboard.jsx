@@ -56,7 +56,7 @@ function Onde() {
 }
 
 // Il riquadro blu dell'allenamento del giorno: km, minuti, difficoltà e i due bottoni per l'acqua
-function EroeAllenamento({ piano, oggi, squadra, vasca, registra, onVasca }) {
+function EroeAllenamento({ piano, oggi, giorno, squadra, vasca, registra, onVasca }) {
   const min = minutiPiano(piano.righe)
   return (
     <section className="relative overflow-hidden rounded-[32px] bg-blue-600 text-white p-5 mb-1">
@@ -80,7 +80,7 @@ function EroeAllenamento({ piano, oggi, squadra, vasca, registra, onVasca }) {
               <svg viewBox="0 0 24 24" className="w-[22px] h-[22px]" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.4-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5Z" /></svg>
               Inizia in vasca
             </button>}
-            {registra && <Link to="/allenamenti" className="h-14 rounded-[18px] bg-white/15 font-display text-lg font-extrabold flex items-center justify-center gap-2">
+            {registra && <Link to={`/allenamenti?data=${giorno}`} className="h-14 rounded-[18px] bg-white/15 font-display text-lg font-extrabold flex items-center justify-center gap-2">
               <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="13" r="8" /><path d="M12 9v4l2.5 2M9.5 2.5h5" /></svg>
               Scrivi i tempi
             </Link>}
@@ -92,9 +92,9 @@ function EroeAllenamento({ piano, oggi, squadra, vasca, registra, onVasca }) {
 }
 
 // Bottone primario: pieno, blu, largo quanto il testo (al massimo 320px)
-function BottoneRegistra() {
+function BottoneRegistra({ giorno }) {
   return (
-    <Link to="/allenamenti"
+    <Link to={`/allenamenti?data=${giorno}`}
       className="cliccabile inline-flex items-center justify-center gap-2 w-full max-w-[320px] min-h-[48px] px-6 font-display font-extrabold text-white bg-blue-600 hover:bg-blue-700 rounded-campo">
       <Icona nome="cronometro" className="w-5 h-5" />
       Scrivi i tuoi tempi
@@ -179,7 +179,7 @@ function HomeAtleta() {
       <div>
       {ruolo === 'genitore' && !puo('g_allenamento') ? null : piano ? (
         <>
-          <EroeAllenamento piano={piano} oggi={giorno === dataLocale()} squadra={squadraNome}
+          <EroeAllenamento piano={piano} oggi={giorno === dataLocale()} giorno={giorno} squadra={squadraNome}
             vasca={puoModificare(ruolo) && puo('a_vasca')} registra={registra} onVasca={() => setVasca(true)} />
           <h2 className="font-display text-xl font-extrabold mt-5 mb-2 flex items-baseline justify-between">
             Il programma
@@ -196,7 +196,7 @@ function HomeAtleta() {
             <p className="font-display text-xl font-extrabold text-abisso mb-1">Nessun allenamento</p>
             <p className="text-sm">Il coach non ha pubblicato l'allenamento di questo giorno. Appena lo fa, lo trovi qui.</p>
           </div>
-          {registra && <BottoneRegistra />}
+          {registra && <BottoneRegistra giorno={giorno} />}
         </div>
       )}
       {vasca && piano && <ModalitaVasca righe={piano.righe} onChiudi={() => setVasca(false)} />}
