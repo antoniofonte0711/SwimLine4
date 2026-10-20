@@ -22,6 +22,7 @@ export async function leggiLavori(squadraId) {
 // Cache condivisa come per le regole: si legge una volta, si ricarica dopo un salvataggio
 let cache = { chiave: undefined, promessa: null }
 const ascoltatori = new Set()
+let ultimi = { chiave: undefined, dati: null } // ultimo risultato: cambiando pagina non si riparte da vuoto
 export function ricaricaTipiLavoro() {
   cache = { chiave: undefined, promessa: null }
   ascoltatori.forEach((f) => f())
@@ -32,7 +33,7 @@ export function ricaricaTipiLavoro() {
 export function useTipiLavoro() {
   const { profile, squadraGestita } = useAuth()
   const squadraId = squadraGestita?.id || profile?.squadra_id || null
-  const [dati, setDati] = useState(null)
+  const [dati, setDati] = useState(() => (ultimi.chiave === squadraId ? ultimi.dati : null))
   const [giro, setGiro] = useState(0)
 
   useEffect(() => {
@@ -49,6 +50,7 @@ export function useTipiLavoro() {
     }
     cache.promessa.then((x) => {
       impostaRegistro(x)
+      ultimi = { chiave: squadraId, dati: x }
       if (attivo) setDati(x)
     })
     return () => { attivo = false }

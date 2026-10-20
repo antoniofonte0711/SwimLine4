@@ -34,7 +34,7 @@ export const PERMESSI_SQUADRA = [
   ['Il coach può', 'Cosa può fare il coach di questa squadra.', [
     ['c_pubblica', 'Pubblicare allenamenti', true], ['c_presenze', 'Segnare le presenze', true],
     ['c_gare', 'Assegnare le gare', true], ['c_persone', 'Aggiungere e togliere persone', true],
-    ['c_punti', 'Gestire punti e premi', true]]],
+    ['c_punti', 'Gestire punti e premi', true], ['c_difficolta', 'Mostrare la difficoltà automatica', true]]],
   ['L’atleta può', 'Cosa vede e fa un atleta della squadra.', [
     ['a_tempi', 'Registrare i propri tempi', true], ['a_gare', 'Inserire le proprie gare', true],
     ['a_compagni', 'Vedere le gare dei compagni', true], ['a_record', 'Vedere i record della squadra', true],
@@ -73,6 +73,7 @@ export function creaPuo(valori = {}) {
 
 // Cache condivisa: si legge una volta, si ricarica dopo un salvataggio dal Pannello
 let cache = { chiave: null, promessa: null }
+let ultimi = { chiave: null, valori: null } // ultimo risultato: cambiando pagina non si riparte da vuoto
 const ascoltatori = new Set()
 export function ricaricaRegole() {
   cache = { chiave: null, promessa: null }
@@ -93,7 +94,7 @@ async function leggi(squadraId) {
 export function useRegole() {
   const { profile, squadraGestita, adminReale, staVedendoCome } = useAuth()
   const squadraId = squadraGestita?.id || profile?.squadra_id || null
-  const [valori, setValori] = useState(null)
+  const [valori, setValori] = useState(() => (ultimi.chiave === squadraId ? ultimi.valori : null))
   const [giro, setGiro] = useState(0)
 
   useEffect(() => {
@@ -105,7 +106,7 @@ export function useRegole() {
   useEffect(() => {
     let attivo = true
     if (cache.chiave !== squadraId || !cache.promessa) cache = { chiave: squadraId, promessa: leggi(squadraId).catch(() => ({})) }
-    cache.promessa.then((x) => { if (attivo) setValori(x) })
+    cache.promessa.then((x) => { ultimi = { chiave: squadraId, valori: x }; if (attivo) setValori(x) })
     return () => { attivo = false }
   }, [squadraId, giro])
 

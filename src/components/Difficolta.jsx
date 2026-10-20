@@ -13,7 +13,7 @@ export default function Difficolta({ righe, suBlu = false }) {
   const { puo } = useRegole()
   useTipiLavoro() // i pesi dei lavori aggiunti dalla squadra
   const d = difficoltaPiano(righe)
-  if (!d || !puo('difficolta')) return null
+  if (!d || !puo('difficolta') || !puo('c_difficolta')) return null
   const colore = (g) => (suBlu && g.id === 'aerobico' ? '#ffffff' : COLORE_GRUPPO[g.id])
   const tenue = suBlu ? 'text-blue-100' : 'text-slate-500'
   return (

@@ -1,7 +1,7 @@
-import { lazy as reactLazy, Suspense } from 'react'
+import { lazy as reactLazy, Suspense, useEffect } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { MotionConfig } from 'framer-motion'
-import { AuthProvider } from './context/AuthContext'
+import { AuthProvider, useAuth } from './context/AuthContext'
 import { CarrelloProvider } from './context/CarrelloContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import AvvisoErrore from './components/AvvisoErrore'
@@ -14,7 +14,15 @@ import Login from './pages/Login'
 // Dashboard è lazy anche lei: porta con sé framer-motion (~120 KB).
 // Dopo un nuovo rilascio main.jsx ricarica la pagina e l'import torna vuoto: si resta su "Carico…"
 // finché il ricaricamento parte, invece di rompere la pagina (errore "reading 'default'" del 12/10)
-const lazy = (carica) => reactLazy(() => carica().then((m) => m ?? new Promise(() => {})))
+const caricatori = []
+const lazy = (carica) => {
+  caricatori.push(carica)
+  return reactLazy(() => carica().then((m) => m ?? new Promise(() => {})))
+}
+// Dopo l'accesso scarica in silenzio tutte le pagine: cambiando schermata non si aspetta più il download
+function scaricaPagine() {
+  caricatori.forEach((c) => c().catch(() => {}))
+}
 const Dashboard = lazy(() => import('./pages/Dashboard'))
 const Registrati = lazy(() => import('./pages/Registrati'))
 const Riepilogo = lazy(() => import('./pages/Riepilogo'))
@@ -49,6 +57,12 @@ const PROSSIMAMENTE = [
 
 function SegnalaAttivita() {
   useSegnalaAttivita()
+  const { user } = useAuth()
+  useEffect(() => {
+    if (!user) return
+    const avvia = window.requestIdleCallback || ((f) => setTimeout(f, 1500))
+    avvia(scaricaPagine)
+  }, [user])
   return null
 }
 

@@ -5,12 +5,53 @@ import AppShell from '../components/AppShell'
 import { SenzaSquadra } from '../components/PianoCard'
 import { useMiaSquadra } from '../lib/pianoSquadra'
 import DomandeIngresso from '../components/DomandeIngresso'
+import { useRegole, ricaricaRegole } from '../lib/regole'
 
 const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white'
 // L'admin è prima di tutto un atleta: in squadra compare come tale
 const RUOLI = { atleta: 'Atleta', genitore: 'Genitore', coach: 'Coach', admin: 'Atleta (admin)' }
 const MIGRAZIONE = 'Manca un aggiornamento del database: esegui supabase/11_migrazione_fase11_gestione_squadra.sql e 12_migrazione_fase12_richieste_admin.sql nell\'SQL Editor di Supabase.'
 const messaggio = (error) => (/function|schema cache/i.test(error.message) ? MIGRAZIONE : error.message)
+
+// Mini pannello del coach: accende o spegne ciò che la sua squadra vede (oggi: la difficoltà automatica)
+function CosaVedonoGliAtleti({ squadra }) {
+  const { puo } = useRegole()
+  const appiattita = !puo('difficolta') // spenta dall'admin per tutta l'app
+  const [acceso, setAcceso] = useState(null)
+  const [errore, setErrore] = useState('')
+  const valore = acceso ?? puo('c_difficolta')
+
+  async function cambia() {
+    const nuovo = !valore
+    setAcceso(nuovo)
+    setErrore('')
+    const { error } = await supabase.rpc('imposta_funzione_squadra', { p_squadra: squadra.id, p_chiave: 'c_difficolta', p_valore: nuovo })
+    if (error) {
+      setAcceso(!nuovo)
+      return setErrore(/function|schema cache/i.test(error.message) ? 'Manca un aggiornamento del database (migrazione 35).' : error.message)
+    }
+    ricaricaRegole()
+  }
+
+  return (
+    <div className="bg-white rounded-3xl p-5 shadow-card mb-3">
+      <p className="font-bold">Cosa vede la squadra</p>
+      <button type="button" role="switch" aria-checked={valore} onClick={cambia} disabled={appiattita}
+        className="cliccabile w-full flex items-center justify-between gap-3 min-h-[48px] mt-2 text-left disabled:opacity-50">
+        <span>
+          <span className="block font-semibold">Difficoltà dell'allenamento</span>
+          <span className="block text-xs text-slate-500">
+            {appiattita ? 'Spenta dall\'amministratore per tutta l\'app.' : 'Il voto da 1 a 10 calcolato in automatico dal piano.'}
+          </span>
+        </span>
+        <span className={`shrink-0 w-12 h-7 rounded-full p-0.5 transition-colors ${valore && !appiattita ? 'bg-blue-600' : 'bg-slate-300'}`}>
+          <span className={`block w-6 h-6 rounded-full bg-white shadow transition-transform ${valore && !appiattita ? 'translate-x-5' : ''}`} />
+        </span>
+      </button>
+      {errore && <p className="text-sm text-white bg-red-600 rounded-lg px-3 py-2 mt-2">{errore}</p>}
+    </div>
+  )
+}
 
 // Impostazioni della squadra: visibili solo ad admin e coach.
 // Il coach vede chi c'è in squadra, aggiunge persone (per nome o email) e le toglie.
@@ -89,6 +130,8 @@ export default function Impostazioni() {
           <>
             {errore && <p className="text-sm text-white bg-red-600 rounded-lg px-3 py-2 mb-3">{errore}</p>}
             {ok && <p className="text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2 mb-3">{ok}</p>}
+
+            <CosaVedonoGliAtleti squadra={squadra} />
 
             <DomandeIngresso squadra={squadra} onCambio={caricaMembri} />
 
