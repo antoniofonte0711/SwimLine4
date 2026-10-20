@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { useCarrello, filePerLavoro } from '../context/CarrelloContext'
 import { aggiungiInCoda, erroreDiRete } from '../lib/codaOffline'
+import { campiMedia } from '../lib/media'
 
 // La lista della giornata: qui vedi tutto quello che hai aggiunto e salvi in un colpo solo
 export default function CarrelloCard({ giorno, onSalvato }) {
@@ -57,6 +58,7 @@ export default function CarrelloCard({ giorno, onSalvato }) {
         ripetizioni: v.ripetizioni,
         stile: v.stile,
         passaggi: v.passaggi,
+        ...(v.media ? campiMedia(v.media) : {}),
         data_allenamento: giorno,
         video_url,
         created_at: new Date().toISOString(),
@@ -110,6 +112,7 @@ export default function CarrelloCard({ giorno, onSalvato }) {
           <div>
             <p className="font-semibold">{v.tipo_lavoro} · {v.ripetizioni}×{v.distanza} m {v.stile} {v.conVideo && '🎥'}</p>
             {v.passaggi.length > 0 && <p className="text-xs text-slate-500">{v.passaggi.map((p) => p || '–').join(' · ')}</p>}
+            {v.media && <p className="text-xs text-slate-500">Media {v.media}</p>}
           </div>
           <div className="flex items-center gap-1 shrink-0">
             <button onClick={() => sposta(v.id, -1)} disabled={idx === 0} aria-label="Sposta su" className="w-8 h-8 rounded-full bg-gray-100 text-slate-600 font-bold disabled:opacity-30">↑</button>

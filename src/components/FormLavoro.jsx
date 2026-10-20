@@ -69,6 +69,12 @@ export default function FormLavoro({ titolo }) {
       passaggi.push(t)
     }
 
+    const media = normalizzaTempo(f.media || '')
+    if (media && !tempoValido(media)) {
+      setErrore(`Tempo medio: ${ERRORE_TEMPO}`)
+      return
+    }
+
     const id = crypto.randomUUID()
     if (f.file) filePerLavoro.set(id, f.file)
     aggiungi({
@@ -78,6 +84,7 @@ export default function FormLavoro({ titolo }) {
       ripetizioni: n,
       stile: f.stile,
       passaggi,
+      media,
       conVideo: !!f.file,
     })
     setF({ ...BASE, tipo_lavoro: f.tipo_lavoro, distanza: f.distanza, ripetizioni: f.ripetizioni, stile: f.stile })
@@ -120,6 +127,20 @@ export default function FormLavoro({ titolo }) {
           </div>
         ))}
       </div>
+
+      {f.media === undefined ? (
+        <button type="button" onClick={() => setF({ ...f, media: '' })}
+          className="cliccabile min-h-[44px] mb-3 -mt-2 text-sm font-semibold text-blue-600 text-left">
+          Non ricordo tutti i tempi: scrivo la media
+        </button>
+      ) : (
+        <div className="mb-4 -mt-2">
+          <InputTempo etichetta="Tempo medio (conta come un tempo normale)" value={f.media} vuotoOk
+            onChange={(v) => setF({ ...f, media: v })} />
+          <button type="button" onClick={() => setF({ ...f, media: undefined })}
+            className="cliccabile min-h-[44px] text-xs font-bold text-slate-500">Togli la media</button>
+        </div>
+      )}
 
       {VIDEO_ATTIVI && <>
       <label className="block text-xs text-slate-500 mb-1">Video (facoltativo, finisce anche nella sezione Video)</label>
