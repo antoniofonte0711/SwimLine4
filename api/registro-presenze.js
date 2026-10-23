@@ -27,12 +27,12 @@ function lavoro(r) {
 
 function csvAllenamenti(lista) {
   const max = Math.max(1, ...lista.map((a) => (a.righe || []).length))
-  const testa = ['Giorno', 'Titolo', 'Metri', ...Array.from({ length: max }, (_, i) => `Lavoro ${i + 1}`)]
+  const testa = ['Giorno', 'Gruppo', 'Titolo', 'Metri', ...Array.from({ length: max }, (_, i) => `Lavoro ${i + 1}`)]
   const righe = lista.map((a) => {
     const [y, m, d] = a.data.split('-')
     const giorno = `${GG[new Date(Date.UTC(y, m - 1, d)).getUTCDay()]} ${d}/${m}/${y}`
     const metri = (a.righe || []).reduce((s, r) => s + (Number(r.distanza) || 0) * (Number(r.ripetizioni) || 1), 0)
-    return [giorno, a.titolo || '', metri, ...(a.righe || []).map(lavoro)]
+    return [giorno, a.gruppo || '', a.titolo || '', metri, ...(a.righe || []).map(lavoro)]
   })
   return [testa, ...righe].map((r) => r.map(csv).join(',')).join('\n')
 }
