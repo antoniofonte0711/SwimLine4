@@ -346,9 +346,20 @@ export function DettaglioSquadra({ dati, ricarica, squadraId, onIndietro }) {
   )
 }
 
-// Coach del gruppo e società a cui appartiene: si cambiano da qui
+// Nome, coach del gruppo e società a cui appartiene: si cambiano da qui
 function CoachESocieta({ dati, squadra, coach, ricarica }) {
   const [esito, setEsito] = useState('')
+  const [nome, setNome] = useState(squadra.nome)
+  useEffect(() => setNome(squadra.nome), [squadra.nome])
+
+  async function rinomina(e) {
+    e.preventDefault()
+    if (!nome.trim() || nome.trim() === squadra.nome) return setNome(squadra.nome)
+    const { error } = await supabase.rpc('admin_rinomina_squadra', { p_squadra: squadra.id, p_nome: nome })
+    setEsito(error ? 'Errore: ' + error.message : 'Salvato')
+    if (error) setNome(squadra.nome)
+    ricarica()
+  }
   const persone = dati.persone.filter((p) => p.role !== 'genitore').sort((a, b) => nomeDi(a).localeCompare(nomeDi(b)))
   const allena = (id) => dati.squadre.find((s) => s.coach_id === id && s.id !== squadra.id)
 
@@ -371,8 +382,16 @@ function CoachESocieta({ dati, squadra, coach, ricarica }) {
 
   const campo = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 text-[15px] font-semibold'
   return (
-    <Scheda titolo="Coach e società" azioni={<Salvato stato={esito} />}
+    <Scheda titolo="Nome, coach e società" azioni={<Salvato stato={esito} />}
       nota={`Gruppo creato il ${new Date(squadra.created_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}. Entrando come coach lo vedi esattamente come lo vede lui.`}>
+      <form onSubmit={rinomina} className="mb-3">
+        <label className="block text-sm font-semibold text-slate-600" htmlFor="nome-gruppo">Nome del gruppo</label>
+        <div className="flex gap-2 mt-1">
+          <input id="nome-gruppo" value={nome} onChange={(e) => setNome(e.target.value)} maxLength={60} className={campo} />
+          <button type="submit" disabled={!nome.trim() || nome.trim() === squadra.nome}
+            className="shrink-0 min-h-[46px] rounded-2xl px-4 font-bold text-white bg-blue-600 disabled:opacity-40">Cambia nome</button>
+        </div>
+      </form>
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="block text-sm font-semibold text-slate-600">Coach del gruppo
           <select value={coach?.id || ''} onChange={(e) => cambiaCoach(e.target.value)} className={campo + ' mt-1'}>
