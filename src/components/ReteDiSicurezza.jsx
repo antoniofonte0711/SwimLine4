@@ -17,9 +17,12 @@ export default class ReteDiSicurezza extends Component {
   render() {
     if (!this.state.errore) return this.props.children
     return (
-      <div role="alert" className="min-h-screen flex items-center justify-center p-6 bg-bordo">
-        <div className="bg-white rounded-3xl p-6 max-w-sm w-full text-center shadow-card">
-          <p className="font-display text-2xl font-extrabold text-abisso mb-2">Ops, qualcosa non va</p>
+      <div role="alert" className="min-h-screen flex items-center justify-center p-6 bg-[#0a3fbf]">
+        <div className="bg-white rounded-[28px] p-7 max-w-sm w-full text-center shadow-[0_24px_60px_rgba(4,26,77,0.35)]">
+          <p className="font-display text-lg font-extrabold text-abisso">
+            Swim<span className="font-semibold text-blue-500">Line4</span>
+          </p>
+          <p className="font-display text-2xl font-extrabold text-abisso mt-3 mb-2">Ops, un tuffo andato male!</p>
           <p className="text-[15px] text-slate-600 mb-5">
             Questa pagina ha avuto un problema. L'abbiamo già segnalato: non hai perso i dati salvati.
           </p>
