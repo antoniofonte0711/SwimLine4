@@ -9,6 +9,7 @@ import { ricaricaTipiLavoro, useTipiLavoro } from '../lib/useTipiLavoro'
 import PiuStili from './PiuStili'
 import { RIGA_VUOTA, STILI_COACH, abbinaTempi, addGiorni, blocchiPiano, metriPiano, minutiPiano, perGiro, riassuntoVarianti } from '../lib/pianoSquadra'
 import { normalizzaRipartenza, ripartenzaValida } from '../lib/tempo'
+import { caselleDiRiga, haTratti, pezziDiRiga, ripetizioniDiRiga, trattiPuliti } from '../lib/varianti'
 import { useRegole } from '../lib/regole'
 import PianoCard from './PianoCard'
 import Difficolta from './Difficolta'
@@ -96,6 +97,84 @@ function Scelte({ titolo, valori, valore, onScegli, testo = (v) => v, tipoCampo 
           <button type="button" onClick={conferma} className="shrink-0 min-h-[46px] px-4 rounded-2xl bg-blue-600 text-white font-bold">OK</button>
         </div>
       )}
+    </div>
+  )
+}
+
+// Vasche da cronometrare: per ogni ripetizione il coach tocca i pezzi che contano per i tempi
+// (nel misto i 4 stili, negli altri stili le vasche). L'atleta poi scrive solo quei tempi.
+function VascheDaCronometrare({ r, rip, onCambia }) {
+  const misti = (j) => (ripetizioniDiRiga(r)[j]?.stile || r.stile) === 'Misti'
+  const ripetizioni = Array.from({ length: rip }, (_, j) => j)
+  if (!ripetizioni.some((j) => pezziDiRiga(r, j).length)) return null
+  if (!r.tratti) {
+    return (
+      <button type="button" onClick={() => onCambia({ vasca: 25, scelte: [] })}
+        className="cliccabile w-full min-h-[48px] mb-4 rounded-2xl text-sm font-bold text-blue-600 bg-schiuma">
+        Scegli le vasche da cronometrare (es. un 50 forte nel 200 misto)
+      </button>
+    )
+  }
+  const scelte = r.tratti.scelte || []
+  const tocca = (j, k) => {
+    const lista = Array.from({ length: rip }, (_, x) => [...(scelte[x] || [])])
+    lista[j] = lista[j].includes(k) ? lista[j].filter((x) => x !== k) : [...lista[j], k].sort((a, b) => a - b)
+    onCambia({ ...r.tratti, scelte: lista })
+  }
+  // 1ª ripetizione → 1° pezzo, 2ª → 2°…: il caso del misto con uno stile forte diverso ogni volta
+  const aScalare = () => onCambia({ ...r.tratti, scelte: ripetizioni.map((j) => (pezziDiRiga(r, j).length ? [j % pezziDiRiga(r, j).length] : [])) })
+  const anteprima = caselleDiRiga({ ...r, ripetizioni: rip })
+  return (
+    <div className="bg-gray-50 rounded-2xl p-3 mb-4">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-semibold text-slate-600">Vasche da cronometrare</p>
+        <button type="button" onClick={() => onCambia(undefined)} className="text-xs font-semibold text-red-600 px-2 min-h-[36px]">Togli</button>
+      </div>
+      <p className="text-xs text-slate-500 mb-2">
+        Tocca i pezzi di cui vuoi il tempo. Nel misto l'ordine è delfino, dorso, rana, stile; le vasche vicine fanno un tratto solo.
+      </p>
+      {ripetizioni.some((j) => !misti(j)) && (
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-xs text-slate-500">Vasca</span>
+          {[25, 50].map((v) => (
+            <Pillola key={v} attiva={(Number(r.tratti.vasca) || 25) === v} onClick={() => onCambia({ ...r.tratti, vasca: v, scelte: [] })}>{v} m</Pillola>
+          ))}
+        </div>
+      )}
+      <div className="space-y-2">
+        {ripetizioni.map((j) => {
+          const pezzi = pezziDiRiga(r, j)
+          return (
+            <div key={j} className="flex items-start gap-2">
+              <span className="w-8 shrink-0 pt-3 text-sm font-bold text-slate-500">{j + 1}ª</span>
+              {pezzi.length ? (
+                <div className={misti(j) ? 'flex-1 grid grid-cols-4 gap-1.5' : 'flex flex-wrap gap-1.5'}>
+                  {pezzi.map((p, k) => {
+                    const attiva = (scelte[j] || []).includes(k)
+                    return (
+                      <button key={k} type="button" onClick={() => tocca(j, k)} aria-pressed={attiva}
+                        aria-label={`Ripetizione ${j + 1}: ${misti(j) ? `${p.distanza} m ${p.nome}` : `vasca ${k + 1}`}`}
+                        className={`cliccabile min-h-[44px] min-w-[44px] px-1.5 rounded-xl text-[13px] font-bold transition active:scale-95 ${
+                          attiva ? 'bg-blue-600 text-white' : 'bg-white text-slate-600 border border-slate-200'
+                        }`}>
+                        {misti(j) ? p.nome : k + 1}
+                      </button>
+                    )
+                  })}
+                </div>
+              ) : <span className="pt-3 text-xs text-slate-400">non si divide</span>}
+            </div>
+          )
+        })}
+      </div>
+      {rip > 1 && (
+        <button type="button" onClick={aScalare} className="cliccabile min-h-[44px] mt-2 text-sm font-semibold text-blue-600">
+          Uno diverso per ripetizione (1ª il primo, 2ª il secondo…)
+        </button>
+      )}
+      <p className="text-xs text-slate-500 mt-2">
+        {anteprima.length ? `Tempi da scrivere: ${anteprima.map((c) => c.breve).join(' · ')}` : 'Nessuna vasca scelta: si scrive il tempo di ogni ripetizione intera.'}
+      </p>
     </div>
   )
 }
@@ -206,6 +285,8 @@ function FoglioLavoro({ r, i, n, inSerie, squadraId, cambia, cambiaTipo, onSu, o
           </button>
         ))}
 
+        {!inSerie && <VascheDaCronometrare r={r} rip={rip} onCambia={(v) => cambia(i, 'tratti', v)} />}
+
         <InputRipartenza etichetta="Ripartenza (facoltativa)" value={r.ripartenza} onChange={(v) => cambia(i, 'ripartenza', v)} />
 
         {!altro ? (
@@ -261,7 +342,7 @@ function FoglioLavoro({ r, i, n, inSerie, squadraId, cambia, cambiaTipo, onSu, o
 // Un lavoro in una riga leggibile ("4 × 400 Stile libero", sotto il tipo per esteso): toccandolo si apre il pannello,
 // il cestino a destra lo toglie subito (si può annullare)
 function RigaBreve({ r, onApri, onTogli, maniglia }) {
-  const sotto = [riassuntoVarianti(r), r.ripartenza && `partenza ${r.ripartenza}`, r.note].filter(Boolean).join(' · ')
+  const sotto = [riassuntoVarianti(r), haTratti(r) && `⏱ ${caselleDiRiga(r).map((c) => c.breve).join(', ')}`, r.ripartenza && `partenza ${r.ripartenza}`, r.note].filter(Boolean).join(' · ')
   const descrizione = `${Number(r.ripetizioni) > 1 ? `${r.ripetizioni} × ` : ''}${r.distanza} ${r.stile}`
   return (
     <div className="flex items-center gap-1">
@@ -672,6 +753,8 @@ export default function EditorAllenamento({ squadra, giorno, onChiudi }) {
       // stile e nota di ogni ripetizione (non nelle serie a giri), tagliati al numero di ripetizioni attuale
       stili: perGiro(r) > 1 ? soloScritte((r.stili || []).slice(0, perGiro(r))) : null,
       note_rip: perGiro(r) > 1 ? soloScritte((r.note_rip || []).map((x) => (x || '').trim()).slice(0, perGiro(r))) : null,
+      // vasche da cronometrare (non nelle serie a giri): solo i pezzi che esistono ancora dopo le modifiche
+      tratti: trattiPuliti(r),
       ...(r.serie && {
         serie: {
           id: r.serie.id, giri: r.serie.giri, recupero: r.serie.recupero || null,

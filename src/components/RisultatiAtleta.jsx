@@ -6,7 +6,7 @@ import InputTempo from './InputTempo'
 import { coloreLavoro } from '../lib/lavori'
 import { blocchiPiano, chiaveRisultato as chiaveRiga, giriSerie, haVarianti, perGiro, ripartenzeDiRiga, ripetizioniDiRiga } from '../lib/pianoSquadra'
 import { aggiungiInCoda, erroreDiRete, leggiCoda, rimuoviDaCoda } from '../lib/codaOffline'
-import { distribuisci, gruppiPerStile, raccogli } from '../lib/varianti'
+import { caselleDiRiga, distribuisci, gruppiPerStile, haTratti, raccogli } from '../lib/varianti'
 import { ERRORE_TEMPO_BREVE, erroreTempoImpossibile, normalizzaTempo, tempoPlausibile, tempoValido } from '../lib/tempo'
 
 // Il coach vede il piano del giorno e scrive i risultati di ogni passaggio per un atleta.
@@ -46,7 +46,7 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
         setValori(righe.map((r, i) => {
           const gruppi = gruppiPerStile(r)
           const trovate = gruppi.map((g) => {
-            const t = lista.find((e) => !usati.has(e.id) && chiaveRiga(e) === chiaveRiga({ ...r, stile: g.stile }))
+            const t = lista.find((e) => !usati.has(e.id) && chiaveRiga(e) === chiaveRiga({ ...r, stile: g.stile, distanza: g.distanza }))
             if (t) usati.add(t.id)
             return t
           })
@@ -70,7 +70,7 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
   const usatiOra = new Set()
   const gruppiRighe = righe.map(gruppiPerStile)
   const perStile = righe.map((r, i) => gruppiRighe[i].map((g) => {
-    const t = esistenti.find((e) => !usatiOra.has(e.id) && chiaveRiga(e) === chiaveRiga({ ...r, stile: g.stile }))
+    const t = esistenti.find((e) => !usatiOra.has(e.id) && chiaveRiga(e) === chiaveRiga({ ...r, stile: g.stile, distanza: g.distanza }))
     if (t) usatiOra.add(t.id)
     return t || null
   }))
@@ -90,7 +90,7 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
   // Tempo medio (per chi non ricorda i singoli passaggi): uno per ogni stile del lavoro
   const mediaDi = (i, r, conDistanza = false) => gruppiRighe[i].map((g, k) => {
     const chiave = `${i}-${k}`
-    const nome = (conDistanza ? ` ${r.distanza} m` : '') + (gruppiRighe[i].length > 1 ? ` · ${g.stile}` : '')
+    const nome = (conDistanza || haTratti(r) ? ` ${g.distanza} m` : '') + (gruppiRighe[i].length > 1 ? ` · ${g.stile}` : '')
     return chiave in medie ? (
       <div key={chiave} className="mt-3">
         <InputTempo etichetta={`Tempo medio${nome}`} value={medie[chiave] || ''} vuotoOk
@@ -111,13 +111,14 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
     setOk('')
     const lavori = []
     for (let i = 0; i < righe.length; i++) {
-      const n = Number(righe[i].ripetizioni) || 1
+      const caselle = caselleDiRiga(righe[i])
+      const n = caselle.length
       const pulito = []
       for (let j = 0; j < n; j++) {
         const t = normalizzaTempo(valori[i]?.[j] || '')
         if (!t) { pulito.push(''); continue }
         if (!tempoValido(t)) return setErrore(`Lavoro ${i + 1}, passaggio ${j + 1}: ${ERRORE_TEMPO_BREVE}`)
-        if (!tempoPlausibile(t, righe[i].distanza)) return setErrore(`Lavoro ${i + 1}, passaggio ${j + 1}: ${erroreTempoImpossibile(righe[i].distanza)}`)
+        if (!tempoPlausibile(t, caselle[j].distanza)) return setErrore(`Lavoro ${i + 1}, passaggio ${j + 1}: ${erroreTempoImpossibile(caselle[j].distanza)}`)
         pulito.push(t)
       }
       // i vuoti in fondo non servono
@@ -142,7 +143,7 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
       // l'atleta aggiunge i lavori nuovi e corregge quelli riaperti con "Correggi"
       const nuove = pezzi.filter((x) => !x.riga && (x.passaggi.some(Boolean) || x.media)).map(({ r, g, passaggi, media }) => ({
         ...(media ? campiMedia(media) : {}),
-        id: crypto.randomUUID(), atleta_id: atletaId, tipo_lavoro: r.tipo_lavoro, distanza: Number(r.distanza),
+        id: crypto.randomUUID(), atleta_id: atletaId, tipo_lavoro: r.tipo_lavoro, distanza: g.distanza,
         ripetizioni: g.reps.length, stile: g.stile, passaggi, data_allenamento: giorno,
         created_at: new Date().toISOString(),
       }))
@@ -200,7 +201,7 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
       const { error } = riga
         ? await supabase.from('allenamenti').update({ passaggi, ...aggiornaMedia(riga, media), ripetizioni: g.reps.length }).eq('id', riga.id)
         : await supabase.from('allenamenti').insert({
-            atleta_id: atletaId, tipo_lavoro: r.tipo_lavoro, distanza: Number(r.distanza),
+            atleta_id: atletaId, tipo_lavoro: r.tipo_lavoro, distanza: g.distanza,
             ripetizioni: g.reps.length, stile: g.stile, passaggi, ...(media ? campiMedia(media) : {}), data_allenamento: giorno,
           })
       if (error) {
@@ -268,21 +269,25 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
           )
         }
         const { riga: r, indice: i } = b
-        const n = Math.min(30, Number(r.ripetizioni) || 1)
+        // con le vasche scelte dal coach si scrive un tempo per ogni tratto, non per ogni ripetizione
+        const caselle = caselleDiRiga(r)
+        const tratti = haTratti(r)
+        const n = tratti ? caselle.length : Math.min(30, Number(r.ripetizioni) || 1)
         return (
           <div key={i} className="bg-white rounded-3xl p-4 mb-3 shadow-card">
             <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${coloreLavoro(r.tipo_lavoro)}`}>{r.tipo_lavoro}</span>
             <span className="ml-1.5"><PiuStili r={r} /></span>
-            <span className="text-sm text-slate-600 ml-2">{n}×{r.distanza} m {r.stile}</span>
+            <span className="text-sm text-slate-600 ml-2">{Number(r.ripetizioni) || 1}×{r.distanza} m {r.stile}</span>
+            {tratti && <p className="text-xs text-blue-700 mt-1">⏱ Tempi solo delle vasche scelte dal coach</p>}
             {ripartenzeDiRiga(r).length > 0 && <span className="text-xs text-slate-500 ml-2">↻ ripartenza {ripartenzeDiRiga(r).join(' · ')}</span>}
             {r.note && <p className="text-xs text-slate-500 mt-1">{r.note}</p>}
             {fisso(i) ? <Salvati i={i} /> : chiuso(i) ? <Apri i={i} n={n} /> : <><div className="grid grid-cols-2 gap-3 mt-3">
               {Array.from({ length: n }, (_, j) => (
-                <InputTempo key={j} etichetta={haVarianti(r) ? `${j + 1}ª · ${ripetizioniDiRiga(r)[j].stile}${ripetizioniDiRiga(r)[j].nota ? ` · ${ripetizioniDiRiga(r)[j].nota}` : ''}` : `Passaggio ${j + 1}`} value={valori[i]?.[j] || ''} vuotoOk
+                <InputTempo key={j} etichetta={tratti ? `${caselle[j].etichetta}${caselle[j].nota ? ` · ${caselle[j].nota}` : ''}` : haVarianti(r) ?`${j + 1}ª · ${ripetizioniDiRiga(r)[j].stile}${ripetizioniDiRiga(r)[j].nota ? ` · ${ripetizioniDiRiga(r)[j].nota}` : ''}` : `Passaggio ${j + 1}`} value={valori[i]?.[j] || ''} vuotoOk
                   onChange={(v) => cambia(i, j, v)} />
               ))}
             </div>
-            {mediaDi(i, r)}</>}
+            {!tratti && mediaDi(i, r)}</>}
           </div>
         )
       })}
