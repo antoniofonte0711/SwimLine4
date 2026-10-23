@@ -291,7 +291,7 @@ function FoglioLavoro({ r, i, n, inSerie, squadraId, cambia, cambiaTipo, onSu, o
 
         {!altro ? (
           <button type="button" onClick={() => setAltro(true)} className="min-h-[44px] mt-2 text-sm font-semibold text-blue-600">
-            + Note, tempo in minuti, ripartenze diverse
+            + Note, durata del lavoro, ripartenze diverse
           </button>
         ) : (
           <div className="mt-3 space-y-3">
@@ -301,7 +301,7 @@ function FoglioLavoro({ r, i, n, inSerie, squadraId, cambia, cambiaTipo, onSu, o
             </div>
             {!inSerie && (
               <div>
-                <label className="block text-xs text-slate-500 mb-1">Tempo (min)</label>
+                <label className="block text-xs text-slate-500 mb-1">Durata lavoro (min)</label>
                 <input type="number" min="1" step="1" inputMode="numeric" value={r.minuti ?? ''} placeholder="Es. 10"
                   onChange={(e) => cambia(i, 'minuti', e.target.value)} className={CAMPO} />
               </div>
@@ -447,12 +447,15 @@ function SerieGiri({ chiave, serie, righe, annulli, cambiaSerie, cambiaGiri, cam
         <Maniglia controlli={controlli} />
         <p className="text-blue-700 text-sm font-bold">Serie a giri</p>
       </div>
-      <div className="grid grid-cols-[8.5rem_1fr_1fr] gap-2 mb-1 px-1">
-        <CampoGiri giri={giri} annulli={annulli} onGiri={(n) => cambiaGiri(serie.id, n)} />
+      {/* sul telefono i giri stanno da soli in alto, recupero e durata sotto a metà larghezza */}
+      <div className="grid grid-cols-2 sm:grid-cols-[8.5rem_1fr_1fr] gap-2 mb-1 px-1">
+        <div className="col-span-2 max-w-[12rem] sm:col-span-1 sm:max-w-none">
+          <CampoGiri giri={giri} annulli={annulli} onGiri={(n) => cambiaGiri(serie.id, n)} />
+        </div>
         <InputRipartenza etichetta="Recupero tra i giri" placeholder={'Es. 20"'} value={serie.recupero}
           onChange={(v) => cambiaSerie(serie.id, 'recupero', v)} />
         <div>
-          <label className="block text-xs text-slate-500 mb-1">Tempo (min)</label>
+          <label className="block text-xs text-slate-500 mb-1">Durata (min)</label>
           <input type="number" min="1" step="1" inputMode="numeric" value={serie.minuti ?? ''} placeholder="Es. 45"
             onChange={(e) => cambiaSerie(serie.id, 'minuti', e.target.value)} className={CAMPO} />
         </div>
