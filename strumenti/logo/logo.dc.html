@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Logo SwimLine4 con l'acqua</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&amp;family=Figtree:wght@500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#2563eb}a:hover{color:#1d4ed8}
+</style>
+</helmet>
+<div style="width: 1280px; height: 1300px; box-sizing: border-box; padding: 56px 64px; background: #eef2f8; font-family: Figtree, system-ui, sans-serif; color: #0a1a2f; display: flex; flex-direction: column; gap: 40px">
+
+  <!-- Logo completo: la corsia 4 vista dall'alto -->
+  <svg width="1152" height="806" viewBox="0 0 1000 700" role="img" aria-label="SwimLine 4: corsia vista dall'alto, il 4 disegnato dalla linea sul fondo" style="border-radius: 32px; display: block">
+    <defs>
+      <clipPath id="logoBordo"><rect width="1000" height="700" rx="28"></rect></clipPath>
+      <linearGradient id="logoAcqua" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#0a3fbf"></stop>
+        <stop offset="0.55" stop-color="#0b5fe0"></stop>
+        <stop offset="1" stop-color="#1aa3e8"></stop>
+      </linearGradient>
+      <!-- riflessi: reticolo di luce netto (rumore ridotto a una banda stretta) -->
+      <filter id="logoRete" x="0" y="0" width="100%" height="100%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.011 0.016" numOctaves="2" seed="7" result="r"></feTurbulence>
+        <feColorMatrix in="r" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 -2.6 1.55"></feColorMatrix>
+        <feComponentTransfer><feFuncA type="table" tableValues="0 0 0 0 0 0.95 0 0 0 0"></feFuncA></feComponentTransfer>
+        <feGaussianBlur stdDeviation="0.7"></feGaussianBlur>
+      </filter>
+      <!-- lo stesso reticolo allargato e sfocato: l'alone della luce -->
+      <filter id="logoAlone" x="0" y="0" width="100%" height="100%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.011 0.016" numOctaves="2" seed="7" result="r"></feTurbulence>
+        <feColorMatrix in="r" type="matrix" values="0 0 0 0 0.85  0 0 0 0 0.95  0 0 0 0 1  0 0 0 -2.6 1.55"></feColorMatrix>
+        <feComponentTransfer><feFuncA type="table" tableValues="0 0 0 0 0.12 0.75 0.12 0 0 0"></feFuncA></feComponentTransfer>
+        <feGaussianBlur stdDeviation="5"></feGaussianBlur>
+      </filter>
+      <filter id="logoRete2" x="0" y="0" width="100%" height="100%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.014 0.01" numOctaves="2" seed="23" result="r"></feTurbulence>
+        <feColorMatrix in="r" type="matrix" values="0 0 0 0 0.8  0 0 0 0 0.95  0 0 0 0 1  0 0 0 -2.6 1.55"></feColorMatrix>
+        <feComponentTransfer><feFuncA type="table" tableValues="0 0 0 0 0.02 0.6 0.02 0 0 0"></feFuncA></feComponentTransfer>
+        <feGaussianBlur stdDeviation="1.2"></feGaussianBlur>
+      </filter>
+      <radialGradient id="logoLuce" cx="0.5" cy="0.38" r="0.6">
+        <stop offset="0" stop-color="#ffffff" stop-opacity="0.2"></stop>
+        <stop offset="1" stop-color="#ffffff" stop-opacity="0"></stop>
+      </radialGradient>
+      <filter id="logoSottAcqua" x="-20%" y="-5%" width="140%" height="110%"><feGaussianBlur stdDeviation="3.2"></feGaussianBlur></filter>
+      <filter id="logoOmbraCorda" x="-50%" y="-5%" width="200%" height="110%"><feGaussianBlur stdDeviation="7"></feGaussianBlur></filter>
+      <linearGradient id="logoGrosso" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7a0d08"></stop><stop offset="0.3" stop-color="#d42a1e"></stop><stop offset="0.48" stop-color="#ff6a55"></stop><stop offset="0.7" stop-color="#d42a1e"></stop><stop offset="1" stop-color="#7a0d08"></stop></linearGradient>
+      <linearGradient id="logoGbianco" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8d9bb0"></stop><stop offset="0.3" stop-color="#eef1f6"></stop><stop offset="0.48" stop-color="#ffffff"></stop><stop offset="0.7" stop-color="#eef1f6"></stop><stop offset="1" stop-color="#8d9bb0"></stop></linearGradient>
+      <linearGradient id="logoGnotte" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#0b1550"></stop><stop offset="0.3" stop-color="#1b2f8f"></stop><stop offset="0.48" stop-color="#3f5bd0"></stop><stop offset="0.7" stop-color="#1b2f8f"></stop><stop offset="1" stop-color="#0b1550"></stop></linearGradient>
+      <linearGradient id="logoGblu" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#12308a"></stop><stop offset="0.3" stop-color="#2a62de"></stop><stop offset="0.48" stop-color="#6b9bff"></stop><stop offset="0.7" stop-color="#2a62de"></stop><stop offset="1" stop-color="#12308a"></stop></linearGradient>
+      <filter id="logoOmbra" x="-10%" y="-30%" width="120%" height="160%"><feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#041a4d" flood-opacity="0.55"></feDropShadow></filter>
+    </defs>
+    <g clip-path="url(#logoBordo)">
+      <rect width="1000" height="700" fill="url(#logoAcqua)"></rect>
+
+      <!-- sul fondo: la linea continua fino alla T, il 4 nasce dalla linea (stessa asta) -->
+      <g fill="#041d57" stroke="#041d57" opacity="0.8" filter="url(#logoSottAcqua)">
+        <rect x="482" y="-20" width="36" height="660" rx="6" stroke="none"></rect>
+        <rect x="428" y="628" width="144" height="28" rx="6" stroke="none"></rect>
+        <line x1="500" y1="292" x2="368" y2="472" stroke-width="36" stroke-linecap="round" fill="none"></line>
+        <rect x="352" y="458" width="210" height="36" rx="6" stroke="none"></rect>
+      </g>
+
+      <!-- ombra delle corde proiettata sul fondo -->
+      <g fill="#041a4d" opacity="0.22" filter="url(#logoOmbraCorda)">
+        <rect x="300" y="-20" width="30" height="740" rx="10"></rect>
+        <rect x="720" y="-20" width="30" height="740" rx="10"></rect>
+      </g>
+
+      <!-- riflessi della luce sul fondo -->
+      <g opacity="0.45" style="mix-blend-mode: screen"><rect x="-200" y="-200" width="1400" height="1100" filter="url(#logoAlone)"></rect></g>
+      <g opacity="0.8" style="mix-blend-mode: screen"><rect x="-200" y="-200" width="1400" height="1100" filter="url(#logoRete)"></rect></g>
+      <g opacity="0.45" style="mix-blend-mode: screen"><rect x="-200" y="-200" width="1400" height="1100" filter="url(#logoRete2)"></rect></g>
+
+      <!-- le corde: galleggianti a nervature come nella foto (rossi alle estremità, bianchi, poi blu) -->
+      <line x1="290" y1="-20" x2="290" y2="720" stroke="#0b1550" stroke-width="2" opacity="0.5"></line>
+      <line x1="710" y1="-20" x2="710" y2="720" stroke="#0b1550" stroke-width="2" opacity="0.5"></line>
+      <sc-for list="{{galleggianti}}" as="g" hint-placeholder-count="44">
+        <g transform="translate(290 {{g.y}})">
+          <path d="M-13 -7.5 L13 -7.5 L17 -5 L21 -5.5 L19 -2 L22 0 L19 2 L21 5.5 L17 5 L13 7.5 L-13 7.5 L-17 5 L-21 5.5 L-19 2 L-22 0 L-19 -2 L-21 -5.5 L-17 -5 Z" fill="url(#logoG{{g.colore}})" stroke="{{g.nervatura}}" stroke-width="1.2" stroke-linejoin="round"></path>
+          <path d="M-12 -2.2 L12 -2.2 M-12 2.2 L12 2.2" stroke="{{g.nervatura}}" stroke-width="1" opacity="0.45"></path>
+        </g>
+        <g transform="translate(710 {{g.y}})">
+          <path d="M-13 -7.5 L13 -7.5 L17 -5 L21 -5.5 L19 -2 L22 0 L19 2 L21 5.5 L17 5 L13 7.5 L-13 7.5 L-17 5 L-21 5.5 L-19 2 L-22 0 L-19 -2 L-21 -5.5 L-17 -5 Z" fill="url(#logoG{{g.colore}})" stroke="{{g.nervatura}}" stroke-width="1.2" stroke-linejoin="round"></path>
+          <path d="M-12 -2.2 L12 -2.2 M-12 2.2 L12 2.2" stroke="{{g.nervatura}}" stroke-width="1" opacity="0.45"></path>
+        </g>
+      </sc-for>
+
+      <rect width="1000" height="700" fill="url(#logoLuce)"></rect>
+
+      <text x="500" y="148" text-anchor="middle" font-family="'Cinzel Decorative', serif" font-weight="900" font-size="112" letter-spacing="2" fill="{{testo}}" filter="url(#logoOmbra)">SwimLine</text>
+    </g>
+  </svg>
+
+  <!-- Icona dell'app: la stessa corsia senza scritta, e prova delle misure vere -->
+  <section style="background: #ffffff; border-radius: 28px; box-sizing: border-box; padding: 32px 40px; display: flex; align-items: center; gap: 48px">
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 10px">
+      <svg width="240" height="240" viewBox="0 0 500 500" role="img" aria-label="Icona app: corsia 4 nell'acqua">
+        <defs>
+          <clipPath id="iconaBordo"><rect width="500" height="500" rx="110"></rect></clipPath>
+          <linearGradient id="iconaAcqua" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#0a3fbf"></stop>
+            <stop offset="0.55" stop-color="#0b5fe0"></stop>
+            <stop offset="1" stop-color="#1aa3e8"></stop>
+          </linearGradient>
+          <filter id="iconaRete" x="0" y="0" width="100%" height="100%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.011 0.016" numOctaves="2" seed="7" result="r"></feTurbulence>
+            <feColorMatrix in="r" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 -2.6 1.55"></feColorMatrix>
+            <feComponentTransfer><feFuncA type="table" tableValues="0 0 0 0 0 0.95 0 0 0 0"></feFuncA></feComponentTransfer>
+            <feGaussianBlur stdDeviation="0.7"></feGaussianBlur>
+          </filter>
+          <filter id="iconaAlone" x="0" y="0" width="100%" height="100%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.011 0.016" numOctaves="2" seed="7" result="r"></feTurbulence>
+            <feColorMatrix in="r" type="matrix" values="0 0 0 0 0.85  0 0 0 0 0.95  0 0 0 0 1  0 0 0 -2.6 1.55"></feColorMatrix>
+            <feComponentTransfer><feFuncA type="table" tableValues="0 0 0 0 0.12 0.75 0.12 0 0 0"></feFuncA></feComponentTransfer>
+            <feGaussianBlur stdDeviation="5"></feGaussianBlur>
+          </filter>
+          <radialGradient id="iconaLuce" cx="0.5" cy="0.38" r="0.6">
+            <stop offset="0" stop-color="#ffffff" stop-opacity="0.2"></stop>
+            <stop offset="1" stop-color="#ffffff" stop-opacity="0"></stop>
+          </radialGradient>
+          <filter id="iconaSottAcqua" x="-20%" y="-5%" width="140%" height="110%"><feGaussianBlur stdDeviation="3"></feGaussianBlur></filter>
+          <linearGradient id="iconaGrosso" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7a0d08"></stop><stop offset="0.3" stop-color="#d42a1e"></stop><stop offset="0.48" stop-color="#ff6a55"></stop><stop offset="0.7" stop-color="#d42a1e"></stop><stop offset="1" stop-color="#7a0d08"></stop></linearGradient>
+      <linearGradient id="iconaGbianco" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8d9bb0"></stop><stop offset="0.3" stop-color="#eef1f6"></stop><stop offset="0.48" stop-color="#ffffff"></stop><stop offset="0.7" stop-color="#eef1f6"></stop><stop offset="1" stop-color="#8d9bb0"></stop></linearGradient>
+      <linearGradient id="iconaGnotte" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#0b1550"></stop><stop offset="0.3" stop-color="#1b2f8f"></stop><stop offset="0.48" stop-color="#3f5bd0"></stop><stop offset="0.7" stop-color="#1b2f8f"></stop><stop offset="1" stop-color="#0b1550"></stop></linearGradient>
+      <linearGradient id="iconaGblu" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#12308a"></stop><stop offset="0.3" stop-color="#2a62de"></stop><stop offset="0.48" stop-color="#6b9bff"></stop><stop offset="0.7" stop-color="#2a62de"></stop><stop offset="1" stop-color="#12308a"></stop></linearGradient>
+          <filter id="iconaOmbra" x="-10%" y="-30%" width="120%" height="160%"><feDropShadow dx="0" dy="3" stdDeviation="6" flood-color="#041a4d" flood-opacity="0.6"></feDropShadow></filter>
+          <filter id="iconaOmbraCorda" x="-50%" y="-5%" width="200%" height="110%"><feGaussianBlur stdDeviation="6"></feGaussianBlur></filter>
+        </defs>
+        <g id="iconaIntera" clip-path="url(#iconaBordo)">
+          <rect width="500" height="500" fill="url(#iconaAcqua)"></rect>
+          <g fill="#041d57" stroke="#041d57" opacity="0.85" filter="url(#iconaSottAcqua)">
+            <rect x="232" y="-20" width="36" height="472" rx="6" stroke="none"></rect>
+            <rect x="178" y="440" width="144" height="26" rx="6" stroke="none"></rect>
+            <line x1="250" y1="176" x2="118" y2="340" stroke-width="36" stroke-linecap="round" fill="none"></line>
+            <rect x="102" y="326" width="210" height="36" rx="6" stroke="none"></rect>
+          </g>
+          <g fill="#041a4d" opacity="0.22" filter="url(#iconaOmbraCorda)">
+            <rect x="74" y="-20" width="30" height="540" rx="10"></rect>
+            <rect x="420" y="-20" width="30" height="540" rx="10"></rect>
+          </g>
+          <g opacity="0.45" style="mix-blend-mode: screen"><rect x="-100" y="-100" width="700" height="700" filter="url(#iconaAlone)"></rect></g>
+          <g opacity="0.8" style="mix-blend-mode: screen"><rect x="-100" y="-100" width="700" height="700" filter="url(#iconaRete)"></rect></g>
+          <line x1="64" y1="-20" x2="64" y2="520" stroke="#0b1550" stroke-width="2" opacity="0.5"></line>
+          <line x1="410" y1="-20" x2="410" y2="520" stroke="#0b1550" stroke-width="2" opacity="0.5"></line>
+          <sc-for list="{{galleggiantiIcona}}" as="g" hint-placeholder-count="32">
+            <g transform="translate(64 {{g.y}})">
+          <path d="M-13 -7.5 L13 -7.5 L17 -5 L21 -5.5 L19 -2 L22 0 L19 2 L21 5.5 L17 5 L13 7.5 L-13 7.5 L-17 5 L-21 5.5 L-19 2 L-22 0 L-19 -2 L-21 -5.5 L-17 -5 Z" fill="url(#iconaG{{g.colore}})" stroke="{{g.nervatura}}" stroke-width="1.2" stroke-linejoin="round"></path>
+          <path d="M-12 -2.2 L12 -2.2 M-12 2.2 L12 2.2" stroke="{{g.nervatura}}" stroke-width="1" opacity="0.45"></path>
+        </g>
+            <g transform="translate(410 {{g.y}})">
+          <path d="M-13 -7.5 L13 -7.5 L17 -5 L21 -5.5 L19 -2 L22 0 L19 2 L21 5.5 L17 5 L13 7.5 L-13 7.5 L-17 5 L-21 5.5 L-19 2 L-22 0 L-19 -2 L-21 -5.5 L-17 -5 Z" fill="url(#iconaG{{g.colore}})" stroke="{{g.nervatura}}" stroke-width="1.2" stroke-linejoin="round"></path>
+          <path d="M-12 -2.2 L12 -2.2 M-12 2.2 L12 2.2" stroke="{{g.nervatura}}" stroke-width="1" opacity="0.45"></path>
+        </g>
+          </sc-for>
+          <rect width="500" height="500" fill="url(#iconaLuce)"></rect>
+          <text x="250" y="112" text-anchor="middle" font-family="'Cinzel Decorative', serif" font-weight="900" font-size="74" fill="{{testo}}" filter="url(#iconaOmbra)">SwimLine</text>
+        </g>
+      </svg>
+      <span style="font-size: 14px; font-weight: 700; color: #475569">Icona app</span>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 14px">
+      <span style="font-size: 14px; font-weight: 700; color: #475569">Prova misure vere: 120 · 64 · 32 · 16 px</span>
+      <div style="display: flex; align-items: flex-end; gap: 28px">
+        <svg width="120" height="120" viewBox="0 0 500 500" role="img" aria-label="Icona a 120 pixel"><use href="#iconaIntera"></use></svg>
+        <svg width="64" height="64" viewBox="0 0 500 500" role="img" aria-label="Icona a 64 pixel"><use href="#iconaIntera"></use></svg>
+        <svg width="32" height="32" viewBox="0 0 500 500" role="img" aria-label="Icona a 32 pixel"><use href="#iconaIntera"></use></svg>
+        <svg width="16" height="16" viewBox="0 0 500 500" role="img" aria-label="Icona a 16 pixel"><use href="#iconaIntera"></use></svg>
+      </div>
+      <p style="margin: 0; font-size: 15px; line-height: 1.5; color: #334155; max-width: 560px">La linea sul fondo è continua fino alla T; il 4 nasce dalla linea stessa, sott'acqua. Galleggianti a dischi dentati come nella vasca vera: rossi alle estremità, bianchi, poi blu.</p>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"testo":{"editor":"color","default":"#ffffff","options":["#ffffff","#0a1a2f","#e8f1ff"]},"$preview":{"width":1280,"height":1300}}'>
+class Component extends DCLogic {
+  renderVals() {
+    // galleggianti uno attaccato all'altro: rossi vicino ai bordi, poi bianchi, poi blu scuro e blu alternati al bianco
+    const ROSSO = { colore: 'rosso', nervatura: '#7a0d08' };
+    const BIANCO = { colore: 'bianco', nervatura: '#8d9bb0' };
+    const NOTTE = { colore: 'notte', nervatura: '#0b1550' };
+    const BLU = { colore: 'blu', nervatura: '#12308a' };
+    const fila = (fine, rossoSopra, bianchiFino, rossoSotto) => {
+      const l = [];
+      for (let y = -6, k = 0; y <= fine; y += 16.5, k++) {
+        let c;
+        if (y < rossoSopra || y > rossoSotto) c = ROSSO;
+        else if (y < bianchiFino) c = BIANCO;
+        else c = [NOTTE, NOTTE, BIANCO, BLU, BLU, BIANCO][k % 6];
+        l.push({ y: y, colore: c.colore, nervatura: c.nervatura });
+      }
+      return l;
+    };
+    return {
+      testo: this.props.testo ?? '#ffffff',
+      galleggianti: fila(712, 120, 300, 610),
+      galleggiantiIcona: fila(512, 70, 200, 440),
+    };
+  }
+}
+</script>
+</body>
+</html>

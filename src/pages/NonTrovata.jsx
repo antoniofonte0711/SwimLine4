@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import SfondoVasca from '../components/SfondoVasca'
+import { Marchio } from '../components/Logo'
 
 // Indirizzo che non esiste (link vecchio o scritto male): stessa vasca della pagina d'ingresso, invece di una pagina bianca
 export default function NonTrovata() {
@@ -11,8 +12,8 @@ export default function NonTrovata() {
       <SfondoVasca />
 
       <div className="relative">
-        <p className="font-display text-xl font-extrabold">
-          Swim<span className="font-semibold text-sky-200">Line4</span>
+        <p className="font-display text-xl font-extrabold flex items-center justify-center gap-2">
+          <Marchio className="w-9 h-9" /><span>Swim<span className="font-semibold text-sky-200">Line4</span></span>
         </p>
         <p className="font-display text-[96px] sm:text-[120px] font-extrabold leading-none mt-2 drop-shadow-[0_4px_24px_rgba(4,26,77,0.5)]">404</p>
         <h1 className="font-display text-2xl font-extrabold mt-2">Hai sbagliato corsia!</h1>

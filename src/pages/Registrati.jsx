@@ -13,6 +13,7 @@ import { SESSI } from '../lib/categorie'
 import { VERSIONE_INFORMATIVA } from '../lib/privacy'
 import { MESSAGGIO_RUBATA, volteRubata } from '../lib/passwordRubata'
 import { registraErrore } from '../lib/registroErrori'
+import { Marchio } from '../components/Logo'
 
 export default function Registrati() {
   const [nome, setNome] = useState('')
@@ -138,9 +139,7 @@ export default function Registrati() {
       <SfondoVasca />
       <form onSubmit={handleRegister} className="w-full max-w-sm relative bg-white rounded-[28px] shadow-[0_24px_60px_rgba(4,26,77,0.35)] p-7">
         <div className="flex justify-center mb-4">
-          <div className="w-16 h-16 rounded-2xl bg-blue-600 text-white flex items-center justify-center">
-            <Icona nome="onde" className="w-8 h-8" />
-          </div>
+          <Marchio className="w-16 h-16 shadow-md" />
         </div>
         <h1 className="font-display text-[28px] font-extrabold text-abisso mb-1 text-center">SwimLine4</h1>
         <p className="text-sm text-slate-500 text-center mb-6">Crea il tuo account</p>

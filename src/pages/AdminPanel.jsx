@@ -9,6 +9,7 @@ import { contaAllenamenti, DettaglioSquadra, ElencoSquadre, useDatiSquadre } fro
 import { AttivitaUtenti, CoachDaApprovare, RegistroAccessi, TuttiUtenti } from '../components/admin/AdminUtenti'
 import { FunzioniApp, NotificheApp, Sicurezza } from '../components/admin/AdminImpostazioni'
 import { Numero, plurale, Scheda, Scheletro } from '../components/admin/ui'
+import { Marchio } from '../components/Logo'
 
 const MENU = [
   ['squadre', 'Società e gruppi', 'onde'],
@@ -85,7 +86,7 @@ export default function AdminPanel() {
         {/* il nome riporta alla pagina iniziale del Pannello */}
         <button type="button" onClick={() => vai('squadre')} aria-label="SwimLine4 Pannello, pagina iniziale"
           className="flex items-center gap-3 font-display text-[22px] font-extrabold text-left">
-          <span className="w-11 h-11 rounded-xl bg-blue-600 text-white flex items-center justify-center"><Icona nome="onde" /></span>
+          <Marchio className="w-11 h-11" />
           <span>Swim<b className="text-blue-600">Line4</b> Pannello</span>
         </button>
         <div className="flex items-center gap-2">

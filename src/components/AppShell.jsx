@@ -10,6 +10,7 @@ import { nomeRuolo } from '../lib/permessi'
 import { useTipiLavoro } from '../lib/useTipiLavoro'
 import { useInvioAutomatico } from '../lib/codaOffline'
 import { supabase } from '../lib/supabaseClient'
+import { Marchio } from './Logo'
 
 const VOCI = [
   ['home', '/dashboard', 'onde', 'Oggi'],
@@ -102,7 +103,7 @@ export default function AppShell({ titolo, attiva, indietro, giorno, onGiorno, v
           <div className="min-w-0">
             {/* il nome dell'app riporta sempre alla pagina principale, come nelle altre app */}
             <Link to="/dashboard" aria-label="SwimLine4, pagina principale"
-              className="inline-block text-[13px] font-bold text-slate-500 lg:hidden py-1 -my-1">Swim<span className="text-blue-600">Line4</span></Link>
+              className="inline-flex items-center gap-1.5 text-[13px] font-bold text-slate-500 lg:hidden py-1 -my-1"><Marchio className="w-5 h-5" /><span>Swim<span className="text-blue-600">Line4</span></span></Link>
             <h1 className="font-display text-[30px] lg:text-[40px] font-extrabold leading-tight text-abisso truncate">{titolo}</h1>
             {onGiorno && <p className="text-sm lg:text-[15px] text-slate-500 first-letter:uppercase">{dataTesto}</p>}
           </div>
@@ -197,7 +198,7 @@ export default function AppShell({ titolo, attiva, indietro, giorno, onGiorno, v
       {/* Computer: barra laterale fissa, non copre mai i contenuti */}
       <nav aria-label="Navigazione" className="hidden lg:flex fixed inset-y-0 left-0 w-[232px] flex-col gap-1 px-4 py-8 bg-white border-r border-linea z-40">
         <Link to="/dashboard" aria-label="SwimLine4, pagina principale"
-          className="cliccabile font-display text-[22px] font-extrabold text-abisso px-3 mb-6 rounded-campo">Swim<span className="text-blue-600">Line4</span></Link>
+          className="cliccabile font-display text-[22px] font-extrabold text-abisso px-3 mb-6 rounded-campo flex items-center gap-2.5"><Marchio className="w-9 h-9" /><span>Swim<span className="text-blue-600">Line4</span></span></Link>
         {voci.map(([chiave, percorso, icona, nome]) => (
           <Link key={chiave} to={percorso} aria-current={attiva === chiave ? 'page' : undefined}
             className={`cliccabile min-h-[48px] px-3 rounded-campo flex items-center gap-3 text-[15px] ${

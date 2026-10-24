@@ -1,6 +1,7 @@
 import { Link, Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import SfondoVasca from '../components/SfondoVasca'
+import { LogoCompleto } from '../components/Logo'
 
 // Cosa fa l'app, in una riga per chi la usa
 const PER_CHI = [
@@ -22,9 +23,7 @@ export default function Home() {
       <SfondoVasca />
 
       <div className="relative text-center mb-8">
-        <h1 className="font-display text-[56px] sm:text-[72px] font-extrabold leading-none drop-shadow-[0_4px_24px_rgba(4,26,77,0.5)]">
-          Swim<span className="font-semibold text-sky-200">Line4</span>
-        </h1>
+        <h1 className="flex justify-center"><LogoCompleto className="w-[min(340px,85vw)]" /></h1>
         <p className="text-white/90 mt-4 text-base font-semibold">I tuoi tempi, la tua squadra.</p>
       </div>
 
