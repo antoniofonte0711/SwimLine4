@@ -43,4 +43,12 @@ ${svg('mask', 512, 512, '0 0 500 500', conPrefisso(maskable, 'd'))}
 ${svg('fav', 64, 64, '0 0 500 500', conPrefisso(icona, 'e'))}
 </body></html>`
 fs.writeFileSync(path.join(__dirname, 'pagina.html'), html)
-console.log('pagina.html pronta')
+// una pagina per immagine (più leggera da fotografare), icone già senza angoli arrotondati
+const testa = '<!doctype html><html><head><meta charset="utf-8"><link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@900&display=block" rel="stylesheet"><style>body{margin:0}</style></head><body>'
+const dritte = (x) => x.replace(/<clipPath id="(\w+)Bordo"><rect width="500" height="500" rx="110"><\/rect><\/clipPath>/g, '<clipPath id="$1Bordo"><rect width="500" height="500"></rect></clipPath>')
+fs.mkdirSync(path.join(__dirname, 'pagine'), { recursive: true })
+for (const blocco of html.match(/<svg id="[^"]+"[\s\S]*?<\/svg>/g)) {
+  const id = blocco.match(/id="([^"]+)"/)[1]
+  fs.writeFileSync(path.join(__dirname, 'pagine', id + '.html'), testa + (id === 'logo' ? blocco.replace('<rect width="1000" height="700" rx="28"></rect></clipPath>', '<rect width="1000" height="700"></rect></clipPath>') : dritte(blocco)) + '</body></html>')
+}
+console.log('pagina.html e pagine/*.html pronte')
