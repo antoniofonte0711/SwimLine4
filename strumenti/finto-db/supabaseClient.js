@@ -159,6 +159,7 @@ const RPC = {
     tabelle.societa = (tabelle.societa || []).filter((s) => s.id !== p_id)
   },
   admin_gruppo_societa({ p_squadra, p_societa }) { const s = tabelle.squadre.find((x) => x.id === p_squadra); if (s) s.societa_id = p_societa },
+  admin_rinomina_squadra({ p_squadra, p_nome }) { const s = tabelle.squadre.find((x) => x.id === p_squadra); if (s) s.nome = p_nome.trim() },
   admin_sposta_persona({ p_persona, p_squadra }) {
     tabelle.squadre.forEach((s) => { if (s.coach_id === p_persona && s.id !== p_squadra) s.coach_id = null })
     const p = tabelle.profiles.find((x) => x.id === p_persona); if (p) p.squadra_id = p_squadra
