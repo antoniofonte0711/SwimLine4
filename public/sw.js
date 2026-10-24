@@ -1,6 +1,6 @@
 // Service worker SwimLine4: salva in cache i file dell'app (non i dati).
 // I dati di Supabase passano sempre dalla rete.
-const VERSIONE = 'v5'
+const VERSIONE = 'v6'
 const CACHE = `swimline4-${VERSIONE}`           // guscio dell'app (fisso)
 const RUNTIME = `swimline4-runtime-${VERSIONE}` // JS/CSS/icone scaricati usando l'app
 const MAX_RUNTIME = 60 // oltre questo numero tolgo i file più vecchi (es. JS di rilasci precedenti)
