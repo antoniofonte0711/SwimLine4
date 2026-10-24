@@ -30,7 +30,7 @@ export default {
       transitionDuration: { DEFAULT: '150ms' },
       fontFamily: {
         sans: ['Figtree', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
-        display: ['"Bricolage Grotesque"', 'Figtree', 'system-ui', 'sans-serif'],
+        display: ['"Cinzel Decorative"', 'Georgia', 'serif'],
       },
     },
   },
