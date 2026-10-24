@@ -6,9 +6,10 @@ export const FPS = 30
 export const BPM = 120
 export const PRIMO_BEAT = 0
 export const TRANSIZIONE = 12 // frame
-// brano: Flashbacks (120 BPM) – ThisIsBeatKitchen, Pixabay. Si usa il FINALE della canzone:
-// fineBrano = secondo in cui la musica finisce (dopo c'è silenzio); l'inizio si calcola dalla durata del video.
-export const MUSICA = { file: 'music.mp3', volume: 0.7, fineBrano: 163.6, fadeIn: 0.4, fadeOut: 0.6 }
+// brano: Flashbacks (120 BPM) – ThisIsBeatKitchen, Pixabay. Mix: APERTURA della canzone + FINALE col botto.
+// apertura = secondi iniziali del brano usati all'inizio del video (0–16 s: l'intro, prima che la canzone salga)
+// fineBrano = secondo in cui la musica finisce (dopo c'è silenzio); incrocio = secondi di dissolvenza tra i due pezzi
+export const MUSICA = { file: 'music.mp3', volume: 0.7, apertura: 16, fineBrano: 163.6, incrocio: 0.4, fadeOut: 0.8 }
 
 export const COLORI = {
   blu: '#2563eb',
@@ -89,5 +90,6 @@ export const frameDi = (sec: number) => Math.max(mezzoBeat * 2, Math.round((sec 
 export const DURATA_TOTALE = SCENE.reduce((s, x) => s + frameDi(x.durata), 0) - (SCENE.length - 1) * TRANSIZIONE
 export const PRIMO_BEAT_FRAME = Math.round(PRIMO_BEAT * FPS)
 
-// da che secondo del brano parte la musica: fine del brano meno la durata del video, agganciato al battito
-export const INIZIO_MUSICA = Math.floor((MUSICA.fineBrano - DURATA_TOTALE / FPS) / (60 / BPM)) * (60 / BPM)
+// da che secondo il brano riparte dopo l'apertura: il finale riempie il resto del video, agganciato alla battuta (4 beat)
+const BATTUTA = (60 / BPM) * 4
+export const RIPRESA_MUSICA = Math.floor((MUSICA.fineBrano - (DURATA_TOTALE / FPS - MUSICA.apertura)) / BATTUTA) * BATTUTA

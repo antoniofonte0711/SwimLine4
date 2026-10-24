@@ -1,10 +1,10 @@
 import React from 'react'
-import { AbsoluteFill, Audio, getStaticFiles, interpolate, staticFile, useVideoConfig } from 'remotion'
+import { AbsoluteFill, Audio, Sequence, getStaticFiles, interpolate, staticFile, useVideoConfig } from 'remotion'
 import { TransitionSeries, springTiming, TransitionPresentation } from '@remotion/transitions'
 import { slide } from '@remotion/transitions/slide'
 import { wipe } from '@remotion/transitions/wipe'
 import { fade } from '@remotion/transitions/fade'
-import { INIZIO_MUSICA, MUSICA, SCENE, TRANSIZIONE, frameDi } from './config'
+import { MUSICA, RIPRESA_MUSICA, SCENE, TRANSIZIONE, frameDi } from './config'
 import { Capitolo, Cose, Hook, Logo, Outro } from './scene'
 import { Formato } from './stile'
 
@@ -41,13 +41,24 @@ export const Video: React.FC<{ orizzontale: boolean }> = ({ orizzontale }) => {
             return [<TransitionSeries.Transition key={s.id + '-t'} presentation={transizioni[i % transizioni.length]()} timing={tempo} />, pezzo]
           })}
         </TransitionSeries>
-        {/* musica: c'è solo se public/music.mp3 esiste; si usa il finale del brano */}
-        {musica && (
-          <Audio src={staticFile(MUSICA.file)} trimBefore={Math.round(INIZIO_MUSICA * fps)} volume={(f) => MUSICA.volume * Math.min(
-            interpolate(f, [0, MUSICA.fadeIn * fps], [0, 1], { extrapolateRight: 'clamp' }),
-            interpolate(f, [durationInFrames - MUSICA.fadeOut * fps, durationInFrames], [1, 0], { extrapolateLeft: 'clamp' }),
-          )} />
-        )}
+        {/* musica (solo se public/music.mp3 esiste): apertura del brano, poi dissolvenza incrociata sul finale */}
+        {musica && (() => {
+          const giunta = MUSICA.apertura * fps, mezzo = (MUSICA.incrocio * fps) / 2
+          const dopo = durationInFrames - (giunta - mezzo)
+          return (
+            <>
+              <Audio src={staticFile(MUSICA.file)} trimAfter={Math.round(giunta + mezzo)}
+                volume={(f) => MUSICA.volume * interpolate(f, [giunta - mezzo, giunta + mezzo], [1, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' })} />
+              <Sequence from={Math.round(giunta - mezzo)}>
+                <Audio src={staticFile(MUSICA.file)} trimBefore={Math.round(RIPRESA_MUSICA * fps - mezzo)}
+                  volume={(f) => MUSICA.volume * Math.min(
+                    interpolate(f, [0, mezzo * 2], [0, 1], { extrapolateRight: 'clamp' }),
+                    interpolate(f, [dopo - MUSICA.fadeOut * fps, dopo], [1, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }),
+                  )} />
+              </Sequence>
+            </>
+          )
+        })()}
       </AbsoluteFill>
     </Formato.Provider>
   )
