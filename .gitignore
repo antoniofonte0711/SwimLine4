@@ -13,3 +13,10 @@ strumenti/video-tutorial/uscita/
 strumenti/video-tutorial/voce/
 strumenti/video-tutorial/acqua.png
 strumenti/video-tutorial/scene/
+video/node_modules/
+video/out/
+video/public/captures/
+video/public/voce/
+video/public/voice-samples/
+video/public/music.mp3
+video/public/musica-originale/

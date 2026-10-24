@@ -1,0 +1,25 @@
+{
+  "name": "swimline-video",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Video presentazione-tutorial di SwimLine4 (Remotion)",
+  "scripts": {
+    "studio": "remotion studio",
+    "voce": "python scripts/voce.py",
+    "render:9x16": "remotion render Tutorial9x16 out/video-9x16.mp4",
+    "render:16x9": "remotion render Tutorial16x9 out/video-16x9.mp4"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.538",
+    "@remotion/google-fonts": "^4.0.538",
+    "@remotion/media-utils": "^4.0.538",
+    "@remotion/transitions": "^4.0.538",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "^4.0.538"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "typescript": "^5.6.3"
+  }
+}
