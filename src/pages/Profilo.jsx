@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { RUOLI_VISTA, nomeRuolo, puoModificare } from '../lib/permessi'
 import { STILI } from '../lib/lavori'
+import { STILI_PROPRI } from '../lib/pianoSquadra'
 import { lavoriDaScegliere } from '../lib/tipiLavoro'
 import { usePreferenze } from '../lib/preferenze'
 import { attivaNotifiche, disattivaNotifiche, notificheAttive, notificheSupportate, serveHome } from '../lib/notifiche'
@@ -241,6 +242,32 @@ function CategoriaGare() {
   )
 }
 
+// Il proprio stile (PS): i lavori "Proprio stile" del coach finiscono nella categoria di questo stile (migrazione 41)
+function ProprioStile() {
+  const { user, profile, ricaricaProfilo } = useAuth()
+  const [errore, setErrore] = useState('')
+
+  async function cambia(valore) {
+    setErrore('')
+    const { error } = await supabase.rpc('imposta_proprio_stile', { p_persona: user.id, p_stile: valore })
+    if (error) return setErrore('Non sono riuscito a salvare: ' + error.message)
+    await ricaricaProfilo()
+  }
+
+  return (
+    <div>
+      <Riga etichetta="Proprio stile (PS)" descrizione="I tempi dei lavori in PS vanno in questo stile">
+        <select value={profile?.proprio_stile || ''} onChange={(e) => cambia(e.target.value)} aria-label="Proprio stile"
+          className="border border-linea bg-bordo rounded-campo px-3 min-h-[44px] text-sm font-semibold max-w-[160px]">
+          {!profile?.proprio_stile && <option value="" disabled>Scegli</option>}
+          {STILI_PROPRI.map((s) => <option key={s}>{s}</option>)}
+        </select>
+      </Riga>
+      {errore && <div className="pb-3"><Messaggio errore={errore} /></div>}
+    </div>
+  )
+}
+
 function Privacy() {
   const { profile, ricaricaProfilo } = useAuth()
   const [errore, setErrore] = useState('')
@@ -449,6 +476,7 @@ export default function Profilo() {
         <Riga etichetta="Email" descrizione={user?.email} />
         <CambiaPassword />
         {['atleta', 'admin'].includes(profile?.role) && <CategoriaGare />}
+        {['atleta', 'admin'].includes(profile?.role) && <ProprioStile />}
       </Sezione>
 
       {registraTempi && (

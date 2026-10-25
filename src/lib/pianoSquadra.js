@@ -31,6 +31,22 @@ export const perGiro = (r) => Math.max(1, Math.round((Number(r.ripetizioni) || 1
 // così i tempi restano agganciati anche se il coach cambia il numero di giri)
 export const chiaveRisultato = (r) => [r.tipo_lavoro, Number(r.distanza), r.stile].join('|')
 
+// Il "proprio stile" di ogni atleta (migrazione 41): i lavori "Proprio stile" del coach si salvano in questo stile
+export const STILI_PROPRI = ['Dorso', 'Rana', 'Farfalla']
+const PS = 'Proprio stile'
+// Le righe del piano viste da un atleta: "Proprio stile" diventa il suo stile (se l'ha scelto)
+export function conProprioStile(righe = [], stile) {
+  if (!stile) return righe
+  return righe.map((r) => (r.stile !== PS && !r.stili?.includes(PS) ? r : {
+    ...r,
+    stile: r.stile === PS ? stile : r.stile,
+    ...(r.stili ? { stili: r.stili.map((s) => (s === PS ? stile : s)) } : {}),
+  }))
+}
+// Un tempo salvato va con una riga "Proprio stile" anche se è nella categoria dello stile dell'atleta
+const stessoLavoro = (e, r) => chiaveRisultato(e) === chiaveRisultato(r)
+  || (r.stile === PS && STILI_PROPRI.includes(e.stile) && chiaveRisultato({ ...e, stile: PS }) === chiaveRisultato(r))
+
 // Per ogni atleta, i tempi registrati abbinati alle righe del piano in ordine: { atleta: [riga registrata | undefined] }
 export function abbinaTempi(righe = [], registrati = []) {
   const perAtleta = {}
@@ -38,7 +54,7 @@ export function abbinaTempi(righe = [], registrati = []) {
   return Object.fromEntries(Object.entries(perAtleta).map(([atleta, lista]) => {
     const usati = new Set()
     return [atleta, righe.map((r) => {
-      const trovata = lista.find((e) => !usati.has(e) && chiaveRisultato(e) === chiaveRisultato(r))
+      const trovata = lista.find((e) => !usati.has(e) && stessoLavoro(e, r))
       if (trovata) usati.add(trovata)
       return trovata
     })]

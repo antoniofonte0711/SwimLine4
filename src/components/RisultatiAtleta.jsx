@@ -4,7 +4,8 @@ import PiuStili from './PiuStili'
 import { aggiornaMedia, campiMedia, leggiMedia } from '../lib/media'
 import InputTempo from './InputTempo'
 import { coloreLavoro } from '../lib/lavori'
-import { blocchiPiano, chiaveRisultato as chiaveRiga, giriSerie, haVarianti, perGiro, ripartenzeDiRiga, ripetizioniDiRiga } from '../lib/pianoSquadra'
+import { useAuth } from '../context/AuthContext'
+import { blocchiPiano, chiaveRisultato as chiaveRiga, conProprioStile, giriSerie, haVarianti, perGiro, ripartenzeDiRiga, ripetizioniDiRiga } from '../lib/pianoSquadra'
 import { aggiungiInCoda, erroreDiRete, leggiCoda, rimuoviDaCoda } from '../lib/codaOffline'
 import { caselleDiRiga, distribuisci, gruppiPerStile, haTratti, raccogli } from '../lib/varianti'
 import { ERRORE_TEMPO_BREVE, erroreTempoImpossibile, normalizzaTempo, tempoPlausibile, tempoValido } from '../lib/tempo'
@@ -14,7 +15,18 @@ import { ERRORE_TEMPO_BREVE, erroreTempoImpossibile, normalizzaTempo, tempoPlaus
 // proprio: è l'atleta che scrive i suoi tempi. Un lavoro già salvato si vede in verde e si corregge con "Correggi"
 // (serve la connessione); i lavori nuovi senza connessione restano sul telefono e partono appena torna.
 export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = false }) {
-  const righe = piano?.righe || []
+  // I lavori "Proprio stile" si vedono e si salvano nello stile dell'atleta (migrazione 41); undefined = lo sto leggendo
+  const { profile } = useAuth()
+  const [ps, setPs] = useState(proprio ? profile?.proprio_stile || null : undefined)
+  useEffect(() => {
+    if (proprio) return setPs(profile?.proprio_stile || null)
+    let attivo = true
+    setPs(undefined)
+    supabase.from('profiles').select('proprio_stile').eq('id', atletaId).maybeSingle()
+      .then(({ data }) => { if (attivo) setPs(data?.proprio_stile || null) })
+    return () => { attivo = false }
+  }, [atletaId, proprio, profile?.proprio_stile])
+  const righe = conProprioStile(piano?.righe || [], ps)
   const [esistenti, setEsistenti] = useState([]) // righe già salvate in "allenamenti" per quel giorno
   const [valori, setValori] = useState([])       // valori[i] = array di passaggi della riga i del piano
   const [medie, setMedie] = useState({})         // tempo medio di un lavoro (per chi non ricorda i singoli): chiave "riga-stile"
@@ -35,7 +47,7 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
     let attivo = true
     setErrore('')
     setOk('')
-    if (!atletaId || !piano) return
+    if (!atletaId || !piano || ps === undefined) return
     supabase.from('allenamenti').select('*').eq('atleta_id', atletaId).eq('data_allenamento', giorno).order('created_at')
       .then(({ data }) => {
         if (!attivo) return
@@ -56,7 +68,7 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
         setMedie(medieTrovate)
       })
     return () => { attivo = false }
-  }, [atletaId, giorno, piano?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [atletaId, giorno, piano?.id, ps]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const cambia = (i, j, v) => {
     const copia = valori.map((a) => [...a])

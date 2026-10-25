@@ -2,15 +2,18 @@ import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { percorsoConsentito, IN_ARRIVO, mostraInArrivo } from '../lib/permessi'
 import { percorsoAttivo, useRegole } from '../lib/regole'
+import SceltaProprioStile, { deveSceglierePs } from './SceltaProprioStile'
 
 export default function ProtectedRoute({ children, requireAdmin = false, requireCoach = false }) {
-  const { user, loading, isAdmin, isCoach, ruolo } = useAuth()
+  const { user, profile, loading, isAdmin, isCoach, ruolo } = useAuth()
   const { pathname } = useLocation()
   const { puo, pronto } = useRegole()
 
   if (loading) return <div className="p-6 text-center text-slate-500">Caricamento...</div>
 
   if (!user) return <Navigate to="/login" replace />
+  // Atleta appena entrato in squadra (o al primo accesso dopo): prima sceglie il proprio stile
+  if (deveSceglierePs(profile)) return <SceltaProprioStile />
   if (requireAdmin && !isAdmin) return <Navigate to="/dashboard" replace />
   if (requireCoach && !isCoach) return <Navigate to="/dashboard" replace />
   if (!percorsoConsentito(ruolo, pathname)) return <Navigate to="/funzioni" replace />

@@ -146,6 +146,12 @@ const RPC = {
     if (e) e.stato = p_accetta ? 'accettato' : 'rifiutato'
   },
   admin_account_eliminati() { return [] },
+  // migrazione 41: proprio stile
+  imposta_proprio_stile({ p_persona, p_stile }) {
+    const p = tabelle.profiles.find((x) => x.id === p_persona)
+    if (p) p.proprio_stile = p_stile
+    ;(tabelle.allenamenti || []).forEach((a) => { if (a.atleta_id === p_persona && a.stile === 'Proprio stile') a.stile = p_stile })
+  },
   // migrazione 40: copia della forma dei dati veri del 25/10 (tutto a zero, poi 1 e 2 persone negli ultimi 5 minuti)
   admin_in_diretta({ p_minuti }) {
     const ora = Math.floor(Date.now() / 60000) * 60000
