@@ -146,6 +146,15 @@ const RPC = {
     if (e) e.stato = p_accetta ? 'accettato' : 'rifiutato'
   },
   admin_account_eliminati() { return [] },
+  // migrazione 40: persone dentro minuto per minuto, inventate
+  admin_in_diretta({ p_minuti }) {
+    const ora = Math.floor(Date.now() / 60000) * 60000
+    return Array.from({ length: p_minuti }, (_, i) => {
+      const n = Math.max(0, Math.round(2 + 2 * Math.sin(i / 9) + (i % 7 === 0 ? 1 : 0)))
+      const persone = [UTENTI.admin, UTENTI.coach, UTENTI.atleta, UTENTI.genitore].slice(0, n)
+      return { minuto: new Date(ora - (p_minuti - 1 - i) * 60000).toISOString(), utenti: persone.length, persone }
+    })
+  },
   // migrazione 31: società e gruppi
   admin_salva_societa({ p_id, p_nome, p_capo }) {
     const t = (tabelle.societa ||= [])

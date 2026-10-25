@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { supabase } from '../../lib/supabaseClient'
 import { BOTTONE, BOTTONE_PIENO, ChipRuolo, Salvato, Scheda, Scheletro, Vuoto } from './ui'
 import { OpzioniGruppi } from './AdminSquadre'
@@ -405,6 +406,78 @@ export function RegistroAccessi({ dati }) {
   )
 }
 
+// Chi è dentro SwimLine adesso e quanti erano dentro minuto per minuto (migrazione 40); si aggiorna ogni 30 secondi
+const PERIODI = [[60, '1 ora'], [360, '6 ore'], [1440, '24 ore']]
+const oraDi = (t) => new Date(t).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
+
+function InDiretta({ dati }) {
+  const [minuti, setMinuti] = useState(60)
+  const [punti, setPunti] = useState(null)
+  const [errore, setErrore] = useState('')
+  useEffect(() => {
+    setPunti(null)
+    const carica = () => {
+      if (document.visibilityState !== 'visible') return
+      supabase.rpc('admin_in_diretta', { p_minuti: minuti }).then(({ data, error }) => {
+        if (error) setErrore(error.message)
+        else { setErrore(''); setPunti(data || []) }
+      })
+    }
+    carica()
+    const timer = setInterval(carica, 30_000)
+    document.addEventListener('visibilitychange', carica)
+    return () => { clearInterval(timer); document.removeEventListener('visibilitychange', carica) }
+  }, [minuti])
+  const adesso = punti?.[punti.length - 1]
+  const per = Object.fromEntries(dati.persone.map((p) => [p.id, p]))
+  const picco = (punti || []).reduce((m, x) => (x.utenti > m.utenti ? x : m), { utenti: 0 })
+  return (
+    <Scheda titolo="In diretta"
+      nota="Persone con l'app aperta e in primo piano, minuto per minuto. Si aggiorna da solo ogni 30 secondi; si parte a contare dal 25 ottobre e si tengono gli ultimi 2 giorni.">
+      {errore && <p className="text-sm text-red-700">Errore: {errore}</p>}
+      {punti === null && !errore && <Scheletro righe={4} />}
+      {punti && (
+        <>
+          <div className="flex flex-wrap items-end gap-x-6 gap-y-2 mb-3">
+            <p>
+              <span className="font-display text-[40px] font-extrabold leading-none text-blue-600">{adesso?.utenti || 0}</span>
+              <span className="text-sm text-slate-600"> dentro adesso</span>
+            </p>
+            <p className="text-sm text-slate-600 pb-1">
+              Picco nel periodo: <b>{picco.utenti}</b>{picco.minuto && <> alle {oraDi(picco.minuto)}</>}
+            </p>
+          </div>
+          {adesso?.persone?.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-3">
+              {adesso.persone.map((id) => (
+                <span key={id} className="text-sm bg-slate-100 rounded-full px-3 py-1">
+                  <b>{nomeDi(per[id])}</b> {per[id]?.role && <ChipRuolo ruolo={per[id].role} />}
+                </span>
+              ))}
+            </div>
+          )}
+          <div className="flex gap-2 mb-3">
+            {PERIODI.map(([m, testo]) => (
+              <button key={m} type="button" onClick={() => setMinuti(m)} aria-pressed={minuti === m}
+                className={minuti === m ? BOTTONE_PIENO : BOTTONE}>{testo}</button>
+            ))}
+          </div>
+          <div className="h-56">
+            <ResponsiveContainer>
+              <AreaChart data={punti}>
+                <XAxis dataKey="minuto" tickFormatter={oraDi} tick={{ fontSize: 11 }} minTickGap={40} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 11 }} width={30} />
+                <Tooltip labelFormatter={oraDi} formatter={(v) => [v, 'dentro']} />
+                <Area type="stepAfter" dataKey="utenti" stroke="#2563eb" fill="#2563eb" fillOpacity={0.15} isAnimationActive={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </>
+      )}
+    </Scheda>
+  )
+}
+
 // Quanto usano l'app: minuti al giorno stimati (segnale ogni minuto ad app aperta), ultimi 7 o 30 giorni
 export function AttivitaUtenti({ dati }) {
   const [giorni, setGiorni] = useState(7)
@@ -428,6 +501,7 @@ export function AttivitaUtenti({ dati }) {
   return (
     <>
       <h1 className="font-display text-[34px] font-extrabold leading-tight">Attività degli utenti</h1>
+      <InDiretta dati={dati} />
       <Scheda titolo="Quanto usano l'app"
         nota="Minuti stimati: l'app manda un segnale ogni minuto mentre è aperta e in primo piano. Si parte a contare da oggi. Serve a capire quanto viene usata, non a controllare le persone.">
         <div className="flex gap-2 mb-4">
