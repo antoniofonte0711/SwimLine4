@@ -12,8 +12,6 @@ export default function ProtectedRoute({ children, requireAdmin = false, require
   if (loading) return <div className="p-6 text-center text-slate-500">Caricamento...</div>
 
   if (!user) return <Navigate to="/login" replace />
-  // Atleta appena entrato in squadra (o al primo accesso dopo): prima sceglie il proprio stile
-  if (deveSceglierePs(profile)) return <SceltaProprioStile />
   if (requireAdmin && !isAdmin) return <Navigate to="/dashboard" replace />
   if (requireCoach && !isCoach) return <Navigate to="/dashboard" replace />
   if (!percorsoConsentito(ruolo, pathname)) return <Navigate to="/funzioni" replace />
@@ -21,5 +19,11 @@ export default function ProtectedRoute({ children, requireAdmin = false, require
   const puoQui = (k) => (IN_ARRIVO.includes(pathname) && mostraInArrivo) || puo(k)
   if (pronto && !percorsoAttivo(pathname, ruolo, puoQui)) return <Navigate to="/funzioni" replace />
 
-  return children
+  // Atleta appena entrato in squadra (o al primo accesso dopo): la finestra del proprio stile sopra la pagina
+  return (
+    <>
+      {children}
+      {deveSceglierePs(profile) && <SceltaProprioStile />}
+    </>
+  )
 }
