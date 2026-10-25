@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import { AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { supabase } from '../../lib/supabaseClient'
 import { BOTTONE, BOTTONE_PIENO, ChipRuolo, Salvato, Scheda, Scheletro, Vuoto } from './ui'
 import { OpzioniGruppi } from './AdminSquadre'
@@ -406,9 +406,31 @@ export function RegistroAccessi({ dati }) {
   )
 }
 
-// Chi è dentro SwimLine adesso e quanti erano dentro minuto per minuto (migrazione 40); si aggiorna ogni 30 secondi
-const PERIODI = [[60, '1 ora'], [360, '6 ore'], [1440, '24 ore']]
+// Chi è dentro SwimLine adesso e quanti erano dentro (migrazione 40); si aggiorna ogni 30 secondi.
+// I minuti si raggruppano (1 ora → 5 min, 6 ore → 20 min, 24 ore → 1 ora): ogni punto è il massimo di persone dentro insieme.
+const PERIODI = [[60, '1 ora', 5], [360, '6 ore', 20], [1440, '24 ore', 60]]
 const oraDi = (t) => new Date(t).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
+
+export function raggruppa(punti, passo) {
+  const gruppi = []
+  for (let fine = punti.length; fine > 0; fine -= passo) {
+    const pezzo = punti.slice(Math.max(0, fine - passo), fine)
+    gruppi.unshift({ minuto: pezzo[pezzo.length - 1].minuto, utenti: Math.max(...pezzo.map((x) => x.utenti)) })
+  }
+  return gruppi
+}
+
+function SuggerimentoDiretta({ active, payload, passo }) {
+  if (!active || !payload?.length) return null
+  const { minuto, utenti } = payload[0].payload
+  const inizio = new Date(new Date(minuto).getTime() - (passo - 1) * 60_000)
+  return (
+    <div className="rounded-xl bg-white/95 px-3 py-2 shadow-lg text-sm text-abisso">
+      <p className="text-xs text-slate-500">{oraDi(inizio)} – {oraDi(minuto)}</p>
+      <p><b className="text-base">{utenti}</b> {utenti === 1 ? 'persona dentro' : 'persone dentro'}</p>
+    </div>
+  )
+}
 
 function InDiretta({ dati }) {
   const [minuti, setMinuti] = useState(60)
@@ -431,50 +453,80 @@ function InDiretta({ dati }) {
   const adesso = punti?.[punti.length - 1]
   const per = Object.fromEntries(dati.persone.map((p) => [p.id, p]))
   const picco = (punti || []).reduce((m, x) => (x.utenti > m.utenti ? x : m), { utenti: 0 })
+  const passo = PERIODI.find(([m]) => m === minuti)[2]
+  const serie = punti?.length ? raggruppa(punti, passo) : []
   return (
-    <Scheda titolo="In diretta"
-      nota="Persone con l'app aperta e in primo piano, minuto per minuto. Si aggiorna da solo ogni 30 secondi; si parte a contare dal 25 ottobre e si tengono gli ultimi 2 giorni.">
-      {errore && <p className="text-sm text-red-700">Errore: {errore}</p>}
-      {punti === null && !errore && <Scheletro righe={4} />}
+    <section className="rounded-2xl p-5 text-white bg-gradient-to-br from-abisso via-[#0d2a5c] to-blue-700 shadow-lg">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-sky-300">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="absolute inline-flex h-full w-full rounded-full bg-sky-300 opacity-75 motion-safe:animate-ping" />
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-sky-300" />
+            </span>
+            In diretta
+          </p>
+          <h2 className="font-display text-2xl font-extrabold mt-1">Chi è dentro SwimLine</h2>
+        </div>
+        <div className="flex gap-1 rounded-full bg-white/10 p-1">
+          {PERIODI.map(([m, testo]) => (
+            <button key={m} type="button" onClick={() => setMinuti(m)} aria-pressed={minuti === m}
+              className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition-colors ${minuti === m ? 'bg-white text-abisso' : 'text-white/80 hover:text-white'}`}>
+              {testo}
+            </button>
+          ))}
+        </div>
+      </div>
+      {errore && <p className="text-sm text-red-200 mt-3">Errore: {errore}</p>}
+      {punti === null && !errore && <div className="h-64 mt-4 rounded-xl bg-white/5 animate-pulse" />}
       {punti && (
         <>
-          <div className="flex flex-wrap items-end gap-x-6 gap-y-2 mb-3">
+          <div className="flex flex-wrap items-end gap-x-8 gap-y-2 mt-4">
             <p>
-              <span className="font-display text-[40px] font-extrabold leading-none text-blue-600">{adesso?.utenti || 0}</span>
-              <span className="text-sm text-slate-600"> dentro adesso</span>
+              <span className="font-display text-[52px] font-extrabold leading-none">{adesso?.utenti || 0}</span>
+              <span className="text-sm text-white/70"> {adesso?.utenti === 1 ? 'persona dentro adesso' : 'persone dentro adesso'}</span>
             </p>
-            <p className="text-sm text-slate-600 pb-1">
-              Picco nel periodo: <b>{picco.utenti}</b>{picco.minuto && <> alle {oraDi(picco.minuto)}</>}
+            <p className="text-sm text-white/70 pb-1.5">
+              Picco: <b className="text-white">{picco.utenti}</b>{picco.minuto && <> alle {oraDi(picco.minuto)}</>}
             </p>
           </div>
           {adesso?.persone?.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-3">
+            <div className="flex flex-wrap gap-2 mt-3">
               {adesso.persone.map((id) => (
-                <span key={id} className="text-sm bg-slate-100 rounded-full px-3 py-1">
-                  <b>{nomeDi(per[id])}</b> {per[id]?.role && <ChipRuolo ruolo={per[id].role} />}
+                <span key={id} className="text-sm bg-white/10 rounded-full px-3 py-1">
+                  {nomeDi(per[id])} {per[id]?.role && <span className="text-white/60">· {per[id].role}</span>}
                 </span>
               ))}
             </div>
           )}
-          <div className="flex gap-2 mb-3">
-            {PERIODI.map(([m, testo]) => (
-              <button key={m} type="button" onClick={() => setMinuti(m)} aria-pressed={minuti === m}
-                className={minuti === m ? BOTTONE_PIENO : BOTTONE}>{testo}</button>
-            ))}
-          </div>
-          <div className="h-56">
+          <div className="h-64 mt-4 -ml-2">
             <ResponsiveContainer>
-              <AreaChart data={punti}>
-                <XAxis dataKey="minuto" tickFormatter={oraDi} tick={{ fontSize: 11 }} minTickGap={40} />
-                <YAxis allowDecimals={false} tick={{ fontSize: 11 }} width={30} />
-                <Tooltip labelFormatter={oraDi} formatter={(v) => [v, 'dentro']} />
-                <Area type="stepAfter" dataKey="utenti" stroke="#2563eb" fill="#2563eb" fillOpacity={0.15} isAnimationActive={false} />
+              <AreaChart data={serie} margin={{ top: 12, right: 12, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="sfumaturaDiretta" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#7dd3fc" stopOpacity={0.45} />
+                    <stop offset="100%" stopColor="#7dd3fc" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.1)" strokeDasharray="4 6" />
+                <XAxis dataKey="minuto" tickFormatter={oraDi} tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.65)' }}
+                  axisLine={{ stroke: 'rgba(255,255,255,0.25)' }} tickLine={false} minTickGap={28} />
+                <YAxis allowDecimals={false} domain={[0, (max) => Math.max(2, max + 1)]} width={30}
+                  tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.65)' }} axisLine={false} tickLine={false} />
+                <Tooltip content={<SuggerimentoDiretta passo={passo} />} cursor={{ stroke: 'rgba(255,255,255,0.35)', strokeDasharray: '3 4' }} />
+                <Area type="monotone" dataKey="utenti" stroke="#7dd3fc" strokeWidth={3} fill="url(#sfumaturaDiretta)"
+                  dot={{ r: 4, fill: '#7dd3fc', stroke: '#0d2a5c', strokeWidth: 2 }}
+                  activeDot={{ r: 7, fill: '#fff', stroke: '#7dd3fc', strokeWidth: 3 }} animationDuration={600} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
+          <p className="text-xs text-white/55 mt-2">
+            Ogni punto è il massimo di persone con l'app aperta e in primo piano insieme, ogni {passo === 60 ? 'ora' : `${passo} minuti`}.
+            Si aggiorna da solo ogni 30 secondi; si conta dal 25 ottobre e si tengono gli ultimi 2 giorni.
+          </p>
         </>
       )}
-    </Scheda>
+    </section>
   )
 }
 
