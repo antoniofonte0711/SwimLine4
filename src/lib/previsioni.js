@@ -68,11 +68,12 @@ function tendenza(punti) {
   return -(sxy / sxx)
 }
 
-// Previsione per una serie di tempi { data, sec }: dal = inizio dei dati da usare, fino = data della previsione
-export function prevedi(punti, { oggi, dal, fino }) {
-  let usati = punti.filter((p) => (!dal || p.data >= dal) && p.data <= oggi)
+// Previsione per una serie di tempi { data, sec }: dal / al = periodo dei dati da usare, fino = data della previsione
+export function prevedi(punti, { oggi, dal, al = oggi, fino }) {
+  const fine = al < oggi ? al : oggi
+  let usati = punti.filter((p) => (!dal || p.data >= dal) && p.data <= fine)
   const tuttoLoStorico = usati.length === 0
-  if (tuttoLoStorico) usati = punti.filter((p) => p.data <= oggi)
+  if (tuttoLoStorico) usati = punti.filter((p) => p.data <= fine)
   if (!usati.length) return null
 
   const attuale = Math.min(...usati.map((p) => p.sec))

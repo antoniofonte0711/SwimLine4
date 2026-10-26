@@ -243,7 +243,7 @@ export const GUIDA = [
     passi: [
       ['Atleta (coach)', 'Il coach sceglie di chi vedere le previsioni.'],
       ['Fino a quando', 'Metà stagione (fine gennaio) o Fine stagione (fine luglio). Dopo gennaio resta solo Fine stagione.'],
-      ['Tempi usati dal', 'Da quando prendere i tempi (di solito l\'inizio della stagione, 1° settembre).'],
+      ['Tempi da usare', 'Dal / Al: il periodo da cui prendere i tempi (di solito dall\'inizio della stagione a oggi, 1° settembre).'],
       ['Gare / Allenamenti', 'Previsioni sui tempi di gara o di allenamento.'],
       ['Ogni riga', 'Tempo di oggi → tempo previsto, quanto migliora, e "tra … e …" (stima ottimista e prudente).'],
       ['Pallino', 'Verde: stima solida. Giallo: indicativa. Grigio: pochi dati.'],

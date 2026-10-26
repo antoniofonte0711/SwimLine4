@@ -32,6 +32,13 @@ body {
   .cliccabile:hover { border-color: #b9cbe0; box-shadow: 0 4px 14px rgba(10, 26, 47, 0.08); }
 }
 .cliccabile:active { transform: scale(0.98); }
+/* Righe di un elenco dentro una card (senza angoli propri): niente ombra a rettangolo,
+   solo uno sfondo chiaro con gli angoli arrotondati */
+.cliccabile:not([class*='rounded']) { border-radius: 1rem; }
+@media (hover: hover) {
+  .cliccabile:not([class*='rounded']):hover { box-shadow: none; background-color: #f3f7fc; }
+}
+.cliccabile:not([class*='rounded']):active { background-color: #eaf1fb; }
 
 /* Contorno ben visibile su bottoni e link quando si naviga con la tastiera */
 a:focus-visible,

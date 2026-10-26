@@ -51,6 +51,17 @@ const UTENTI = {
     { id: 'n1', destinatario_id: A, tipo: 'record', titolo: 'Nuovo primato!', testo: 'Hai nuotato i 100 SL in gara in 1\'03"20, -0"90 rispetto al record precedente.', link: '/gare', letta: false, created_at: new Date().toISOString() },
     { id: 'n2', destinatario_id: UTENTI.genitore, tipo: 'gara_nuova', titolo: 'Nuova gara in calendario', testo: "Trofeo d'Autunno, ore 09:30, Piscina Comunale.", link: '/gare', letta: false, created_at: new Date().toISOString() },
   ]
+  // migrazione 43: Atleta Uno con 1240 punti, premi con costo e probabilità, una voce del coach
+  if (sqA) {
+    tabelle.punti_config = [{ squadra_id: sqA, punti_presenza: 10, punti_risultati: 5, punti_gara: 15, punti_miglioramento: 0, soglia_premio: 1000 }]
+    tabelle.punti_movimenti = [{ id: 'pm1', atleta_id: A, squadra_id: sqA, punti: 1240, motivo: 'Presenze di ottobre', riferimento: 'prova', data: g(-1), created_at: new Date().toISOString() }]
+    tabelle.premi_catalogo = [
+      ['Scegli lo stile del defaticamento', 6, 900], ['Un 50 in meno nel riscaldamento', 6, 950], ['Scegli la tua corsia', 4, 1000],
+      ['Tuffi a fine allenamento', 3, 1000], ['Salta un 400', 1, 1000],
+    ].map(([nome, peso, costo], i) => ({ id: 'pr' + i, squadra_id: sqA, nome, peso, costo, attivo: true, created_at: g(-5 + i) }))
+    tabelle.punti_voci = [{ id: 'v1', squadra_id: sqA, nome: 'Allenamento extra', punti: 20, created_at: g(-2) }]
+    tabelle.premi_atleta = []
+  }
 }
 
 const chi = (() => { try { return localStorage.getItem('mock-utente') || 'admin' } catch { return 'admin' } })()
@@ -146,6 +157,25 @@ const RPC = {
     if (e) e.stato = p_accetta ? 'accettato' : 'rifiutato'
   },
   admin_account_eliminati() { return [] },
+  // migrazione 43: premi a scelta (estrazione semplificata: i primi 3 premi attivi a caso)
+  proponi_premi() {
+    const io = tabelle.profiles.find((r) => r.id === utente.id)
+    const gia = (tabelle.premi_proposte ||= []).find((r) => r.atleta_id === utente.id)
+    if (gia) return gia.opzioni
+    const opzioni = (tabelle.premi_catalogo || []).filter((p) => p.squadra_id === io?.squadra_id && p.attivo)
+      .sort(() => Math.random() - 0.5).slice(0, 3).map((p) => ({ id: p.id, nome: p.nome, costo: p.costo || 1000 }))
+    tabelle.premi_proposte.push({ atleta_id: utente.id, squadra_id: io?.squadra_id, opzioni })
+    return opzioni
+  },
+  scegli_premio({ p_premio }) {
+    const prop = (tabelle.premi_proposte || []).find((r) => r.atleta_id === utente.id)
+    const o = prop?.opzioni.find((x) => x.id === p_premio)
+    const r = { id: crypto.randomUUID(), atleta_id: utente.id, squadra_id: prop.squadra_id, premio_nome: o.nome, costo: o.costo, usato: false, ottenuto_il: new Date().toISOString() }
+    ;(tabelle.premi_atleta ||= []).push(r)
+    tabelle.premi_proposte = tabelle.premi_proposte.filter((x) => x !== prop)
+    return r
+  },
+  admin_elimina_squadra({ p_squadra }) { tabelle.squadre = tabelle.squadre.filter((s) => s.id !== p_squadra) },
   // migrazione 41: proprio stile
   imposta_proprio_stile({ p_persona, p_stile }) {
     const p = tabelle.profiles.find((x) => x.id === p_persona)

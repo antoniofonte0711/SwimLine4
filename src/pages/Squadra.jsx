@@ -324,7 +324,7 @@ function SquadraCoach() {
               {atleti.map((a) => (
                 <li key={a.id} className="border-t border-slate-100 first:border-t-0">
                   <button type="button" onClick={() => scegli(a.id)}
-                    className="cliccabile w-full min-h-[60px] flex items-center justify-between gap-3 text-left py-2">
+                    className="cliccabile w-[calc(100%+1rem)] min-h-[60px] flex items-center justify-between gap-3 text-left py-2 px-2 -mx-2">
                     <span className="min-w-0">
                       <span className="block text-[17px] font-bold text-abisso truncate">{a.nome} {a.cognome}</span>
                       <span className="block text-[13px] text-slate-500">{a.categoria || 'Categoria —'}{a.anno ? ` · ${a.anno}` : ''}</span>

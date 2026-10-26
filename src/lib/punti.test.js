@@ -1,15 +1,16 @@
 import { describe, expect, it, vi } from 'vitest'
-import { piccoliDopoGrande } from './punti'
 
 vi.mock('./supabaseClient', () => ({ supabase: {} }))
+const { costoDi, costoMinimo } = await import('./punti')
 
-describe('piccoliDopoGrande', () => {
-  it('conta tutti i premi se non ne è mai uscito uno grande', () => {
-    expect(piccoliDopoGrande([])).toBe(0)
-    expect(piccoliDopoGrande([{ grande: false }, { grande: false }])).toBe(2)
+describe('costo dei premi', () => {
+  it('sta tra il 90% e il 100% della soglia', () => {
+    expect(costoMinimo(1000)).toBe(900)
+    expect(costoDi({ costo: 950 }, 1000)).toBe(950)
+    expect(costoDi({ costo: 500 }, 1000)).toBe(900)
+    expect(costoDi({ costo: 2000 }, 1000)).toBe(1000)
   })
-  it("conta solo i piccoli dopo l'ultimo grande (lista dal più recente)", () => {
-    expect(piccoliDopoGrande([{ grande: false }, { grande: true }, { grande: false }])).toBe(1)
-    expect(piccoliDopoGrande([{ grande: true }, { grande: false }])).toBe(0)
+  it('senza costo vale la soglia', () => {
+    expect(costoDi({}, 1000)).toBe(1000)
   })
 })

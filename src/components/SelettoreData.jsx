@@ -67,8 +67,8 @@ export default function SelettoreData({ valore, onChange, etichetta = 'Data' }) 
       <label className="block text-xs text-slate-500 mb-1">{etichetta}</label>
       <button type="button" onClick={() => setAperto(true)}
         className="w-full flex items-center justify-between border border-gray-200 bg-gray-50 rounded-xl px-3 py-2.5 text-left">
-        <span className="capitalize">{formattaGiorno(valore)}</span>
-        <span aria-hidden>📅</span>
+        <span className="capitalize truncate">{formattaGiorno(valore)}</span>
+        <span aria-hidden className="shrink-0 ml-1">📅</span>
       </button>
       {aperto && <CalendarioFoglio valore={valore} onScegli={onChange} onChiudi={() => setAperto(false)} />}
     </>

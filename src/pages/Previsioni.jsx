@@ -34,6 +34,7 @@ export function SchedaPrevisioni({ atletaId }) {
   const [dati, setDati] = useState(null)
   const [fonte, setFonte] = useState(FONTI[0])
   const [dal, setDal] = useState(stagione(oggi).inizio)
+  const [al, setAl] = useState(oggi)
   const [fino, setFino] = useState(voci[voci.length - 1][1]) // fine stagione
 
   useEffect(() => {
@@ -51,12 +52,12 @@ export function SchedaPrevisioni({ atletaId }) {
     if (!dati) return []
     const righe = dati
       .filter((s) => s.fonte === (fonte === 'Gare' ? 'gara' : 'allenamento'))
-      .map((s) => ({ ...s, p: prevedi(s.punti, { oggi, dal, fino }) }))
+      .map((s) => ({ ...s, p: prevedi(s.punti, { oggi, dal, al, fino }) }))
       .filter((s) => s.p)
       .sort((x, y) => x.distanza - y.distanza || (x.vasca || 0) - (y.vasca || 0) || ordineLavoro(x.tipo) - ordineLavoro(y.tipo))
     const stili = [...new Set([...STILI_COACH, ...righe.map((r) => r.stile)])]
     return stili.map((st) => [st, righe.filter((r) => r.stile === st)]).filter(([, r]) => r.length)
-  }, [dati, fonte, dal, fino, oggi])
+  }, [dati, fonte, dal, al, fino, oggi])
 
   return (
     <>
@@ -71,9 +72,12 @@ export function SchedaPrevisioni({ atletaId }) {
           ))}
         </div>
         <p className="text-xs font-semibold text-blue-600 mt-2 px-1">Previsione al {dataIt(fino)}</p>
-        <div className="mt-3">
-          <SelettoreData etichetta="Tempi usati dal (di solito l'inizio della stagione)" valore={dal} onChange={(d) => setDal(d > oggi ? oggi : d)} />
+        <p className="text-sm font-bold mt-4">Tempi da usare</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
+          <div className="min-w-0"><SelettoreData etichetta="Dal" valore={dal} onChange={(d) => setDal(d > al ? al : d)} /></div>
+          <div className="min-w-0"><SelettoreData etichetta="Al" valore={al} onChange={(d) => setAl(d > oggi ? oggi : d < dal ? dal : d)} /></div>
         </div>
+        <p className="text-xs text-slate-500 mt-1.5 px-1">Di solito dall'inizio della stagione a oggi.</p>
       </div>
 
       <Schede valore={fonte} opzioni={FONTI} onCambia={setFonte} etichetta="Fonte dei tempi" />
@@ -114,7 +118,7 @@ export function SchedaPrevisioni({ atletaId }) {
       {dati && perStile.length > 0 && (
         <div className="text-xs text-slate-500 px-1 pb-2 space-y-1.5">
           <p>
-            Previsione al <b>{dataIt(fino)}</b>, partendo dal miglior tempo dal {dataIt(dal)}. Si basa sulla tendenza dei tempi
+            Previsione al <b>{dataIt(fino)}</b>, partendo dal miglior tempo tra il {dataIt(dal)} e il {dataIt(al)}. Si basa sulla tendenza dei tempi
             e vale <b>se l'allenamento resta costante</b>: non tiene conto di infortuni, pause o periodi no.
           </p>
           <p>Il miglioramento rallenta col tempo: più si va avanti, più ogni centesimo costa fatica.</p>
