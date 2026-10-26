@@ -47,7 +47,7 @@ export const GUIDA = [
       ['‹ e ›', 'Settimana prima e settimana dopo. "Mese ▾" apre il calendario per saltare a qualsiasi giorno.'],
       ['Riquadro blu', 'L\'allenamento del coach: chilometri, minuti e difficoltà. Tocca la difficoltà per vedere dove va la fatica.'],
       ['Inizia in vasca', 'Modalità piscina: un lavoro alla volta a caratteri grandi. "Fatto" quando finisci; alla fine "Registra i tempi" o "Torna a Oggi".'],
-      ['Scrivi i tempi', 'Nel riquadro blu: apre i lavori del coach con le caselle per i tuoi tempi. Se il coach non ha pubblicato niente, scrivi tu cosa hai fatto.'],
+      ['Scrivi i tempi', 'Nel riquadro blu: apre i lavori del coach con le caselle per i tuoi tempi. Se il coach non ha pubblicato niente, non ci sono tempi da scrivere.'],
       ['Il programma', 'Tutti i lavori del giorno, in ordine.'],
       ['Com\'è andata oggi', 'Riassunto del giorno: km, tempi, record, punti. Sabato e domenica c\'è anche la card della settimana (la X la chiude).'],
       ['Barra in basso', 'Oggi, I miei tempi (progressi, record, previsioni, storico, punti), Gare, Altro e Profilo.'],

@@ -91,17 +91,6 @@ function EroeAllenamento({ piano, oggi, giorno, squadra, vasca, registra, onVasc
   )
 }
 
-// Bottone primario: pieno, blu, largo quanto il testo (al massimo 320px)
-function BottoneRegistra({ giorno }) {
-  return (
-    <Link to={`/allenamenti?data=${giorno}`}
-      className="cliccabile inline-flex items-center justify-center gap-2 w-full max-w-[320px] min-h-[48px] px-6 font-display font-extrabold text-white bg-blue-600 hover:bg-blue-700 rounded-campo">
-      <Icona nome="cronometro" className="w-5 h-5" />
-      Scrivi i tuoi tempi
-    </Link>
-  )
-}
-
 // Home: i giorni e, sotto, gli allenamenti del giorno scelto
 function HomeAtleta() {
   const { user, ruolo, profile, adminReale } = useAuth()
@@ -194,9 +183,8 @@ function HomeAtleta() {
           </span>
           <div>
             <p className="font-display text-xl font-extrabold text-abisso mb-1">Nessun allenamento</p>
-            <p className="text-sm">Il coach non ha pubblicato l'allenamento di questo giorno. Appena lo fa, lo trovi qui.</p>
+            <p className="text-sm">Il coach non ha scritto alcun allenamento {giorno === dataLocale() ? 'nella giornata di oggi' : 'in questo giorno'}. Appena lo pubblica, lo trovi qui.</p>
           </div>
-          {registra && <BottoneRegistra giorno={giorno} />}
         </div>
       )}
       {vasca && piano && <ModalitaVasca righe={piano.righe} onChiudi={() => setVasca(false)} />}

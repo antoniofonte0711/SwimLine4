@@ -52,18 +52,26 @@ function AllenamentiAtleta() {
         <div className="bg-white rounded-3xl p-5 mb-3 shadow-card">
           <SelettoreData etichetta="Giorno dell'allenamento" valore={oggi} onChange={setOggi} />
         </div>
-        {piano === undefined ? <p className="text-center text-slate-500 py-8">Carico…</p> : (
+        {piano === undefined ? <p className="text-center text-slate-500 py-8">Carico…</p> : !piano ? (
+          // senza un allenamento vero del coach non si scrivono tempi
+          <div className="bg-white rounded-3xl p-6 mb-3 shadow-card text-center">
+            <p className="font-display text-xl font-extrabold text-abisso mb-1">Nessun allenamento</p>
+            <p className="text-sm text-slate-500">
+              Il coach non ha scritto alcun allenamento {oggi === dataLocale() ? 'nella giornata di oggi' : 'in questo giorno'}.
+              Appena lo pubblica, qui potrai scrivere i tuoi tempi.
+            </p>
+          </div>
+        ) : (
           <>
-            {piano && <RisultatiAtleta piano={piano} atletaId={user.id} giorno={oggi} proprio />}
-            {piano && !libero ? (
+            <RisultatiAtleta piano={piano} atletaId={user.id} giorno={oggi} proprio />
+            {!libero ? (
               <button onClick={() => setLibero(true)} className="cliccabile w-full min-h-[48px] mt-3 text-sm font-bold text-blue-600 bg-schiuma rounded-2xl">
                 + Lavoro oltre l'allenamento
               </button>
             ) : (
               <>
-                {!piano && <p className="text-sm text-slate-500 mb-3 px-1">In questo giorno il coach non ha pubblicato un allenamento: scrivi tu cosa hai fatto.</p>}
-                {piano && <p className="font-display text-lg font-extrabold text-abisso mt-5 mb-2 px-1">Lavoro oltre l'allenamento</p>}
-                <FormLavoro titolo={piano ? "Aggiungi un lavoro che non era nel programma. Quelli del coach sopra non si cambiano." : undefined} />
+                <p className="font-display text-lg font-extrabold text-abisso mt-5 mb-2 px-1">Lavoro oltre l'allenamento</p>
+                <FormLavoro titolo="Aggiungi un lavoro che non era nel programma. Quelli del coach sopra non si cambiano." />
                 <CarrelloCard giorno={oggi} />
               </>
             )}
