@@ -7,6 +7,7 @@ import { SenzaSquadra } from './PianoCard'
 import { dataLocale, formattaGiorno } from '../lib/lavori'
 import { lunediDi } from '../lib/presenze'
 import { addGiorni, metriPiano, useMiaSquadra } from '../lib/pianoSquadra'
+import { ordinaPersone } from '../lib/persone'
 
 const GG = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven']
 const SCELTE = [['presente', 'Presente'], ['assente', 'Assente'], ['non_penale', 'Giustificato']]
@@ -30,7 +31,7 @@ export function Bollettino({ squadra }) {
   const carica = useCallback(async () => {
     const { data: a } = await supabase.from('profiles').select('id, nome, cognome').in('role', ['atleta', 'admin'])
       .eq('squadra_id', squadra.id).is('eliminato_il', null).order('cognome')
-    setAtleti(a || [])
+    setAtleti(ordinaPersone(a))
     const ids = (a || []).map((x) => x.id)
     if (ids.length) {
       const { data: pr } = await supabase.from('presenze').select('atleta_id, data, stato')

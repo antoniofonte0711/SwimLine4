@@ -18,6 +18,7 @@ import StoricoAllenamenti from '../components/StoricoAllenamenti'
 import Icona from '../components/Icona'
 import { SenzaSquadra } from '../components/PianoCard'
 import { SchedaPrevisioni } from './Previsioni'
+import { ordinaPersone } from '../lib/persone'
 
 const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white'
 const dataIt = (s) => (s ? new Date(s + 'T12:00:00').toLocaleDateString('it-IT') : '')
@@ -72,7 +73,7 @@ function SquadraCompagni() {
           anno: a.data_nascita ? a.data_nascita.slice(0, 4) : null,
         }))
       }
-      setAtleti(data || [])
+      setAtleti(ordinaPersone(data))
       // nessuno scelto all'inizio: prima l'elenco, poi si tocca un nome
       setScelto((s) => (data || []).some((a) => a.id === s) ? s : '')
     }
@@ -292,7 +293,7 @@ function SquadraCoach() {
           anno: a.data_nascita ? a.data_nascita.slice(0, 4) : null,
         }))
       }
-      setAtleti(data || [])
+      setAtleti(ordinaPersone(data))
     }
     carica()
   }, [pronto, squadra?.id]) // eslint-disable-line react-hooks/exhaustive-deps

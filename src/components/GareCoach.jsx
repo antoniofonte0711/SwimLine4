@@ -13,6 +13,7 @@ import {
 import { useMiaSquadra } from '../lib/pianoSquadra'
 import { useRegole } from '../lib/regole'
 import Schede from './Schede'
+import { ordinaPersone } from '../lib/persone'
 
 const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white'
 const CARD = 'bg-white rounded-3xl p-5 mb-3 shadow-card'
@@ -289,7 +290,7 @@ export default function GareCoach() {
   useEffect(() => {
     if (!squadra) return
     supabase.from('profiles').select('id, nome, cognome').in('role', ['atleta', 'admin']).eq('squadra_id', squadra.id).order('cognome')
-      .then(({ data: a }) => { setAtleti(a || []); caricaGare(a || []) })
+      .then(({ data: a }) => { const ord = ordinaPersone(a); setAtleti(ord); caricaGare(ord) })
   }, [squadra?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const cambiaGara = (i, patch) => setProgramma(programma.map((g, k) => (k === i ? { ...g, ...patch } : g)))

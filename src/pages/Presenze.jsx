@@ -10,6 +10,7 @@ import { SenzaSquadra } from '../components/PianoCard'
 import { dataLocale } from '../lib/lavori'
 import { STATI_BREVI, GIORNI_ALLENAMENTO } from '../lib/presenze'
 import { addGiorni, useMiaSquadra } from '../lib/pianoSquadra'
+import { ordinaPersone } from '../lib/persone'
 
 const COLORI = {
   presente: 'bg-green-600 text-white',
@@ -41,7 +42,7 @@ export default function Presenze() {
     const { data: p } = ids.length
       ? await supabase.from('presenze').select('atleta_id, stato').in('atleta_id', ids).eq('data', giorno)
       : { data: [] }
-    setAtleti(a || [])
+    setAtleti(ordinaPersone(a))
     setStati(Object.fromEntries((p || []).map((r) => [r.atleta_id, r.stato])))
   }, [giorno, squadra?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 

@@ -14,6 +14,7 @@ import { coloreLavoro, dataLocale } from '../lib/lavori'
 import { ordineLavoro } from '../lib/tipiLavoro'
 import { secondiInTempo } from '../lib/tempo'
 import { prevedi, scorciatoie, serieTempi, stagione } from '../lib/previsioni'
+import { ordinaPersone } from '../lib/persone'
 
 const CARD = 'bg-white rounded-3xl p-5 mb-3 shadow-card'
 const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white'
@@ -138,8 +139,9 @@ function PrevisioniCoach() {
     if (!squadra) return
     supabase.from('profiles').select('id, nome, cognome').in('role', ['atleta', 'admin']).eq('squadra_id', squadra.id).order('cognome')
       .then(({ data }) => {
-        setAtleti(data || [])
-        setScelto((s) => s || data?.[0]?.id || '')
+        const ord = ordinaPersone(data)
+        setAtleti(ord)
+        setScelto((s) => s || ord[0]?.id || '')
       })
   }, [squadra?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 

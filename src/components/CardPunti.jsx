@@ -40,7 +40,7 @@ export default function CardPunti({ dettaglio = true }) {
             <Icona nome="stella" className="w-5 h-5 text-blue-600" />
             Livello {livello.nome}
           </p>
-          {dettaglio && <Link to="/punti" className="cliccabile inline-flex items-center min-h-[44px] -my-2 text-xs font-semibold text-blue-600">Movimenti e premi ›</Link>}
+          {dettaglio && <Link to="/punti" className="inline-flex items-center min-h-[44px] -my-2 -mr-3 px-3 rounded-2xl text-xs font-semibold text-blue-600 transition active:scale-[0.97] active:bg-schiuma [@media(hover:hover)]:hover:bg-schiuma">Movimenti e premi ›</Link>}
         </div>
         <p className="font-display text-3xl font-extrabold mt-1">{dentro}<span className="text-slate-500">/{soglia}</span> <span className="font-sans text-sm font-semibold text-slate-500 tracking-normal">punti al prossimo premio</span></p>
         <div className="h-3 rounded-full bg-schiuma overflow-hidden mt-3">

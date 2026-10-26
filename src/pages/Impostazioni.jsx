@@ -6,6 +6,7 @@ import { SenzaSquadra } from '../components/PianoCard'
 import { useMiaSquadra } from '../lib/pianoSquadra'
 import DomandeIngresso from '../components/DomandeIngresso'
 import { useRegole, ricaricaRegole } from '../lib/regole'
+import { ordinaPersone } from '../lib/persone'
 
 const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white'
 // L'admin è prima di tutto un atleta: in squadra compare come tale
@@ -68,7 +69,7 @@ export default function Impostazioni() {
   const caricaMembri = useCallback(async () => {
     const { data } = await supabase.from('profiles').select('id, nome, cognome, role')
       .eq('squadra_id', squadra.id).order('cognome')
-    setMembri(data || [])
+    setMembri(ordinaPersone(data))
   }, [squadra?.id])
 
   useEffect(() => { if (squadra) caricaMembri() }, [squadra?.id, caricaMembri]) // eslint-disable-line react-hooks/exhaustive-deps

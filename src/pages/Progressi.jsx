@@ -9,6 +9,7 @@ import SchedaProgressi from '../components/SchedaProgressi'
 import SceltaFiglio, { useAtletaVisto } from '../components/SceltaFiglio'
 import { SenzaSquadra } from '../components/PianoCard'
 import { useMiaSquadra } from '../lib/pianoSquadra'
+import { ordinaPersone } from '../lib/persone'
 
 // Coach: tabella degli atleti; la freccia apre la scheda personale (tutti i tempi, filtri, aggiunta tempi)
 function ProgressiCoach() {
@@ -19,7 +20,7 @@ function ProgressiCoach() {
   useEffect(() => {
     if (!squadra) return
     supabase.from('profiles').select('id, nome, cognome').in('role', ['atleta', 'admin']).eq('squadra_id', squadra.id).order('cognome')
-      .then(({ data }) => setAtleti(data || []))
+      .then(({ data }) => setAtleti(ordinaPersone(data)))
   }, [squadra?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (scelto) {

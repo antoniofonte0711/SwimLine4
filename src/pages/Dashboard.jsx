@@ -257,7 +257,7 @@ function HomeAtleta() {
 function RigaDaFare({ to, icona, titolo, sotto, urgente }) {
   return (
     <li className="border-t border-slate-100 first:border-t-0">
-      <Link to={to} className="cliccabile flex items-center gap-3 min-h-[64px] py-2">
+      <Link to={to} className="flex items-center gap-3 min-h-[64px] py-2 -mx-2 px-2 rounded-2xl transition active:scale-[0.98] active:bg-slate-100 [@media(hover:hover)]:hover:bg-slate-50">
         <span className={`w-10 h-10 shrink-0 rounded-2xl flex items-center justify-center ${urgente ? 'bg-red-50 text-red-600' : 'bg-schiuma text-blue-600'}`}>
           <Icona nome={icona} className="w-[22px] h-[22px]" />
         </span>

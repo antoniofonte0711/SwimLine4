@@ -7,6 +7,7 @@ import SelettoreData from '../components/SelettoreData'
 import { SenzaSquadra } from '../components/PianoCard'
 import { dataLocale } from '../lib/lavori'
 import { useMiaSquadra } from '../lib/pianoSquadra'
+import { ordinaPersone } from '../lib/persone'
 
 const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white'
 
@@ -24,8 +25,9 @@ export default function RisultatiAllenamento() {
     if (!squadra) return
     supabase.from('profiles').select('id, nome, cognome').in('role', ['atleta', 'admin']).eq('squadra_id', squadra.id).order('cognome')
       .then(({ data }) => {
-        setAtleti(data || [])
-        setAtleta((a) => a || data?.[0]?.id || '')
+        const ord = ordinaPersone(data)
+        setAtleti(ord)
+        setAtleta((a) => a || ord[0]?.id || '')
       })
   }, [squadra?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
