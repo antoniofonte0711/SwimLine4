@@ -20,6 +20,7 @@ import { useRegole } from '../lib/regole'
 import { RecapOggi, RecapOggiFiglio } from '../components/RecapAtleta'
 import GenitoriAtleta from '../components/GenitoriAtleta'
 import Icona from '../components/Icona'
+import CondividiAllenamento from '../components/CondividiAllenamento'
 import { ProponiFuoriPiano, ProposteFuoriPiano } from '../components/FuoriPiano'
 
 const COLORE_STATO = {
@@ -170,6 +171,10 @@ function HomeAtleta() {
         <>
           <EroeAllenamento piano={piano} oggi={giorno === dataLocale()} giorno={giorno} squadra={squadraNome}
             vasca={puoModificare(ruolo) && puo('a_vasca')} registra={registra} onVasca={() => setVasca(true)} />
+          {piano.pubblicato && (
+            <CondividiAllenamento piano={piano} giorno={giorno} atletaId={ruolo === 'genitore' ? null : user.id}
+              testo={ruolo === 'genitore' ? "Condividi l'allenamento" : undefined} />
+          )}
           <h2 className="font-display text-xl font-extrabold mt-5 mb-2 flex items-baseline justify-between">
             Il programma
             <span className="font-sans text-[13px] font-semibold text-slate-500 tracking-normal">{piano.righe.length} lavori</span>
@@ -394,6 +399,7 @@ function OggiCoach({ squadra, giorno, settimana, onScrivi, avviso }) {
               <span className="font-sans text-[13px] font-semibold text-slate-500 tracking-normal">{(piano.righe || []).length} lavori</span>
             </h2>
             <PianoCard piano={piano} senzaTesta />
+            {piano.pubblicato && <CondividiAllenamento piano={piano} giorno={giorno} testo="Condividi l'allenamento della squadra" />}
           </>
         )}
       </div>
