@@ -187,13 +187,33 @@ export function ElencoSquadre({ dati, onApri, ricarica }) {
     ricarica()
   }
 
+  async function eliminaGruppo(s) {
+    setErrore('')
+    if (s.atleti + s.genitori > 0 || dati.persone.some((p) => p.squadra_id === s.id)) {
+      return setErrore(`${s.nome} ha ancora persone dentro: spostale o toglile prima di eliminarlo.`)
+    }
+    if (!window.confirm(`Eliminare il gruppo ${s.nome}? Si cancellano anche i suoi allenamenti e le sue impostazioni. Non si può annullare.`)) return
+    const { error } = await supabase.rpc('admin_elimina_squadra', { p_squadra: s.id })
+    if (error) return setErrore(error.message)
+    ricarica()
+  }
+
+  async function eliminaSocieta(so) {
+    setErrore('')
+    if (!window.confirm(`Eliminare la società ${so.nome}? I suoi gruppi restano com'erano, senza società.`)) return
+    const { error } = await supabase.rpc('admin_elimina_societa', { p_id: so.id })
+    if (error) return setErrore(error.message)
+    ricarica()
+  }
+
   const chiudi = () => { setModulo(null); ricarica() }
   const sezioni = [...(dati?.societa || []).map((so) => ({ so, gruppi: elenco.filter((s) => s.societa_id === so.id) })),
     { so: null, gruppi: elenco.filter((s) => !s.societa_id) }]
     .filter(({ so, gruppi }) => gruppi.length || (so && (!q || so.nome.toLowerCase().includes(q))))
 
   const scheda = (s) => (
-    <button key={s.id} type="button" onClick={() => onApri(s.id)} aria-label={`Entra in ${s.nome}`}
+    <div key={s.id} className="flex flex-col gap-1">
+    <button type="button" onClick={() => onApri(s.id)} aria-label={`Entra in ${s.nome}`}
       className="flex items-center gap-4 bg-white border border-slate-200 rounded-2xl p-5 text-left hover:border-blue-200 hover:shadow-lg transition">
       <span className="w-16 h-16 shrink-0 rounded-2xl flex items-center justify-center font-display font-extrabold text-2xl text-white" style={{ background: s.colore }}>
         {sigla(s.nome)}
@@ -205,6 +225,9 @@ export function ElencoSquadre({ dati, onApri, ricarica }) {
       </span>
       <span className="ml-auto text-sm font-extrabold text-blue-600 whitespace-nowrap">Entra ›</span>
     </button>
+    <button type="button" onClick={() => eliminaGruppo(s)} aria-label={`Elimina il gruppo ${s.nome}`}
+      className="self-end min-h-[36px] px-2 text-xs font-extrabold text-red-700">Elimina gruppo</button>
+    </div>
   )
 
   return (
@@ -273,6 +296,7 @@ export function ElencoSquadre({ dati, onApri, ricarica }) {
                   )}
                   <button type="button" onClick={() => setModulo({ tipo: 'gruppo', societa: so.id })} className="min-h-[40px] rounded-xl px-3 text-sm font-extrabold bg-schiuma text-blue-600">+ Gruppo</button>
                   <button type="button" onClick={() => setModulo({ tipo: 'societa', societa: so })} className="min-h-[40px] rounded-xl px-3 text-sm font-extrabold bg-slate-100 text-slate-600">Modifica</button>
+                  <button type="button" onClick={() => eliminaSocieta(so)} className="min-h-[40px] rounded-xl px-3 text-sm font-extrabold text-red-700 bg-red-50">Elimina</button>
                 </div>
               )}
             </div>
@@ -304,6 +328,15 @@ export function DettaglioSquadra({ dati, ricarica, squadraId, onIndietro }) {
     navigate('/dashboard')
   }
 
+  async function elimina() {
+    if (membri.length > 0) return window.alert(`${squadra.nome} ha ancora ${membri.length} persone dentro: spostale o toglile dalla scheda Persone prima di eliminarlo.`)
+    if (!window.confirm(`Eliminare il gruppo ${squadra.nome}? Si cancellano anche i suoi allenamenti e le sue impostazioni. Non si può annullare.`)) return
+    const { error } = await supabase.rpc('admin_elimina_squadra', { p_squadra: squadra.id })
+    if (error) return window.alert(error.message)
+    ricarica()
+    onIndietro()
+  }
+
   return (
     <>
       <div>
@@ -314,7 +347,10 @@ export function DettaglioSquadra({ dati, ricarica, squadraId, onIndietro }) {
         </nav>
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <h1 className="font-display text-[34px] font-extrabold leading-tight">{squadra.nome}</h1>
-          <button type="button" onClick={entraCome} className={BOTTONE_PIENO}>Entra nell'app come coach</button>
+          <div className="flex gap-2 flex-wrap">
+            <button type="button" onClick={elimina} className="min-h-[44px] rounded-xl px-4 text-sm font-extrabold text-red-700 bg-red-50">Elimina gruppo</button>
+            <button type="button" onClick={entraCome} className={BOTTONE_PIENO}>Entra nell'app come coach</button>
+          </div>
         </div>
       </div>
 
