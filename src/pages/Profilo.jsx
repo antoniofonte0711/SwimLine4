@@ -436,7 +436,9 @@ export default function Profilo() {
       <div className="lg:col-start-2 lg:row-start-1 lg:row-span-2">
       {/* L'admin è anche atleta: entra in una squadra accettando l'invito del coach (non creandone una sua) */}
       {adminReale && <RichiesteSquadra completo />}
-      {adminReale && <SquadreAdmin />}
+      {/* tutte le squadre solo nella vista admin; "come coach" vede quello che vedrebbe quel coach */}
+      {adminReale && ruolo === 'admin' && <SquadreAdmin />}
+      {adminReale && ruolo === 'coach' && <SquadreAdmin comeCoach />}
 
       {['atleta', 'genitore', 'coach'].includes(profile?.role) && <BoxSquadra />}
 
