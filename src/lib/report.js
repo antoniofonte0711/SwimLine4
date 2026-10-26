@@ -39,10 +39,12 @@ export function datiReport({ piano, giorno, allenamenti = null, gare = [] }) {
         if (!meglio || sec / a.distanza < meglio.sec / meglio.distanza) meglio = { sec, distanza: a.distanza, stile: a.stile }
       })
     })
-    if (meglio) dati.migliore = { tempo: secondiInTempo(meglio.sec), sotto: `${meglio.distanza} m ${String(meglio.stile || '').toLowerCase()}` }
+    // per l'atleta ci sono sempre tutti e 4 i numeri, anche senza tempi o record quel giorno
+    dati.migliore = meglio
+      ? { tempo: secondiInTempo(meglio.sec), sotto: `${meglio.distanza} m ${String(meglio.stile || '').toLowerCase()}` }
+      : { tempo: '—', sotto: 'nessun tempo scritto' }
     const battuti = recordPersonali(risultati(allenamenti, gare)).filter((r) => r.data === giorno)
-    // "0 record" non si mostra: compare solo nei giorni in cui ne ha battuto almeno uno
-    if (battuti.length) dati.record = { n: battuti.length, sotto: `${battuti[0].etichetta} −${secondiInTempo(battuti[0].meglio)}` }
+    dati.record = { n: battuti.length, sotto: battuti[0] ? `${battuti[0].etichetta} −${secondiInTempo(battuti[0].meglio)}` : 'nessuno oggi' }
   }
   return dati
 }
