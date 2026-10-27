@@ -113,7 +113,7 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
       </div>
     ) : (
       <button key={chiave} type="button" onClick={() => setMedie({ ...medie, [chiave]: '' })}
-        className="cliccabile min-h-[44px] mt-2 block text-sm font-semibold text-blue-600 text-left">
+        className="cliccabile min-h-[44px] mt-2 flex w-fit items-center rounded-xl border border-blue-300 px-3 text-sm font-semibold text-blue-600 text-left">
         Non ricordo tutti i tempi: scrivo la media{nome}
       </button>
     )

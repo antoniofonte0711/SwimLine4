@@ -130,7 +130,7 @@ export default function FormLavoro({ titolo }) {
 
       {f.media === undefined ? (
         <button type="button" onClick={() => setF({ ...f, media: '' })}
-          className="cliccabile min-h-[44px] mb-3 -mt-2 text-sm font-semibold text-blue-600 text-left">
+          className="cliccabile min-h-[44px] mb-3 -mt-2 inline-flex items-center rounded-xl border border-blue-300 px-3 text-sm font-semibold text-blue-600 text-left">
           Non ricordo tutti i tempi: scrivo la media
         </button>
       ) : (
