@@ -134,11 +134,12 @@ export default function FormLavoro({ titolo }) {
           Non ricordo tutti i tempi: scrivo la media
         </button>
       ) : (
-        <div className="mb-4 -mt-2">
-          <InputTempo etichetta="Tempo medio (conta come un tempo normale)" value={f.media} vuotoOk
+        <div className="mb-4 -mt-2 rounded-2xl border-2 border-blue-300 bg-blue-50 p-3">
+          <p className="mb-1 text-sm font-bold text-blue-700">Tempo medio <span className="font-normal text-blue-600">(conta come un tempo normale)</span></p>
+          <InputTempo ariaLabel="Tempo medio" value={f.media} vuotoOk
             onChange={(v) => setF({ ...f, media: v })} />
           <button type="button" onClick={() => setF({ ...f, media: undefined })}
-            className="cliccabile min-h-[44px] text-xs font-bold text-slate-500">Togli la media</button>
+            className="cliccabile min-h-[44px] text-xs font-bold text-red-600">Togli la media</button>
         </div>
       )}
 

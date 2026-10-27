@@ -104,11 +104,12 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
     const chiave = `${i}-${k}`
     const nome = (conDistanza || haTratti(r) ? ` ${g.distanza} m` : '') + (gruppiRighe[i].length > 1 ? ` · ${g.stile}` : '')
     return chiave in medie ? (
-      <div key={chiave} className="mt-3">
-        <InputTempo etichetta={`Tempo medio${nome}`} value={medie[chiave] || ''} vuotoOk
+      <div key={chiave} className="mt-3 rounded-2xl border-2 border-blue-300 bg-blue-50 p-3">
+        <p className="mb-1 text-sm font-bold text-blue-700">Tempo medio{nome}</p>
+        <InputTempo ariaLabel={`Tempo medio${nome}`} value={medie[chiave] || ''} vuotoOk
           onChange={(v) => setMedie({ ...medie, [chiave]: v })} />
         <button type="button" onClick={() => { const { [chiave]: _tolta, ...resto } = medie; setMedie(resto) }}
-          className="cliccabile min-h-[44px] text-xs font-bold text-slate-500">Togli la media</button>
+          className="cliccabile min-h-[44px] text-xs font-bold text-red-600">Togli la media</button>
       </div>
     ) : (
       <button key={chiave} type="button" onClick={() => setMedie({ ...medie, [chiave]: '' })}
