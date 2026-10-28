@@ -28,4 +28,14 @@ describe('lavori "A scelta"', () => {
     expect(abb[0]).toBe(tempi[0])
     expect(abb[1]).toBe(tempi[1])
   })
+  it('il tempo di un lavoro normale con stesso tipo e distanza non finisce nella riga "A scelta"', () => {
+    const piano = [
+      { tipo_lavoro: 'C1', distanza: 100, stile: 'A scelta' },
+      { tipo_lavoro: 'C1', distanza: 100, stile: 'Rana' },
+    ]
+    const solo = [{ atleta_id: 'a', tipo_lavoro: 'C1', distanza: 100, stile: 'Rana' }]
+    const abb = abbinaTempi(piano, solo).a
+    expect(abb[0]).toBeUndefined()
+    expect(abb[1]).toBe(solo[0])
+  })
 })

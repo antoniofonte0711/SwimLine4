@@ -59,17 +59,24 @@ const stessoLavoro = (e, r) => chiaveRisultato(e) === chiaveRisultato(r)
   || (r.stile === PS && STILI_PROPRI.includes(e.stile) && chiaveRisultato({ ...e, stile: PS }) === chiaveRisultato(r))
   || tempoDiRigaAScelta(e, r)
 
+// Ordine in cui abbinare le righe ai tempi: prima quelle con lo stile fissato, poi le "A scelta"
+// (così una riga "A scelta" non si prende il tempo di un lavoro normale con stesso tipo e distanza)
+export const ordineAbbinamento = (righe = []) =>
+  [...righe.keys()].sort((a, b) => Number(aScelta(righe[a])) - Number(aScelta(righe[b])) || a - b)
+
 // Per ogni atleta, i tempi registrati abbinati alle righe del piano in ordine: { atleta: [riga registrata | undefined] }
 export function abbinaTempi(righe = [], registrati = []) {
   const perAtleta = {}
   registrati.forEach((e) => (perAtleta[e.atleta_id] ||= []).push(e))
   return Object.fromEntries(Object.entries(perAtleta).map(([atleta, lista]) => {
     const usati = new Set()
-    return [atleta, righe.map((r) => {
-      const trovata = lista.find((e) => !usati.has(e) && stessoLavoro(e, r))
+    const fuori = []
+    ordineAbbinamento(righe).forEach((i) => {
+      const trovata = lista.find((e) => !usati.has(e) && stessoLavoro(e, righe[i]))
       if (trovata) usati.add(trovata)
-      return trovata
-    })]
+      fuori[i] = trovata
+    })
+    return [atleta, Array.from({ length: righe.length }, (_, i) => fuori[i])]
   }))
 }
 

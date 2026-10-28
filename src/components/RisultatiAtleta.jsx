@@ -6,7 +6,7 @@ import InputTempo from './InputTempo'
 import { coloreLavoro } from '../lib/lavori'
 import { useAuth } from '../context/AuthContext'
 import { STILI } from '../lib/lavori'
-import { aScelta, blocchiPiano, chiaveRisultato as chiaveRiga, conProprioStile, conScelte, giriSerie, tempoDiRigaAScelta, haVarianti, perGiro, ripartenzeDiRiga, ripetizioniDiRiga } from '../lib/pianoSquadra'
+import { aScelta, blocchiPiano, chiaveRisultato as chiaveRiga, conProprioStile, conScelte, giriSerie, ordineAbbinamento, tempoDiRigaAScelta, haVarianti, perGiro, ripartenzeDiRiga, ripetizioniDiRiga } from '../lib/pianoSquadra'
 import { aggiungiInCoda, erroreDiRete, leggiCoda, rimuoviDaCoda } from '../lib/codaOffline'
 import { caselleDiRiga, distribuisci, gruppiPerStile, haTratti, raccogli } from '../lib/varianti'
 import { ERRORE_TEMPO_BREVE, erroreTempoImpossibile, normalizzaTempo, tempoPlausibile, tempoValido } from '../lib/tempo'
@@ -64,7 +64,9 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
         const usati = new Set()
         const medieTrovate = {}
         const scelteTrovate = {}
-        setValori(base.map((rb, i) => {
+        const nuoviValori = []
+        ordineAbbinamento(base).forEach((i) => {
+          const rb = base[i]
           const gruppi = gruppiPerStile(rb)
           const trovate = gruppi.map((g) => {
             const t = lista.find((e) => !usati.has(e.id) && combacia(e, i, g))
@@ -74,8 +76,9 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
           // un lavoro "A scelta" già salvato riparte dallo stile scelto allora
           if (aScelta(rb) && trovate[0]) scelteTrovate[i] = trovate[0].stile
           trovate.forEach((t, k) => { if (leggiMedia(t)) medieTrovate[`${i}-${k}`] = leggiMedia(t) })
-          return distribuisci(gruppi, trovate.map((t) => t?.passaggi || []))
-        }))
+          nuoviValori[i] = distribuisci(gruppi, trovate.map((t) => t?.passaggi || []))
+        })
+        setValori(Array.from({ length: base.length }, (_, i) => nuoviValori[i]))
         setScelte(scelteTrovate)
         setMedie(medieTrovate)
       })
@@ -93,11 +96,14 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
   // Ogni stile di una riga è un lavoro salvato a sé: il tempo resta nella categoria del suo stile
   const usatiOra = new Set()
   const gruppiRighe = righe.map(gruppiPerStile)
-  const perStile = righe.map((r, i) => gruppiRighe[i].map((g) => {
-    const t = esistenti.find((e) => !usatiOra.has(e.id) && combacia(e, i, g))
-    if (t) usatiOra.add(t.id)
-    return t || null
-  }))
+  const perStile = []
+  ordineAbbinamento(base).forEach((i) => {
+    perStile[i] = gruppiRighe[i].map((g) => {
+      const t = esistenti.find((e) => !usatiOra.has(e.id) && combacia(e, i, g))
+      if (t) usatiOra.add(t.id)
+      return t || null
+    })
+  })
   const salvata = perStile.map((lista, i) => (lista.some(Boolean)
     ? { passaggi: distribuisci(gruppiRighe[i], lista.map((t) => t?.passaggi || [])), medie: lista.map((t) => leggiMedia(t)).filter(Boolean) }
     : null))
