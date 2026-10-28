@@ -7,7 +7,7 @@ import { coloreLavoro, distanzaDaTipo } from '../lib/lavori'
 import { lavoriDaScegliere } from '../lib/tipiLavoro'
 import { ricaricaTipiLavoro, useTipiLavoro } from '../lib/useTipiLavoro'
 import PiuStili from './PiuStili'
-import { RIGA_VUOTA, STILI_COACH, abbinaTempi, addGiorni, blocchiPiano, metriPiano, minutiPiano, perGiro, riassuntoVarianti } from '../lib/pianoSquadra'
+import { A_SCELTA, RIGA_VUOTA, STILI_COACH, STILI_PIANO, aScelta, abbinaTempi, addGiorni, blocchiPiano, metriPiano, minutiPiano, perGiro, riassuntoVarianti } from '../lib/pianoSquadra'
 import { normalizzaRipartenza, ripartenzaValida } from '../lib/tempo'
 import { caselleDiRiga, haTratti, pezziDiRiga, ripetizioniDiRiga, trattiPuliti } from '../lib/varianti'
 import { useRegole } from '../lib/regole'
@@ -254,9 +254,18 @@ function FoglioLavoro({ r, i, n, inSerie, squadraId, cambia, cambiaTipo, onSu, o
           )}
         </div>
 
-        <Scelte titolo="Stile" valori={STILI_COACH} valore={r.stile} onScegli={(v) => cambia(i, 'stile', v)} segnaposto="Es. Pinne" />
+        <Scelte titolo="Stile" valori={STILI_PIANO} valore={r.stile} segnaposto="Es. Pinne" onScegli={(v) => {
+          cambia(i, 'stile', v)
+          // "A scelta" vale per tutto il lavoro: niente stili diversi per ripetizione né vasche da cronometrare
+          if (v === A_SCELTA) { cambia(i, 'stili', undefined); cambia(i, 'tratti', null) }
+        }} />
+        {aScelta(r) && (
+          <p className="-mt-2 mb-4 rounded-2xl bg-schiuma px-3 py-2 text-xs font-semibold text-blue-700">
+            Ogni atleta, scrivendo i tempi, sceglie lo stile che ha fatto. Il tempo va nella categoria di quello stile.
+          </p>
+        )}
 
-        {rip > 1 && (variante ? (
+        {rip > 1 && !aScelta(r) && (variante ? (
           <div className="bg-gray-50 rounded-2xl p-3 mb-4">
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold text-slate-600">Stile e nota di ogni ripetizione</p>
@@ -285,7 +294,7 @@ function FoglioLavoro({ r, i, n, inSerie, squadraId, cambia, cambiaTipo, onSu, o
           </button>
         ))}
 
-        {!inSerie && <VascheDaCronometrare r={r} rip={rip} onCambia={(v) => cambia(i, 'tratti', v)} />}
+        {!inSerie && !aScelta(r) && <VascheDaCronometrare r={r} rip={rip} onCambia={(v) => cambia(i, 'tratti', v)} />}
 
         <InputRipartenza etichetta="Ripartenza (facoltativa)" value={r.ripartenza} onChange={(v) => cambia(i, 'ripartenza', v)} />
 

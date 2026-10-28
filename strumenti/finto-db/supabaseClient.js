@@ -42,6 +42,8 @@ const UTENTI = {
         { tipo_lavoro: 'Tecnica', distanza: 50, ripetizioni: 16, stile: 'Misti', note: '', minuti: null, ripartenza: null, ripartenze: null },
         { tipo_lavoro: 'A2', distanza: 400, ripetizioni: 4, stile: 'Stile libero', note: '', minuti: null, ripartenza: '6\'00"', ripartenze: null },
         { tipo_lavoro: 'C3', distanza: 25, ripetizioni: 12, stile: 'Stile libero', note: '', minuti: null, ripartenza: '40"', ripartenze: null },
+        // l'atleta sceglie lo stile che ha fatto
+        { tipo_lavoro: 'C1', distanza: 100, ripetizioni: 3, stile: 'A scelta', note: '', minuti: null, ripartenza: null, ripartenze: null },
       ],
     })
   }

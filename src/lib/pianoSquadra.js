@@ -8,6 +8,17 @@ import { difficoltaPiano } from './difficolta'
 export const TIPI_COACH = ['Riscaldamento', 'Tecnica', 'Gambe', 'Ipossia', 'Sciolto', 'Defaticamento']
 // Il coach può anche lasciare che ognuno nuoti il proprio stile (non vale per i lavori inseriti dagli atleti)
 export const STILI_COACH = [...STILI, 'Proprio stile']
+// "A scelta": il coach lascia decidere all'atleta. L'atleta, scrivendo i tempi, sceglie lo stile che ha fatto
+// (uno per tutto il lavoro) e il tempo finisce nella categoria di quello stile. Solo come stile del lavoro intero.
+export const A_SCELTA = 'A scelta'
+export const STILI_PIANO = [...STILI_COACH, A_SCELTA]
+export const aScelta = (r) => r?.stile === A_SCELTA
+// Le righe "A scelta" con lo stile scelto dall'atleta (scelte[indice riga]); senza scelta restano "A scelta"
+export const conScelte = (righe = [], scelte = {}) =>
+  righe.map((r, i) => (aScelta(r) && scelte[i] ? { ...r, stile: scelte[i] } : r))
+// Un tempo salvato va con una riga "A scelta" se tipo e distanza coincidono, qualunque stile abbia scelto l'atleta
+export const tempoDiRigaAScelta = (e, r) =>
+  aScelta(r) && STILI.includes(e.stile) && e.tipo_lavoro === r.tipo_lavoro && Number(e.distanza) === Number(r.distanza)
 export const RIGA_VUOTA = { tipo_lavoro: 'A2', distanza: 100, ripetizioni: 4, stile: 'Stile libero', note: '', minuti: '', ripartenza: '' }
 
 // Ripartenze da mostrare per una riga: se il coach le ha personalizzate, una per ripetizione
@@ -46,6 +57,7 @@ export function conProprioStile(righe = [], stile) {
 // Un tempo salvato va con una riga "Proprio stile" anche se è nella categoria dello stile dell'atleta
 const stessoLavoro = (e, r) => chiaveRisultato(e) === chiaveRisultato(r)
   || (r.stile === PS && STILI_PROPRI.includes(e.stile) && chiaveRisultato({ ...e, stile: PS }) === chiaveRisultato(r))
+  || tempoDiRigaAScelta(e, r)
 
 // Per ogni atleta, i tempi registrati abbinati alle righe del piano in ordine: { atleta: [riga registrata | undefined] }
 export function abbinaTempi(righe = [], registrati = []) {

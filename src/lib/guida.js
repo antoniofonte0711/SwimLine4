@@ -76,6 +76,7 @@ export const GUIDA = [
       ['+ Aggiungi lavoro', 'Sale un pannello: ripetizioni con − e +, distanza, tipo e stile con un tocco. Con "+" scrivi una distanza o uno stile che non c\'è, o crei un tipo di lavoro nuovo.'],
       ['Ripartenza', 'Si scrive come vuoi (130 diventa 1\'30"). Note, minuti e ripartenze diverse sono in "+ Note, tempo…".'],
       ['Stili diversi nelle ripetizioni', 'Nel pannello di un lavoro con più ripetizioni: scegli stile e nota per ognuna (es. 1ª Stile libero "forte", 2ª Proprio stile "piano"). Dove non scegli nulla vale lo stile generale. Vale anche nelle serie a giri (lo schema si ripete a ogni giro). Accanto al tipo di lavoro compare la sigla "+ stili".'],
+      ['Stile "A scelta"', 'Lascia decidere all\'atleta: scrivendo i tempi sceglie lo stile che ha fatto (uno per tutto il lavoro) e il tempo va nella categoria di quello stile. Con "A scelta" non ci sono stili diversi per ripetizione né vasche da cronometrare.'],
       ['← Indietro', 'In alto nel pannello di un lavoro: chiude il pannello e torna all\'allenamento. Quello che hai cambiato resta.'],
       ['Toccare un lavoro', 'Lo riapre per cambiarlo. Nel pannello: frecce ↑ ↓ per spostarlo. Si sposta anche trascinando ⠿.'],
       ['Cestino', 'A destra di ogni lavoro: lo toglie subito. Per qualche secondo compare "Annulla" se hai sbagliato.'],
@@ -96,6 +97,7 @@ export const GUIDA = [
     passi: [
       ['I lavori del coach', 'Se il coach ha pubblicato l\'allenamento di oggi, sotto ogni lavoro ci sono le caselle: scrivi i tempi (anche solo alcuni) e premi "Salva i tempi". Un lavoro già salvato compare in verde: "Correggi" riapre le caselle per cambiare un tempo.'],
       ['Lavori con più stili', 'Se il coach ha messo stili diversi nelle ripetizioni, ogni casella dice il suo (es. "2ª · Proprio stile · piano"): scrivi il tempo nella casella giusta. Ogni tempo va nella categoria del suo stile (progressi, record).'],
+      ['Lavori "A scelta"', 'Il coach ti lascia scegliere lo stile: prima dei tempi tocca quello che hai fatto (Stile libero, Dorso, Rana, Farfalla o Misti). Senza la scelta i tempi di quel lavoro non si salvano.'],
       ['Non ricordo tutti i tempi: scrivo la media', 'Sotto le caselle: se non ricordi i singoli passaggi scrivi un tempo medio indicativo. Conta come un tempo normale. (Non c\'è nelle serie a giri.)'],
       ['Tempi senza limiti', 'L\'app non blocca nessun tempo, nemmeno uno molto veloce o molto lento: controlla tu di averlo scritto bene. Scrivendo 1.20 o 120 capisce 1\'20"00 (sotto il campo compare "Capito: …"); i tasti \' e " compaiono mentre scrivi.'],
       ['I lavori del coach non si cambiano', 'Non puoi cambiare tipo, distanza o stile dei lavori del coach: scrivi solo i tempi.'],
