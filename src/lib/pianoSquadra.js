@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 
 import { STILI } from './lavori'
 import { difficoltaPiano } from './difficolta'
+import { gruppiPerStile } from './varianti'
 
 export const TIPI_COACH = ['Riscaldamento', 'Tecnica', 'Gambe', 'Ipossia', 'Sciolto', 'Defaticamento']
 // Il coach può anche lasciare che ognuno nuoti il proprio stile (non vale per i lavori inseriti dagli atleti)
@@ -13,9 +14,49 @@ export const STILI_COACH = [...STILI, 'Proprio stile']
 export const A_SCELTA = 'A scelta'
 export const STILI_PIANO = [...STILI_COACH, A_SCELTA]
 export const aScelta = (r) => r?.stile === A_SCELTA
-// Le righe "A scelta" con lo stile scelto dall'atleta (scelte[indice riga]); senza scelta restano "A scelta"
-export const conScelte = (righe = [], scelte = {}) =>
-  righe.map((r, i) => (aScelta(r) && scelte[i] ? { ...r, stile: scelte[i] } : r))
+// Le righe "A scelta" con lo stile scelto dall'atleta (scelte[indice riga]); senza scelta restano "A scelta".
+// La scelta è uno stile per tutto il lavoro oppure una lista con lo stile di ogni passaggio ('' = non ancora scelto):
+// in quel caso la riga ha uno stile per ripetizione e ogni stile si salva come un lavoro a sé.
+export const conScelte = (righe = [], scelte = {}) => righe.map((r, i) => {
+  const s = scelte[i]
+  if (!aScelta(r) || !s) return r
+  if (!Array.isArray(s)) return { ...r, stile: s }
+  return { ...r, stili: s.map((x) => x || A_SCELTA) }
+})
+// Tempi di un lavoro "A scelta" salvati "per posizione": il tempo del passaggio j sta in passaggi[j]
+// (vuoti dove il passaggio è in un altro stile), così con stili diversi nei passaggi si sa dov'era ognuno.
+export function inPosizione(gruppo, tempi = []) {
+  const l = []
+  gruppo.reps.forEach((j) => { l[j] = tempi[j] || '' })
+  const fuori = Array.from(l, (x) => x || '')
+  while (fuori.length && !fuori[fuori.length - 1]) fuori.pop()
+  return fuori
+}
+const posizioniPiene = (e) => (e?.passaggi || []).map((p, j) => (p ? j : -1)).filter((j) => j >= 0)
+// I tempi salvati che appartengono a una riga "A scelta" (uno per stile fatto): si prendono quelli di stesso tipo e
+// distanza finché i passaggi non si sovrappongono (due righe "A scelta" uguali non si rubano i tempi)
+export function tempiAScelta(r, lista = [], usati = new Set()) {
+  const presi = []
+  const occupate = new Set()
+  for (const e of lista) {
+    if (usati.has(e.id ?? e) || !tempoDiRigaAScelta(e, r)) continue
+    const pos = posizioniPiene(e)
+    if (presi.length && pos.some((j) => occupate.has(j))) continue
+    presi.push(e)
+    usati.add(e.id ?? e)
+    pos.forEach((j) => occupate.add(j))
+  }
+  return presi
+}
+// Dai tempi salvati di una riga "A scelta" alla scelta dell'atleta e ai tempi in ordine di passaggio
+export function sceltaDaTempi(presi = []) {
+  if (!presi.length) return { scelta: undefined, valori: [] }
+  const valori = []
+  const stili = []
+  presi.forEach((e) => (e.passaggi || []).forEach((p, j) => { if (p) { valori[j] = p; stili[j] = e.stile } }))
+  const diversi = new Set(presi.map((e) => e.stile)).size > 1
+  return { scelta: diversi ? Array.from(stili, (x) => x || '') : presi[0].stile, valori: Array.from(valori, (x) => x || '') }
+}
 // Un tempo salvato va con una riga "A scelta" se tipo e distanza coincidono, qualunque stile abbia scelto l'atleta
 export const tempoDiRigaAScelta = (e, r) =>
   aScelta(r) && STILI.includes(e.stile) && e.tipo_lavoro === r.tipo_lavoro && Number(e.distanza) === Number(r.distanza)
@@ -58,6 +99,49 @@ export function conProprioStile(righe = [], stile) {
 const stessoLavoro = (e, r) => chiaveRisultato(e) === chiaveRisultato(r)
   || (r.stile === PS && STILI_PROPRI.includes(e.stile) && chiaveRisultato({ ...e, stile: PS }) === chiaveRisultato(r))
   || tempoDiRigaAScelta(e, r)
+
+// Il coach ha cambiato lo stile di un lavoro? (stile del lavoro o stile di qualche ripetizione)
+const stiliDi = (r) => Array.from({ length: perGiro(r) }, (_, j) => r.stili?.[j] || r.stile)
+export function stileCambiato(prima, dopo) {
+  if (prima.stile !== dopo.stile) return true
+  const a = stiliDi(prima)
+  const b = stiliDi(dopo)
+  return a.slice(0, Math.min(a.length, b.length)).some((s, j) => s !== b[j])
+}
+// Un tempo salvato va con un gruppo (uno stile) di una riga del piano?
+const stessoGruppo = (e, r, g) => e.tipo_lavoro === r.tipo_lavoro && Number(e.distanza) === Number(g.distanza)
+  && (e.stile === g.stile || (g.stile === PS && STILI_PROPRI.includes(e.stile)))
+// Per ogni atleta, tutti i tempi salvati di ogni riga (uno per stile della riga): { atleta: [[tempi della riga]] }
+export function tempiPerRiga(righe = [], registrati = []) {
+  const perAtleta = {}
+  registrati.forEach((e) => (perAtleta[e.atleta_id] ||= []).push(e))
+  return Object.fromEntries(Object.entries(perAtleta).map(([atleta, lista]) => {
+    const usati = new Set()
+    const fuori = []
+    ordineAbbinamento(righe).forEach((i) => {
+      const r = righe[i]
+      if (aScelta(r)) { fuori[i] = tempiAScelta(r, lista, usati); return }
+      fuori[i] = gruppiPerStile(r).map((g) => {
+        const t = lista.find((e) => !usati.has(e.id ?? e) && stessoGruppo(e, r, g))
+        if (t) usati.add(t.id ?? t)
+        return t
+      }).filter(Boolean)
+    })
+    return [atleta, Array.from({ length: righe.length }, (_, i) => fuori[i] || [])]
+  }))
+}
+// Tempi che non valgono più dopo che il coach ha cambiato lo stile di una riga: restano solo se prima e dopo
+// il lavoro ha un solo stile e il tempo va ancora bene (es. da "Proprio stile" a Dorso per chi fa dorso),
+// oppure se il lavoro diventa "A scelta" (vale qualunque stile) e prima aveva un solo stile
+export function tempiDaTogliere(prima, dopo, tempi = []) {
+  if (!stileCambiato(prima, dopo)) return []
+  // un "A scelta" con stili diversi nei passaggi ha i tempi per posizione: non si possono rimettere in un altro lavoro
+  const unoPrima = gruppiPerStile(prima).length === 1 && !(aScelta(prima) && tempi.length > 1)
+  if (aScelta(dopo)) return unoPrima ? [] : tempi
+  const gruppiDopo = gruppiPerStile(dopo)
+  if (!unoPrima || gruppiDopo.length !== 1) return tempi
+  return tempi.filter((e) => !stessoGruppo(e, dopo, gruppiDopo[0]))
+}
 
 // Ordine in cui abbinare le righe ai tempi: prima quelle con lo stile fissato, poi le "A scelta"
 // (così una riga "A scelta" non si prende il tempo di un lavoro normale con stesso tipo e distanza)

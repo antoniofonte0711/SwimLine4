@@ -7,7 +7,7 @@ import { coloreLavoro, distanzaDaTipo } from '../lib/lavori'
 import { lavoriDaScegliere } from '../lib/tipiLavoro'
 import { ricaricaTipiLavoro, useTipiLavoro } from '../lib/useTipiLavoro'
 import PiuStili from './PiuStili'
-import { A_SCELTA, RIGA_VUOTA, STILI_COACH, STILI_PIANO, aScelta, abbinaTempi, addGiorni, blocchiPiano, metriPiano, minutiPiano, perGiro, riassuntoVarianti } from '../lib/pianoSquadra'
+import { A_SCELTA, RIGA_VUOTA, STILI_COACH, STILI_PIANO, aScelta, abbinaTempi, addGiorni, blocchiPiano, metriPiano, minutiPiano, perGiro, riassuntoVarianti, tempiDaTogliere, tempiPerRiga } from '../lib/pianoSquadra'
 import { normalizzaRipartenza, ripartenzaValida } from '../lib/tempo'
 import { caselleDiRiga, haTratti, pezziDiRiga, ripetizioniDiRiga, trattiPuliti } from '../lib/varianti'
 import { useRegole } from '../lib/regole'
@@ -404,7 +404,7 @@ function RigaLavoro({ chiave, r, onApri, onTogli }) {
 }
 
 // Riquadro di conferma al centro dello schermo, con lo sfondo scurito
-function Conferma({ titolo, testo, si, no }) {
+function Conferma({ titolo, testo, si, no, bottone = 'Sì, togli' }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={no}>
       <div role="alertdialog" aria-modal="true" onClick={(e) => e.stopPropagation()}
@@ -414,7 +414,7 @@ function Conferma({ titolo, testo, si, no }) {
         <p className="text-sm text-slate-600 mb-5">{testo}</p>
         <div className="grid grid-cols-2 gap-2">
           <button onClick={no} className="font-bold text-slate-600 bg-gray-100 rounded-2xl py-3">Annulla</button>
-          <button onClick={si} className="font-bold text-white bg-red-600 rounded-2xl py-3">Sì, togli</button>
+          <button onClick={si} className="font-bold text-white bg-red-600 rounded-2xl py-3">{bottone}</button>
         </div>
       </div>
     </div>
@@ -534,7 +534,8 @@ export default function EditorAllenamento({ squadra, giorno, onChiudi }) {
   const [modifica, setModifica] = useState(true)
   const [salvato, setSalvato] = useState(() => fotografia('', [], 'squadra'))
   const [tempi, setTempi] = useState([])         // tempi già registrati dagli atleti in questo giorno
-  const [conferma, setConferma] = useState(null) // { id, giri, titolo, testo } quando togliere giri chiede conferma
+  const [conferma, setConferma] = useState(null) // { titolo, testo, bottone?, si, no } quando un cambio chiede conferma
+  const [iniziali, setIniziali] = useState([])   // le righe com'erano salvate: per capire se il coach ha cambiato uno stile
   const [annulli, setAnnulli] = useState(0)      // riporta il campo Giri al valore di prima dopo "Annulla"
   const [aperto, setAperto] = useState(null)     // _id del lavoro aperto nel pannello
   const [opzioni, setOpzioni] = useState(false)
@@ -544,7 +545,7 @@ export default function EditorAllenamento({ squadra, giorno, onChiudi }) {
     const { data: atleti } = await supabase.from('profiles').select('id').eq('squadra_id', squadra.id)
     const ids = (atleti || []).map((a) => a.id)
     if (!ids.length) return setTempi([])
-    const { data } = await supabase.from('allenamenti').select('atleta_id, tipo_lavoro, distanza, stile, passaggi')
+    const { data } = await supabase.from('allenamenti').select('id, atleta_id, tipo_lavoro, distanza, stile, passaggi')
       .in('atleta_id', ids).eq('data_allenamento', giorno).order('created_at')
     setTempi(data || [])
   }
@@ -557,6 +558,7 @@ export default function EditorAllenamento({ squadra, giorno, onChiudi }) {
     const v = data?.visibilita || 'squadra'
     setTitolo(t)
     setRighe(r)
+    setIniziali(r)
     setVis(v)
     setSalvato(fotografia(t, r, v))
     setStato(data ? (data.pubblicato ? 'pubblicato' : 'bozza') : 'nuovo')
@@ -648,7 +650,8 @@ export default function EditorAllenamento({ squadra, giorno, onChiudi }) {
       ripCambiate && 'ci sono ripartenze già scritte',
     ].filter(Boolean).join(' e ')
     setConferma({
-      id, giri: n,
+      si: () => applicaGiri(id, n),
+      no: () => setAnnulli((x) => x + 1),
       titolo: prima - n === 1 ? 'Togliere questo giro?' : 'Togliere questi giri?',
       testo: `Sei sicuro di voler togliere ${quali}? È già compilato: ${dati}. Togliendolo, quei dati non verranno più mostrati.`,
     })
@@ -705,7 +708,8 @@ export default function EditorAllenamento({ squadra, giorno, onChiudi }) {
     return { ...r, ripetizioni: (Number(r.ripetizioni) || 1) * giri, serie: { ...r.serie, giri } }
   })
 
-  async function salva(pubblica) {
+  // confermato: il coach ha già detto sì a cancellare i tempi di un lavoro a cui ha cambiato lo stile
+  async function salva(pubblica, confermato = false) {
     setErrore('')
     setOk('')
     if (!righe.length) return setErrore('Aggiungi almeno un lavoro.')
@@ -774,6 +778,35 @@ export default function EditorAllenamento({ squadra, giorno, onChiudi }) {
         },
       }),
     }))
+    // Stile cambiato in un lavoro che ha già dei tempi: quei tempi erano di un altro stile e non valgono più
+    // (resterebbero nel lavoro, anche nei passaggi sbagliati). Si cancellano, dopo una conferma, e vanno riscritti.
+    const prima = righeSalvate(iniziali)
+    const dopo = righeSalvate(ordinate)
+    const perRiga = Object.values(tempiPerRiga(prima, tempi))
+    const daTogliere = []
+    const atletiToccati = new Set()
+    const lavoriToccati = []
+    dopo.forEach((r, k) => {
+      const i = prima.findIndex((x) => x._id === r._id)
+      if (i < 0) return
+      perRiga.forEach((lista) => {
+        const via = tempiDaTogliere(prima[i], r, lista[i])
+        if (!via.length) return
+        daTogliere.push(...via)
+        atletiToccati.add(via[0].atleta_id)
+        if (!lavoriToccati.includes(k)) lavoriToccati.push(k)
+      })
+    })
+    if (daTogliere.length && !confermato) {
+      const nAtleti = atletiToccati.size === 1 ? '1 atleta ha' : `${atletiToccati.size} atleti hanno`
+      const quali = lavoriToccati.map((k) => `${dopo[k].ripetizioni > 1 ? `${dopo[k].ripetizioni}×` : ''}${dopo[k].distanza} ${prima.find((x) => x._id === dopo[k]._id).stile}`).join(', ')
+      return setConferma({
+        titolo: 'Cambiare lo stile?',
+        testo: `${nAtleti} già scritto i tempi di ${quali}. Con lo stile nuovo quei tempi non valgono più: verranno cancellati e andranno riscritti.`,
+        bottone: 'Sì, cambia',
+        si: () => salva(pubblica, true),
+      })
+    }
     const giorni = [giorno, ...extra]
     const { error } = await supabase.from('allenamenti_squadra').upsert(
       giorni.map((data) => ({
@@ -783,6 +816,15 @@ export default function EditorAllenamento({ squadra, giorno, onChiudi }) {
       { onConflict: 'squadra_id,data' }
     )
     if (error) return setErrore('Non sono riuscito a salvare: ' + error.message)
+    setIniziali(ordinate)
+    if (daTogliere.length) {
+      const { error: errTempi } = await supabase.from('allenamenti').delete().in('id', daTogliere.map((e) => e.id))
+      if (errTempi) {
+        caricaTempi()
+        return setErrore('Allenamento salvato, ma non sono riuscito a cancellare i tempi dello stile vecchio: ' + errTempi.message)
+      }
+      caricaTempi()
+    }
     const messaggio = pubblica
       ? (vis === 'squadra' ? (giorni.length > 1 ? `Pubblicato alla squadra su ${giorni.length} giorni.` : 'Pubblicato alla squadra.') : 'Salvato: lo vedi solo tu.')
       : 'Bozza salvata.'
@@ -958,8 +1000,9 @@ export default function EditorAllenamento({ squadra, giorno, onChiudi }) {
       </AnimatePresence>
       {conferma && (
         <Conferma titolo={conferma.titolo} testo={conferma.testo}
-          si={() => { applicaGiri(conferma.id, conferma.giri); setConferma(null) }}
-          no={() => { setConferma(null); setAnnulli((x) => x + 1) }} />
+bottone={conferma.bottone}
+          si={() => { setConferma(null); conferma.si() }}
+          no={() => { setConferma(null); conferma.no?.() }} />
       )}
     </>
   )

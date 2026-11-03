@@ -6,7 +6,7 @@ import InputTempo from './InputTempo'
 import { coloreLavoro } from '../lib/lavori'
 import { useAuth } from '../context/AuthContext'
 import { STILI } from '../lib/lavori'
-import { aScelta, blocchiPiano, chiaveRisultato as chiaveRiga, conProprioStile, conScelte, giriSerie, ordineAbbinamento, tempoDiRigaAScelta, haVarianti, perGiro, ripartenzeDiRiga, ripetizioniDiRiga } from '../lib/pianoSquadra'
+import { A_SCELTA, aScelta, blocchiPiano, chiaveRisultato as chiaveRiga, conProprioStile, conScelte, giriSerie, inPosizione, ordineAbbinamento, sceltaDaTempi, tempiAScelta, tempoDiRigaAScelta, haVarianti, perGiro, ripartenzeDiRiga, ripetizioniDiRiga } from '../lib/pianoSquadra'
 import { aggiungiInCoda, erroreDiRete, leggiCoda, rimuoviDaCoda } from '../lib/codaOffline'
 import { caselleDiRiga, distribuisci, gruppiPerStile, haTratti, raccogli } from '../lib/varianti'
 import { ERRORE_TEMPO_BREVE, erroreTempoImpossibile, normalizzaTempo, tempoPlausibile, tempoValido } from '../lib/tempo'
@@ -29,6 +29,7 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
   }, [atletaId, proprio, profile?.proprio_stile])
   const base = conProprioStile(piano?.righe || [], ps)
   // Lavori "A scelta": lo stile che l'atleta dice di aver fatto, per indice di riga
+  // (uno stile per tutto il lavoro, oppure una lista con lo stile di ogni passaggio)
   const [scelte, setScelte] = useState({})
   const righe = conScelte(base, scelte)
   // Il lavoro salvato e la riga del piano (nello stile del gruppo) sono lo stesso lavoro?
@@ -67,14 +68,25 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
         const nuoviValori = []
         ordineAbbinamento(base).forEach((i) => {
           const rb = base[i]
+          if (aScelta(rb)) {
+            // un lavoro "A scelta" già salvato riparte dagli stili scelti allora (uno o uno per passaggio)
+            const presi = tempiAScelta(rb, lista, usati)
+            const { scelta, valori: v } = sceltaDaTempi(presi)
+            if (scelta) scelteTrovate[i] = scelta
+            const gruppi = gruppiPerStile(conScelte([rb], [scelta])[0])
+            presi.forEach((t) => {
+              const k = gruppi.findIndex((g) => g.stile === t.stile)
+              if (k >= 0 && leggiMedia(t)) medieTrovate[`${i}-${k}`] = leggiMedia(t)
+            })
+            nuoviValori[i] = v
+            return
+          }
           const gruppi = gruppiPerStile(rb)
           const trovate = gruppi.map((g) => {
             const t = lista.find((e) => !usati.has(e.id) && combacia(e, i, g))
             if (t) usati.add(t.id)
             return t
           })
-          // un lavoro "A scelta" già salvato riparte dallo stile scelto allora
-          if (aScelta(rb) && trovate[0]) scelteTrovate[i] = trovate[0].stile
           trovate.forEach((t, k) => { if (leggiMedia(t)) medieTrovate[`${i}-${k}`] = leggiMedia(t) })
           nuoviValori[i] = distribuisci(gruppi, trovate.map((t) => t?.passaggi || []))
         })
@@ -97,7 +109,20 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
   const usatiOra = new Set()
   const gruppiRighe = righe.map(gruppiPerStile)
   const perStile = []
+  const avanzati = [] // lavori "A scelta" salvati in uno stile che ora non c'è più (si cancellano salvando)
   ordineAbbinamento(base).forEach((i) => {
+    if (aScelta(base[i])) {
+      const liberi = tempiAScelta(base[i], esistenti, usatiOra)
+      // prima lo stesso stile; un gruppo con uno stile nuovo riusa un lavoro salvato rimasto libero
+      const presi = gruppiRighe[i].map((g) => {
+        const k = liberi.findIndex((t) => t.stile === g.stile)
+        return k >= 0 ? liberi.splice(k, 1)[0] : null
+      })
+      perStile[i] = presi.map((t, k) => t || (gruppiRighe[i][k].stile !== A_SCELTA && liberi.length ? liberi.shift() : null))
+      avanzati[i] = liberi
+      return
+    }
+    avanzati[i] = []
     perStile[i] = gruppiRighe[i].map((g) => {
       const t = esistenti.find((e) => !usatiOra.has(e.id) && combacia(e, i, g))
       if (t) usatiOra.add(t.id)
@@ -105,7 +130,11 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
     })
   })
   const salvata = perStile.map((lista, i) => (lista.some(Boolean)
-    ? { passaggi: distribuisci(gruppiRighe[i], lista.map((t) => t?.passaggi || [])), medie: lista.map((t) => leggiMedia(t)).filter(Boolean) }
+    ? {
+        // nei lavori "A scelta" i tempi sono salvati già nel loro passaggio
+        passaggi: aScelta(base[i]) ? sceltaDaTempi(lista.filter(Boolean)).valori : distribuisci(gruppiRighe[i], lista.map((t) => t?.passaggi || [])),
+        medie: lista.map((t) => leggiMedia(t)).filter(Boolean),
+      }
     : null))
   // l'atleta vede i tempi già salvati al posto delle caselle; "Correggi" riapre le caselle già compilate
   const fisso = (i) => proprio && salvata[i] && !aperti.has(i)
@@ -117,23 +146,40 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
     </div>
   )
 
-  // Lavoro "A scelta" del coach: prima dei tempi si dice che stile si è fatto
-  const SceltaStile = ({ i, titolo }) => (aScelta(base[i]) ? (
+  // Lavoro "A scelta" del coach: prima dei tempi si dice che stile si è fatto, per tutto il lavoro
+  // oppure (n = passaggi, se più di uno) uno stile diverso per ogni passaggio
+  const perPassaggio = (i) => Array.isArray(scelte[i])
+  const SceltaStile = ({ i, titolo, n = 1 }) => (aScelta(base[i]) ? (
     <div className={`mt-3 rounded-2xl p-3 ${scelte[i] ? 'bg-gray-50' : 'border-2 border-blue-300 bg-blue-50'}`}>
       <p className="mb-2 text-sm font-bold text-blue-700">{titolo || (proprio ? 'Che stile hai fatto?' : 'Che stile ha fatto?')}</p>
-      <div className="flex flex-wrap gap-2" role="group" aria-label={titolo || 'Stile fatto'}>
-        {STILI.map((s) => (
-          <button key={s} type="button" aria-pressed={scelte[i] === s} onClick={() => setScelte({ ...scelte, [i]: s })}
-            className={`cliccabile min-h-[40px] rounded-full px-3.5 text-sm font-semibold ${scelte[i] === s ? 'bg-blue-600 text-white' : 'bg-white text-slate-700 border border-slate-200'}`}>
-            {s}
-          </button>
-        ))}
-      </div>
+      {perPassaggio(i) ? (
+        <p className="text-sm text-slate-600">Scegli lo stile sotto ogni passaggio.</p>
+      ) : (
+        <div className="flex flex-wrap gap-2" role="group" aria-label={titolo || 'Stile fatto'}>
+          {STILI.map((s) => (
+            <button key={s} type="button" aria-pressed={scelte[i] === s} onClick={() => setScelte({ ...scelte, [i]: s })}
+              className={`cliccabile min-h-[40px] rounded-full px-3.5 text-sm font-semibold ${scelte[i] === s ? 'bg-blue-600 text-white' : 'bg-white text-slate-700 border border-slate-200'}`}>
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
+      {n > 1 && (
+        <button type="button" onClick={() => setScelte({
+          ...scelte,
+          // passando a "uno per passaggio" si parte dallo stile già scelto; tornando indietro si tiene il primo scelto
+          [i]: perPassaggio(i) ? scelte[i].find(Boolean) : Array.from({ length: n }, () => scelte[i] || ''),
+        })} className="cliccabile min-h-[44px] mt-1 text-sm font-semibold text-blue-600">
+          {perPassaggio(i) ? 'Stesso stile per tutto il lavoro' : 'Stili diversi nei passaggi'}
+        </button>
+      )}
     </div>
   ) : null)
+  const scegliPassaggio = (i, j, s) => setScelte({ ...scelte, [i]: scelte[i].map((x, k) => (k === j ? s : x)) })
 
   // Tempo medio (per chi non ricorda i singoli passaggi): uno per ogni stile del lavoro
   const mediaDi = (i, r, conDistanza = false) => gruppiRighe[i].map((g, k) => {
+    if (g.stile === A_SCELTA) return null // passaggi "A scelta" senza stile scelto: niente media
     const chiave = `${i}-${k}`
     const nome = (conDistanza || haTratti(r) ? ` ${g.distanza} m` : '') + (gruppiRighe[i].length > 1 ? ` · ${g.stile}` : '')
     return chiave in medie ? (
@@ -183,14 +229,20 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
     const senzaStile = base.findIndex((rb, i) => aScelta(rb) && !scelte[i]
       && (lavori[i].some(Boolean) || Object.keys(medieOk).some((c) => c.startsWith(`${i}-`))))
     if (senzaStile >= 0) return setErrore(`Lavoro ${senzaStile + 1}: scegli lo stile che hai fatto.`)
+    for (let i = 0; i < base.length; i++) {
+      if (!aScelta(base[i]) || !perPassaggio(i)) continue
+      const j = lavori[i].findIndex((t, k) => t && !scelte[i][k])
+      if (j >= 0) return setErrore(`Lavoro ${i + 1}, passaggio ${j + 1}: scegli lo stile che hai fatto.`)
+    }
 
     setSalvo(true)
     // Un lavoro per ogni stile della riga: [{ i, g, riga: lavoro già salvato | null, passaggi }]
+    // Nei lavori "A scelta" ogni tempo resta nel suo passaggio (serve a ricordare lo stile di ognuno)
     const pezzi = righe.flatMap((r, i) => gruppiRighe[i].map((g, k) => ({
-      i, g, r, riga: perStile[i][k], passaggi: raccogli(g, lavori[i]), media: medieOk[`${i}-${k}`] || '',
+      i, g, r, riga: perStile[i][k], passaggi: aScelta(base[i]) ? inPosizione(g, lavori[i]) : raccogli(g, lavori[i]), media: medieOk[`${i}-${k}`] || '',
       // correggendo un lavoro "A scelta" si può cambiare anche lo stile
-      stile: aScelta(base[i]) ? { stile: g.stile } : {},
-    })))
+      stile: aScelta(base[i]) ? { stile: g.stile, ripetizioni: g.reps.length } : {},
+    })).filter((x) => x.g.stile !== A_SCELTA))
     if (proprio) {
       // l'atleta aggiunge i lavori nuovi e corregge quelli riaperti con "Correggi"
       const nuove = pezzi.filter((x) => !x.riga && (x.passaggi.some(Boolean) || x.media)).map(({ r, g, passaggi, media }) => ({
@@ -200,13 +252,15 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
         created_at: new Date().toISOString(),
       }))
       const corrette = pezzi.filter((x) => x.riga && aperti.has(x.i))
-      if (!nuove.length && !corrette.length) {
+      // stili che non ci sono più in un lavoro "A scelta" corretto
+      const daTogliere = avanzati.flatMap((l, i) => (aperti.has(i) ? l : []))
+      if (!nuove.length && !corrette.length && !daTogliere.length) {
         setSalvo(false)
         return setErrore('Scrivi almeno un tempo.')
       }
       // un lavoro ancora in coda sul telefono (salvato senza connessione) si corregge lì, non nel database
       const inCodaIds = new Set(leggiCoda('allenamenti', atletaId).map((r) => r.id))
-      if (corrette.some((x) => !inCodaIds.has(x.riga.id)) && !navigator.onLine) {
+      if ([...corrette.map((x) => x.riga), ...daTogliere].some((e) => !inCodaIds.has(e.id)) && !navigator.onLine) {
         setSalvo(false)
         return setErrore('Per correggere un tempo già inviato serve la connessione: riprova appena torna.')
       }
@@ -222,7 +276,16 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
           return setErrore('Non sono riuscito a correggere: ' + error.message)
         }
       }
-      const aggiornate = esistenti.map((e) => {
+      for (const e of daTogliere) {
+        if (inCodaIds.has(e.id)) { rimuoviDaCoda('allenamenti', e.id); continue }
+        const { error } = await supabase.from('allenamenti').delete().eq('id', e.id)
+        if (error) {
+          setSalvo(false)
+          return setErrore('Non sono riuscito a correggere: ' + error.message)
+        }
+      }
+      const tolti = new Set(daTogliere.map((e) => e.id))
+      const aggiornate = esistenti.filter((e) => !tolti.has(e.id)).map((e) => {
         const x = corrette.find((c) => c.riga.id === e.id)
         return x ? { ...e, passaggi: x.passaggi, ...aggiornaMedia(e, x.media), ...x.stile } : e
       })
@@ -256,6 +319,15 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
             atleta_id: atletaId, tipo_lavoro: r.tipo_lavoro, distanza: g.distanza,
             ripetizioni: g.reps.length, stile: g.stile, passaggi, ...(media ? campiMedia(media) : {}), data_allenamento: giorno,
           })
+      if (error) {
+        setSalvo(false)
+        return setErrore('Non sono riuscito a salvare: ' + error.message)
+      }
+    }
+    // lavori "A scelta" salvati in uno stile che ora non c'è più
+    const daTogliere = avanzati.flat()
+    if (daTogliere.length) {
+      const { error } = await supabase.from('allenamenti').delete().in('id', daTogliere.map((e) => e.id))
       if (error) {
         setSalvo(false)
         return setErrore('Non sono riuscito a salvare: ' + error.message)
@@ -336,8 +408,17 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
             {tratti && <p className="text-xs text-blue-700 mt-1">⏱ Tempi solo delle vasche scelte dal coach</p>}
             {ripartenzeDiRiga(r).length > 0 && <span className="text-xs text-slate-500 ml-2">↻ ripartenza {ripartenzeDiRiga(r).join(' · ')}</span>}
             {r.note && <p className="text-xs text-slate-500 mt-1">{r.note}</p>}
-            {fisso(i) ? <Salvati i={i} /> : chiuso(i) ? <Apri i={i} n={n} /> : <><SceltaStile i={i} /><div className="grid grid-cols-2 gap-3 mt-3">
-              {Array.from({ length: n }, (_, j) => (
+            {fisso(i) ? <Salvati i={i} /> : chiuso(i) ? <Apri i={i} n={n} /> : <><SceltaStile i={i} n={n} /><div className="grid grid-cols-2 gap-3 mt-3">
+              {aScelta(base[i]) && perPassaggio(i) ? Array.from({ length: n }, (_, j) => (
+                <div key={j}>
+                  <InputTempo etichetta={`Passaggio ${j + 1}`} value={valori[i]?.[j] || ''} vuotoOk onChange={(v) => cambia(i, j, v)} />
+                  <select aria-label={`Stile del passaggio ${j + 1}`} value={scelte[i][j] || ''} onChange={(e) => scegliPassaggio(i, j, e.target.value)}
+                    className={`mt-1.5 w-full min-h-[40px] rounded-xl px-2 text-sm font-semibold ${scelte[i][j] ? 'bg-white border border-slate-200 text-slate-700' : 'border-2 border-blue-300 bg-blue-50 text-blue-700'}`}>
+                    <option value="">Che stile?</option>
+                    {STILI.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+              )) : Array.from({ length: n }, (_, j) => (
                 <InputTempo key={j} etichetta={tratti ? `${caselle[j].etichetta}${caselle[j].nota ? ` · ${caselle[j].nota}` : ''}` : haVarianti(r) ?`${j + 1}ª · ${ripetizioniDiRiga(r)[j].stile}${ripetizioniDiRiga(r)[j].nota ? ` · ${ripetizioniDiRiga(r)[j].nota}` : ''}` : `Passaggio ${j + 1}`} value={valori[i]?.[j] || ''} vuotoOk
                   onChange={(v) => cambia(i, j, v)} />
               ))}
