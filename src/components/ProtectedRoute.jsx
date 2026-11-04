@@ -2,10 +2,9 @@ import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { percorsoConsentito, IN_ARRIVO, mostraInArrivo } from '../lib/permessi'
 import { percorsoAttivo, useRegole } from '../lib/regole'
-import SceltaProprioStile, { deveSceglierePs } from './SceltaProprioStile'
 
 export default function ProtectedRoute({ children, requireAdmin = false, requireCoach = false }) {
-  const { user, profile, loading, isAdmin, isCoach, ruolo } = useAuth()
+  const { user, loading, isAdmin, isCoach, ruolo } = useAuth()
   const { pathname } = useLocation()
   const { puo, pronto } = useRegole()
 
@@ -19,11 +18,5 @@ export default function ProtectedRoute({ children, requireAdmin = false, require
   const puoQui = (k) => (IN_ARRIVO.includes(pathname) && mostraInArrivo) || puo(k)
   if (pronto && !percorsoAttivo(pathname, ruolo, puoQui)) return <Navigate to="/funzioni" replace />
 
-  // Atleta appena entrato in squadra (o al primo accesso dopo): la finestra del proprio stile sopra la pagina
-  return (
-    <>
-      {children}
-      {deveSceglierePs(profile) && <SceltaProprioStile />}
-    </>
-  )
+  return children
 }
