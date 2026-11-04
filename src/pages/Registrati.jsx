@@ -9,7 +9,7 @@ import BarraPassword from '../components/BarraPassword'
 import ControllaEmail from '../components/ControllaEmail'
 import { ETA_CONSENSO, erroreAuth, eta } from '../lib/erroriAuth'
 import { erroreNascita } from '../lib/dataScritta'
-import { SESSI } from '../lib/categorie'
+import { SESSI, categoriaFin } from '../lib/categorie'
 import { STILI_PROPRI } from '../lib/pianoSquadra'
 
 // Proprio stile (PS): quando il coach scrive un lavoro in PS, i tempi dell'atleta vanno in questo stile
@@ -42,6 +42,10 @@ export default function Registrati() {
   // atleta sotto i 14 anni: serve il consenso di un genitore
   const anni = eta(dataNascita)
   const minore = role === 'atleta' && anni !== null && anni < ETA_CONSENSO
+  // proprio stile obbligatorio solo da Juniores in su (senza sesso: solo se è Juniores sia da maschio che da femmina)
+  const categoria = categoriaFin(dataNascita, sesso || null) // es. "Ragazzi o Juniores" se manca il sesso
+  const psObbligatorio = role === 'atleta' && !!categoria
+    && categoria.split(' o ').every((c) => ['Juniores', 'Cadetti', 'Seniores'].includes(c))
 
   useEffect(() => {
     // il nome della società accanto al gruppo: due "Esordienti" di società diverse non si confondono
@@ -56,7 +60,7 @@ export default function Registrati() {
     setError('')
     const nascitaSbagliata = erroreNascita(dataScritta)
     if (nascitaSbagliata) return setError(nascitaSbagliata)
-    if (role === 'atleta' && !proprioStile) return setError('Scegli il tuo proprio stile: dorso, rana o farfalla.')
+    if (psObbligatorio && !proprioStile) return setError('Scegli il tuo proprio stile: dorso, rana o farfalla.')
     if (password.length < 8) return setError('La password deve avere almeno 8 caratteri.')
     if (!privacy) return setError('Per continuare leggi e accetta l\'informativa privacy.')
     if (minore && !consensoGenitore) return setError('Sotto i 14 anni serve il consenso di un genitore: chiedi a mamma o papà di spuntare la casella.')
@@ -67,7 +71,7 @@ export default function Registrati() {
       privacy_accettata: new Date().toISOString(), privacy_versione: VERSIONE_INFORMATIVA,
       ...(minore ? { consenso_genitore: true } : {}),
       ...(role === 'atleta' && sesso ? { sesso } : {}),
-      ...(role === 'atleta' ? { proprio_stile: proprioStile } : {}),
+      ...(role === 'atleta' && proprioStile ? { proprio_stile: proprioStile } : {}),
     }
     if (role === 'coach' && nomeSquadra) {
       metadata.nome_squadra = nomeSquadra
@@ -183,10 +187,10 @@ export default function Registrati() {
             </select>
             <p className="text-xs text-slate-500 mt-1 mb-4">Serve solo a calcolare la tua categoria FIN (maschi e femmine hanno età diverse).</p>
 
-            <p id="ps-etichetta" className="block text-sm font-semibold text-slate-600 mb-1">Il tuo proprio stile</p>
+            <p id="ps-etichetta" className="block text-sm font-semibold text-slate-600 mb-1">Il tuo proprio stile{psObbligatorio ? '' : ' (facoltativo)'}</p>
             <div className="grid gap-2" role="radiogroup" aria-labelledby="ps-etichetta" aria-describedby="ps-aiuto">
               {STILI_PROPRI.map((s) => (
-                <button key={s} type="button" role="radio" aria-checked={proprioStile === s} onClick={() => setProprioStile(s)}
+                <button key={s} type="button" role="radio" aria-checked={proprioStile === s} onClick={() => setProprioStile(psObbligatorio || proprioStile !== s ? s : '')}
                   className={`min-h-[46px] rounded-2xl px-3.5 border-2 flex items-center justify-between gap-2 text-left transition-colors ${
                     proprioStile === s ? 'border-blue-600 bg-schiuma' : 'border-slate-200 bg-bordo'}`}>
                   <span><b className="text-abisso">{s}</b> <span className="text-sm text-slate-500">· {DESCRIZIONE_PS[s]}</span></span>
