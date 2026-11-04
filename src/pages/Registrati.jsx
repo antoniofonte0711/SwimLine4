@@ -59,7 +59,12 @@ export default function Registrati() {
     e.preventDefault()
     setError('')
     const nascitaSbagliata = erroreNascita(dataScritta)
+    // tutti i campi sono obbligatori (il proprio stile solo da Juniores in su)
+    if (!nome.trim() || !cognome.trim()) return setError('Scrivi nome e cognome.')
     if (nascitaSbagliata) return setError(nascitaSbagliata)
+    if (role === 'atleta' && !sesso) return setError('Scegli la categoria nelle gare: maschile o femminile.')
+    if (role === 'coach' && !nomeSquadra.trim()) return setError('Scrivi il nome della tua squadra.')
+    if (role !== 'coach' && !squadraScelta) return setError('Scegli la tua squadra.')
     if (psObbligatorio && !proprioStile) return setError('Scegli il tuo proprio stile: dorso, rana o farfalla.')
     if (password.length < 8) return setError('La password deve avere almeno 8 caratteri.')
     if (!privacy) return setError('Per continuare leggi e accetta l\'informativa privacy.')
@@ -67,14 +72,14 @@ export default function Registrati() {
 
     // il consenso resta salvato insieme all'account (data e versione dell'informativa)
     const metadata = {
-      nome, cognome, data_nascita: dataNascita, role,
+      nome: nome.trim(), cognome: cognome.trim(), data_nascita: dataNascita, role,
       privacy_accettata: new Date().toISOString(), privacy_versione: VERSIONE_INFORMATIVA,
       ...(minore ? { consenso_genitore: true } : {}),
       ...(role === 'atleta' && sesso ? { sesso } : {}),
       ...(role === 'atleta' && proprioStile ? { proprio_stile: proprioStile } : {}),
     }
     if (role === 'coach' && nomeSquadra) {
-      metadata.nome_squadra = nomeSquadra
+      metadata.nome_squadra = nomeSquadra.trim()
     } else if (role !== 'coach' && squadraScelta) {
       metadata.squadra_id = squadraScelta
     }
@@ -179,10 +184,10 @@ export default function Registrati() {
 
         {role === 'atleta' && (
           <>
-            <label htmlFor="sesso" className="block text-sm font-semibold text-slate-600 mb-1">Categoria nelle gare (facoltativo)</label>
-            <select id="sesso" value={sesso} onChange={(e) => setSesso(e.target.value)}
+            <label htmlFor="sesso" className="block text-sm font-semibold text-slate-600 mb-1">Categoria nelle gare</label>
+            <select id="sesso" value={sesso} onChange={(e) => setSesso(e.target.value)} required
               className="w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white transition">
-              <option value="">Preferisco non dirlo</option>
+              <option value="" disabled>Scegli</option>
               {SESSI.map(([v, n]) => <option key={v} value={v}>{n}</option>)}
             </select>
             <p className="text-xs text-slate-500 mt-1 mb-4">Serve solo a calcolare la tua categoria FIN (maschi e femmine hanno età diverse).</p>
@@ -205,22 +210,22 @@ export default function Registrati() {
         {role === 'coach' ? (
           <>
             <label className="block text-sm font-semibold text-slate-600 mb-1">Nome della tua squadra</label>
-            <input value={nomeSquadra} onChange={(e) => setNomeSquadra(e.target.value)}
+            <input value={nomeSquadra} onChange={(e) => setNomeSquadra(e.target.value)} required
               placeholder="Es. Delfini Nuoto Club"
               className="w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white transition mb-1" />
             <p className="text-xs text-slate-500 mb-4">La tua squadra nasce subito, senza approvazioni: gli atleti la trovano con questo nome.</p>
           </>
         ) : (
           <>
-            <label className="block text-sm font-semibold text-slate-600 mb-1">Chiedi di entrare in una squadra (facoltativo)</label>
-            <select value={squadraScelta} onChange={(e) => setSquadraScelta(e.target.value)}
+            <label className="block text-sm font-semibold text-slate-600 mb-1">La tua squadra</label>
+            <select value={squadraScelta} onChange={(e) => setSquadraScelta(e.target.value)} required
               className="w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white transition mb-4">
-              <option value="">Nessuna squadra per ora</option>
+              <option value="" disabled>Scegli la tua squadra</option>
               {squadre.map((s) => (
                 <option key={s.id} value={s.id}>{s.nome}</option>
               ))}
             </select>
-            {squadraScelta && <p className="text-xs text-slate-500 -mt-3 mb-4">Entri quando il coach approva la richiesta.</p>}
+            <p className="text-xs text-slate-500 -mt-3 mb-4">Entri quando il coach approva la richiesta.</p>
           </>
         )}
 
