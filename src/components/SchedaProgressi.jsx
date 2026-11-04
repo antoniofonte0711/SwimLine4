@@ -26,6 +26,25 @@ function piuFrequente(lista) {
   return migliore ? { distanza: String(migliore.distanza), stile: migliore.stile || TUTTI } : { distanza: '', stile: TUTTI }
 }
 
+// Scala dell'asse dei tempi: tacche ai decimi quando i tempi sono vicini (si vince e si perde per poco),
+// più larghe solo se servono per farci stare tutto (al massimo ~8 tacche)
+const PASSI = [0.1, 0.2, 0.5, 1, 2, 5, 10, 15, 30, 60, 120, 300]
+function scalaTempi(valori) {
+  if (!valori.length) return null
+  const min = Math.min(...valori)
+  const max = Math.max(...valori)
+  const passo = PASSI.find((p) => (max - min) / p <= 6) || PASSI[PASSI.length - 1]
+  const tondo = (x) => Math.round(x * 100) / 100
+  let lo = Math.floor(tondo(min / passo)) * passo
+  let hi = Math.ceil(tondo(max / passo)) * passo
+  if (min - lo < passo / 2) lo -= passo // un po' d'aria sotto e sopra la linea
+  if (hi - max < passo / 2) hi += passo
+  lo = Math.max(0, lo)
+  const tacche = []
+  for (let t = lo; t <= hi + passo / 1000; t += passo) tacche.push(tondo(t))
+  return { domain: [tondo(lo), tondo(hi)], tacche }
+}
+
 // Scheda di un atleta: tutti i suoi tempi (gare + lavori), filtrabili a scelta.
 // Il coach può anche aggiungere o togliere tempi (coach = true).
 export default function SchedaProgressi({ atletaId, coach = false }) {
@@ -102,6 +121,7 @@ export default function SchedaProgressi({ atletaId, coach = false }) {
   )
   const migliore = filtrati.length ? Math.min(...filtrati.map((p) => p.sec)) : null
   const dati = filtrati.map((p) => ({ data: formattaData(p.data), tempo: p.sec }))
+  const scala = scalaTempi(dati.map((d) => d.tempo))
 
   async function togli(p) {
     if (!window.confirm(`Eliminare "${p.nome}" del ${new Date(p.data + 'T12:00:00').toLocaleDateString('it-IT')}?`)) return
@@ -178,7 +198,7 @@ export default function SchedaProgressi({ atletaId, coach = false }) {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={dati}>
                 <XAxis dataKey="data" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 11 }} width={62} domain={['auto', 'auto']} tickFormatter={secondiInTempo} />
+                <YAxis tick={{ fontSize: 11 }} width={62} domain={scala.domain} ticks={scala.tacche} interval={0} allowDataOverflow tickFormatter={secondiInTempo} />
                 <Tooltip formatter={(v) => secondiInTempo(v)} />
                 <Line type="monotone" dataKey="tempo" stroke="#2563eb" strokeWidth={3} dot={{ r: 4 }} isAnimationActive={false} />
               </LineChart>
