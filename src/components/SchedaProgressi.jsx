@@ -196,8 +196,9 @@ export default function SchedaProgressi({ atletaId, coach = false }) {
         {dati.length >= 2 ? (
           <div style={{ width: '100%', height: 200 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={dati}>
-                <XAxis dataKey="data" tick={{ fontSize: 12 }} />
+              {/* margine e spazio ai lati: la prima e l'ultima data restano intere dentro il riquadro */}
+              <LineChart data={dati} margin={{ top: 5, right: 16, bottom: 0, left: 0 }}>
+                <XAxis dataKey="data" tick={{ fontSize: 12 }} padding={{ left: 14, right: 14 }} />
                 <YAxis tick={{ fontSize: 11 }} width={62} domain={scala.domain} ticks={scala.tacche} interval={0} allowDataOverflow tickFormatter={secondiInTempo} />
                 <Tooltip formatter={(v) => secondiInTempo(v)} />
                 <Line type="monotone" dataKey="tempo" stroke="#2563eb" strokeWidth={3} dot={{ r: 4 }} isAnimationActive={false} />
