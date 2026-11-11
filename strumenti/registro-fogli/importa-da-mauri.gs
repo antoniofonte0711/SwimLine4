@@ -89,6 +89,7 @@ function importaDaMauri() {
   var presenze = registro.getSheetByName('Presenze');
   var k = 'LOWER(TRIM($A2:$A200))&"|"&$C2:$C200&"|"&(E1:HI1*1)';
   presenze.getRange('E2').setFormula(
-    '=ARRAYFORMULA(IF($A2:$A200="","",IFERROR(VLOOKUP(' + k + ',\'Da Mauri\'!$A$8:$B,2,FALSE),' +
-    'IFERROR(VLOOKUP(' + k + ',Dati!$A:$B,2,FALSE),""))))');
+    // il registro è in italiano: separatore ";" (con la virgola la formula dà errore)
+    '=ARRAYFORMULA(IF($A2:$A200="";"";IFERROR(VLOOKUP(' + k + ';\'Da Mauri\'!$A$8:$B;2;0);' +
+    'IFERROR(VLOOKUP(' + k + ';Dati!$A:$B;2;0);""))))');
 }
