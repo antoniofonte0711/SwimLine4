@@ -214,6 +214,12 @@ const RPC = {
     tabelle.squadre.forEach((s) => { if (s.coach_id === p_persona && s.id !== p_squadra) s.coach_id = null })
     const p = tabelle.profiles.find((x) => x.id === p_persona); if (p) p.squadra_id = p_squadra
   },
+  imposta_giorni_squadra({ p_squadra, p_giorni }) {
+    const t = (tabelle.impostazioni_squadra ||= [])
+    const r = t.find((x) => x.squadra_id === p_squadra)
+    if (r) r.giorni = p_giorni
+    else t.push({ squadra_id: p_squadra, permessi: {}, giorni: p_giorni })
+  },
   admin_cambia_ruolo({ p_persona, p_ruolo }) { const p = tabelle.profiles.find((x) => x.id === p_persona); if (p) p.role = p_ruolo },
   admin_imposta_coach({ p_squadra, p_coach }) {
     if (p_coach) {

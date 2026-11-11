@@ -1,7 +1,4 @@
-// Allenamenti di squadra a settimana. In futuro diventerà una variabile in base all'età dell'atleta.
-export const ALLENAMENTI_SETTIMANA = 5
-// Giorni in cui si allena la squadra (0 = domenica ... 6 = sabato): qui lunedì-venerdì
-export const GIORNI_ALLENAMENTO = [1, 2, 3, 4, 5]
+// I giorni di allenamento della squadra li sceglie il coach: vedi lib/giorni.js
 
 export const STATI = {
   presente: 'Presente',

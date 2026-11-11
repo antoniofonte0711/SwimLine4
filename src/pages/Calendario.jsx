@@ -8,9 +8,12 @@ import PianoCard from '../components/PianoCard'
 import { coloreLavoro, dataLocale, formattaGiorno } from '../lib/lavori'
 import { useMiaSquadra } from '../lib/pianoSquadra'
 import SceltaFiglio, { useAtletaVisto } from '../components/SceltaFiglio'
+import GiorniAllenamento from '../components/GiorniAllenamento'
+import { useGiorniSquadra } from '../lib/giorni'
 
 const MESI = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre']
-const INTEST = ['L', 'M', 'M', 'G', 'V', 'S', 'D']
+const INTEST = [['L', 1], ['M', 2], ['M', 3], ['G', 4], ['V', 5], ['S', 6], ['D', 0]]
+const COLORE_INTEST = { si: 'text-blue-600 font-bold', avolte: 'text-sky-500 font-semibold', no: 'text-slate-400' }
 const PRES = { presente: 'bg-green-500', assente: 'bg-red-500', non_penale: 'bg-amber-400' }
 
 // Calendario: allenamenti e gare del mese. Il coach vede anche quanti atleti c'erano (es. 12/15).
@@ -19,6 +22,7 @@ export default function Calendario() {
   const visto = useAtletaVisto() // il genitore vede presenze e lavori del figlio scelto
   const atletaId = visto.atletaId
   const { squadra } = useMiaSquadra()
+  const giorniSquadra = useGiorniSquadra(squadra?.id)
   const oggi = dataLocale()
   const base = new Date()
   const [anno, setAnno] = useState(base.getFullYear())
@@ -119,7 +123,8 @@ export default function Calendario() {
         </div>
 
         <div className="grid grid-cols-7 text-center text-xs text-slate-500 mb-1">
-          {INTEST.map((l, i) => <span key={i}>{l}</span>)}
+          {/* blu = giorno di allenamento fisso, azzurro = a volte, grigio = riposo */}
+          {INTEST.map(([l, n]) => <span key={n} className={squadra ? COLORE_INTEST[giorniSquadra[n] || 'no'] : ''}>{l}</span>)}
         </div>
         <div className="grid grid-cols-7 gap-1">
           {celle.map((g, i) => {
@@ -162,6 +167,8 @@ export default function Calendario() {
           </ul>
         )}
       </div>
+
+      {isCoach && squadra && <GiorniAllenamento squadra={squadra} giorni={giorniSquadra} />}
 
       <AnimatePresence mode="wait" initial={false}>
         <motion.div key={scelto} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}>

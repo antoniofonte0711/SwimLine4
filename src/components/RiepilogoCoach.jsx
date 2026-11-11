@@ -8,8 +8,8 @@ import { dataLocale, formattaGiorno } from '../lib/lavori'
 import { lunediDi } from '../lib/presenze'
 import { addGiorni, metriPiano, useMiaSquadra } from '../lib/pianoSquadra'
 import { ordinaPersone } from '../lib/persone'
+import { SETTIMANA, useGiorniSquadra } from '../lib/giorni'
 
-const GG = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven']
 const SCELTE = [['presente', 'Presente'], ['assente', 'Assente'], ['non_penale', 'Giustificato']]
 const SIGLA = { presente: 'P', assente: 'A', non_penale: 'G' }
 const COLORE = {
@@ -17,7 +17,7 @@ const COLORE = {
   non_penale: 'bg-amber-500 text-white', vuoto: 'bg-gray-100 text-slate-500',
 }
 
-// Tabella delle presenze della settimana (lunedì-venerdì): toccando una casella sotto compaiono
+// Tabella delle presenze della settimana (solo i giorni di allenamento scelti dal coach, anche quelli "a volte"): toccando una casella sotto compaiono
 // i tre pulsanti scritti per esteso (niente tocchi ripetuti da indovinare)
 export function Bollettino({ squadra }) {
   const { user } = useAuth()
@@ -26,7 +26,11 @@ export function Bollettino({ squadra }) {
   const [errore, setErrore] = useState('')
   const [casella, setCasella] = useState(null) // { atleta, data } la casella toccata
   const lunedi = lunediDi()
-  const giorni = GG.map((_, i) => addGiorni(lunedi, i))
+  const scelti = useGiorniSquadra(squadra.id)
+  // colonne: { data, sigla, aVolte }
+  const colonne = SETTIMANA.map(([n, sigla], i) => ({ n, sigla, data: addGiorni(lunedi, i), aVolte: scelti[n] === 'avolte' }))
+    .filter((c) => scelti[c.n])
+  const giorni = colonne.map((c) => c.data)
 
   const carica = useCallback(async () => {
     const { data: a } = await supabase.from('profiles').select('id, nome, cognome').in('role', ['atleta', 'admin'])
@@ -35,7 +39,7 @@ export function Bollettino({ squadra }) {
     const ids = (a || []).map((x) => x.id)
     if (ids.length) {
       const { data: pr } = await supabase.from('presenze').select('atleta_id, data, stato')
-        .in('atleta_id', ids).gte('data', giorni[0]).lte('data', giorni[4])
+        .in('atleta_id', ids).gte('data', lunedi).lte('data', addGiorni(lunedi, 6))
       setStati(Object.fromEntries((pr || []).map((r) => [r.atleta_id + r.data, r.stato])))
     }
   }, [squadra.id]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -58,13 +62,15 @@ export function Bollettino({ squadra }) {
   return (
     <div className="bg-white rounded-3xl p-5 mb-3 shadow-card">
       <p className="font-bold mb-1">Questa settimana</p>
-      <p className="text-xs text-slate-500 mb-3">P presente · A assente · G giustificato. Tocca una casella per cambiarla.</p>
+      <p className="text-xs text-slate-500 mb-3">P presente · A assente · G giustificato{colonne.some((c) => c.aVolte) ? ' · * giorno a volte' : ''}. Tocca una casella per cambiarla.</p>
       {errore && <p className="text-sm text-white bg-red-600 rounded-lg px-3 py-2 mb-3">{errore}</p>}
       {atleti.length === 0 ? (
         <p className="text-sm text-slate-500">Nessun atleta nella squadra: compaiono quando la scelgono in registrazione.</p>
       ) : (
         <table className="w-full text-xs">
-          <thead><tr><th />{GG.map((g, i) => <th key={g} className="pb-2 font-semibold text-slate-500">{g}<br />{Number(giorni[i].slice(8))}</th>)}</tr></thead>
+          <thead><tr><th />{colonne.map((c) => (
+            <th key={c.data} className={`pb-2 font-semibold ${c.aVolte ? 'text-sky-500' : 'text-slate-500'}`}>{c.sigla}{c.aVolte ? '*' : ''}<br />{Number(c.data.slice(8))}</th>
+          ))}</tr></thead>
           <tbody>
             {atleti.map((a) => (
               <tr key={a.id}>
@@ -75,7 +81,7 @@ export function Bollettino({ squadra }) {
                     <td key={d} className="text-center py-1">
                       <button onClick={() => setCasella({ atleta: a, data: d })} aria-label={`${a.nome}, ${nomeGiorno(d)}`}
                         aria-pressed={casella?.atleta.id === a.id && casella?.data === d}
-                        className={`w-9 h-9 rounded-lg font-bold ${COLORE[s || 'vuoto']} ${casella?.atleta.id === a.id && casella?.data === d ? 'ring-2 ring-offset-2 ring-blue-500' : ''}`}>{s ? SIGLA[s] : '·'}</button>
+                        className={`${colonne.length > 5 ? 'w-8 h-8' : 'w-9 h-9'} rounded-lg font-bold ${COLORE[s || 'vuoto']} ${casella?.atleta.id === a.id && casella?.data === d ? 'ring-2 ring-offset-2 ring-blue-500' : ''}`}>{s ? SIGLA[s] : '·'}</button>
                     </td>
                   )
                 })}

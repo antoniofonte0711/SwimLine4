@@ -8,7 +8,8 @@ import { CalendarioFoglio } from '../components/SelettoreData'
 import { Bollettino } from '../components/RiepilogoCoach'
 import { SenzaSquadra } from '../components/PianoCard'
 import { dataLocale } from '../lib/lavori'
-import { STATI_BREVI, GIORNI_ALLENAMENTO } from '../lib/presenze'
+import { STATI_BREVI } from '../lib/presenze'
+import { tipoGiorno, useGiorniSquadra } from '../lib/giorni'
 import { addGiorni, useMiaSquadra } from '../lib/pianoSquadra'
 import { ordinaPersone } from '../lib/persone'
 
@@ -24,6 +25,7 @@ const VISTE = ['Giorno', 'Settimana']
 export default function Presenze() {
   const { user, ruolo } = useAuth()
   const { squadra, pronto } = useMiaSquadra()
+  const giorniSquadra = useGiorniSquadra(squadra?.id)
   const [params] = useSearchParams()
   const [giorno, setGiorno] = useState(() => (/^\d{4}-\d{2}-\d{2}$/.test(params.get('giorno') || '') ? params.get('giorno') : dataLocale()))
   const [vista, setVista] = useState(VISTE[0])
@@ -79,8 +81,7 @@ export default function Presenze() {
     setStati((s) => ({ ...s, ...Object.fromEntries(mancanti.map((a) => [a.id, 'presente'])) }))
   }
 
-  const giornoSettimana = new Date(giorno + 'T12:00:00').getDay()
-  const fuoriAllenamento = !GIORNI_ALLENAMENTO.includes(giornoSettimana)
+  const tipo = tipoGiorno(giorniSquadra, giorno)
   const conta = (s) => atleti.filter((a) => stati[a.id] === s).length
   const daSegnare = atleti.filter((a) => !stati[a.id]).length
   const riassunto = [
@@ -106,9 +107,11 @@ export default function Presenze() {
             <button onClick={() => setGiorno(addGiorni(giorno, 1))} aria-label="Giorno dopo" className="cliccabile w-11 h-11 rounded-full text-slate-500 text-xl font-bold">›</button>
           </div>
           {cal && <CalendarioFoglio valore={giorno} onScegli={setGiorno} onChiudi={() => setCal(false)} />}
-          {fuoriAllenamento && (
+          {tipo !== 'si' && (
             <p className="text-xs text-amber-700 bg-amber-50 rounded-2xl px-4 py-2.5 mb-3">
-              Questo non è un giorno di allenamento fisso (lunedì-venerdì).
+              {tipo === 'avolte'
+                ? 'Giorno di allenamento solo a volte: segna le presenze solo se quel giorno vi siete allenati. Se non le segni non contano.'
+                : 'Di solito in questo giorno la squadra non si allena. I giorni si cambiano dal Calendario.'}
             </p>
           )}
           {errore && <p role="alert" className="text-sm text-white bg-red-600 rounded-lg px-3 py-2 mb-3">{errore}</p>}
