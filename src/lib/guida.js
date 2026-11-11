@@ -131,7 +131,7 @@ export const GUIDA = [
     id: 'riepilogo-coach', titolo: 'La settimana (coach)', pagine: ['/riepilogo'], per: ['coach'],
     passi: [
       ['Chilometri di questa settimana', 'Il totale della squadra.'],
-      ['Questa settimana', 'Tabella delle presenze da lunedì a venerdì: tocca una casella per cambiarla (P presente · A assente · G giustificato).'],
+      ['Questa settimana', 'Tabella delle presenze da lunedì a venerdì: tocca una casella per cambiarla (P presente · A assente · G giustificato). Con le frecce ‹ › vedi e correggi le settimane passate.'],
       ['Lavori svolti', 'Gli allenamenti degli ultimi 14 giorni con lo stato (Bozza, Solo coach, Pubblicato): tocca per aprirlo.'],
     ],
   },

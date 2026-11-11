@@ -25,7 +25,8 @@ export function Bollettino({ squadra }) {
   const [stati, setStati] = useState({})
   const [errore, setErrore] = useState('')
   const [casella, setCasella] = useState(null) // { atleta, data } la casella toccata
-  const lunedi = lunediDi()
+  const questoLunedi = lunediDi()
+  const [lunedi, setLunedi] = useState(questoLunedi) // settimana mostrata: con le frecce si va indietro (e avanti fino a questa)
   const scelti = useGiorniSquadra(squadra.id)
   // colonne: { data, sigla, aVolte }
   const colonne = SETTIMANA.map(([n, sigla], i) => ({ n, sigla, data: addGiorni(lunedi, i), aVolte: scelti[n] === 'avolte' }))
@@ -42,9 +43,18 @@ export function Bollettino({ squadra }) {
         .in('atleta_id', ids).gte('data', lunedi).lte('data', addGiorni(lunedi, 6))
       setStati(Object.fromEntries((pr || []).map((r) => [r.atleta_id + r.data, r.stato])))
     }
-  }, [squadra.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [squadra.id, lunedi])
 
   useEffect(() => { carica() }, [carica])
+  function cambiaSettimana(passo) {
+    setCasella(null)
+    setStati({})
+    setLunedi(addGiorni(lunedi, 7 * passo))
+  }
+  const mese = (d) => new Date(d + 'T12:00:00').toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })
+  const titolo = lunedi === questoLunedi ? 'Questa settimana'
+    : lunedi === addGiorni(questoLunedi, -7) ? 'Settimana scorsa'
+      : `${mese(lunedi)} – ${mese(addGiorni(lunedi, 6))}`
 
   // stato null = togli (giorno non segnato)
   async function segna(atletaId, data, prossimo) {
@@ -61,7 +71,15 @@ export function Bollettino({ squadra }) {
 
   return (
     <div className="bg-white rounded-3xl p-5 mb-3 shadow-card">
-      <p className="font-bold mb-1">Questa settimana</p>
+      <div className="flex items-center justify-between -mx-2 mb-1">
+        <button onClick={() => cambiaSettimana(-1)} aria-label="Settimana prima" className="cliccabile w-11 h-11 rounded-full text-slate-500 text-xl font-bold">‹</button>
+        <p className="font-bold">{titolo}</p>
+        <button onClick={() => cambiaSettimana(1)} disabled={lunedi >= questoLunedi} aria-label="Settimana dopo"
+          className="cliccabile w-11 h-11 rounded-full text-slate-500 text-xl font-bold disabled:opacity-25">›</button>
+      </div>
+      {lunedi !== questoLunedi && (
+        <button onClick={() => { setCasella(null); setStati({}); setLunedi(questoLunedi) }} className="block mx-auto -mt-1 mb-2 text-xs font-bold text-blue-600 min-h-[32px]">Torna a questa settimana</button>
+      )}
       <p className="text-xs text-slate-500 mb-3">P presente · A assente · G giustificato{colonne.some((c) => c.aVolte) ? ' · * giorno a volte' : ''}. Tocca una casella per cambiarla.</p>
       {errore && <p className="text-sm text-white bg-red-600 rounded-lg px-3 py-2 mb-3">{errore}</p>}
       {atleti.length === 0 ? (
