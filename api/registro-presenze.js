@@ -2,7 +2,8 @@
 //   =IMPORTDATA("https://swim-line4.vercel.app/api/registro-presenze?k=CHIAVE")            (presenze)
 //   =IMPORTDATA("https://swim-line4.vercel.app/api/registro-presenze?k=CHIAVE&tipo=atleti") (atleti in app)
 // La chiave è della squadra (tabella registro_fogli, migrazione 37): senza chiave giusta la risposta è vuota.
-// Google rilegge da solo più o meno ogni ora. Il foglio non scrive mai nell'app.
+// Google rilegge da solo più o meno ogni ora.
+// Unica scrittura: POST ?k=CHIAVE&tipo=importa con [{c,n,y,d,s}] = presenze del foglio di Mauri (script nel registro, migrazione 47).
 //   =IMPORTDATA("https://swim-line4.vercel.app/api/registro-presenze?k=CHIAVE&tipo=allenamenti") (registro allenamenti)
 /* global process */
 const csv = (v) => (v == null ? '' : /[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v))
@@ -44,6 +45,24 @@ export default async function handler(req, res) {
   const tipo = ['atleti', 'allenamenti'].includes(req.query.tipo) ? req.query.tipo : 'presenze'
   if (!url || !anon) return res.status(500).send('')
   if (!/^[A-Za-z0-9]{32,80}$/.test(chiave)) return res.status(400).send('')
+  if (req.query.tipo === 'importa') {
+    if (req.method !== 'POST') return res.status(405).send('')
+    let righe = req.body
+    if (typeof righe === 'string') { try { righe = JSON.parse(righe) } catch { righe = null } }
+    if (!Array.isArray(righe)) return res.status(400).json({ errore: 'righe' })
+    try {
+      const r = await fetch(`${url}/rest/v1/rpc/registro_importa`, {
+        method: 'POST',
+        headers: { apikey: anon, Authorization: `Bearer ${anon}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ p_chiave: chiave, p_righe: righe }),
+      })
+      if (!r.ok) return res.status(r.status === 400 ? 403 : 502).json({ errore: 'importazione' })
+      res.setHeader('Cache-Control', 'no-store')
+      return res.status(200).json(await r.json())
+    } catch {
+      return res.status(502).json({ errore: 'importazione' })
+    }
+  }
   try {
     const r = await fetch(`${url}/rest/v1/rpc/${tipo === 'allenamenti' ? 'registro_allenamenti' : 'registro_presenze'}`, {
       method: 'POST',
