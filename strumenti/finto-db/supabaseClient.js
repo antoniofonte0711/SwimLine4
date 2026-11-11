@@ -231,6 +231,9 @@ const RPC = {
   },
 }
 
+// per le prove: le tabelle si leggono dalla console con __fintoDb
+globalThis.__fintoDb = tabelle
+
 export const supabase = {
   from: query,
   rpc: async (nome, args) => ({ data: RPC[nome]?.(args) ?? null, error: null }),
