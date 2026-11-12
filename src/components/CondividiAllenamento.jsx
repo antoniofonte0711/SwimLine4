@@ -105,7 +105,7 @@ function Finestra({ piano, giorno, atletaId, onChiudi }) {
         </div>
 
         <div className={`mx-auto w-[min(62vw,260px)] aspect-[9/16] rounded-2xl overflow-hidden ${formato === 'overlay' ? 'bg-[linear-gradient(160deg,#2a9fd6,#0e5e86_60%,#173b4f)]' : 'bg-blue-600'}`}>
-          {url ? <img src={url} alt="Anteprima dell'immagine da condividere" className="w-full h-full object-cover" />
+          {url ? <img src={url} alt="Anteprima dell'immagine da condividere" className={`w-full h-full ${formato === 'overlay' ? 'object-contain p-3' : 'object-cover'}`} />
             : <p className="text-white/80 text-sm text-center pt-24">Preparo l'immagine…</p>}
         </div>
         {formato === 'overlay' && <p className="text-xs text-slate-500 text-center mt-1.5">Fondo trasparente: qui lo vedi sopra un'acqua finta. Mettilo sopra una tua foto.</p>}

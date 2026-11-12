@@ -1,5 +1,5 @@
 // Immagine da condividere di un allenamento (stile adesivo Strava), disegnata nel telefono: niente servizi a pagamento.
-// formato 'card' = storia 1080×1920 con fondo blu; 'overlay' = stesse scritte su fondo trasparente, da mettere sopra una foto.
+// formato 'card' = storia 1080×1920 con fondo blu; 'overlay' = adesivo trasparente centrato, ritagliato sul contenuto, da mettere sopra una foto.
 import { coloreLavoro } from './lavori'
 import { metriPiano } from './pianoSquadra'
 import { difficoltaPiano, formattaVoto } from './difficolta'
@@ -134,29 +134,23 @@ function blocco(ctx, b, x, y, maxW, grande) {
 
 // Disegna e restituisce il canvas. logo = immagine già caricata (facoltativa)
 export function disegnaReport(dati, { formato = 'card', scelti = NUMERI.map(([k]) => k), logo = null } = {}) {
+  const lista = blocchi(dati, scelti)
+  if (formato !== 'card') return disegnaOverlay(dati, lista, logo)
   const W = 1080
   const H = 1920
   const c = document.createElement('canvas')
   c.width = W
   c.height = H
   const ctx = c.getContext('2d')
-  const card = formato === 'card'
-  const lista = blocchi(dati, scelti)
   const X = 100
   const larga = W - X * 2
 
-  if (card) {
-    const g = ctx.createLinearGradient(0, 0, W, H)
-    g.addColorStop(0, BLU)
-    g.addColorStop(1, NOTTE)
-    ctx.fillStyle = g
-    ctx.fillRect(0, 0, W, H)
-    onde(ctx, W, H)
-  } else {
-    // sull'overlay un'ombra leggera tiene leggibili le scritte sopra qualsiasi foto
-    ctx.shadowColor = 'rgba(0,0,0,0.4)'
-    ctx.shadowBlur = 20
-  }
+  const g = ctx.createLinearGradient(0, 0, W, H)
+  g.addColorStop(0, BLU)
+  g.addColorStop(1, NOTTE)
+  ctx.fillStyle = g
+  ctx.fillRect(0, 0, W, H)
+  onde(ctx, W, H)
   ctx.fillStyle = '#fff'
   ctx.textBaseline = 'alphabetic'
 
@@ -169,8 +163,8 @@ export function disegnaReport(dati, { formato = 'card', scelti = NUMERI.map(([k]
   const altNumeri = righeGriglia.reduce((a, r) => a + Math.max(...r.map(altBlocco)), 0) + spazio * (righeGriglia.length - 1)
   const altTesta = 170
   const altStriscia = 140
-  const tot = altTesta + altNumeri + altStriscia + (card ? 0 : 90)
-  let y = card ? Math.max(300, (H - tot) / 2 - 40) : (H - tot) / 2
+  const tot = altTesta + altNumeri + altStriscia
+  let y = Math.max(300, (H - tot) / 2 - 40)
 
   ctx.globalAlpha = 0.85
   testo(ctx, 'ALLENAMENTO DI NUOTO', X, y + 44, larga, 700, 44, 'Figtree, sans-serif')
@@ -187,25 +181,146 @@ export function disegnaReport(dati, { formato = 'card', scelti = NUMERI.map(([k]
   y += 30 - spazio
 
   // la striscia: un pezzo per lavoro, largo quanto i metri, colorato per zona
-  ctx.shadowColor = 'transparent'
   striscia(ctx, dati.striscia, X, y, larga, 40, 'rgba(255,255,255,0.92)')
-  y += altStriscia
 
   // firma
-  if (card) {
-    const lx = X
-    if (logo) {
-      ctx.save()
-      rett(ctx, lx, H - 236, 104, 104, 26)
-      ctx.clip()
-      ctx.drawImage(logo, lx, H - 236, 104, 104)
-      ctx.restore()
-    }
-    testo(ctx, 'SwimLine4', lx + (logo ? 132 : 0), H - 160, larga, 800, 64)
-  } else {
-    ctx.shadowColor = 'rgba(0,0,0,0.4)'
-    testo(ctx, 'SwimLine4', X, y + 20, larga, 800, 58)
+  if (logo) {
+    ctx.save()
+    rett(ctx, X, H - 236, 104, 104, 26)
+    ctx.clip()
+    ctx.drawImage(logo, X, H - 236, 104, 104)
+    ctx.restore()
   }
+  testo(ctx, 'SwimLine4', X + (logo ? 132 : 0), H - 160, larga, 800, 64)
+  return c
+}
+
+const DISPLAY = '"Bricolage Grotesque", Figtree, sans-serif'
+const CORPO = 'Figtree, sans-serif'
+
+// Imposta il carattere più grande (fino a px) che fa stare t in maxW; restituisce la larghezza
+function adatta(ctx, t, maxW, peso, px, famiglia, spaziatura = 0) {
+  let size = px
+  do {
+    ctx.font = `${peso} ${size}px ${famiglia}`
+    if ('letterSpacing' in ctx) ctx.letterSpacing = `${Math.round(size * spaziatura)}px`
+    size -= 2
+  } while (ctx.measureText(t).width > maxW && size > 16)
+  return ctx.measureText(t).width
+}
+
+// Overlay: adesivo trasparente centrato e ritagliato sul contenuto, da appoggiare su una foto (stile Strava).
+function disegnaOverlay(dati, lista, logo) {
+  const W = 1080
+  const M = 70 // margine: spazio per l'ombra
+  const larga = W - M * 2
+  const n = lista.length
+  const g = n === 1 ? 280 : n === 2 ? 210 : 170 // altezza dei numeri
+  const et = Math.round(g * 0.2)
+  const sot = Math.round(g * 0.19)
+  const altBlocco = (b) => et + g * 0.98 + (b.sotto ? sot * 1.9 : 0)
+  const spazio = Math.round(g * 0.34)
+  const altTesta = 150
+  const altStriscia = 30
+  const altFirma = 90
+  const H = Math.round(M + altTesta + lista.reduce((a, b) => a + altBlocco(b), 0) + spazio * (n - 1) + 80 + altStriscia + 80 + altFirma + M)
+
+  const c = document.createElement('canvas')
+  c.width = W
+  c.height = H
+  const ctx = c.getContext('2d')
+  const cx = W / 2
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'alphabetic'
+  ctx.fillStyle = '#fff'
+  const ombra = (forte) => {
+    ctx.shadowColor = `rgba(0,0,0,${forte ? 0.45 : 0.35})`
+    ctx.shadowBlur = forte ? 28 : 18
+    ctx.shadowOffsetY = forte ? 4 : 2
+  }
+  const spazi = (v) => { if ('letterSpacing' in ctx) ctx.letterSpacing = v }
+
+  // testa: tipo e data
+  let y = M
+  ombra(false)
+  ctx.globalAlpha = 0.9
+  adatta(ctx, 'ALLENAMENTO DI NUOTO', larga, 700, 34, CORPO, 0.22)
+  ctx.fillText('ALLENAMENTO DI NUOTO', cx, y + 34)
+  ctx.globalAlpha = 1
+  const d = dataLunga(dati.giorno)
+  const data = d.charAt(0).toUpperCase() + d.slice(1)
+  adatta(ctx, data, larga, 700, 56, DISPLAY)
+  ctx.fillText(data, cx, y + 104)
+  spazi('0px')
+  y += altTesta
+
+  // i numeri, uno sotto l'altro e centrati
+  lista.forEach((b, i) => {
+    ombra(false)
+    ctx.globalAlpha = 0.85
+    adatta(ctx, b.etichetta.toUpperCase(), larga, 700, et, CORPO, 0.18)
+    ctx.fillText(b.etichetta.toUpperCase(), cx, y + et)
+    spazi('0px')
+    ctx.globalAlpha = 1
+
+    // valore grande + unità piccola, centrati insieme
+    const base = y + et + g * 0.9
+    ombra(true)
+    const ug = Math.round(g * 0.36)
+    ctx.font = `700 ${ug}px ${DISPLAY}`
+    const wu = b.unita ? ctx.measureText(b.unita).width + g * 0.06 : 0
+    const wv = adatta(ctx, b.valore, larga - wu, 800, g, DISPLAY)
+    const x0 = cx - (wv + wu) / 2
+    ctx.textAlign = 'left'
+    ctx.fillText(b.valore, x0, base)
+    if (b.unita) {
+      ctx.font = `700 ${ug}px ${DISPLAY}`
+      ctx.globalAlpha = 0.9
+      ctx.fillText(b.unita, x0 + wv + g * 0.06, base)
+      ctx.globalAlpha = 1
+    }
+    ctx.textAlign = 'center'
+    if (b.sotto) {
+      ombra(false)
+      ctx.globalAlpha = 0.85
+      adatta(ctx, b.sotto, larga, 600, sot, CORPO)
+      ctx.fillText(b.sotto, cx, base + sot * 1.75)
+      ctx.globalAlpha = 1
+    }
+    y += altBlocco(b) + (i < n - 1 ? spazio : 0)
+  })
+  y += 80
+
+  // la striscia dei lavori, più sottile e senza cornice bianca piena
+  const sw = Math.min(larga, 720)
+  ctx.shadowColor = 'rgba(0,0,0,0.3)'
+  ctx.shadowBlur = 14
+  ctx.shadowOffsetY = 2
+  ctx.fillStyle = 'rgba(255,255,255,0.35)'
+  rett(ctx, cx - sw / 2 - 6, y - 6, sw + 12, altStriscia + 12, (altStriscia + 12) / 2)
+  ctx.fill()
+  ctx.shadowColor = 'transparent'
+  striscia(ctx, dati.striscia, cx - sw / 2, y, sw, altStriscia, null)
+  y += altStriscia + 80
+
+  // firma: logo + nome, centrati
+  ctx.fillStyle = '#fff'
+  ombra(false)
+  const lg = logo ? 76 : 0
+  ctx.font = `800 52px ${DISPLAY}`
+  const wn = ctx.measureText('SwimLine4').width
+  const xl = cx - (lg + (logo ? 22 : 0) + wn) / 2
+  if (logo) {
+    ctx.save()
+    rett(ctx, xl, y, lg, lg, 20)
+    ctx.fill() // base per l'ombra
+    ctx.clip()
+    ctx.shadowColor = 'transparent'
+    ctx.drawImage(logo, xl, y, lg, lg)
+    ctx.restore()
+  }
+  ctx.textAlign = 'left'
+  ctx.fillText('SwimLine4', xl + lg + (logo ? 22 : 0), y + lg / 2 + 19)
   return c
 }
 export const caricaLogo = () => new Promise((ok) => {
