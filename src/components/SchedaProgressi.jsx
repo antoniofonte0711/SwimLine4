@@ -11,7 +11,9 @@ import { tempoInSecondi, secondiInTempo, formattaData, normalizzaTempo, tempoVal
 import { STILI_COACH } from '../lib/pianoSquadra'
 
 const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white'
-const FONTI = ['Tutti i tempi', 'Solo allenamenti', 'Solo gare']
+// I tempi si confrontano dentro lo stesso lavoro (un 100 in A2 e uno in B1 sono velocità diverse per scelta)
+const GARE = 'Gare'
+const INSIEME = 'Tutto insieme'
 const TUTTI = 'Tutti gli stili'
 
 // Distanza e stile con più tempi (a parità, quella nuotata più di recente): da lì si vede subito il grafico
@@ -49,7 +51,7 @@ function scalaTempi(valori) {
 // Il coach può anche aggiungere o togliere tempi (coach = true).
 export default function SchedaProgressi({ atletaId, coach = false }) {
   const [punti, setPunti] = useState([])
-  const [fonte, setFonte] = useState(FONTI[0])
+  const [lavoro, setLavoro] = useState('')
   const [vasca, setVasca] = useState(25)
   const [distanza, setDistanza] = useState('')
   const [stile, setStile] = useState(TUTTI)
@@ -72,14 +74,14 @@ export default function SchedaProgressi({ atletaId, coach = false }) {
       if (!secondi.length) return
       lista.push({
         id: r.id, tabella: 'allenamenti', fonte: 'Allenamento', data: r.data_allenamento || (r.created_at || '').slice(0, 10),
-        distanza: r.distanza, stile: r.stile, sec: Math.min(...secondi),
+        distanza: r.distanza, stile: r.stile, lavoro: r.tipo_lavoro || 'Altro', sec: Math.min(...secondi),
         nome: `${r.tipo_lavoro}${r.ripetizioni ? ` · ${r.ripetizioni}×${r.distanza} m` : ''}`,
       })
     })
     ;(g || []).forEach((r) => {
       const sec = tempoInSecondi(r.tempo)
       if (sec === null) return
-      lista.push({ id: r.id, tabella: 'gare', fonte: 'Gara', data: r.data_gara, distanza: r.distanza, stile: r.stile, vasca: vascaDi(r), sec, nome: r.nome_gara })
+      lista.push({ id: r.id, tabella: 'gare', fonte: 'Gara', lavoro: GARE, data: r.data_gara, distanza: r.distanza, stile: r.stile, vasca: vascaDi(r), sec, nome: r.nome_gara })
     })
     setPunti(lista)
     // se l'atleta ha gare in una sola vasca, si parte da quella
@@ -89,7 +91,7 @@ export default function SchedaProgressi({ atletaId, coach = false }) {
     if (nuova) {
       // Il tempo appena aggiunto deve vedersi: niente filtri che lo nascondano
       prossima = { distanza: String(nuova.distanza), stile: nuova.stile }
-      setFonte(FONTI[0])
+      setLavoro(nuova.lavoro || GARE)
       setDal('')
       setAl('')
     } else {
@@ -108,16 +110,31 @@ export default function SchedaProgressi({ atletaId, coach = false }) {
   const distanze = useMemo(() => [...new Set(punti.map((p) => p.distanza))].sort((x, y) => x - y), [punti])
   // Stili standard + "Proprio stile" + eventuali altri stili presenti nei tempi salvati
   const stili = useMemo(() => [...new Set([...STILI_COACH, ...punti.map((p) => p.stile).filter(Boolean)])], [punti])
+  const stessaProva = useMemo(
+    () => punti.filter((p) => String(p.distanza) === distanza).filter((p) => stile === TUTTI || p.stile === stile),
+    [punti, distanza, stile]
+  )
+  // I lavori con tempi in questa distanza e stile, dal più frequente; le gare in fondo
+  const lavori = useMemo(() => {
+    const n = {}
+    stessaProva.forEach((p) => { if (p.lavoro !== GARE) n[p.lavoro] = (n[p.lavoro] || 0) + 1 })
+    const ordine = Object.keys(n).sort((x, y) => n[y] - n[x] || x.localeCompare(y))
+    if (stessaProva.some((p) => p.lavoro === GARE)) ordine.push(GARE)
+    return ordine
+  }, [stessaProva])
+  // se il lavoro scelto non ha tempi qui, si passa a quello con più tempi
+  useEffect(() => {
+    if (lavori.length && lavoro !== INSIEME && !lavori.includes(lavoro)) setLavoro(lavori[0])
+  }, [lavori, lavoro])
+  const conGare = lavoro === GARE || lavoro === INSIEME
   const filtrati = useMemo(
     () =>
-      punti
-        .filter((p) => String(p.distanza) === distanza)
-        .filter((p) => stile === TUTTI || p.stile === stile)
-        .filter((p) => fonte === FONTI[0] || (fonte === FONTI[1] ? p.fonte === 'Allenamento' : p.fonte === 'Gara'))
+      stessaProva
+        .filter((p) => lavoro === INSIEME || p.lavoro === lavoro)
         .filter((p) => p.fonte !== 'Gara' || p.vasca === vasca) // gare: una vasca alla volta
         .filter((p) => (!dal || p.data >= dal) && (!al || p.data <= al))
         .sort((x, y) => String(x.data).localeCompare(String(y.data))),
-    [punti, distanza, stile, fonte, vasca, dal, al]
+    [stessaProva, lavoro, vasca, dal, al]
   )
   const migliore = filtrati.length ? Math.min(...filtrati.map((p) => p.sec)) : null
   const dati = filtrati.map((p) => ({ data: formattaData(p.data), tempo: p.sec }))
@@ -158,14 +175,16 @@ export default function SchedaProgressi({ atletaId, coach = false }) {
             </select>
           </div>
         </div>
-        <div className={fonte !== FONTI[1] ? 'grid grid-cols-2 gap-3 mb-3' : 'mb-3'}>
+        <div className={conGare ? 'grid grid-cols-2 gap-3 mb-3' : 'mb-3'}>
           <div>
-            <label className="block text-xs text-slate-500 mb-1">Cosa mostrare</label>
-            <select value={fonte} onChange={(e) => setFonte(e.target.value)} className={CAMPO}>
-              {FONTI.map((f) => <option key={f}>{f}</option>)}
+            <label className="block text-xs text-slate-500 mb-1">Lavoro</label>
+            <select value={lavoro} onChange={(e) => setLavoro(e.target.value)} className={CAMPO}>
+              {lavori.map((l) => <option key={l}>{l}</option>)}
+              {lavori.length > 1 && <option>{INSIEME}</option>}
+              {lavori.length === 0 && <option value="">—</option>}
             </select>
           </div>
-          {fonte !== FONTI[1] && (
+          {conGare && (
             <div>
               <label className="block text-xs text-slate-500 mb-1">Vasca delle gare</label>
               <select value={vasca} onChange={(e) => setVasca(Number(e.target.value))} className={CAMPO}>
@@ -208,7 +227,7 @@ export default function SchedaProgressi({ atletaId, coach = false }) {
         ) : (
           <p className="text-sm text-slate-500 text-center py-8">Servono almeno due tempi con questi filtri<br />per mostrare il grafico.</p>
         )}
-        <p className="text-xs text-slate-500 mt-1">Più la linea scende, più è veloce.</p>
+        <p className="text-xs text-slate-500 mt-1">Più la linea scende, più è veloce.{lavoro === INSIEME && lavori.length > 1 && ' Attenzione: stai mescolando lavori diversi.'}</p>
       </div>
 
       <div className="bg-white rounded-3xl p-5 shadow-card">
@@ -260,7 +279,7 @@ function NuovoTempo({ atletaId, onSalvato }) {
       : await supabase.from('allenamenti').insert({ atleta_id: atletaId, tipo_lavoro: lavoro, distanza: Number(distanza), ripetizioni: 1, stile, tempo_totale: t, data_allenamento: data })
     setInvio(false)
     if (error) return setErrore('Non sono riuscito a salvare: ' + error.message)
-    onSalvato({ distanza: Number(distanza), stile, ...(tipo === 'gara' ? { vasca } : {}) })
+    onSalvato({ distanza: Number(distanza), stile, ...(tipo === 'gara' ? { vasca } : { lavoro }) })
   }
 
   return (

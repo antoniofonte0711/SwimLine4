@@ -25,7 +25,11 @@ const UTENTI = {
   tabelle.allenamenti = [0, 1, 2].map((i) => ({
     id: 'all' + i, atleta_id: A, tipo_lavoro: 'C1', distanza: 100, ripetizioni: 4, stile: 'Stile libero',
     passaggi: [t(70 - i), t(70.5 - i), t(71 - i), t(71.2 - i)], data_allenamento: g(-12 + i * 4),
-  }))
+  })).concat([0, 1, 2].map((i) => ({
+    // stessi 100 SL ma in A2 (più lenti per scelta): per provare il filtro "Lavoro" nei progressi
+    id: 'allA2-' + i, atleta_id: A, tipo_lavoro: 'A2', distanza: 100, ripetizioni: 8, stile: 'Stile libero',
+    passaggi: [t(82 - i), t(82.5 - i)], data_allenamento: g(-14 + i * 5),
+  })))
   // società "Test Team" con i suoi gruppi (come vorremmo nel database vero)
   tabelle.societa = [{ id: 'soc1', nome: 'Test Team', capo_id: UTENTI.admin, created_at: g(0) }]
   tabelle.squadre.forEach((s) => { if (s.nome === 'Test Team') s.societa_id = 'soc1' })
