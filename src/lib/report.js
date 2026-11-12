@@ -133,9 +133,13 @@ function blocco(ctx, b, x, y, maxW, grande) {
 }
 
 // Disegna e restituisce il canvas. logo = immagine già caricata (facoltativa)
-export function disegnaReport(dati, { formato = 'card', scelti = NUMERI.map(([k]) => k), logo = null, foto = null } = {}) {
+export function disegnaReport(dati, { formato = 'card', scelti = NUMERI.map(([k]) => k), logo = null, foto = null, stile = 'centrato' } = {}) {
   const lista = blocchi(dati, scelti)
-  if (formato !== 'card') return foto ? suFoto(disegnaOverlay(dati, lista, logo), foto) : disegnaOverlay(dati, lista, logo)
+  if (formato !== 'card') {
+    const disegna = { lista: adesivoLista, pillole: adesivoPillole, minimal: adesivoMinimal }[stile] || disegnaOverlay
+    const adesivo = disegna(dati, lista, logo)
+    return foto ? suFoto(adesivo, foto) : adesivo
+  }
   const W = 1080
   const H = 1920
   const c = document.createElement('canvas')
@@ -323,6 +327,181 @@ function disegnaOverlay(dati, lista, logo) {
   ctx.fillText('SwimLine4', xl + lg + (logo ? 22 : 0), y + lg / 2 + 19)
   return c
 }
+// Gli stili dell'adesivo trasparente, da scegliere come su Strava
+export const STILI = [
+  ['centrato', 'Centrato'],
+  ['lista', 'Lista'],
+  ['pillole', 'Pillole'],
+  ['minimal', 'Minimal'],
+]
+
+function tela(W, H) {
+  const c = document.createElement('canvas')
+  c.width = W
+  c.height = H
+  const ctx = c.getContext('2d')
+  ctx.fillStyle = '#fff'
+  ctx.textBaseline = 'alphabetic'
+  ctx.shadowColor = 'rgba(0,0,0,0.4)'
+  ctx.shadowBlur = 18
+  ctx.shadowOffsetY = 2
+  return [c, ctx]
+}
+
+// logo + "SwimLine4" che partono da x (o centrati su x se centro=true); restituisce la larghezza
+function firma(ctx, logo, x, y, px, centro = false) {
+  const lg = logo ? Math.round(px * 1.45) : 0
+  const gap = logo ? Math.round(px * 0.4) : 0
+  ctx.font = `800 ${px}px ${DISPLAY}`
+  const wn = ctx.measureText('SwimLine4').width
+  const x0 = centro ? x - (lg + gap + wn) / 2 : x
+  if (logo) {
+    ctx.save()
+    rett(ctx, x0, y, lg, lg, lg * 0.26)
+    ctx.fill()
+    ctx.clip()
+    ctx.shadowColor = 'transparent'
+    ctx.drawImage(logo, x0, y, lg, lg)
+    ctx.restore()
+  }
+  ctx.textAlign = 'left'
+  ctx.fillText('SwimLine4', x0 + lg + gap, y + (lg || px) / 2 + px * 0.36)
+  return lg + gap + wn
+}
+
+const valoreIntero = (b) => (b.unita ? `${b.valore} ${b.unita}` : b.valore)
+const dataBreve = (g) => new Date(g + 'T12:00:00').toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })
+
+// Lista compatta: etichetta a sinistra, valore a destra, puntini in mezzo
+function adesivoLista(dati, lista, logo) {
+  const W = 1080
+  const M = 70
+  const riga = 104
+  const H = M + 90 + 40 + lista.length * riga + 50 + 24 + M
+  const [c, ctx] = tela(W, H)
+  let y = M
+  firma(ctx, logo, M, y, 50)
+  ctx.textAlign = 'right'
+  ctx.font = `600 38px ${CORPO}`
+  ctx.globalAlpha = 0.85
+  ctx.fillText(dataBreve(dati.giorno), W - M, y + 52)
+  ctx.globalAlpha = 1
+  y += 90 + 40
+  lista.forEach((b) => {
+    const base = y + 66
+    ctx.textAlign = 'left'
+    ctx.font = `600 44px ${CORPO}`
+    ctx.globalAlpha = 0.9
+    ctx.fillText(b.etichetta, M, base)
+    const we = ctx.measureText(b.etichetta).width
+    ctx.globalAlpha = 1
+    ctx.textAlign = 'right'
+    const v = valoreIntero(b)
+    const wv = adatta(ctx, v, W - M * 2 - we - 60, 800, 60, DISPLAY)
+    ctx.fillText(v, W - M, base)
+    // puntini
+    ctx.globalAlpha = 0.6
+    for (let x = M + we + 24; x < W - M - wv - 20; x += 18) { ctx.beginPath(); ctx.arc(x, base - 10, 3, 0, Math.PI * 2); ctx.fill() }
+    ctx.globalAlpha = 1
+    y += riga
+  })
+  y += 50
+  ctx.shadowColor = 'transparent'
+  striscia(ctx, dati.striscia, M, y, W - M * 2, 24, null)
+  return c
+}
+
+// Pillole: ogni numero in una capsula col bordo bianco, come etichette
+function adesivoPillole(dati, lista, logo) {
+  const W = 1080
+  const M = 60
+  const h = 96
+  const gap = 22
+  const px = 42
+  const [prova] = tela(1, 1)
+  const mctx = prova.getContext('2d')
+  const pezzi = [
+    { tipo: 'firma' },
+    { testo: dataBreve(dati.giorno).toUpperCase() },
+    ...lista.map((b) => ({ testo: `${b.etichetta.toUpperCase()} ${valoreIntero(b)}` })),
+  ]
+  pezzi.forEach((p) => {
+    mctx.font = `700 ${px}px ${p.tipo ? DISPLAY : CORPO}`
+    p.w = Math.min(W - M * 2, (p.tipo ? mctx.measureText('SwimLine4').width + (logo ? 70 : 0) : mctx.measureText(p.testo).width) + 64)
+  })
+  // a righe, centrate
+  const righe = [[]]
+  let lw = 0
+  pezzi.forEach((p) => {
+    if (lw + p.w > W - M * 2 && righe.at(-1).length) { righe.push([]); lw = 0 }
+    righe.at(-1).push(p)
+    lw += p.w + gap
+  })
+  const H = M * 2 + righe.length * h + (righe.length - 1) * gap
+  const [c, ctx] = tela(W, H)
+  let y = M
+  righe.forEach((r) => {
+    const tot = r.reduce((a, p) => a + p.w, 0) + gap * (r.length - 1)
+    let x = (W - tot) / 2
+    r.forEach((p) => {
+      ctx.lineWidth = 5
+      ctx.strokeStyle = '#fff'
+      rett(ctx, x, y, p.w, h, h / 2)
+      if (p.tipo) {
+        ctx.fill()
+        ctx.save()
+        ctx.shadowColor = 'transparent'
+        ctx.fillStyle = BLU
+        firma(ctx, logo, x + p.w / 2, y + (h - (logo ? 61 : 42)) / 2, 42, true)
+        ctx.restore()
+      } else {
+        ctx.stroke()
+        ctx.textAlign = 'center'
+        adatta(ctx, p.testo, p.w - 40, 700, px, CORPO)
+        ctx.fillText(p.testo, x + p.w / 2, y + h / 2 + px * 0.36)
+      }
+      x += p.w + gap
+    })
+    y += h + gap
+  })
+  return c
+}
+
+// Minimal: un solo numero grande (il primo scelto) e la firma
+function adesivoMinimal(dati, lista, logo) {
+  const W = 1080
+  const M = 70
+  const b = lista[0]
+  const g = 300
+  const H = M + 50 + 30 + g + (b.sotto ? 60 : 0) + 60 + 70 + M
+  const [c, ctx] = tela(W, H)
+  const cx = W / 2
+  let y = M
+  ctx.textAlign = 'center'
+  ctx.globalAlpha = 0.9
+  adatta(ctx, b.etichetta.toUpperCase(), W - M * 2, 700, 40, CORPO, 0.2)
+  ctx.fillText(b.etichetta.toUpperCase(), cx, y + 40)
+  if ('letterSpacing' in ctx) ctx.letterSpacing = '0px'
+  ctx.globalAlpha = 1
+  y += 50 + 30
+  ctx.shadowBlur = 28
+  const ug = Math.round(g * 0.32)
+  ctx.font = `700 ${ug}px ${DISPLAY}`
+  const wu = b.unita ? ctx.measureText(b.unita).width + 16 : 0
+  const wv = adatta(ctx, b.valore, W - M * 2 - wu, 800, g, DISPLAY)
+  const x0 = cx - (wv + wu) / 2
+  ctx.textAlign = 'left'
+  ctx.fillText(b.valore, x0, y + g * 0.82)
+  if (b.unita) { ctx.font = `700 ${ug}px ${DISPLAY}`; ctx.fillText(b.unita, x0 + wv + 16, y + g * 0.82) }
+  ctx.shadowBlur = 18
+  y += g
+  ctx.textAlign = 'center'
+  if (b.sotto) { ctx.font = `600 44px ${CORPO}`; ctx.globalAlpha = 0.9; ctx.fillText(b.sotto, cx, y + 30); ctx.globalAlpha = 1; y += 60 }
+  y += 60
+  firma(ctx, logo, cx, y - 20, 46, true)
+  return c
+}
+
 // La foto scelta dall'atleta come sfondo della storia (1080×1920, riempita e centrata) con l'adesivo sopra.
 // Tutto nel telefono: la foto non viene caricata da nessuna parte.
 function suFoto(adesivo, foto) {

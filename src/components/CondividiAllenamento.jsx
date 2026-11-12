@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { caricaTutto } from '../lib/caricaTutto'
-import { NUMERI, caricaFoto, caricaLogo, canvasInBlob, datiReport, disegnaReport, numeriDisponibili } from '../lib/report'
+import { NUMERI, STILI, caricaFoto, caricaLogo, canvasInBlob, datiReport, disegnaReport, numeriDisponibili } from '../lib/report'
 
 const FORMATI = [['card', 'Card'], ['overlay', 'Overlay']]
+// fondo a scacchi scuro: si capisce che l'adesivo è trasparente
+const SCACCHI = { backgroundColor: '#2b2b2b', backgroundImage: 'conic-gradient(#3a3a3a 25%, transparent 0 50%, #3a3a3a 0 75%, transparent 0)', backgroundSize: '20px 20px' }
 
 // Il pulsante "Condividi il tuo allenamento" e la sua finestra: anteprima, Card o Overlay, numeri da mostrare.
 // atletaId: con i suoi tempi e record; senza (coach, genitore): solo i numeri dell'allenamento.
@@ -31,6 +33,8 @@ function Finestra({ piano, giorno, atletaId, onChiudi }) {
   const [url, setUrl] = useState('')
   const [esito, setEsito] = useState('')
   const [foto, setFoto] = useState(null)
+  const [stile, setStile] = useState('centrato')
+  const [miniature, setMiniature] = useState({})
   const sceltaFoto = useRef(null)
   const conFoto = formato === 'overlay' && foto
 
@@ -56,10 +60,16 @@ function Finestra({ piano, giorno, atletaId, onChiudi }) {
   // rifà l'immagine a ogni scelta
   useEffect(() => {
     if (!dati || !scelti) return
-    setUrl(disegnaReport(dati, { formato, scelti, logo, foto }).toDataURL('image/png'))
-  }, [dati, scelti, formato, logo, foto])
+    setUrl(disegnaReport(dati, { formato, scelti, logo, foto, stile }).toDataURL('image/png'))
+  }, [dati, scelti, formato, logo, foto, stile])
 
-  const canvas = () => disegnaReport(dati, { formato, scelti, logo, foto })
+  // le miniature degli stili (solo adesivo, senza foto) per la galleria
+  useEffect(() => {
+    if (!dati || !scelti || formato !== 'overlay') return
+    setMiniature(Object.fromEntries(STILI.map(([k]) => [k, disegnaReport(dati, { formato, scelti, logo, stile: k }).toDataURL('image/png')])))
+  }, [dati, scelti, formato, logo])
+
+  const canvas = () => disegnaReport(dati, { formato, scelti, logo, foto, stile })
   const nomeFile = `swimline4-${giorno}-${conFoto ? 'foto' : formato}.png`
 
   async function scegliFoto(e) {
@@ -90,7 +100,7 @@ function Finestra({ piano, giorno, atletaId, onChiudi }) {
   async function copia() {
     try {
       await navigator.clipboard.write([new ClipboardItem({ 'image/png': canvasInBlob(canvas()) })])
-      setEsito('Copiata: incollala nella storia di Instagram, diventa un adesivo.')
+      setEsito('Copiato! Ora apri una storia Instagram con la tua foto e incolla: diventa un adesivo.')
     } catch {
       setEsito('Questo telefono non lascia copiare le immagini: usa Condividi o Scarica.')
     }
@@ -115,25 +125,35 @@ function Finestra({ piano, giorno, atletaId, onChiudi }) {
           ))}
         </div>
 
-        <div className={`mx-auto w-[min(62vw,260px)] aspect-[9/16] rounded-2xl overflow-hidden ${formato === 'overlay' ? 'bg-[linear-gradient(160deg,#2a9fd6,#0e5e86_60%,#173b4f)]' : 'bg-blue-600'}`}>
+        <div className={`mx-auto w-[min(62vw,260px)] aspect-[9/16] rounded-2xl overflow-hidden ${formato === 'overlay' ? '' : 'bg-blue-600'}`} style={formato === 'overlay' ? SCACCHI : undefined}>
           {url ? <img src={url} alt="Anteprima dell'immagine da condividere" className={`w-full h-full ${formato === 'overlay' && !foto ? 'object-contain p-3' : 'object-cover'}`} />
             : <p className="text-white/80 text-sm text-center pt-24">Preparo l'immagine…</p>}
         </div>
         {formato === 'overlay' && (
           <>
+            <div className="grid grid-cols-4 gap-2 mt-3" role="group" aria-label="Stile dell'adesivo">
+              {STILI.map(([k, n]) => (
+                <button key={k} type="button" aria-pressed={stile === k} onClick={() => setStile(k)} className="flex flex-col items-center gap-1">
+                  <span className={`w-full aspect-[9/16] rounded-xl overflow-hidden flex items-center justify-center p-1 border-2 ${stile === k ? 'border-blue-600' : 'border-transparent'}`} style={SCACCHI}>
+                    {miniature[k] && <img src={miniature[k]} alt="" className="max-w-full max-h-full" />}
+                  </span>
+                  <span className={`text-xs font-semibold ${stile === k ? 'text-blue-600' : 'text-slate-500'}`}>{n}</span>
+                </button>
+              ))}
+            </div>
             <input ref={sceltaFoto} type="file" accept="image/*" className="hidden" onChange={scegliFoto} />
             <div className="flex gap-2 justify-center mt-3">
               <button type="button" onClick={() => sceltaFoto.current?.click()}
-                className="min-h-[44px] rounded-2xl px-4 bg-blue-600 text-white font-bold flex items-center gap-2">
+                className="min-h-[44px] rounded-2xl px-4 bg-slate-100 text-slate-700 font-bold flex items-center gap-2">
                 <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="9" cy="10" r="1.5" /><path d="m21 16-5-5-8 8" />
                 </svg>
-                {foto ? 'Cambia foto' : 'Metti una tua foto sotto'}
+                {foto ? 'Cambia foto' : 'Oppure metti una tua foto sotto'}
               </button>
               {foto && <button type="button" onClick={() => setFoto(null)} className="min-h-[44px] rounded-2xl px-4 bg-slate-100 text-slate-600 font-bold">Togli</button>}
             </div>
             <p className="text-xs text-slate-500 text-center mt-1.5">
-              {foto ? 'La foto resta sul tuo telefono: non viene caricata da nessuna parte.' : "Senza foto il fondo è trasparente (qui lo vedi sopra un'acqua finta)."}
+              {foto ? 'La foto resta sul tuo telefono: non viene caricata da nessuna parte.' : 'Come su Strava: tocca Copia, apri una storia Instagram con la tua foto e incolla. Diventa un adesivo da spostare e ingrandire.'}
             </p>
           </>
         )}
@@ -148,10 +168,10 @@ function Finestra({ piano, giorno, atletaId, onChiudi }) {
         )}
 
         <div className={`grid gap-2 mt-4 ${formato === 'overlay' && !foto ? 'grid-cols-3' : 'grid-cols-2'}`}>
-          <button type="button" onClick={condividi} disabled={!url} className="min-h-[48px] rounded-2xl bg-blue-600 text-white font-bold disabled:opacity-40">
+          {formato === 'overlay' && !foto && <button type="button" onClick={copia} disabled={!url} className="min-h-[48px] rounded-2xl bg-blue-600 text-white font-bold disabled:opacity-40">Copia</button>}
+          <button type="button" onClick={condividi} disabled={!url} className={`min-h-[48px] rounded-2xl font-bold disabled:opacity-40 ${formato === 'overlay' && !foto ? 'bg-schiuma text-blue-600' : 'bg-blue-600 text-white'}`}>
             Condividi
           </button>
-          {formato === 'overlay' && !foto && <button type="button" onClick={copia} disabled={!url} className="min-h-[48px] rounded-2xl bg-schiuma text-blue-600 font-bold disabled:opacity-40">Copia</button>}
           <button type="button" onClick={() => scarica()} disabled={!url} className="min-h-[48px] rounded-2xl bg-slate-100 text-slate-600 font-bold disabled:opacity-40">Scarica</button>
         </div>
         {esito && <p role="status" className="text-sm text-center text-slate-600 mt-3">{esito}</p>}
