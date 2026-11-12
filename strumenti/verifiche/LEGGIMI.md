@@ -65,3 +65,10 @@ Utenti di prova dell'anteprima (dati inventati, `@swimline4.test`): coach `…00
 - **Le funzioni del server** (`accedi-come`, `notifiche`) controllano il ruolo sul database: verificate leggendo il codice.
 - **Video**: fermi (spazio del piano gratuito troppo piccolo); lo spazio file `video-allenamenti` non ha regole d'accesso,
   da creare prima di riattivarli.
+
+### Pentest del 12/11/2026
+
+| File | Cosa controlla | Risultato |
+|---|---|---|
+| `09_pentest_12_novembre.sql` | Finto coach non vede né prende atleti (solo invito che si accetta), ricerca per email senza squadra altrui, chiave delle formule solo lettura (importa con `chiave_importa`), max 6 gare con punti al giorno se le inserisce l'atleta | come atteso ✅ dopo la migrazione 48 (prima: 4 bug confermati) |
+| `01` e `02` rilanciate | Pannello solo admin (anche funzioni nuove 39-46) e isolamento | ✅ |

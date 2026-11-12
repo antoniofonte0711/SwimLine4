@@ -220,6 +220,16 @@ const RPC = {
     if (r) r.giorni = p_giorni
     else t.push({ squadra_id: p_squadra, permessi: {}, giorni: p_giorni })
   },
+  // ricerca e inviti (versione semplice di cerca_persone / chiedi_ingresso, migrazione 48)
+  cerca_persone({ p_testo, p_squadra }) {
+    const t = String(p_testo || '').trim().toLowerCase()
+    return tabelle.profiles.filter((p) => ['atleta', 'genitore', 'admin'].includes(p.role)
+      && `${p.nome || ''} ${p.cognome || ''}`.toLowerCase().includes(t)).slice(0, 20)
+      .map((p) => ({ id: p.id, nome: p.nome, cognome: p.cognome, ruolo: p.role,
+        squadra_id: p.squadra_id === p_squadra ? p.squadra_id : null,
+        squadra_nome: p.squadra_id === p_squadra ? 'questa' : p.squadra_id ? "un'altra squadra" : null, richiesta_in_attesa: false }))
+  },
+  chiedi_ingresso() { return 'invitato' },
   admin_cambia_ruolo({ p_persona, p_ruolo }) { const p = tabelle.profiles.find((x) => x.id === p_persona); if (p) p.role = p_ruolo },
   admin_imposta_coach({ p_squadra, p_coach }) {
     if (p_coach) {

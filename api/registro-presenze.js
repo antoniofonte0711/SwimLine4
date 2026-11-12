@@ -3,7 +3,8 @@
 //   =IMPORTDATA("https://swim-line4.vercel.app/api/registro-presenze?k=CHIAVE&tipo=atleti") (atleti in app)
 // La chiave è della squadra (tabella registro_fogli, migrazione 37): senza chiave giusta la risposta è vuota.
 // Google rilegge da solo più o meno ogni ora.
-// Unica scrittura: POST ?k=CHIAVE&tipo=importa con [{c,n,y,d,s}] = presenze del foglio di Mauri (script nel registro, migrazione 47).
+// Unica scrittura: POST ?k=CHIAVE_IMPORTA&tipo=importa con [{c,n,y,d,s}] = presenze del foglio di Mauri (script nel registro, migrazione 47).
+//   CHIAVE_IMPORTA è un'altra chiave (migrazione 48): quella delle formule qui sopra legge soltanto.
 //   =IMPORTDATA("https://swim-line4.vercel.app/api/registro-presenze?k=CHIAVE&tipo=allenamenti") (registro allenamenti)
 /* global process */
 const csv = (v) => (v == null ? '' : /[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v))

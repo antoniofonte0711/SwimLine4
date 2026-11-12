@@ -15,6 +15,10 @@
 var FOGLIO_MAURI = '1AYieGkYPeYciBNkfYsTOYERqkf0Z-1U5pg2TOcQk-Js';
 var NOSTRO_REGISTRO = '1iYYPd3HIM8OxmMFNjzZW0mgKFekX6kie0jKA4hvf0po';
 var INDIRIZZO = 'https://swim-line4.vercel.app/api/registro-presenze';
+// Chiave per SCRIVERE le presenze nell'app (registro_fogli.chiave_importa, migrazione 48).
+// È diversa da quella delle formule IMPORTDATA, che chiunque apra il registro vede e che serve solo a leggere.
+// Sta solo qui: non metterla in nessuna cella del foglio.
+var CHIAVE_IMPORTA = 'INCOLLA_QUI_LA_CHIAVE_DI_IMPORTAZIONE';
 
 function avvia() {
   ScriptApp.getProjectTriggers().forEach(function (t) {
@@ -26,9 +30,8 @@ function avvia() {
 
 function importaDaMauri() {
   var registro = SpreadsheetApp.openById(NOSTRO_REGISTRO);
-  var formula = registro.getSheetByName('Dati').getRange('A1').getFormula();
-  var chiave = (formula.match(/[?&]k=([A-Za-z0-9]{32,80})/) || [])[1];
-  if (!chiave) throw new Error('Chiave non trovata in Dati!A1 del registro');
+  var chiave = CHIAVE_IMPORTA;
+  if (!/^[A-Za-z0-9]{32,80}$/.test(chiave)) throw new Error('Manca la chiave di importazione in cima allo script (CHIAVE_IMPORTA)');
 
   // 1) Leggo il foglio di Mauri (solo lettura)
   var valori = SpreadsheetApp.openById(FOGLIO_MAURI).getSheets()[0].getDataRange().getDisplayValues();

@@ -57,7 +57,7 @@ function CosaVedonoGliAtleti({ squadra }) {
 // Impostazioni della squadra: visibili solo ad admin e coach.
 // Il coach vede chi c'è in squadra, aggiunge persone (per nome o email) e le toglie.
 export default function Impostazioni() {
-  const { user } = useAuth()
+  const { user, adminReale } = useAuth()
   const { squadra, pronto } = useMiaSquadra()
   const [membri, setMembri] = useState([])
   const [cerca, setCerca] = useState('')
@@ -98,15 +98,21 @@ export default function Impostazioni() {
     caricaMembri()
   }
 
-  // Un account admin non si aggiunge direttamente: riceve una richiesta e decide lui se entrare
-  async function invitaAdmin(p) {
+  // Nessuno entra in squadra senza volerlo: la persona riceve un invito e decide lei.
+  // Se aveva già chiesto di entrare qui, l'invito vale come approvazione ed entra subito.
+  async function invita(p) {
     setErrore('')
     setOk('')
     setInvio(p.id)
-    const { error } = await supabase.rpc('chiedi_ingresso', { p_persona: p.id, p_squadra: squadra.id })
+    const { data, error } = await supabase.rpc('chiedi_ingresso', { p_persona: p.id, p_squadra: squadra.id })
     setInvio('')
     if (error) return setErrore(messaggio(error))
-    setOk(`Richiesta inviata a ${p.nome} ${p.cognome || ''}: entrerà in ${squadra.nome} quando la accetta.`)
+    if (data === 'entrato') {
+      setOk(`${p.nome} ${p.cognome || ''} aveva chiesto di entrare: ora è nella squadra ${squadra.nome}.`)
+      setRisultati((r) => r?.map((x) => (x.id === p.id ? { ...x, squadra_id: squadra.id, squadra_nome: squadra.nome } : x)))
+      return caricaMembri()
+    }
+    setOk(`Invito inviato a ${p.nome} ${p.cognome || ''}: entrerà in ${squadra.nome} quando lo accetta.`)
     setRisultati((r) => r?.map((x) => (x.id === p.id ? { ...x, richiesta_in_attesa: true } : x)))
   }
 
@@ -139,8 +145,8 @@ export default function Impostazioni() {
             <form onSubmit={trova} className="bg-white rounded-3xl p-5 shadow-card mb-3">
               <p className="font-bold">Aggiungi una persona a {squadra.nome}</p>
               <p className="text-xs text-slate-500 mb-3">
-                Cerca per nome o cognome, oppure scrivi l'email completa con cui si è registrata. Puoi aggiungere atleti e genitori;
-                agli account admin (che sono anche atleti) arriva una richiesta da accettare.
+                Per nome trovi chi ha chiesto di entrare; chi non l'ha chiesto lo trovi con l'email completa con cui si è registrato.
+                Gli arriva un invito ed entra solo se lo accetta.
               </p>
               <div className="flex gap-2">
                 <input value={cerca} onChange={(e) => setCerca(e.target.value)} placeholder="Nome, cognome o email"
@@ -151,11 +157,12 @@ export default function Impostazioni() {
                 </button>
               </div>
               {risultati?.length === 0 && (
-                <p className="text-sm text-slate-500 pt-3">Nessuno trovato. Se è già in un'altra squadra, cercalo con l'email completa.</p>
+                <p className="text-sm text-slate-500 pt-3">Nessuno trovato. Se non ha ancora chiesto di entrare, cercalo con l'email completa.</p>
               )}
               {risultati?.map((p) => {
                 const qui = p.squadra_id === squadra.id
-                const serveRichiesta = p.ruolo === 'admin' && p.id !== user.id
+                // solo l'admin vero mette le persone in squadra direttamente (e sé stesso); gli altri invitano
+                const serveRichiesta = p.id !== user.id && !adminReale
                 return (
                   <div key={p.id} className="flex items-center justify-between gap-3 py-3 border-t border-gray-100 mt-3 first-of-type:mt-3">
                     <div className="min-w-0">
@@ -168,11 +175,11 @@ export default function Impostazioni() {
                     {qui
                       ? <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-green-50 text-green-700 shrink-0">Già in squadra</span>
                       : serveRichiesta && p.richiesta_in_attesa
-                      ? <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 shrink-0">Richiesta inviata</span>
+                      ? <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 shrink-0">Invito inviato</span>
                       : serveRichiesta
-                      ? <button type="button" onClick={() => invitaAdmin(p)} disabled={invio === p.id}
-                          className="text-sm font-bold text-blue-600 bg-blue-50 disabled:opacity-60 rounded-full px-4 py-1.5 shrink-0">
-                          {invio === p.id ? '…' : 'Invia richiesta'}
+                      ? <button type="button" onClick={() => invita(p)} disabled={invio === p.id}
+                          className="text-sm font-bold text-white bg-blue-600 disabled:opacity-60 rounded-full px-4 py-1.5 shrink-0">
+                          {invio === p.id ? '…' : 'Invita'}
                         </button>
                       : <button type="button" onClick={() => aggiungi(p)} disabled={invio === p.id}
                           className="text-sm font-bold text-white bg-blue-600 disabled:opacity-60 rounded-full px-4 py-1.5 shrink-0">
