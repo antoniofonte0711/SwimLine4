@@ -4,8 +4,8 @@ import { caricaTutto } from '../lib/caricaTutto'
 import { NUMERI, STILI, caricaFoto, caricaLogo, canvasInBlob, datiReport, disegnaReport, numeriDisponibili } from '../lib/report'
 
 const FORMATI = [['card', 'Card'], ['overlay', 'Overlay']]
-// fondo a scacchi scuro: si capisce che l'adesivo è trasparente
-const SCACCHI = { backgroundColor: '#2b2b2b', backgroundImage: 'conic-gradient(#3a3a3a 25%, transparent 0 50%, #3a3a3a 0 75%, transparent 0)', backgroundSize: '20px 20px' }
+// fondo a scacchi blu piscina: si capisce che l'adesivo è trasparente
+const SCACCHI = { backgroundColor: '#0f2a47', backgroundImage: 'conic-gradient(#173a5e 25%, transparent 0 50%, #173a5e 0 75%, transparent 0)', backgroundSize: '20px 20px' }
 
 // Il pulsante "Condividi il tuo allenamento" e la sua finestra: anteprima, Card o Overlay, numeri da mostrare.
 // atletaId: con i suoi tempi e record; senza (coach, genitore): solo i numeri dell'allenamento.
@@ -33,7 +33,7 @@ function Finestra({ piano, giorno, atletaId, onChiudi }) {
   const [url, setUrl] = useState('')
   const [esito, setEsito] = useState('')
   const [foto, setFoto] = useState(null)
-  const [stile, setStile] = useState('centrato')
+  const [stile, setStile] = useState('corsia')
   const [miniature, setMiniature] = useState({})
   const sceltaFoto = useRef(null)
   const conFoto = formato === 'overlay' && foto

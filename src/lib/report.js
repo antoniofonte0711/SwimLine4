@@ -133,10 +133,10 @@ function blocco(ctx, b, x, y, maxW, grande) {
 }
 
 // Disegna e restituisce il canvas. logo = immagine già caricata (facoltativa)
-export function disegnaReport(dati, { formato = 'card', scelti = NUMERI.map(([k]) => k), logo = null, foto = null, stile = 'centrato' } = {}) {
+export function disegnaReport(dati, { formato = 'card', scelti = NUMERI.map(([k]) => k), logo = null, foto = null, stile = 'corsia' } = {}) {
   const lista = blocchi(dati, scelti)
   if (formato !== 'card') {
-    const disegna = { lista: adesivoLista, pillole: adesivoPillole, minimal: adesivoMinimal }[stile] || disegnaOverlay
+    const disegna = { tabellone: adesivoTabellone, zone: adesivoZone, onda: adesivoOnda }[stile] || adesivoCorsia
     const adesivo = disegna(dati, lista, logo)
     return foto ? suFoto(adesivo, foto) : adesivo
   }
@@ -327,13 +327,16 @@ function disegnaOverlay(dati, lista, logo) {
   ctx.fillText('SwimLine4', xl + lg + (logo ? 22 : 0), y + lg / 2 + 19)
   return c
 }
-// Gli stili dell'adesivo trasparente, da scegliere come su Strava
+// Gli stili dell'adesivo trasparente: tutti con elementi della piscina, per avere un aspetto nostro
 export const STILI = [
-  ['centrato', 'Centrato'],
-  ['lista', 'Lista'],
-  ['pillole', 'Pillole'],
-  ['minimal', 'Minimal'],
+  ['corsia', 'Corsia'],
+  ['tabellone', 'Tabellone'],
+  ['zone', 'Zone'],
+  ['onda', 'Onda'],
 ]
+
+const GIALLO = '#ffd23f'
+const AZZURRO = '#2b6cf0'
 
 function tela(W, H) {
   const c = document.createElement('canvas')
@@ -348,7 +351,7 @@ function tela(W, H) {
   return [c, ctx]
 }
 
-// logo + "SwimLine4" che partono da x (o centrati su x se centro=true); restituisce la larghezza
+// logo + "SwimLine4" che partono da x (o centrati su x se centro=true)
 function firma(ctx, logo, x, y, px, centro = false) {
   const lg = logo ? Math.round(px * 1.45) : 0
   const gap = logo ? Math.round(px * 0.4) : 0
@@ -366,114 +369,160 @@ function firma(ctx, logo, x, y, px, centro = false) {
   }
   ctx.textAlign = 'left'
   ctx.fillText('SwimLine4', x0 + lg + gap, y + (lg || px) / 2 + px * 0.36)
-  return lg + gap + wn
 }
 
 const valoreIntero = (b) => (b.unita ? `${b.valore} ${b.unita}` : b.valore)
 const dataBreve = (g) => new Date(g + 'T12:00:00').toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })
+const senzaSpazi = (ctx) => { if ('letterSpacing' in ctx) ctx.letterSpacing = '0px' }
 
-// Lista compatta: etichetta a sinistra, valore a destra, puntini in mezzo
-function adesivoLista(dati, lista, logo) {
+// valore grande + unità piccola, centrati insieme su cx
+function numeroGrande(ctx, b, cx, base, g, maxW) {
+  const ug = Math.round(g * 0.34)
+  ctx.font = `700 ${ug}px ${DISPLAY}`
+  const wu = b.unita ? ctx.measureText(b.unita).width + g * 0.06 : 0
+  const wv = adatta(ctx, b.valore, maxW - wu, 800, g, DISPLAY)
+  const x0 = cx - (wv + wu) / 2
+  ctx.textAlign = 'left'
+  ctx.fillText(b.valore, x0, base)
+  if (b.unita) { ctx.font = `700 ${ug}px ${DISPLAY}`; ctx.fillText(b.unita, x0 + wv + g * 0.06, base) }
+  ctx.textAlign = 'center'
+}
+
+// Galleggiante di corsia verticale: palline bianche e azzurre alternate
+function galleggiante(ctx, x, y0, y1, r) {
+  let i = 0
+  for (let y = y0 + r; y <= y1 - r; y += r * 2.3) {
+    ctx.fillStyle = i % 2 ? AZZURRO : '#fff'
+    ctx.beginPath(); ctx.ellipse(x, y, r * 1.15, r, 0, 0, Math.PI * 2); ctx.fill()
+    i++
+  }
+  ctx.fillStyle = '#fff'
+}
+
+// Corsia: i numeri centrati, tra due galleggianti come in vasca
+function adesivoCorsia(dati, lista, logo) {
+  const dentro = disegnaOverlay(dati, lista, logo)
   const W = 1080
-  const M = 70
-  const riga = 104
-  const H = M + 90 + 40 + lista.length * riga + 50 + 24 + M
+  const k = 0.84
+  const H = Math.round(dentro.height * k)
   const [c, ctx] = tela(W, H)
-  let y = M
-  firma(ctx, logo, M, y, 50)
+  ctx.shadowBlur = 10
+  galleggiante(ctx, 52, 20, H - 20, 17)
+  galleggiante(ctx, W - 52, 20, H - 20, 17)
+  ctx.shadowColor = 'transparent'
+  ctx.drawImage(dentro, (W - W * k) / 2, 0, W * k, H)
+  return c
+}
+
+// Tabellone: come il tabellone dei tempi in piscina, pannello scuro e cifre gialle
+function adesivoTabellone(dati, lista, logo) {
+  const W = 1080
+  const M = 40
+  const P = 56
+  const riga = 124
+  const testa = 120
+  const H = M * 2 + P + testa + lista.length * riga + 36 + 20 + P
+  const [c, ctx] = tela(W, H)
+  ctx.shadowColor = 'rgba(0,0,0,0.35)'
+  ctx.shadowBlur = 30
+  ctx.shadowOffsetY = 6
+  ctx.fillStyle = 'rgba(8,22,48,0.9)'
+  rett(ctx, M, M, W - M * 2, H - M * 2, 44)
+  ctx.fill()
+  ctx.shadowColor = 'transparent'
+  ctx.strokeStyle = 'rgba(255,255,255,0.18)'
+  ctx.lineWidth = 3
+  ctx.stroke()
+  const x0 = M + P
+  const x1 = W - M - P
+  let y = M + P
+  ctx.fillStyle = '#fff'
+  firma(ctx, logo, x0, y, 44)
   ctx.textAlign = 'right'
-  ctx.font = `600 38px ${CORPO}`
-  ctx.globalAlpha = 0.85
-  ctx.fillText(dataBreve(dati.giorno), W - M, y + 52)
-  ctx.globalAlpha = 1
-  y += 90 + 40
+  ctx.fillStyle = GIALLO
+  ctx.font = `700 40px ${CORPO}`
+  ctx.fillText(dataBreve(dati.giorno).toUpperCase(), x1, y + 46)
+  y += testa
   lista.forEach((b) => {
-    const base = y + 66
+    ctx.fillStyle = 'rgba(255,255,255,0.14)'
+    ctx.fillRect(x0, y, x1 - x0, 2)
+    const base = y + riga / 2 + 24
     ctx.textAlign = 'left'
-    ctx.font = `600 44px ${CORPO}`
-    ctx.globalAlpha = 0.9
-    ctx.fillText(b.etichetta, M, base)
-    const we = ctx.measureText(b.etichetta).width
-    ctx.globalAlpha = 1
+    ctx.fillStyle = 'rgba(255,255,255,0.85)'
+    adatta(ctx, b.etichetta.toUpperCase(), 420, 700, 36, CORPO, 0.12)
+    ctx.fillText(b.etichetta.toUpperCase(), x0, base - 8)
+    senzaSpazi(ctx)
     ctx.textAlign = 'right'
-    const v = valoreIntero(b)
-    const wv = adatta(ctx, v, W - M * 2 - we - 60, 800, 60, DISPLAY)
-    ctx.fillText(v, W - M, base)
-    // puntini
-    ctx.globalAlpha = 0.6
-    for (let x = M + we + 24; x < W - M - wv - 20; x += 18) { ctx.beginPath(); ctx.arc(x, base - 10, 3, 0, Math.PI * 2); ctx.fill() }
-    ctx.globalAlpha = 1
+    ctx.fillStyle = GIALLO
+    adatta(ctx, valoreIntero(b), x1 - x0 - 440, 800, 76, DISPLAY)
+    ctx.fillText(valoreIntero(b), x1, base)
     y += riga
   })
-  y += 50
-  ctx.shadowColor = 'transparent'
-  striscia(ctx, dati.striscia, M, y, W - M * 2, 24, null)
+  y += 36
+  striscia(ctx, dati.striscia, x0, y, x1 - x0, 20, null)
   return c
 }
 
-// Pillole: ogni numero in una capsula col bordo bianco, come etichette
-function adesivoPillole(dati, lista, logo) {
+// Zone: i km grandi e la striscia delle intensità in evidenza, gli altri numeri piccoli sotto
+function adesivoZone(dati, lista, logo) {
   const W = 1080
-  const M = 60
-  const h = 96
-  const gap = 22
-  const px = 42
-  const [prova] = tela(1, 1)
-  const mctx = prova.getContext('2d')
-  const pezzi = [
-    { tipo: 'firma' },
-    { testo: dataBreve(dati.giorno).toUpperCase() },
-    ...lista.map((b) => ({ testo: `${b.etichetta.toUpperCase()} ${valoreIntero(b)}` })),
-  ]
-  pezzi.forEach((p) => {
-    mctx.font = `700 ${px}px ${p.tipo ? DISPLAY : CORPO}`
-    p.w = Math.min(W - M * 2, (p.tipo ? mctx.measureText('SwimLine4').width + (logo ? 70 : 0) : mctx.measureText(p.testo).width) + 64)
-  })
-  // a righe, centrate
-  const righe = [[]]
-  let lw = 0
-  pezzi.forEach((p) => {
-    if (lw + p.w > W - M * 2 && righe.at(-1).length) { righe.push([]); lw = 0 }
-    righe.at(-1).push(p)
-    lw += p.w + gap
-  })
-  const H = M * 2 + righe.length * h + (righe.length - 1) * gap
+  const M = 70
+  const capo = lista.find((b) => b.unita === 'km') || lista[0]
+  const altri = lista.filter((b) => b !== capo)
+  const g = 250
+  const H = M + 46 + 24 + g + 50 + 64 + (altri.length ? 70 + 130 : 0) + 70 + 70 + M
   const [c, ctx] = tela(W, H)
+  const cx = W / 2
   let y = M
-  righe.forEach((r) => {
-    const tot = r.reduce((a, p) => a + p.w, 0) + gap * (r.length - 1)
-    let x = (W - tot) / 2
-    r.forEach((p) => {
-      ctx.lineWidth = 5
-      ctx.strokeStyle = '#fff'
-      rett(ctx, x, y, p.w, h, h / 2)
-      if (p.tipo) {
-        ctx.fill()
-        ctx.save()
-        ctx.shadowColor = 'transparent'
-        ctx.fillStyle = BLU
-        firma(ctx, logo, x + p.w / 2, y + (h - (logo ? 61 : 42)) / 2, 42, true)
-        ctx.restore()
-      } else {
-        ctx.stroke()
-        ctx.textAlign = 'center'
-        adatta(ctx, p.testo, p.w - 40, 700, px, CORPO)
-        ctx.fillText(p.testo, x + p.w / 2, y + h / 2 + px * 0.36)
-      }
-      x += p.w + gap
+  ctx.textAlign = 'center'
+  ctx.globalAlpha = 0.9
+  const t = `${capo.etichetta.toUpperCase()} · ${dataBreve(dati.giorno).toUpperCase()}`
+  adatta(ctx, t, W - M * 2, 700, 38, CORPO, 0.16)
+  ctx.fillText(t, cx, y + 38)
+  senzaSpazi(ctx)
+  ctx.globalAlpha = 1
+  y += 46 + 24
+  ctx.shadowBlur = 28
+  numeroGrande(ctx, capo, cx, y + g * 0.8, g, W - M * 2)
+  ctx.shadowBlur = 18
+  y += g + 50
+  // striscia spessa con binario chiaro
+  const sw = W - M * 2
+  ctx.fillStyle = 'rgba(255,255,255,0.3)'
+  rett(ctx, M - 8, y - 8, sw + 16, 64 + 16, 40)
+  ctx.fill()
+  ctx.shadowColor = 'transparent'
+  striscia(ctx, dati.striscia, M, y, sw, 64, null)
+  ctx.shadowColor = 'rgba(0,0,0,0.4)'
+  ctx.fillStyle = '#fff'
+  y += 64
+  if (altri.length) {
+    y += 70
+    const col = sw / altri.length
+    altri.forEach((b, i) => {
+      const x = M + col * i + col / 2
+      ctx.textAlign = 'center'
+      adatta(ctx, valoreIntero(b), col - 20, 800, 70, DISPLAY)
+      ctx.fillText(valoreIntero(b), x, y + 64)
+      ctx.globalAlpha = 0.85
+      adatta(ctx, b.etichetta, col - 20, 600, 32, CORPO)
+      ctx.fillText(b.etichetta, x, y + 112)
+      ctx.globalAlpha = 1
     })
-    y += h + gap
-  })
+    y += 130
+  }
+  y += 70
+  firma(ctx, logo, cx, y - 20, 44, true)
   return c
 }
 
-// Minimal: un solo numero grande (il primo scelto) e la firma
-function adesivoMinimal(dati, lista, logo) {
+// Onda: un solo numero grande (il primo scelto) con un'onda sotto
+function adesivoOnda(dati, lista, logo) {
   const W = 1080
   const M = 70
   const b = lista[0]
   const g = 300
-  const H = M + 50 + 30 + g + (b.sotto ? 60 : 0) + 60 + 70 + M
+  const H = M + 50 + 30 + g + 90 + (b.sotto ? 70 : 0) + 50 + 70 + M
   const [c, ctx] = tela(W, H)
   const cx = W / 2
   let y = M
@@ -481,23 +530,29 @@ function adesivoMinimal(dati, lista, logo) {
   ctx.globalAlpha = 0.9
   adatta(ctx, b.etichetta.toUpperCase(), W - M * 2, 700, 40, CORPO, 0.2)
   ctx.fillText(b.etichetta.toUpperCase(), cx, y + 40)
-  if ('letterSpacing' in ctx) ctx.letterSpacing = '0px'
+  senzaSpazi(ctx)
   ctx.globalAlpha = 1
   y += 50 + 30
   ctx.shadowBlur = 28
-  const ug = Math.round(g * 0.32)
-  ctx.font = `700 ${ug}px ${DISPLAY}`
-  const wu = b.unita ? ctx.measureText(b.unita).width + 16 : 0
-  const wv = adatta(ctx, b.valore, W - M * 2 - wu, 800, g, DISPLAY)
-  const x0 = cx - (wv + wu) / 2
-  ctx.textAlign = 'left'
-  ctx.fillText(b.valore, x0, y + g * 0.82)
-  if (b.unita) { ctx.font = `700 ${ug}px ${DISPLAY}`; ctx.fillText(b.unita, x0 + wv + 16, y + g * 0.82) }
+  numeroGrande(ctx, b, cx, y + g * 0.82, g, W - M * 2)
   ctx.shadowBlur = 18
-  y += g
+  y += g + 40
+  // l'onda
+  ctx.strokeStyle = '#fff'
+  ctx.lineWidth = 10
+  ctx.lineCap = 'round'
+  ctx.beginPath()
+  const ow = 560
+  for (let x = 0; x <= ow; x += 6) {
+    const yy = y + Math.sin((x / ow) * Math.PI * 4) * 16
+    if (x === 0) ctx.moveTo(cx - ow / 2 + x, yy)
+    else ctx.lineTo(cx - ow / 2 + x, yy)
+  }
+  ctx.stroke()
+  y += 50
   ctx.textAlign = 'center'
-  if (b.sotto) { ctx.font = `600 44px ${CORPO}`; ctx.globalAlpha = 0.9; ctx.fillText(b.sotto, cx, y + 30); ctx.globalAlpha = 1; y += 60 }
-  y += 60
+  if (b.sotto) { ctx.font = `600 44px ${CORPO}`; ctx.globalAlpha = 0.9; ctx.fillText(b.sotto, cx, y + 40); ctx.globalAlpha = 1; y += 70 }
+  y += 50
   firma(ctx, logo, cx, y - 20, 46, true)
   return c
 }
