@@ -133,9 +133,9 @@ function blocco(ctx, b, x, y, maxW, grande) {
 }
 
 // Disegna e restituisce il canvas. logo = immagine già caricata (facoltativa)
-export function disegnaReport(dati, { formato = 'card', scelti = NUMERI.map(([k]) => k), logo = null } = {}) {
+export function disegnaReport(dati, { formato = 'card', scelti = NUMERI.map(([k]) => k), logo = null, foto = null } = {}) {
   const lista = blocchi(dati, scelti)
-  if (formato !== 'card') return disegnaOverlay(dati, lista, logo)
+  if (formato !== 'card') return foto ? suFoto(disegnaOverlay(dati, lista, logo), foto) : disegnaOverlay(dati, lista, logo)
   const W = 1080
   const H = 1920
   const c = document.createElement('canvas')
@@ -323,6 +323,40 @@ function disegnaOverlay(dati, lista, logo) {
   ctx.fillText('SwimLine4', xl + lg + (logo ? 22 : 0), y + lg / 2 + 19)
   return c
 }
+// La foto scelta dall'atleta come sfondo della storia (1080×1920, riempita e centrata) con l'adesivo sopra.
+// Tutto nel telefono: la foto non viene caricata da nessuna parte.
+function suFoto(adesivo, foto) {
+  const W = 1080
+  const H = 1920
+  const c = document.createElement('canvas')
+  c.width = W
+  c.height = H
+  const ctx = c.getContext('2d')
+  const k = Math.max(W / foto.width, H / foto.height)
+  ctx.drawImage(foto, (W - foto.width * k) / 2, (H - foto.height * k) / 2, foto.width * k, foto.height * k)
+  // velo scuro leggero dove stanno i numeri: si leggono anche su una foto chiara
+  const g = ctx.createLinearGradient(0, 0, 0, H)
+  g.addColorStop(0, 'rgba(0,0,0,0.05)')
+  g.addColorStop(0.5, 'rgba(0,0,0,0.3)')
+  g.addColorStop(1, 'rgba(0,0,0,0.15)')
+  ctx.fillStyle = g
+  ctx.fillRect(0, 0, W, H)
+  const s = Math.min(1, (H * 0.82) / adesivo.height)
+  const w = adesivo.width * s
+  const h = adesivo.height * s
+  ctx.drawImage(adesivo, (W - w) / 2, (H - h) / 2, w, h)
+  return c
+}
+
+// Legge la foto scelta dal telefono; null se non è un'immagine leggibile
+export const caricaFoto = (file) => new Promise((ok) => {
+  const img = new Image()
+  const url = URL.createObjectURL(file)
+  img.onload = () => { URL.revokeObjectURL(url); ok(img) }
+  img.onerror = () => { URL.revokeObjectURL(url); ok(null) }
+  img.src = url
+})
+
 export const caricaLogo = () => new Promise((ok) => {
   const img = new Image()
   img.onload = () => ok(img)

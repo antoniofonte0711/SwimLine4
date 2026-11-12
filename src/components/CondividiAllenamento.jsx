@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { caricaTutto } from '../lib/caricaTutto'
-import { NUMERI, caricaLogo, canvasInBlob, datiReport, disegnaReport, numeriDisponibili } from '../lib/report'
+import { NUMERI, caricaFoto, caricaLogo, canvasInBlob, datiReport, disegnaReport, numeriDisponibili } from '../lib/report'
 
 const FORMATI = [['card', 'Card'], ['overlay', 'Overlay']]
 
@@ -30,6 +30,9 @@ function Finestra({ piano, giorno, atletaId, onChiudi }) {
   const [scelti, setScelti] = useState(null)
   const [url, setUrl] = useState('')
   const [esito, setEsito] = useState('')
+  const [foto, setFoto] = useState(null)
+  const sceltaFoto = useRef(null)
+  const conFoto = formato === 'overlay' && foto
 
   useEffect(() => {
     let attivo = true
@@ -53,11 +56,19 @@ function Finestra({ piano, giorno, atletaId, onChiudi }) {
   // rifà l'immagine a ogni scelta
   useEffect(() => {
     if (!dati || !scelti) return
-    setUrl(disegnaReport(dati, { formato, scelti, logo }).toDataURL('image/png'))
-  }, [dati, scelti, formato, logo])
+    setUrl(disegnaReport(dati, { formato, scelti, logo, foto }).toDataURL('image/png'))
+  }, [dati, scelti, formato, logo, foto])
 
-  const canvas = () => disegnaReport(dati, { formato, scelti, logo })
-  const nomeFile = `swimline4-${giorno}-${formato}.png`
+  const canvas = () => disegnaReport(dati, { formato, scelti, logo, foto })
+  const nomeFile = `swimline4-${giorno}-${conFoto ? 'foto' : formato}.png`
+
+  async function scegliFoto(e) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    const img = await caricaFoto(file)
+    if (img) { setFoto(img); setEsito('') } else setEsito("Questa foto non si riesce ad aprire: provane un'altra.")
+  }
 
   async function condividi() {
     setEsito('')
@@ -105,10 +116,27 @@ function Finestra({ piano, giorno, atletaId, onChiudi }) {
         </div>
 
         <div className={`mx-auto w-[min(62vw,260px)] aspect-[9/16] rounded-2xl overflow-hidden ${formato === 'overlay' ? 'bg-[linear-gradient(160deg,#2a9fd6,#0e5e86_60%,#173b4f)]' : 'bg-blue-600'}`}>
-          {url ? <img src={url} alt="Anteprima dell'immagine da condividere" className={`w-full h-full ${formato === 'overlay' ? 'object-contain p-3' : 'object-cover'}`} />
+          {url ? <img src={url} alt="Anteprima dell'immagine da condividere" className={`w-full h-full ${formato === 'overlay' && !foto ? 'object-contain p-3' : 'object-cover'}`} />
             : <p className="text-white/80 text-sm text-center pt-24">Preparo l'immagine…</p>}
         </div>
-        {formato === 'overlay' && <p className="text-xs text-slate-500 text-center mt-1.5">Fondo trasparente: qui lo vedi sopra un'acqua finta. Mettilo sopra una tua foto.</p>}
+        {formato === 'overlay' && (
+          <>
+            <input ref={sceltaFoto} type="file" accept="image/*" className="hidden" onChange={scegliFoto} />
+            <div className="flex gap-2 justify-center mt-3">
+              <button type="button" onClick={() => sceltaFoto.current?.click()}
+                className="min-h-[44px] rounded-2xl px-4 bg-blue-600 text-white font-bold flex items-center gap-2">
+                <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="9" cy="10" r="1.5" /><path d="m21 16-5-5-8 8" />
+                </svg>
+                {foto ? 'Cambia foto' : 'Metti una tua foto sotto'}
+              </button>
+              {foto && <button type="button" onClick={() => setFoto(null)} className="min-h-[44px] rounded-2xl px-4 bg-slate-100 text-slate-600 font-bold">Togli</button>}
+            </div>
+            <p className="text-xs text-slate-500 text-center mt-1.5">
+              {foto ? 'La foto resta sul tuo telefono: non viene caricata da nessuna parte.' : "Senza foto il fondo è trasparente (qui lo vedi sopra un'acqua finta)."}
+            </p>
+          </>
+        )}
 
         {disponibili.length > 1 && (
           <div className="flex flex-wrap gap-2 justify-center mt-3" role="group" aria-label="Numeri da mostrare">
@@ -119,11 +147,11 @@ function Finestra({ piano, giorno, atletaId, onChiudi }) {
           </div>
         )}
 
-        <div className={`grid gap-2 mt-4 ${formato === 'overlay' ? 'grid-cols-3' : 'grid-cols-2'}`}>
+        <div className={`grid gap-2 mt-4 ${formato === 'overlay' && !foto ? 'grid-cols-3' : 'grid-cols-2'}`}>
           <button type="button" onClick={condividi} disabled={!url} className="min-h-[48px] rounded-2xl bg-blue-600 text-white font-bold disabled:opacity-40">
             Condividi
           </button>
-          {formato === 'overlay' && <button type="button" onClick={copia} disabled={!url} className="min-h-[48px] rounded-2xl bg-schiuma text-blue-600 font-bold disabled:opacity-40">Copia</button>}
+          {formato === 'overlay' && !foto && <button type="button" onClick={copia} disabled={!url} className="min-h-[48px] rounded-2xl bg-schiuma text-blue-600 font-bold disabled:opacity-40">Copia</button>}
           <button type="button" onClick={() => scarica()} disabled={!url} className="min-h-[48px] rounded-2xl bg-slate-100 text-slate-600 font-bold disabled:opacity-40">Scarica</button>
         </div>
         {esito && <p role="status" className="text-sm text-center text-slate-600 mt-3">{esito}</p>}
