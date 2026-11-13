@@ -11,8 +11,31 @@ import { ERRORE_TEMPO, erroreTempoImpossibile, normalizzaTempo, tempoPlausibile,
 const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white'
 const BASE = { tipo_lavoro: 'C1', distanza: 75, ripetizioni: 4, stile: 'Stile libero', passaggi: [], file: null }
 
-// Tipo di lavoro e stile partono da quelli preferiti (Profilo → Allenamento)
+// Ultimo lavoro scritto su questo telefono: il modulo riparte da lì (non da C1 4×75)
+const CHIAVE_ULTIMO = 'swimline4:ultimoLavoro'
+function leggiUltimo() {
+  try {
+    const u = JSON.parse(localStorage.getItem(CHIAVE_ULTIMO) || 'null')
+    if (!u || !infoLavoro(u.tipo_lavoro || '') || !STILI.includes(u.stile)) return null
+    const distanza = Number(u.distanza), ripetizioni = Number(u.ripetizioni)
+    if (!(distanza >= 25) || !(ripetizioni >= 1 && ripetizioni <= 30)) return null
+    return { tipo_lavoro: u.tipo_lavoro, distanza, ripetizioni, stile: u.stile }
+  } catch {
+    return null
+  }
+}
+function salvaUltimo(l) {
+  try {
+    localStorage.setItem(CHIAVE_ULTIMO, JSON.stringify(l))
+  } catch {
+    // navigazione privata o telefono pieno: pazienza, riparte dalle preferenze
+  }
+}
+
+// Riparte dall'ultimo lavoro scritto; se non c'è, da tipo di lavoro e stile preferiti (Profilo → Allenamento)
 function iniziale() {
+  const ultimo = leggiUltimo()
+  if (ultimo) return { ...BASE, ...ultimo }
   const p = leggiPreferenze()
   const tipo = infoLavoro(p.tipoLavoro || '') ? p.tipoLavoro : BASE.tipo_lavoro
   return {
@@ -87,6 +110,7 @@ export default function FormLavoro({ titolo }) {
       media,
       conVideo: !!f.file,
     })
+    salvaUltimo({ tipo_lavoro: f.tipo_lavoro, distanza: Number(f.distanza), ripetizioni: n, stile: f.stile })
     setF({ ...BASE, tipo_lavoro: f.tipo_lavoro, distanza: f.distanza, ripetizioni: f.ripetizioni, stile: f.stile })
     setFileKey((k) => k + 1)
   }

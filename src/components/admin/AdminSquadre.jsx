@@ -154,6 +154,73 @@ function NuovaSquadra({ dati, societaId, onCreata, onAnnulla }) {
   )
 }
 
+// Spostare gli atleti tra gruppi: si trascinano da un gruppo all'altro.
+// Su telefono/iPad (dove il trascinamento non c'è) si tocca l'atleta e poi il gruppo.
+function SpostaAtleti({ dati, ricarica, onChiudi }) {
+  const [scelto, setScelto] = useState(null) // id dell'atleta toccato
+  const [sopra, setSopra] = useState(undefined) // gruppo sotto il dito/mouse mentre trascini
+  const [esito, setEsito] = useState('')
+  const [invio, setInvio] = useState(false)
+  const atleti = dati.persone.filter((p) => p.role === 'atleta').sort((a, b) => nomeDi(a).localeCompare(nomeDi(b)))
+  const gruppi = [...dati.societa.flatMap((so) => dati.squadre.filter((s) => s.societa_id === so.id)
+    .sort((a, b) => a.nome.localeCompare(b.nome)).map((s) => ({ ...s, societa: so.nome }))),
+  ...dati.squadre.filter((s) => !s.societa_id).sort((a, b) => a.nome.localeCompare(b.nome)).map((s) => ({ ...s, societa: 'Senza società' })),
+  { id: null, nome: 'Senza gruppo', societa: '' }]
+
+  async function sposta(personaId, squadraId) {
+    const p = atleti.find((x) => x.id === personaId)
+    setScelto(null)
+    setSopra(undefined)
+    if (!p || (p.squadra_id || null) === squadraId) return
+    setInvio(true)
+    const { error } = await supabase.rpc('admin_sposta_persona', { p_persona: personaId, p_squadra: squadraId })
+    setInvio(false)
+    if (error) return setEsito('Errore: ' + error.message)
+    const nome = gruppi.find((g) => g.id === squadraId)?.nome
+    setEsito(squadraId ? `${nomeDi(p)} spostato in ${nome}.` : `${nomeDi(p)} tolto dal gruppo.`)
+    ricarica()
+  }
+
+  return (
+    <Scheda titolo="Sposta atleti" nota="Trascina un atleta su un altro gruppo. Da telefono: tocca l'atleta, poi il gruppo."
+      azioni={<button type="button" onClick={onChiudi} className="min-h-[40px] rounded-xl px-3 text-sm font-extrabold bg-slate-100 text-slate-600">Chiudi</button>}>
+      {esito && <p role="status" className={`text-sm rounded-xl px-3 py-2 mb-3 ${esito.startsWith('Errore') ? 'text-white bg-red-600' : 'bg-schiuma text-blue-700 font-semibold'}`}>{esito}</p>}
+      {scelto && <p className="text-sm font-semibold text-blue-700 mb-2">Ora tocca il gruppo dove spostare {nomeDi(atleti.find((a) => a.id === scelto))}.</p>}
+      <div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(220px,1fr))]" aria-busy={invio}>
+        {gruppi.map((g) => {
+          const dentro = atleti.filter((a) => (a.squadra_id || null) === g.id)
+          const attivo = sopra === g.id || (scelto && (atleti.find((a) => a.id === scelto)?.squadra_id || null) !== g.id)
+          return (
+            <div key={g.id || 'nessuno'} role="button" tabIndex={0} aria-label={`Gruppo ${g.nome}`}
+              onClick={() => scelto && sposta(scelto, g.id)}
+              onKeyDown={(e) => { if (scelto && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); sposta(scelto, g.id) } }}
+              onDragOver={(e) => { e.preventDefault(); setSopra(g.id) }}
+              onDragLeave={() => setSopra((s) => (s === g.id ? undefined : s))}
+              onDrop={(e) => { e.preventDefault(); sposta(e.dataTransfer.getData('text/plain'), g.id) }}
+              className={`rounded-2xl border-2 p-3 min-h-[120px] transition ${sopra === g.id ? 'border-blue-500 bg-schiuma' : attivo ? 'border-blue-300 border-dashed bg-white' : 'border-slate-200 bg-white'}`}>
+              <p className="text-[11px] uppercase tracking-wide text-slate-500 font-bold">{g.societa}</p>
+              <p className="font-display font-extrabold text-lg leading-tight mb-2">{g.nome} <span className="text-sm text-slate-500 font-semibold">({dentro.length})</span></p>
+              <div className="flex flex-wrap gap-1.5">
+                {dentro.length === 0 && <span className="text-sm text-slate-400">Nessun atleta</span>}
+                {dentro.map((a) => (
+                  <button key={a.id} type="button" draggable
+                    onDragStart={(e) => { e.dataTransfer.setData('text/plain', a.id); e.dataTransfer.effectAllowed = 'move' }}
+                    onDragEnd={() => setSopra(undefined)}
+                    onClick={(e) => { e.stopPropagation(); setScelto((s) => (s === a.id ? null : a.id)) }}
+                    aria-pressed={scelto === a.id}
+                    className={`min-h-[36px] rounded-full px-3 text-sm font-semibold cursor-grab active:cursor-grabbing ${scelto === a.id ? 'bg-blue-600 text-white' : 'bg-bordo text-abisso border border-slate-200'}`}>
+                    {nomeDi(a)}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </Scheda>
+  )
+}
+
 export function ElencoSquadre({ dati, onApri, ricarica }) {
   const [cerca, setCerca] = useState('')
   const [stat, setStat] = useState(null)
@@ -257,8 +324,11 @@ export function ElencoSquadre({ dati, onApri, ricarica }) {
           <button type="button" onClick={() => setModulo({ tipo: 'societa', societa: null })} className={BOTTONE_PIENO}>+ Nuova società</button>
           <button type="button" onClick={() => setModulo({ tipo: 'gruppo', societa: null })}
             className="min-h-[44px] rounded-xl px-4 text-sm font-extrabold bg-white border border-slate-300 text-abisso">+ Nuovo gruppo</button>
+          <button type="button" onClick={() => setModulo(modulo?.tipo === 'sposta' ? null : { tipo: 'sposta' })} aria-pressed={modulo?.tipo === 'sposta'}
+            className="min-h-[44px] rounded-xl px-4 text-sm font-extrabold bg-white border border-slate-300 text-abisso">Sposta atleti</button>
         </div>
       )}
+      {modulo?.tipo === 'sposta' && dati && <SpostaAtleti dati={dati} ricarica={ricarica} onChiudi={() => setModulo(null)} />}
       {errore && <p role="alert" className="text-sm text-white bg-red-600 rounded-xl px-3 py-2">{errore}</p>}
       {modulo?.tipo === 'societa' && dati && <FormSocieta key={modulo.societa?.id || 'nuova'} dati={dati} societa={modulo.societa} onFatto={chiudi} onAnnulla={() => setModulo(null)} />}
       {modulo?.tipo === 'gruppo' && dati && (
