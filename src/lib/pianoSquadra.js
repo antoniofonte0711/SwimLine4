@@ -21,7 +21,8 @@ export const aScelta = (r) => r?.stile === A_SCELTA
 export const conScelte = (righe = [], scelte = {}) => righe.map((r, i) => {
   const s = scelte[i]
   if (!s) return r
-  if (Array.isArray(s)) return { ...r, stili: s.map((x) => x || A_SCELTA) }
+  // stili scelti dall'atleta: uno per ogni ripetizione del lavoro (anche nelle serie a giri, dove quelli del coach valgono per giro)
+  if (Array.isArray(s)) return { ...r, stili: s.map((x) => x || A_SCELTA), stiliTutti: true }
   return aScelta(r) ? { ...r, stile: s } : r
 })
 // L'atleta può dire di aver fatto un altro stile (non nelle serie a giri né con le vasche da cronometrare)

@@ -156,6 +156,13 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
     </div>
   ) : null)
   const scegliPassaggio = (i, j, s) => setScelte({ ...scelte, [i]: scelte[i].map((x, k) => (k === j ? s : x)) })
+  const StilePassaggio = ({ i, j, nome }) => (
+    <select aria-label={`Stile ${nome}`} value={scelte[i][j] || ''} onChange={(e) => scegliPassaggio(i, j, e.target.value)}
+      className={`mt-1.5 w-full min-h-[40px] rounded-xl px-2 text-sm font-semibold ${scelte[i][j] ? 'bg-white border border-slate-200 text-slate-700' : 'border-2 border-blue-300 bg-blue-50 text-blue-700'}`}>
+      <option value="">Che stile?</option>
+      {STILI.map((s) => <option key={s} value={s}>{s}</option>)}
+    </select>
+  )
 
   // Tempo medio (per chi non ricorda i singoli passaggi): uno per ogni stile del lavoro
   const mediaDi = (i, r, conDistanza = false) => gruppiRighe[i].map((g, k) => {
@@ -356,7 +363,7 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
                 <Apri i={b.righe[0].indice} n={giri * b.righe.reduce((s, { riga }) => s + perGiro(riga), 0)} />
               )}
               {!b.righe.some(({ indice }) => fisso(indice)) && !b.righe.every(({ indice }) => chiuso(indice)) && b.righe.map(({ riga: r, indice: i }) => (
-                <SceltaStile key={`s${i}`} i={i} titolo={`${proprio ? 'Che stile hai fatto' : 'Che stile ha fatto'} nei ${r.distanza} m (${r.tipo_lavoro})?`} />
+                <SceltaStile key={`s${i}`} i={i} n={caselleDiRiga(r).length} titolo={`${proprio ? 'Che stile hai fatto' : 'Che stile ha fatto'} nei ${r.distanza} m (${r.tipo_lavoro})?`} />
               ))}
               {!b.righe.some(({ indice }) => fisso(indice)) && !b.righe.every(({ indice }) => chiuso(indice)) && Array.from({ length: giri }, (_, g) => (
                 <div key={g} className="bg-gray-50 rounded-2xl p-3 mt-3">
@@ -366,9 +373,12 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
                       const j = g * perGiro(r) + k
                       // ripartenza di questo giro, se il coach l'ha cambiata rispetto a quella generale
                       const rip = r.ripartenze?.[j] && r.ripartenze[j] !== r.ripartenza ? ` ↻ ${r.ripartenze[j]}` : ''
+                      const etichetta = `${r.distanza} m${haVarianti(r) ? ` ${ripetizioniDiRiga(r)[j].stile}${ripetizioniDiRiga(r)[j].nota ? ` ${ripetizioniDiRiga(r)[j].nota}` : ''}` : ''}${perGiro(r) > 1 ? ` (${k + 1})` : ''}${rip}`
                       return (
-                        <InputTempo key={`${i}-${j}`} etichetta={`${r.distanza} m${haVarianti(r) ? ` ${ripetizioniDiRiga(r)[j].stile}${ripetizioniDiRiga(r)[j].nota ? ` ${ripetizioniDiRiga(r)[j].nota}` : ''}` : ''}${perGiro(r) > 1 ? ` (${k + 1})` : ''}${rip}`}
-                          value={valori[i]?.[j] || ''} vuotoOk onChange={(v) => cambia(i, j, v)} />
+                        <div key={`${i}-${j}`}>
+                          <InputTempo etichetta={etichetta} value={valori[i]?.[j] || ''} vuotoOk onChange={(v) => cambia(i, j, v)} />
+                          {perPassaggio(i) && <StilePassaggio i={i} j={j} nome={`${etichetta}, giro ${g + 1}`} />}
+                        </div>
                       )
                     }))}
                   </div>
@@ -395,11 +405,7 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
               {perPassaggio(i) ? Array.from({ length: n }, (_, j) => (
                 <div key={j}>
                   <InputTempo etichetta={`Passaggio ${j + 1}`} value={valori[i]?.[j] || ''} vuotoOk onChange={(v) => cambia(i, j, v)} />
-                  <select aria-label={`Stile del passaggio ${j + 1}`} value={scelte[i][j] || ''} onChange={(e) => scegliPassaggio(i, j, e.target.value)}
-                    className={`mt-1.5 w-full min-h-[40px] rounded-xl px-2 text-sm font-semibold ${scelte[i][j] ? 'bg-white border border-slate-200 text-slate-700' : 'border-2 border-blue-300 bg-blue-50 text-blue-700'}`}>
-                    <option value="">Che stile?</option>
-                    {STILI.map((s) => <option key={s} value={s}>{s}</option>)}
-                  </select>
+                  <StilePassaggio i={i} j={j} nome={`del passaggio ${j + 1}`} />
                 </div>
               )) : Array.from({ length: n }, (_, j) => (
                 <InputTempo key={j} etichetta={tratti ? `${caselle[j].etichetta}${caselle[j].nota ? ` · ${caselle[j].nota}` : ''}` : haVarianti(r) ?`${j + 1}ª · ${ripetizioniDiRiga(r)[j].stile}${ripetizioniDiRiga(r)[j].nota ? ` · ${ripetizioniDiRiga(r)[j].nota}` : ''}` : `Passaggio ${j + 1}`} value={valori[i]?.[j] || ''} vuotoOk

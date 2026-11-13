@@ -12,7 +12,8 @@ const perGiroRiga = (r) => {
 export function ripetizioniDiRiga(r) {
   const n = Math.max(1, Number(r.ripetizioni) || 1)
   const pg = perGiroRiga(r)
-  return Array.from({ length: n }, (_, j) => ({ stile: r.stili?.[j % pg] || r.stile, nota: r.note_rip?.[j % pg] || '' }))
+  // r.stiliTutti: uno stile per ogni ripetizione (scelti dall'atleta); sennò quelli del coach si ripetono a ogni giro
+  return Array.from({ length: n }, (_, j) => ({ stile: r.stili?.[r.stiliTutti ? j : j % pg] || r.stile, nota: r.note_rip?.[j % pg] || '' }))
 }
 
 // "Stile libero forte · Proprio stile piano" per la scheda del lavoro; '' se la riga non ha varianti

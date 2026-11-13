@@ -39,3 +39,22 @@ describe('lavori "A scelta"', () => {
     expect(abb[1]).toBe(solo[0])
   })
 })
+
+describe('"A scelta" in una serie a giri', () => {
+  const serie = { id: 's1', giri: 2 }
+  const base = [
+    { tipo_lavoro: 'B1', distanza: 200, ripetizioni: 4, stile: 'Stile libero', serie },
+    { tipo_lavoro: 'C1', distanza: 75, ripetizioni: 6, stile: 'A scelta', serie }, // 3×75 per giro
+  ]
+  it('ogni ripetizione tiene il suo stile, anche nei giri dopo il primo', async () => {
+    const { ripetizioniDiRiga } = await import('./varianti')
+    const stili = ['Dorso', 'Rana', 'Farfalla', 'Rana', 'Dorso', 'Stile libero']
+    const r = conScelte(base, { 1: stili })[1]
+    expect(ripetizioniDiRiga(r).map((v) => v.stile)).toEqual(stili)
+  })
+  it('gli stili del coach in una serie si ripetono a ogni giro', async () => {
+    const { ripetizioniDiRiga } = await import('./varianti')
+    const r = { ...base[1], stile: 'Stile libero', stili: ['Dorso', 'Rana', 'Farfalla'] }
+    expect(ripetizioniDiRiga(r).map((v) => v.stile)).toEqual(['Dorso', 'Rana', 'Farfalla', 'Dorso', 'Rana', 'Farfalla'])
+  })
+})
