@@ -53,3 +53,15 @@ describe('difficoltà', () => {
     expect(formattaVoto(6.1)).toBe('6,1')
   })
 })
+
+describe('quanto stanca un lavoro di base, cambiato dal coach della squadra', () => {
+  it('usa il peso della squadra; senza modifica torna quello nostro', async () => {
+    const { impostaRegistro } = await import('./tipiLavoro')
+    impostaRegistro({ pesi: { A2: 1.5, 'Passo gara 100': 3 } })
+    expect(pesoRiga(R('A2', 100))).toBe(1.5)
+    expect(pesoRiga(R('Passo gara 100', 100))).toBe(3)
+    impostaRegistro({})
+    expect(pesoRiga(R('A2', 100))).toBe(1)
+    expect(pesoRiga(R('Passo gara 100', 100))).toBe(4)
+  })
+})

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import {
-  BASE, GRUPPI_LAVORO, POSIZIONI, RIFERIMENTI, TINTE, attivoDi, coloreDiGruppo, erroreNuovoLavoro,
+  BASE, GRUPPI_LAVORO, POSIZIONI, RIFERIMENTI, TINTE, attivoDi, coloreDiGruppo, conPeso, erroreNuovoLavoro,
   gruppoDaPosizione, posizioneDaPeso, votoEsempio,
 } from '../lib/tipiLavoro'
 import { LIVELLI, formattaVoto } from '../lib/difficolta'
@@ -121,6 +121,7 @@ export default function GestioneLavori({ squadraId, admin = false }) {
   const [dati, setDati] = useState(null)
   const [stato, setStato] = useState('')
   const [form, setForm] = useState(null) // null | 'nuovo' | lavoro da modificare
+  const [fatica, setFatica] = useState(null) // sigla del lavoro di base di cui si cambia "quanto stanca"
 
   const carica = useCallback(async () => setDati(await leggiLavori(squadraId || null)), [squadraId])
   useEffect(() => { carica() }, [carica])
@@ -132,7 +133,19 @@ export default function GestioneLavori({ squadraId, admin = false }) {
   }
 
   if (!dati) return <p className="text-slate-500 py-6">Carico i lavori…</p>
-  const lavori = [...BASE, ...dati.extra].map((t) => ({ ...t, attivo: attivoDi(t, dati.spunte) }))
+  const lavori = [...BASE.map((t) => conPeso(t, dati.pesi)), ...dati.extra].map((t) => ({ ...t, attivo: attivoDi(t, dati.spunte) }))
+  const nomePosizione = (peso) => POSIZIONI.find((p) => p.id === posizioneDaPeso(peso))?.nome || ''
+
+  // Lavori di base: le impostazioni sono le nostre, ma ogni squadra può dire che per lei stancano di più o di meno
+  async function cambiaFatica(t, peso) {
+    setStato('Salvo…')
+    const { error } = await supabase.from('tipi_lavoro_squadra').upsert(
+      { squadra_id: squadraId, sigla: t.sigla, attivo: t.attivo, peso, aggiornato: new Date().toISOString() },
+      { onConflict: 'squadra_id,sigla' })
+    if (error) return setStato('Errore: ' + error.message)
+    setFatica(null)
+    fatto(peso == null ? `${t.sigla}: tornato come l'abbiamo impostato noi` : 'Salvato')
+  }
   const puoModificare = (t) => t.origine === 'squadra' || (t.origine === 'generale' && admin)
 
   async function spunta(t, attivo) {
@@ -174,7 +187,9 @@ export default function GestioneLavori({ squadraId, admin = false }) {
   }
 
   const sezioni = [
-    ['Di base', 'Uguali per tutte le squadre. Togli la spunta a quelli che la squadra non usa.', lavori.filter((t) => t.origine === 'base')],
+    ['Di base', squadraId
+      ? 'Impostati da noi. Togli la spunta a quelli che la squadra non usa. Con "Quanto stanca" puoi cambiare il loro peso nella difficoltà, solo per questa squadra.'
+      : 'Uguali per tutte le squadre.', lavori.filter((t) => t.origine === 'base')],
     ['Elenco generale', admin ? 'Aggiunti da te: ogni squadra li accende con la spunta.' : 'Aggiunti dall\'amministratore: spunta quelli che vuoi usare.', lavori.filter((t) => t.origine === 'generale')],
     ['Solo di questa squadra', 'Aggiunti per questa squadra: le altre non li vedono.', lavori.filter((t) => t.origine === 'squadra')],
   ].filter(([, , l], i) => l.length > 0 || i === 2)
@@ -200,7 +215,34 @@ export default function GestioneLavori({ squadraId, admin = false }) {
               <span className={`flex-1 min-w-0 ${t.attivo || !squadraId ? '' : 'opacity-50'}`}>
                 <b className="block text-[15px] text-abisso truncate">{t.sigla}</b>
                 <span className="block text-[13px] text-slate-500">{[t.descrizione, nomeGruppo(t.gruppo)].filter(Boolean).join(' · ')}</span>
+                {t.pesoBase != null && (
+                  <span className="block text-[13px] font-semibold text-blue-700">Per questa squadra stanca: {nomePosizione(t.peso)}</span>
+                )}
+                {fatica === t.sigla && (
+                  <span className="flex flex-wrap gap-2 mt-2">
+                    <label className="sr-only" htmlFor={`fatica-${t.sigla}`}>Quanto stanca {t.sigla}</label>
+                    <select id={`fatica-${t.sigla}`} defaultValue={posizioneDaPeso(t.peso)}
+                      onChange={(e) => {
+                        const p = POSIZIONI.find((x) => x.id === e.target.value)
+                        // scegliere di nuovo il valore nostro = togliere la modifica
+                        if (p) cambiaFatica(t, p.id === posizioneDaPeso(t.pesoBase ?? t.peso) ? null : p.peso)
+                      }}
+                      className="min-h-[40px] max-w-full border border-slate-200 bg-white rounded-xl px-2 text-sm font-semibold">
+                      {POSIZIONI.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
+                    </select>
+                    {t.pesoBase != null && (
+                      <button type="button" onClick={() => cambiaFatica(t, null)}
+                        className="min-h-[40px] rounded-xl px-3 text-xs font-extrabold bg-slate-100 text-slate-600">Rimetti come l'abbiamo impostato noi</button>
+                    )}
+                  </span>
+                )}
               </span>
+              {squadraId && t.origine === 'base' && (
+                <button type="button" onClick={() => setFatica(fatica === t.sigla ? null : t.sigla)}
+                  className="min-h-[40px] shrink-0 rounded-xl px-3 text-xs font-extrabold bg-schiuma text-blue-600">
+                  {fatica === t.sigla ? 'Chiudi' : 'Quanto stanca'}
+                </button>
+              )}
               {puoModificare(t) && (
                 <span className="flex gap-1.5 shrink-0">
                   <button type="button" onClick={() => setForm(t)} className="min-h-[40px] rounded-xl px-3 text-xs font-extrabold bg-schiuma text-blue-600">Modifica</button>

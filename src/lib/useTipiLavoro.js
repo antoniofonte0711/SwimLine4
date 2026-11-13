@@ -6,11 +6,19 @@ import { elencoLavori, impostaRegistro } from './tipiLavoro'
 // Lavori aggiunti (elenco generale + quelli della squadra) e spunte acceso/spento di una squadra
 export async function leggiLavori(squadraId) {
   const tipi = supabase.from('tipi_lavoro').select('id, squadra_id, sigla, descrizione, gruppo, peso, colore').order('created_at')
+  // peso = quanto stanca un lavoro di base secondo il coach (migrazione 49); se la colonna
+  // non c'è ancora sul database si leggono solo le spunte, così l'app non si rompe
+  const leggiSpunte = async () => {
+    const q = (campi) => supabase.from('tipi_lavoro_squadra').select(campi).eq('squadra_id', squadraId)
+    const r = await q('sigla, attivo, peso')
+    return r.error ? q('sigla, attivo') : r
+  }
   const [{ data: righe }, { data: spunte }] = await Promise.all([
     squadraId ? tipi.or(`squadra_id.is.null,squadra_id.eq.${squadraId}`) : tipi.is('squadra_id', null),
-    squadraId ? supabase.from('tipi_lavoro_squadra').select('sigla, attivo').eq('squadra_id', squadraId) : Promise.resolve({ data: [] }),
+    squadraId ? leggiSpunte() : Promise.resolve({ data: [] }),
   ])
   return {
+    pesi: Object.fromEntries((spunte || []).filter((s) => s.peso != null).map((s) => [s.sigla, Number(s.peso)])),
     squadraId,
     extra: (righe || []).map((r) => ({
       ...r, peso: Number(r.peso), soloCoach: false, origine: r.squadra_id ? 'squadra' : 'generale',
@@ -46,7 +54,7 @@ export function useTipiLavoro() {
     if (!profile) return
     let attivo = true
     if (cache.chiave !== squadraId || !cache.promessa) {
-      cache = { chiave: squadraId, promessa: leggiLavori(squadraId).catch(() => ({ squadraId, extra: [], spunte: {} })) }
+      cache = { chiave: squadraId, promessa: leggiLavori(squadraId).catch(() => ({ squadraId, extra: [], spunte: {}, pesi: {} })) }
     }
     cache.promessa.then((x) => {
       impostaRegistro(x)
@@ -56,5 +64,5 @@ export function useTipiLavoro() {
     return () => { attivo = false }
   }, [profile, squadraId, giro])
 
-  return { pronto: dati !== null, squadraId, lavori: elencoLavori(dati?.extra, dati?.spunte) }
+  return { pronto: dati !== null, squadraId, lavori: elencoLavori(dati?.extra, dati?.spunte, dati?.pesi) }
 }

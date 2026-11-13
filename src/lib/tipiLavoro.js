@@ -48,22 +48,29 @@ export const BASE = [
 const PER_SIGLA = new Map(BASE.map((t) => [t.sigla, t]))
 
 // ---------- Lavori della squadra in uso (riempito da useTipiLavoro) ----------
-let registro = { squadraId: null, extra: [], spunte: {} }
-export function impostaRegistro(r) { registro = { squadraId: null, extra: [], spunte: {}, ...r } }
+let registro = { squadraId: null, extra: [], spunte: {}, pesi: {} }
+export function impostaRegistro(r) { registro = { squadraId: null, extra: [], spunte: {}, pesi: {}, ...r } }
 
 export const chiave = (s = '') => s.trim().toLowerCase()
 
+// Lavoro di base con il "quanto stanca" scelto dal coach della squadra, se l'ha cambiato.
+// pesoBase = il valore impostato da noi, per poterlo mostrare e ripristinare.
+export const conPeso = (t, pesi = registro.pesi) =>
+  t.origine === 'base' && pesi?.[t.sigla] != null ? { ...t, peso: pesi[t.sigla], pesoBase: t.peso } : t
+
 // Tutto quello che si sa di un lavoro (base o aggiunto). null se sconosciuto.
 export function infoLavoro(sigla = '') {
-  return PER_SIGLA.get(sigla) || registro.extra.find((t) => t.sigla === sigla) || registro.extra.find((t) => chiave(t.sigla) === chiave(sigla)) || null
+  const base = PER_SIGLA.get(sigla)
+  if (base) return conPeso(base)
+  return registro.extra.find((t) => t.sigla === sigla) || registro.extra.find((t) => chiave(t.sigla) === chiave(sigla)) || null
 }
 
 // Acceso per la squadra? Senza spunta salvata: base e della squadra sì, quelli generali aggiunti no.
 export const attivoDi = (t, spunte = registro.spunte) => spunte[t.sigla] ?? t.origine !== 'generale'
 
 // Elenco completo per una squadra, nell'ordine in cui si mostrano
-export function elencoLavori(extra = registro.extra, spunte = registro.spunte) {
-  return [...BASE, ...extra].map((t) => ({ ...t, attivo: attivoDi(t, spunte) }))
+export function elencoLavori(extra = registro.extra, spunte = registro.spunte, pesi = registro.pesi) {
+  return [...BASE.map((t) => conPeso(t, pesi)), ...extra].map((t) => ({ ...t, attivo: attivoDi(t, spunte) }))
 }
 
 // Da scegliere nei menu: il coach li ha tutti, l'atleta non ha riscaldamento, tecnica…

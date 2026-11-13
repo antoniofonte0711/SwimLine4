@@ -22,7 +22,10 @@ export const LIVELLI = [
 ]
 
 export const pesoRiga = (r) => {
-  const base = r.tipo_lavoro?.startsWith('Passo gara') ? PESO_PASSO_GARA : infoLavoro(r.tipo_lavoro || '')?.peso ?? 1
+  const info = infoLavoro(r.tipo_lavoro || '')
+  // la squadra può aver cambiato quanto stanca un lavoro di base (anche i passi gara)
+  const base = info?.pesoBase != null ? info.peso
+    : r.tipo_lavoro?.startsWith('Passo gara') ? PESO_PASSO_GARA : info?.peso ?? 1
   // "forte" nelle note di un lavoro tranquillo: ci sono tratti veloci dentro
   const forte = base <= PESI.B1 && /\bfort[ei]\b/i.test(r.note || '') ? 1.15 : 1
   return base * forte
