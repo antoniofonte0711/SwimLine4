@@ -9,7 +9,7 @@ import BarraPassword from '../components/BarraPassword'
 import ControllaEmail from '../components/ControllaEmail'
 import { ETA_CONSENSO, erroreAuth, eta } from '../lib/erroriAuth'
 import { erroreNascita } from '../lib/dataScritta'
-import { SESSI, categoriaFin } from '../lib/categorie'
+import { SESSI } from '../lib/categorie'
 import { STILI_PROPRI } from '../lib/pianoSquadra'
 
 // Proprio stile (PS): quando il coach scrive un lavoro in PS, i tempi dell'atleta vanno in questo stile
@@ -42,10 +42,8 @@ export default function Registrati() {
   // atleta sotto i 14 anni: serve il consenso di un genitore
   const anni = eta(dataNascita)
   const minore = role === 'atleta' && anni !== null && anni < ETA_CONSENSO
-  // proprio stile obbligatorio solo da Juniores in su (senza sesso: solo se è Juniores sia da maschio che da femmina)
-  const categoria = categoriaFin(dataNascita, sesso || null) // es. "Ragazzi o Juniores" se manca il sesso
-  const psObbligatorio = role === 'atleta' && !!categoria
-    && categoria.split(' o ').every((c) => ['Juniores', 'Cadetti', 'Seniores'].includes(c))
+  // proprio stile obbligatorio per tutti gli atleti, di ogni età (13/11: prima solo da Juniores in su)
+  const psObbligatorio = role === 'atleta'
 
   useEffect(() => {
     // il nome della società accanto al gruppo: due "Esordienti" di società diverse non si confondono
@@ -59,7 +57,7 @@ export default function Registrati() {
     e.preventDefault()
     setError('')
     const nascitaSbagliata = erroreNascita(dataScritta)
-    // tutti i campi sono obbligatori (il proprio stile solo da Juniores in su)
+    // tutti i campi sono obbligatori, proprio stile compreso per gli atleti
     if (!nome.trim() || !cognome.trim()) return setError('Scrivi nome e cognome.')
     if (nascitaSbagliata) return setError(nascitaSbagliata)
     if (role === 'atleta' && !sesso) return setError('Scegli la categoria nelle gare: maschile o femminile.')

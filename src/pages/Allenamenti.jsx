@@ -12,46 +12,10 @@ import { useAuth } from '../context/AuthContext'
 import SelettoreData from '../components/SelettoreData'
 import EditorAllenamento from '../components/EditorAllenamento'
 import { SenzaSquadra } from '../components/PianoCard'
-import { STILI_PROPRI, pianoConProprioStile, useMiaSquadra } from '../lib/pianoSquadra'
+import { useMiaSquadra } from '../lib/pianoSquadra'
 import Schede from '../components/Schede'
 
 const VISTE = ['Aggiungi lavoro', 'Storico']
-
-// Chi non ha ancora il proprio stile (iscritto prima del 4/11, o sotto i Juniores dove in registrazione non è obbligatorio)
-// non veniva mai più chiesto: i tempi dei lavori PS finivano in "Proprio stile" e non nel suo stile.
-// Ora, quando il coach mette un lavoro PS, glielo chiediamo qui, senza finestre che bloccano.
-function ChiediProprioStile() {
-  const { user, ricaricaProfilo } = useAuth()
-  const [errore, setErrore] = useState('')
-  const [salvo, setSalvo] = useState('')
-
-  async function scegli(stile) {
-    setErrore('')
-    setSalvo(stile)
-    const { error } = await supabase.rpc('imposta_proprio_stile', { p_persona: user.id, p_stile: stile })
-    if (error) {
-      setSalvo('')
-      return setErrore('Non sono riuscito a salvare: ' + error.message)
-    }
-    await ricaricaProfilo()
-  }
-
-  return (
-    <div className="bg-white rounded-3xl p-5 mb-3 shadow-card border-2 border-blue-300">
-      <p className="font-display text-lg font-extrabold text-abisso">Qual è il tuo proprio stile?</p>
-      <p className="text-sm text-slate-500 mt-1 mb-3">Oggi il coach ha messo lavori in PS: scegli il tuo stile e i tempi andranno lì. Puoi cambiarlo dal Profilo.</p>
-      <div className="grid grid-cols-3 gap-2">
-        {STILI_PROPRI.map((s) => (
-          <button key={s} type="button" disabled={!!salvo} onClick={() => scegli(s)}
-            className="cliccabile min-h-[48px] rounded-2xl bg-schiuma text-blue-700 font-extrabold disabled:opacity-60">
-            {salvo === s ? 'Salvo…' : s}
-          </button>
-        ))}
-      </div>
-      {errore && <p role="alert" className="text-sm text-white bg-red-600 rounded-lg px-3 py-2 mt-3">{errore}</p>}
-    </div>
-  )
-}
 
 // Atleta: i tempi di oggi. Se il coach ha pubblicato l'allenamento si scrivono sotto i suoi lavori
 // (niente da riscrivere); il modulo libero resta per i lavori fuori programma.
@@ -99,7 +63,6 @@ function AllenamentiAtleta() {
           </div>
         ) : (
           <>
-            {ruolo === 'atleta' && !profile?.proprio_stile && pianoConProprioStile(piano.righe) && <ChiediProprioStile />}
             <RisultatiAtleta piano={piano} atletaId={user.id} giorno={oggi} proprio />
             {!libero ? (
               <button onClick={() => setLibero(true)} className="cliccabile w-full min-h-[48px] mt-3 text-sm font-bold text-blue-600 bg-schiuma rounded-2xl">
