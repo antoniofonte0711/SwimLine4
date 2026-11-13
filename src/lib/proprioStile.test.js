@@ -35,3 +35,14 @@ describe('abbinaTempi con il proprio stile', () => {
     expect(abbinaTempi(righe, tempi).a[0]).toBeUndefined()
   })
 })
+
+describe('serve chiedere il proprio stile?', () => {
+  it('sì se un lavoro, una ripetizione o una serie è in Proprio stile; no altrimenti', async () => {
+    const { pianoConProprioStile } = await import('./pianoSquadra')
+    expect(pianoConProprioStile([{ tipo_lavoro: 'A2', stile: 'Proprio stile' }])).toBe(true)
+    expect(pianoConProprioStile([{ tipo_lavoro: 'C1', stile: 'Stile libero', stili: ['Stile libero', 'Proprio stile'] }])).toBe(true)
+    expect(pianoConProprioStile([{ serie: [{ tipo_lavoro: 'B1', stile: 'Proprio stile' }] }])).toBe(true)
+    expect(pianoConProprioStile([{ tipo_lavoro: 'A2', stile: 'Stile libero', note: 'proprio stile piano' }])).toBe(false)
+    expect(pianoConProprioStile(null)).toBe(false)
+  })
+})

@@ -144,6 +144,8 @@ export const chiaveRisultato = (r) => [r.tipo_lavoro, Number(r.distanza), r.stil
 // Il "proprio stile" di ogni atleta (migrazione 41): i lavori "Proprio stile" del coach si salvano in questo stile
 export const STILI_PROPRI = ['Dorso', 'Rana', 'Farfalla']
 const PS = 'Proprio stile'
+// C'è almeno un lavoro (o una ripetizione, anche dentro le serie) in "Proprio stile"?
+export const pianoConProprioStile = (righe = []) => JSON.stringify(righe || []).includes('"Proprio stile"')
 // Le righe del piano viste da un atleta: "Proprio stile" diventa il suo stile (se l'ha scelto)
 export function conProprioStile(righe = [], stile) {
   if (!stile) return righe
