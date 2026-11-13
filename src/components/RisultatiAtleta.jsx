@@ -66,6 +66,8 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
         const nuoviValori = base.map((rb, i) => {
           const { scelta, valori: v } = letturaRiga(rb, abbinati[i])
           if (scelta) scelteTrovate[i] = scelta
+          // nelle serie a giri un lavoro "A scelta" ha sempre lo stile sotto ogni casella
+          if (aScelta(rb) && rb.serie && !Array.isArray(scelta)) scelteTrovate[i] = caselleDiRiga(rb).map(() => scelta || '')
           if (!aScelta(rb) && !scelta) {
             abbinati[i].esatti.forEach((t, k) => { if (leggiMedia(t)) medieTrovate[`${i}-${k}`] = leggiMedia(t) })
           } else {
@@ -362,9 +364,11 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
               {!b.righe.some(({ indice }) => fisso(indice)) && b.righe.every(({ indice }) => chiuso(indice)) && (
                 <Apri i={b.righe[0].indice} n={giri * b.righe.reduce((s, { riga }) => s + perGiro(riga), 0)} />
               )}
-              {!b.righe.some(({ indice }) => fisso(indice)) && !b.righe.every(({ indice }) => chiuso(indice)) && b.righe.map(({ riga: r, indice: i }) => (
-                <SceltaStile key={`s${i}`} i={i} n={caselleDiRiga(r).length} titolo={`${proprio ? 'Che stile hai fatto' : 'Che stile ha fatto'} nei ${r.distanza} m (${r.tipo_lavoro})?`} />
-              ))}
+              {!b.righe.some(({ indice }) => fisso(indice)) && !b.righe.every(({ indice }) => chiuso(indice)) && b.righe.some(({ riga: r }) => aScelta(r)) && (
+                <p className="mt-3 rounded-2xl border-2 border-blue-300 bg-blue-50 p-3 text-sm font-bold text-blue-700">
+                  {proprio ? 'Sotto ogni tempo "A scelta" scegli lo stile che hai fatto.' : 'Sotto ogni tempo "A scelta" scegli lo stile che ha fatto.'}
+                </p>
+              )}
               {!b.righe.some(({ indice }) => fisso(indice)) && !b.righe.every(({ indice }) => chiuso(indice)) && Array.from({ length: giri }, (_, g) => (
                 <div key={g} className="bg-gray-50 rounded-2xl p-3 mt-3">
                   <p className="text-xs font-bold text-slate-600 mb-2">Giro {g + 1}</p>
