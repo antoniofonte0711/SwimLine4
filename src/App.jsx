@@ -39,6 +39,7 @@ const Presenze = lazy(() => import('./pages/Presenze'))
 const Squadra = lazy(() => import('./pages/Squadra'))
 const Record = lazy(() => import('./pages/Record'))
 const InArrivo = lazy(() => import('./pages/InArrivo'))
+const AnalisiVideo = lazy(() => import('./pages/AnalisiVideo'))
 const AdminPanel = lazy(() => import('./pages/AdminPanel'))
 const Impostazioni = lazy(() => import('./pages/Impostazioni'))
 const Lavori = lazy(() => import('./pages/Lavori'))
@@ -108,6 +109,8 @@ export default function App() {
 
               {/* Video: la sezione c'è per tutti, con l'avviso "attualmente non in funzione" */}
               <Route path="/video" element={<ProtectedRoute><InArrivo titolo="Video" fermo /></ProtectedRoute>} />
+              {/* Analisi video (velocità dall'immagine): solo coach, in costruzione -> solo sviluppo e anteprima */}
+              {mostraInArrivo && <Route path="/analisi-video" element={<ProtectedRoute requireCoach><AnalisiVideo /></ProtectedRoute>} />}
               {mostraInArrivo && PROSSIMAMENTE.map(([percorso, titolo]) => (
                 <Route key={percorso} path={percorso}
                   element={<ProtectedRoute><InArrivo titolo={titolo} /></ProtectedRoute>} />
