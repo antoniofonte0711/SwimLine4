@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import PiuStili from './PiuStili'
+import EtichettaRip from './EtichettaRip'
 import { aggiornaMedia, campiMedia, leggiMedia } from '../lib/media'
 import InputTempo from './InputTempo'
 import { coloreLavoro } from '../lib/lavori'
@@ -403,7 +404,7 @@ export default function RisultatiAtleta({ piano, atletaId, giorno, proprio = fal
             <span className="ml-1.5"><PiuStili r={r} /></span>
             <span className="text-sm text-slate-600 ml-2">{Number(r.ripetizioni) || 1}×{r.distanza} m {r.stile}</span>
             {tratti && <p className="text-xs text-blue-700 mt-1">⏱ Tempi solo delle vasche scelte dal coach</p>}
-            {ripartenzeDiRiga(r).length > 0 && <span className="text-xs text-slate-500 ml-2">↻ ripartenza {ripartenzeDiRiga(r).join(' · ')}</span>}
+            {ripartenzeDiRiga(r).length > 0 && <EtichettaRip lista={ripartenzeDiRiga(r)} className="ml-2 align-middle" />}
             {r.note && <p className="text-xs text-slate-500 mt-1">{r.note}</p>}
             {fisso(i) ? <Salvati i={i} /> : chiuso(i) ? <Apri i={i} n={n} /> : <><SceltaStile i={i} n={n} /><div className="grid grid-cols-2 gap-3 mt-3">
               {perPassaggio(i) ? Array.from({ length: n }, (_, j) => (

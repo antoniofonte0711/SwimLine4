@@ -128,15 +128,31 @@ export function formattaData(valore) {
   return d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' })
 }
 
+// Secondi di una ripartenza (1'30" → 90); null se non si capisce
+export function ripartenzaInSecondi(t) {
+  const x = normalizzaRipartenza(t).match(/^(?:(\d{1,2})')?(\d{1,2})"$/)
+  return x ? Number(x[1] || 0) * 60 + Number(x[2]) : null
+}
+const secondiInRipartenza = (s) => (s >= 60 ? `${Math.floor(s / 60)}'${String(s % 60).padStart(2, '0')}"` : `${s}"`)
+
 // Ripartenza che scala: dalla prima (es. 1'30") toglie o aggiunge `passo` secondi a ogni ripetizione.
 // Restituisce la lista delle ripartenze (vuota se la base non si capisce); non scende mai sotto i 5".
 export function ripartenzeCheScalano(base, passo, n) {
-  const x = normalizzaRipartenza(base).match(/^(?:(\d{1,2})')?(\d{1,2})"$/)
-  if (!x || !Number.isFinite(passo)) return []
-  const inizio = Number(x[1] || 0) * 60 + Number(x[2])
-  return Array.from({ length: n }, (_, k) => {
-    const s = Math.max(5, inizio + passo * k)
-    const m = Math.floor(s / 60)
-    return m > 0 ? `${m}'${String(s % 60).padStart(2, '0')}"` : `${s}"`
-  })
+  const inizio = ripartenzaInSecondi(base)
+  if (inizio === null || !Number.isFinite(passo)) return []
+  return Array.from({ length: n }, (_, k) => secondiInRipartenza(Math.max(5, inizio + passo * k)))
+}
+
+// Ripartenze in breve per l'etichetta RIP: una sola se sono tutte uguali, "1'30" → 1'15" (−5")" se scalano
+// sempre dello stesso passo, altrimenti tutte in fila
+export function ripartenzeInBreve(lista) {
+  const l = (lista || []).filter(Boolean)
+  if (!l.length) return ''
+  if (new Set(l).size === 1) return l[0]
+  const sec = l.map(ripartenzaInSecondi)
+  const passo = sec[1] - sec[0]
+  if (l.length > 2 && !sec.includes(null) && passo && sec.every((s, k) => !k || s - sec[k - 1] === passo)) {
+    return `${l[0]} → ${l[l.length - 1]} (${passo < 0 ? '−' : '+'}${Math.abs(passo)}")`
+  }
+  return l.join(' · ')
 }

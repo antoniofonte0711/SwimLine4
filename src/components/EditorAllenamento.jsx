@@ -7,6 +7,7 @@ import { coloreLavoro, distanzaDaTipo } from '../lib/lavori'
 import { lavoriDaScegliere } from '../lib/tipiLavoro'
 import { ricaricaTipiLavoro, useTipiLavoro } from '../lib/useTipiLavoro'
 import PiuStili from './PiuStili'
+import EtichettaRip from './EtichettaRip'
 import { A_SCELTA, RIGA_VUOTA, STILI_COACH, STILI_PIANO, aScelta, abbinaTempi, addGiorni, blocchiPiano, metriPiano, minutiPiano, perGiro, riassuntoVarianti, tempiDaTogliere, tempiPerRiga } from '../lib/pianoSquadra'
 import { normalizzaRipartenza, ripartenzaValida, ripartenzeCheScalano } from '../lib/tempo'
 import { caselleDiRiga, haTratti, pezziDiRiga, ripetizioniDiRiga, trattiPuliti } from '../lib/varianti'
@@ -29,6 +30,8 @@ const ANIMA = {
 const nuovaRiga = (extra = {}) => ({ ...RIGA_VUOTA, ...extra, _id: crypto.randomUUID() })
 // Nell'editor le righe di una serie a giri tengono le ripetizioni di un solo giro (si moltiplicano al salvataggio)
 const conId = (lista) => lista.map((r) => ({ ...r, _id: r._id || crypto.randomUUID(), ...(r.serie && { ripetizioni: perGiro(r) }) }))
+// Ripetizioni di un giro di una riga dell'editor (qui sono già per giro: perGiro vale solo sulle righe salvate)
+const ripGiro = (r) => Math.max(1, Number(r.ripetizioni) || 1)
 // Stato del form in forma confrontabile, per capire se ci sono modifiche non salvate
 const fotografia = (titolo, righe, vis) => JSON.stringify({ titolo, vis, righe: righe.map(({ _id, ...r }) => r) })
 // Chiave di un blocco (riga singola o serie a giri) per riordinarli
@@ -52,27 +55,33 @@ function InputRipartenza({ value, onChange, etichetta, placeholder = `Es. 1'30"`
 // Riempie le caselle "ripartenza di ogni ripetizione", che poi si possono ritoccare a mano.
 const PASSI = [-10, -5, 5, 10]
 function ScalaRipartenza({ base, rip, onScala }) {
-  const [passo, setPasso] = useState('')
   const valida = !!base && ripartenzaValida(normalizzaRipartenza(base))
-  const applica = (p) => {
-    const lista = ripartenzeCheScalano(base, p, rip)
-    if (lista.length) onScala(lista)
-  }
   return (
-    <div className="mb-3 rounded-2xl bg-schiuma p-3">
-      <p className="text-xs font-bold text-blue-700 mb-2">Scala a ogni ripetizione{valida ? `, partendo da ${normalizzaRipartenza(base)}` : ''}</p>
-      {!valida ? (
-        <p className="text-xs text-slate-600">Scrivi prima la ripartenza (sopra): da lì calcolo le altre.</p>
+    <PulsantiScala titolo={`Scala a ogni ripetizione${valida ? `, partendo da ${normalizzaRipartenza(base)}` : ''}`}
+      avviso={!valida && 'Scrivi prima la ripartenza (sopra): da lì calcolo le altre.'}
+      onPasso={(p) => { const lista = ripartenzeCheScalano(base, p, rip); if (lista.length) onScala(lista) }} />
+  )
+}
+
+// Pulsanti −10" −5" +5" +10" e una casella per altri secondi; se manca la ripartenza di partenza, al loro posto l'avviso
+function PulsantiScala({ titolo, avviso, onPasso, ogni = 'ripetizione', classe = 'mb-3 bg-schiuma' }) {
+  const [passo, setPasso] = useState('')
+  const applica = onPasso
+  return (
+    <div className={`rounded-2xl p-3 ${classe}`}>
+      <p className="text-xs font-bold text-blue-700 mb-2">{titolo}</p>
+      {avviso ? (
+        <p className="text-xs text-slate-600">{avviso}</p>
       ) : (
         <div className="flex flex-wrap items-center gap-2">
           {PASSI.map((p) => (
-            <button key={p} type="button" onClick={() => applica(p)} aria-label={`${Math.abs(p)} secondi ${p < 0 ? 'in meno' : 'in più'} a ogni ripetizione`}
+            <button key={p} type="button" onClick={() => applica(p)} aria-label={`${Math.abs(p)} secondi ${p < 0 ? 'in meno' : 'in più'} a ogni ${ogni}`}
               className="cliccabile min-h-[40px] px-3 rounded-full bg-white text-sm font-bold text-blue-700">
               {p > 0 ? '+' : '−'}{Math.abs(p)}"
             </button>
           ))}
           <span className="flex items-center gap-1">
-            <input type="text" inputMode="numeric" value={passo} placeholder="-3" aria-label="Altri secondi a ogni ripetizione (meno davanti per scendere)"
+            <input type="text" inputMode="numeric" value={passo} placeholder="-3" aria-label={`Altri secondi a ogni ${ogni} (meno davanti per scendere)`}
               onChange={(e) => setPasso(e.target.value.replace(/[^\d-]/g, '').slice(0, 4))}
               className="w-16 min-h-[40px] rounded-full bg-white px-3 text-center text-sm font-bold text-abisso" />
             <button type="button" disabled={!Number(passo)} onClick={() => applica(Number(passo))}
@@ -388,7 +397,7 @@ function FoglioLavoro({ r, i, n, inSerie, squadraId, cambia, cambiaTipo, onSu, o
 // Un lavoro in una riga leggibile ("4 × 400 Stile libero", sotto il tipo per esteso): toccandolo si apre il pannello,
 // il cestino a destra lo toglie subito (si può annullare)
 function RigaBreve({ r, onApri, onTogli, maniglia }) {
-  const sotto = [riassuntoVarianti(r), haTratti(r) && `⏱ ${caselleDiRiga(r).map((c) => c.breve).join(', ')}`, r.ripartenza && `partenza ${r.ripartenza}`, r.note].filter(Boolean).join(' · ')
+  const sotto = [riassuntoVarianti(r), haTratti(r) && `⏱ ${caselleDiRiga(r).map((c) => c.breve).join(', ')}`, r.note].filter(Boolean).join(' · ')
   const descrizione = `${Number(r.ripetizioni) > 1 ? `${r.ripetizioni} × ` : ''}${r.distanza} ${r.stile}`
   return (
     <div className="flex items-center gap-1">
@@ -401,6 +410,8 @@ function RigaBreve({ r, onApri, onTogli, maniglia }) {
         <span className="flex items-center gap-1.5 mt-0.5 min-w-0">
           <span className={`shrink-0 text-[11px] font-extrabold px-2 py-0.5 rounded-md ${coloreLavoro(r.tipo_lavoro)}`}>{r.tipo_lavoro}</span>
           <PiuStili r={r} />
+          <EtichettaRip className="shrink-0" perGiro={r.serie ? ripGiro(r) : 1}
+            lista={(Array.isArray(r.ripartenze) && r.ripartenze.some(Boolean) ? r.ripartenze.map((x) => x || r.ripartenza) : [r.ripartenza]).map(normalizzaRipartenza)} />
           {sotto && <span className="text-[13px] text-slate-500 truncate">{sotto}</span>}
         </span>
       </button>
@@ -483,9 +494,10 @@ function CampoGiri({ giri, annulli, onGiri }) {
 
 // Serie a giri: un gruppo di lavori nuotati in sequenza e ripetuti N volte (es. 3 giri di 400-300-200).
 // Il Giro 1 definisce i lavori (si toccano per aprirli); ogni altro giro ha la sua casella, dove si può cambiare la ripartenza.
-function SerieGiri({ chiave, serie, righe, annulli, cambiaSerie, cambiaGiri, cambiaRipGiro, aggiungiInSerie, sciogli, onApri, onTogli }) {
+function SerieGiri({ chiave, serie, righe, annulli, cambiaSerie, cambiaGiri, cambiaRipGiro, scalaSerie, aggiungiInSerie, sciogli, onApri, onTogli }) {
   const controlli = useDragControls()
   const giri = Math.max(1, Number(serie.giri) || 1)
+  const conBase = righe.some(({ riga }) => ripartenzaValida(normalizzaRipartenza(riga.ripartenza)) && riga.ripartenza)
   return (
     <Reorder.Item as="div" value={chiave} dragListener={false} dragControls={controlli} {...ANIMA}
       className="relative bg-blue-50/60 border-2 border-blue-200 rounded-3xl p-3 mb-2 shadow-sm">
@@ -516,6 +528,11 @@ function SerieGiri({ chiave, serie, righe, annulli, cambiaSerie, cambiaGiri, cam
         <button onClick={() => aggiungiInSerie(serie.id)} className="min-h-[44px] text-sm font-semibold text-blue-600">+ Lavoro nella serie</button>
         <button onClick={() => sciogli(serie.id)} className="min-h-[44px] text-sm text-slate-500">Sciogli serie</button>
       </div>
+      {giri > 1 && (
+        <PulsantiScala titolo="Ripartenze che scalano a ogni giro" ogni="giro" classe="mb-3 bg-white border border-blue-100"
+          avviso={!conBase && 'Scrivi la ripartenza dei lavori del Giro 1: da lì calcolo quelle degli altri giri.'}
+          onPasso={(p) => scalaSerie(serie.id, p)} />
+      )}
       <AnimatePresence initial={false}>
         {Array.from({ length: giri - 1 }, (_, x) => x + 1).map((g) => (
           <motion.div key={g} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
@@ -528,12 +545,12 @@ function SerieGiri({ chiave, serie, righe, annulli, cambiaSerie, cambiaGiri, cam
                 )}
               </div>
               <p className="text-xs text-slate-500 mb-2">Stessi lavori del Giro 1. Cambia la ripartenza solo se in questo giro è diversa.</p>
-              {righe.map(({ riga, indice }) => Array.from({ length: perGiro(riga) }, (_, k) => {
-                const j = g * perGiro(riga) + k
+              {righe.map(({ riga, indice }) => Array.from({ length: ripGiro(riga) }, (_, k) => {
+                const j = g * ripGiro(riga) + k
                 return (
                   <div key={`${riga._id}-${k}`} className="grid grid-cols-[1fr_7rem] items-end gap-2 mb-1">
                     <p className="text-sm text-slate-600 pb-2.5">
-                      {riga.distanza} m {riga.stile}{perGiro(riga) > 1 ? ` (${k + 1})` : ''}
+                      {riga.distanza} m {riga.stile}{ripGiro(riga) > 1 ? ` (${k + 1})` : ''}
                       <span className="text-xs text-slate-500"> · {riga.tipo_lavoro}</span>
                     </p>
                     <InputRipartenza etichetta="Ripartenza" placeholder={riga.ripartenza || 'Es. 1\'30"'}
@@ -665,10 +682,18 @@ export default function EditorAllenamento({ squadra, giorno, onChiudi }) {
     lista[j] = v
     return { ...r, ripartenze: lista }
   }))
+  // Ripartenze che scalano a ogni giro: giro g = ripartenza del Giro 1 + passo × g, per ogni lavoro della serie che ne ha una
+  const scalaSerie = (id, passo) => setRighe(righe.map((r) => {
+    if (r.serie?.id !== id || !r.ripartenza) return r
+    const giri = Math.max(1, Number(r.serie.giri) || 1)
+    const perGiroLista = ripartenzeCheScalano(r.ripartenza, passo, giri)
+    if (!perGiroLista.length) return r
+    return { ...r, ripartenze: Array.from({ length: giri * ripGiro(r) }, (_, j) => perGiroLista[Math.floor(j / ripGiro(r))]) }
+  }))
   // Cambia il numero di giri: le caselle si aggiungono in fondo e si tolgono dall'ultima
   const applicaGiri = (id, n) => setRighe(righe.map((r) => {
     if (r.serie?.id !== id) return r
-    const ripartenze = Array.isArray(r.ripartenze) ? r.ripartenze.slice(0, perGiro(r) * n) : r.ripartenze
+    const ripartenze = Array.isArray(r.ripartenze) ? r.ripartenze.slice(0, ripGiro(r) * n) : r.ripartenze
     return { ...r, ripartenze, serie: { ...r.serie, giri: n } }
   }))
   const cambiaGiri = (id, n) => {
@@ -678,8 +703,8 @@ export default function EditorAllenamento({ squadra, giorno, onChiudi }) {
     // Giri che spariscono: hanno già tempi degli atleti o ripartenze cambiate?
     const abbinati = Object.values(abbinaTempi(righe, tempi))
     const atleti = abbinati.filter((lista) => nella.some(({ r, i }) =>
-      (lista[i]?.passaggi || []).slice(perGiro(r) * n).some(Boolean))).length
-    const ripCambiate = nella.some(({ r }) => (r.ripartenze || []).slice(perGiro(r) * n).some(Boolean))
+      (lista[i]?.passaggi || []).slice(ripGiro(r) * n).some(Boolean))).length
+    const ripCambiate = nella.some(({ r }) => (r.ripartenze || []).slice(ripGiro(r) * n).some(Boolean))
     if (!atleti && !ripCambiate) return applicaGiri(id, n)
     const quali = prima - n === 1 ? `il giro ${prima}` : `i giri dal ${n + 1} al ${prima}`
     const dati = [
@@ -950,7 +975,7 @@ export default function EditorAllenamento({ squadra, giorno, onChiudi }) {
             const chiave = chiaveBlocco(b)
             return b.serie
               ? <SerieGiri key={chiave} chiave={chiave} serie={b.serie} righe={b.righe} annulli={annulli} cambiaSerie={cambiaSerie}
-                  cambiaGiri={cambiaGiri} cambiaRipGiro={cambiaRipGiro} aggiungiInSerie={aggiungiInSerie} sciogli={sciogli} onApri={setAperto} onTogli={togli} />
+                  cambiaGiri={cambiaGiri} cambiaRipGiro={cambiaRipGiro} scalaSerie={scalaSerie} aggiungiInSerie={aggiungiInSerie} sciogli={sciogli} onApri={setAperto} onTogli={togli} />
               : <RigaLavoro key={chiave} chiave={chiave} r={b.riga} onApri={() => setAperto(b.riga._id)} onTogli={() => togli(b.indice)} />
           })}
         </AnimatePresence>

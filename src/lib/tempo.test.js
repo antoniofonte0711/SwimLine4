@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   normalizzaTempo, normalizzaRipartenza, ripartenzaValida, passaggiCoerenti,
-  tempoValido, tempoPlausibile, tempoInSecondi, secondiInTempo, ripartenzeCheScalano,
+  tempoValido, tempoPlausibile, tempoInSecondi, secondiInTempo, ripartenzeCheScalano, ripartenzeInBreve,
 } from './tempo'
 
 describe('normalizzaTempo', () => {
@@ -110,5 +110,15 @@ describe('ripartenzeCheScalano', () => {
     expect(ripartenzeCheScalano(`15"`, -10, 3)).toEqual([`15"`, `5"`, `5"`])
     expect(ripartenzeCheScalano('', -5, 3)).toEqual([])
     expect(ripartenzeCheScalano('abc', -5, 3)).toEqual([])
+  })
+})
+
+describe('ripartenzeInBreve', () => {
+  it('una, che scalano, o in fila', () => {
+    expect(ripartenzeInBreve([`1'30"`, `1'30"`])).toBe(`1'30"`)
+    expect(ripartenzeInBreve([`1'30"`, `1'25"`, `1'20"`, `1'15"`])).toBe(`1'30" → 1'15" (−5")`)
+    expect(ripartenzeInBreve([`55"`, `1'00"`, `1'05"`])).toBe(`55" → 1'05" (+5")`)
+    expect(ripartenzeInBreve([`1'30"`, `1'20"`, `1'25"`])).toBe(`1'30" · 1'20" · 1'25"`)
+    expect(ripartenzeInBreve([])).toBe('')
   })
 })
