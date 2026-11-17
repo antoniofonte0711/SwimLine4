@@ -74,7 +74,7 @@ export const GUIDA = [
       ['Striscia dei giorni', 'Scegli il giorno; la barretta sotto ogni giorno è la difficoltà dell\'allenamento.'],
       ['Scrivi l\'allenamento / Continua e pubblica / Modifica', 'Apre l\'allenamento del giorno.'],
       ['+ Aggiungi lavoro', 'Sale un pannello: ripetizioni con − e +, distanza, tipo e stile con un tocco. Con "+" scrivi una distanza o uno stile che non c\'è, o crei un tipo di lavoro nuovo.'],
-      ['Ripartenza', 'Si scrive come vuoi (130 diventa 1\'30"). Note, minuti e ripartenze diverse sono in "+ Note, tempo…".'],
+      ['Ripartenza', 'Si scrive come vuoi (130 diventa 1\'30"). Note, minuti, ripartenze diverse o che scalano (es. −5\" a ogni ripetizione) sono in "+ Note, tempo…".'],
       ['Stili diversi nelle ripetizioni', 'Nel pannello di un lavoro con più ripetizioni: scegli stile e nota per ognuna (es. 1ª Stile libero "forte", 2ª Proprio stile "piano"). Dove non scegli nulla vale lo stile generale. Vale anche nelle serie a giri (lo schema si ripete a ogni giro). Accanto al tipo di lavoro compare la sigla "+ stili".'],
       ['Stile "A scelta"', 'Lascia decidere all\'atleta: scrivendo i tempi sceglie lo stile che ha fatto (uno per tutto il lavoro, oppure uno diverso per ogni passaggio) e ogni tempo va nella categoria del suo stile. Con "A scelta" non ci sono stili diversi per ripetizione né vasche da cronometrare.'],
       ['← Indietro', 'In alto nel pannello di un lavoro: chiude il pannello e torna all\'allenamento. Quello che hai cambiato resta.'],

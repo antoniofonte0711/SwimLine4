@@ -127,3 +127,16 @@ export function formattaData(valore) {
   if (isNaN(d)) return ''
   return d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' })
 }
+
+// Ripartenza che scala: dalla prima (es. 1'30") toglie o aggiunge `passo` secondi a ogni ripetizione.
+// Restituisce la lista delle ripartenze (vuota se la base non si capisce); non scende mai sotto i 5".
+export function ripartenzeCheScalano(base, passo, n) {
+  const x = normalizzaRipartenza(base).match(/^(?:(\d{1,2})')?(\d{1,2})"$/)
+  if (!x || !Number.isFinite(passo)) return []
+  const inizio = Number(x[1] || 0) * 60 + Number(x[2])
+  return Array.from({ length: n }, (_, k) => {
+    const s = Math.max(5, inizio + passo * k)
+    const m = Math.floor(s / 60)
+    return m > 0 ? `${m}'${String(s % 60).padStart(2, '0')}"` : `${s}"`
+  })
+}

@@ -8,7 +8,7 @@ import { lavoriDaScegliere } from '../lib/tipiLavoro'
 import { ricaricaTipiLavoro, useTipiLavoro } from '../lib/useTipiLavoro'
 import PiuStili from './PiuStili'
 import { A_SCELTA, RIGA_VUOTA, STILI_COACH, STILI_PIANO, aScelta, abbinaTempi, addGiorni, blocchiPiano, metriPiano, minutiPiano, perGiro, riassuntoVarianti, tempiDaTogliere, tempiPerRiga } from '../lib/pianoSquadra'
-import { normalizzaRipartenza, ripartenzaValida } from '../lib/tempo'
+import { normalizzaRipartenza, ripartenzaValida, ripartenzeCheScalano } from '../lib/tempo'
 import { caselleDiRiga, haTratti, pezziDiRiga, ripetizioniDiRiga, trattiPuliti } from '../lib/varianti'
 import { useRegole } from '../lib/regole'
 import PianoCard from './PianoCard'
@@ -44,6 +44,42 @@ function InputRipartenza({ value, onChange, etichetta, placeholder = `Es. 1'30"`
         onChange={(e) => onChange(e.target.value)}
         onBlur={(e) => onChange(normalizzaRipartenza(e.target.value))}
         className={`${CAMPO} ${ripartenzaValida(normalizzaRipartenza(value)) ? '' : 'border-red-400'}`} />
+    </div>
+  )
+}
+
+// Ripartenza che scala: dalla prima ripartenza, tot secondi in meno (o in più) a ogni ripetizione.
+// Riempie le caselle "ripartenza di ogni ripetizione", che poi si possono ritoccare a mano.
+const PASSI = [-10, -5, 5, 10]
+function ScalaRipartenza({ base, rip, onScala }) {
+  const [passo, setPasso] = useState('')
+  const valida = !!base && ripartenzaValida(normalizzaRipartenza(base))
+  const applica = (p) => {
+    const lista = ripartenzeCheScalano(base, p, rip)
+    if (lista.length) onScala(lista)
+  }
+  return (
+    <div className="mb-3 rounded-2xl bg-schiuma p-3">
+      <p className="text-xs font-bold text-blue-700 mb-2">Scala a ogni ripetizione{valida ? `, partendo da ${normalizzaRipartenza(base)}` : ''}</p>
+      {!valida ? (
+        <p className="text-xs text-slate-600">Scrivi prima la ripartenza (sopra): da lì calcolo le altre.</p>
+      ) : (
+        <div className="flex flex-wrap items-center gap-2">
+          {PASSI.map((p) => (
+            <button key={p} type="button" onClick={() => applica(p)} aria-label={`${Math.abs(p)} secondi ${p < 0 ? 'in meno' : 'in più'} a ogni ripetizione`}
+              className="cliccabile min-h-[40px] px-3 rounded-full bg-white text-sm font-bold text-blue-700">
+              {p > 0 ? '+' : '−'}{Math.abs(p)}"
+            </button>
+          ))}
+          <span className="flex items-center gap-1">
+            <input type="text" inputMode="numeric" value={passo} placeholder="-3" aria-label="Altri secondi a ogni ripetizione (meno davanti per scendere)"
+              onChange={(e) => setPasso(e.target.value.replace(/[^\d-]/g, '').slice(0, 4))}
+              className="w-16 min-h-[40px] rounded-full bg-white px-3 text-center text-sm font-bold text-abisso" />
+            <button type="button" disabled={!Number(passo)} onClick={() => applica(Number(passo))}
+              className="cliccabile min-h-[40px] px-3 rounded-full bg-blue-600 text-sm font-bold text-white disabled:opacity-40">Applica</button>
+          </span>
+        </div>
+      )}
     </div>
   )
 }
@@ -300,7 +336,7 @@ function FoglioLavoro({ r, i, n, inSerie, squadraId, cambia, cambiaTipo, onSu, o
 
         {!altro ? (
           <button type="button" onClick={() => setAltro(true)} className="min-h-[44px] mt-2 text-sm font-semibold text-blue-600">
-            + Note, durata del lavoro, ripartenze diverse
+            + Note, durata del lavoro, ripartenze diverse o che scalano
           </button>
         ) : (
           <div className="mt-3 space-y-3">
@@ -321,7 +357,8 @@ function FoglioLavoro({ r, i, n, inSerie, squadraId, cambia, cambiaTipo, onSu, o
                   <p className="text-xs font-semibold text-slate-600">Ripartenza di ogni ripetizione</p>
                   <button onClick={() => cambia(i, 'ripartenze', undefined)} className="text-xs font-semibold text-red-600 px-2 min-h-[36px]">Togli</button>
                 </div>
-                <p className="text-xs text-slate-500 mb-2">Le caselle vuote usano la ripartenza generale.</p>
+                <ScalaRipartenza base={r.ripartenza || r.ripartenze?.[0]} rip={rip} onScala={(lista) => cambia(i, 'ripartenze', lista)} />
+                <p className="text-xs text-slate-500 mb-2">Le caselle vuote usano la ripartenza generale. Puoi correggere ogni casella a mano.</p>
                 <div className="grid grid-cols-3 gap-2">
                   {Array.from({ length: rip }, (_, j) => (
                     <InputRipartenza key={j} etichetta={`${j + 1}° ${r.distanza || ''}`} value={r.ripartenze[j]}
@@ -331,7 +368,7 @@ function FoglioLavoro({ r, i, n, inSerie, squadraId, cambia, cambiaTipo, onSu, o
               </div>
             ) : (
               <button onClick={() => cambia(i, 'ripartenze', [])} className="text-sm font-semibold text-blue-600 min-h-[44px] text-left">
-                + Ripartenza diversa per ogni ripetizione
+                + Ripartenza diversa per ogni ripetizione (anche che scala di tot secondi)
               </button>
             ))}
           </div>

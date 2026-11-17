@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   normalizzaTempo, normalizzaRipartenza, ripartenzaValida, passaggiCoerenti,
-  tempoValido, tempoPlausibile, tempoInSecondi, secondiInTempo,
+  tempoValido, tempoPlausibile, tempoInSecondi, secondiInTempo, ripartenzeCheScalano,
 } from './tempo'
 
 describe('normalizzaTempo', () => {
@@ -98,5 +98,17 @@ describe('passaggiCoerenti', () => {
   })
   it('ignora i passaggi vuoti', () => {
     expect(passaggiCoerenti(['', '30"00'], '59"00')).toBeNull()
+  })
+})
+
+describe('ripartenzeCheScalano', () => {
+  it('scala di tot secondi a ogni ripetizione', () => {
+    expect(ripartenzeCheScalano(`1'30"`, -5, 4)).toEqual([`1'30"`, `1'25"`, `1'20"`, `1'15"`])
+    expect(ripartenzeCheScalano('55', 5, 3)).toEqual([`55"`, `1'00"`, `1'05"`])
+  })
+  it('non scende sotto i 5" e ignora basi non valide', () => {
+    expect(ripartenzeCheScalano(`15"`, -10, 3)).toEqual([`15"`, `5"`, `5"`])
+    expect(ripartenzeCheScalano('', -5, 3)).toEqual([])
+    expect(ripartenzeCheScalano('abc', -5, 3)).toEqual([])
   })
 })
