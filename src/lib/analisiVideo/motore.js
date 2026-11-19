@@ -7,7 +7,7 @@
 // Quindi la velocità vera = scorrimento della vasca + spostamento del nuotatore nell'inquadratura,
 // e la scala (P) si ricalcola a ogni fotogramma proprio vicino al nuotatore.
 // I metri arrivano moltiplicando u per i metri di un dischetto (dalla scala toccata o dai cambi di colore).
-import { coloreAcqua, diversitaAcqua, mappaBin, classeGalleggiante, N_CLASSI } from './immagine'
+import { coloreAcqua, diversitaAcqua, mappaBin, mappaCaldo, classeGalleggiante, N_CLASSI } from './immagine'
 import { trovaCorsie, adattaLinea, profilo, periodo, spostamento, spostamentoGrossolano, yLinea } from './corsie'
 import { iniziaNuotatore, cercaNuotatore, applicaPasso, schiumaRiquadro } from './nuotatore'
 
@@ -29,7 +29,7 @@ export class MotoreAnalisi {
 
   canali(img) {
     const acqua = coloreAcqua(img)
-    return { w: img.w, h: img.h, img, acqua, div: diversitaAcqua(img, acqua), bin: mappaBin(img) }
+    return { w: img.w, h: img.h, img, acqua, div: diversitaAcqua(img, acqua), bin: mappaBin(img), caldo: mappaCaldo(img, acqua) }
   }
 
   // Metà della zona dei galleggianti da ignorare attorno al nuotatore (braccia e schizzi che li coprono).

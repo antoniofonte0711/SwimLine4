@@ -28,6 +28,21 @@ export function diversitaAcqua(img, acqua) {
   return out
 }
 
+// Quanto ogni pixel è "caldo" (0..1): pelle, cuffie e costumi rossi/arancio. Acqua, scia e schiuma sono
+// blu, azzurre o bianche e restano a 0: è l'unico segnale che separa davvero il nuotatore dalla sua scia
+// (l'istogramma dei colori pesato sulla diversità dall'acqua li trova quasi uguali).
+export function mappaCaldo(img, acqua) {
+  const { w, h, data } = img
+  const out = new Float32Array(w * h)
+  const rbAcqua = acqua[0] - acqua[2]
+  for (let p = 0, i = 0; p < out.length; p++, i += 4) {
+    const rb = data[i] - data[i + 2]
+    const c = Math.min(rb - 10, rb - rbAcqua - 40)
+    out[p] = c <= 0 ? 0 : Math.min(1, c / 80)
+  }
+  return out
+}
+
 // Valore del canale c (w×h) nel punto (x, y) con interpolazione bilineare
 export function campiona(c, w, h, x, y) {
   if (x < 0 || y < 0 || x > w - 1 || y > h - 1) return NaN

@@ -10,26 +10,31 @@ import { yLinea } from './corsie'
 
 export const SOGLIA_TROVATO = 0.42
 export const SOGLIA_RITROVATO = 0.55
+// sotto questa quantità media di "caldo" nel riquadro iniziale (muta integrale, video in controluce)
+// la pelle non si usa e si torna al solo aspetto
+const CALDO_MINIMO = 0.02
 
 const pesoPrimoPiano = (d) => Math.min(1, Math.max(0, (d - 22) / 55))
 
 // Istogrammi colonna per colonna nella fascia di righe [ya, yb] per x in [xa, xb]
 function istogrammiColonne(ctx, xa, xb, ya, yb) {
-  const { w, bin, div } = ctx
-  const n = xb - xa + 1
+  const { w, bin, div, caldo } = ctx
+  const n = Math.max(0, xb - xa + 1) // riquadro fuori dall'immagine: nessuna colonna
   const h = new Float32Array(n * N_BIN)
   const fg = new Float32Array(n)
+  const ca = new Float32Array(n)
   for (let y = ya; y <= yb; y++) {
     const r = y * w
     for (let i = 0; i < n; i++) {
       const p = r + xa + i
+      if (caldo) ca[i] += caldo[p]
       const q = pesoPrimoPiano(div[p])
       if (q <= 0) continue
       h[i * N_BIN + bin[p]] += q
       fg[i] += q
     }
   }
-  return { h, fg, n }
+  return { h, fg, ca, n }
 }
 
 function bhattacharyya(a, b) {
@@ -54,16 +59,17 @@ function fascia(stato, x) {
 function istogrammaRiquadro(ctx, x, f, bw) {
   const xa = Math.max(0, Math.round(x - bw / 2)), xb = Math.min(ctx.w - 1, Math.round(x + bw / 2))
   const ya = Math.max(0, Math.round(f.ya)), yb = Math.min(ctx.h - 1, Math.round(f.yb))
-  const { h, fg, n } = istogrammiColonne(ctx, xa, xb, ya, yb)
+  const { h, fg, ca, n } = istogrammiColonne(ctx, xa, xb, ya, yb)
   const tot = new Float32Array(N_BIN)
-  let fgTot = 0
+  let fgTot = 0, caTot = 0
   for (let i = 0; i < n; i++) {
     fgTot += fg[i]
+    caTot += ca[i]
     for (let k = 0; k < N_BIN; k++) tot[k] += h[i * N_BIN + k]
   }
   if (fgTot > 0) for (let k = 0; k < N_BIN; k++) tot[k] /= fgTot
   const area = Math.max(1, (xb - xa + 1) * (yb - ya + 1))
-  return { hist: tot, fg: fgTot / area }
+  return { hist: tot, fg: fgTot / area, caldo: caTot / area }
 }
 
 // stato iniziale dal tocco (x, y in pixel del fotogramma di analisi)
@@ -117,6 +123,7 @@ export function iniziaNuotatore(ctx, x, y, corsie) {
   const m = istogrammaRiquadro(ctx, stato.x, fascia(stato, stato.x), stato.bw)
   stato.modello = m.hist
   stato.fgModello = Math.max(m.fg, 0.05)
+  stato.caldoModello = m.caldo >= CALDO_MINIMO ? m.caldo : 0
   return stato
 }
 
@@ -136,9 +143,11 @@ export function cercaNuotatore(ctx, stato, dt, movimentoCamera) {
   const area = Math.max(1, (2 * half + 1) * (Math.round(f.yb) - Math.round(f.ya) + 1))
   // somma scorrevole degli istogrammi di colonna = istogramma del riquadro in ogni posizione
   const acc = new Float32Array(N_BIN)
-  let fgAcc = 0
+  let fgAcc = 0, caAcc = 0
+  const conPelle = stato.caldoModello > 0
   const aggiungi = (i, segno) => {
     fgAcc += segno * col.fg[i]
+    caAcc += segno * col.ca[i]
     const o = i * N_BIN
     for (let k = 0; k < N_BIN; k++) acc[k] += segno * col.h[o + k]
   }
@@ -158,8 +167,12 @@ export function cercaNuotatore(ctx, stato, dt, movimentoCamera) {
     const conf = bc * presenza
     const x = xa + c
     const prior = Math.exp(-((x - xPrev) ** 2) / (2 * sigma * sigma))
-    // per decidere DOVE: somiglianza × quantità di nuotatore nel riquadro (massima quando lo copre tutto)
-    risultati.push({ x, conf, bc, rapp, punteggio: bc * Math.min(1.5, rapp) * (0.35 + 0.65 * prior) })
+    // per decidere DOVE: somiglianza × quantità di nuotatore nel riquadro (massima quando lo copre tutto).
+    // Con la pelle visibile conta soprattutto quanta pelle c'è: la scia è "nuotatore" per diversità
+    // dall'acqua e per colori, ma non è calda.
+    let quanto = Math.min(1.5, rapp)
+    if (conPelle) quanto = 0.3 * quanto + 0.7 * Math.min(1.5, Math.max(0, caAcc) / area / stato.caldoModello)
+    risultati.push({ x, conf, bc, rapp, punteggio: bc * quanto * (0.35 + 0.65 * prior) })
   }
   if (!risultati.length) return { x: xPrev, y: stato.y, conf: 0, trovato: false, previsto: xPrev }
   let b = 0
@@ -220,6 +233,8 @@ export function applicaPasso(ctx, stato, r, dt, movimentoCamera, corsie) {
       const a = r.rinnova ? 0.5 : 0.08
       for (let k = 0; k < N_BIN; k++) stato.modello[k] = (1 - a) * stato.modello[k] + a * m.hist[k]
       stato.fgModello = (1 - a / 2) * stato.fgModello + (a / 2) * Math.max(0.05, m.fg)
+      // la pelle visibile cambia con la bracciata: il riferimento si adatta piano, senza mai sparire
+      if (stato.caldoModello > 0) stato.caldoModello = Math.max(CALDO_MINIMO, (1 - a / 2) * stato.caldoModello + (a / 2) * m.caldo)
     }
   } else {
     // nessun numero inventato: lo stato segue solo la previsione per sapere dove cercare
