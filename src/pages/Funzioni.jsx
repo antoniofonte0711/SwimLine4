@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { funzioniConsentite, IN_ARRIVO, mostraInArrivo } from '../lib/permessi'
+import { funzioniConsentite, IN_ARRIVO, SOLO_ANTEPRIMA, mostraInArrivo } from '../lib/permessi'
 import AppShell from '../components/AppShell'
 import { percorsoAttivo, useRegole } from '../lib/regole'
 import Icona from '../components/Icona'
@@ -20,6 +20,7 @@ const GRUPPI = [
     ['/gare', 'coppa', 'Gare', 'Prossime gare e risultati'],
     ['/archivio', 'archivio', 'Archivio gare'],
     ['/video', 'video', 'Video'],
+    ['/analisi-video', 'video', 'Analisi video'],
   ]],
   ['Squadra', [
     ['/presenze', 'spunta', 'Presenze'],
@@ -41,6 +42,7 @@ const GRUPPI_COACH = [
     ['/previsioni', 'futuro', 'Previsioni', 'Che tempi può fare a fine stagione'],
     ['/record', 'medaglia', 'Record', 'I migliori tempi della squadra'],
     ['/punti', 'stella', 'Punti e premi', 'Premi per motivare gli atleti'],
+    ['/analisi-video', 'video', 'Analisi video', "La velocità dell'atleta calcolata dal video"],
   ]],
   ['Impostazioni', [
     ['/impostazioni', 'regolazioni', 'Persone della squadra', 'Aggiungi o togli atleti e genitori'],
@@ -109,7 +111,7 @@ export default function Funzioni() {
   const { puo } = useRegole()
   const consentite = funzioniConsentite(ruolo)
   // sezioni in arrivo: in sviluppo/anteprima sempre, per gli utenti solo se accese dal Pannello
-  const visibile = ([percorso]) => consentite.includes(percorso) && percorsoAttivo(percorso, ruolo, (k) => (IN_ARRIVO.includes(percorso) && mostraInArrivo) || puo(k))
+  const visibile = ([percorso]) => consentite.includes(percorso) && (!SOLO_ANTEPRIMA.includes(percorso) || mostraInArrivo) && percorsoAttivo(percorso, ruolo, (k) => (IN_ARRIVO.includes(percorso) && mostraInArrivo) || puo(k))
   const coach = ruolo === 'coach'
   const atleta = ruolo === 'atleta'
   const genitore = ruolo === 'genitore'

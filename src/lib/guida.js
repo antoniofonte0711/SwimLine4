@@ -394,6 +394,15 @@ export const GUIDA = [
     id: 'video', titolo: 'Video', pagine: ['/video'], per: TUTTI,
     passi: [['Attualmente non in funzione', 'Per ora non si possono caricare né guardare video: la sezione arriverà più avanti.']],
   },
+  {
+    id: 'analisi-video', titolo: 'Analisi video', pagine: ['/analisi-video'], per: ['coach', 'admin'],
+    passi: [
+      ['Scegli un video', 'Dal telefono o dal PC. Il video resta sul dispositivo: non va su nessun server e non viene salvato. Quando chiudi, viene tolto.'],
+      ['Guarda a tutto schermo', 'Tocca il video per avviarlo o fermarlo. Le frecce vanno avanti e indietro di un fotogramma, 1× / 0,5× / 0,25× rallenta.'],
+      ['Riquadri in basso a destra', 'Velocità istantanea (grande) e media (piccolo), in m/s. Il trattino "—" vuol dire nessun numero affidabile: il calcolo arriva nei prossimi passi.'],
+      ['Screenshot', 'Salva il fotogramma con i riquadri: sul PC si scarica, sul telefono scegli "Salva immagine".'],
+    ],
+  },
 
   // ---------- Admin ----------
   {

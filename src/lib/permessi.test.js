@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest'
 import { percorsoConsentito, puoModificare, funzioniConsentite, nomeRuolo } from './permessi'
 
 describe('percorsoConsentito', () => {
-  it('presenze e impostazioni solo per coach e admin', () => {
-    for (const p of ['/presenze', '/impostazioni']) {
+  it('presenze, impostazioni e analisi video solo per coach e admin', () => {
+    for (const p of ['/presenze', '/impostazioni', '/analisi-video']) {
       expect(percorsoConsentito('coach', p)).toBe(true)
       expect(percorsoConsentito('admin', p)).toBe(true)
       expect(percorsoConsentito('atleta', p)).toBe(false)

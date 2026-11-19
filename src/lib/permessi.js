@@ -12,7 +12,7 @@ const TUTTE = [
   '/record', '/archivio', '/squadra', '/calendario', '/punti',
 ]
 // Solo admin e coach (anche quando l'admin guarda l'app come coach)
-const SOLO_COACH = ['/presenze', '/impostazioni', '/lavori']
+const SOLO_COACH = ['/presenze', '/impostazioni', '/lavori', '/analisi-video']
 
 const PERMESSI = {
   admin: [...TUTTE, ...SOLO_COACH],
@@ -24,6 +24,8 @@ const PERMESSI = {
 
 // Sezioni non ancora pronte: si vedono in sviluppo e nell'anteprima Vercel, non agli utenti veri
 export const IN_ARRIVO = ['/archivio']
+// In costruzione: solo in sviluppo e nell'anteprima Vercel, mai agli utenti veri (nemmeno se acceso dal Pannello)
+export const SOLO_ANTEPRIMA = ['/analisi-video']
 // Video: la sezione si vede, ma caricare e guardare video non è ancora attivo (spazio Supabase insufficiente)
 export const VIDEO_ATTIVI = false
 export const AVVISO_VIDEO = 'Video: attualmente non in funzione.'
