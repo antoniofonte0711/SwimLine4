@@ -4,6 +4,7 @@
 // dati = {
 //   istantanea: m/s | null      null = nessun numero affidabile: si mostra "—", mai un valore inventato
 //   media: m/s | null
+//   ciclo: m/s | null | undefined   media dell'ultimo ciclo (solo delfino e rana; undefined = non mostrare)
 //   fase: 'subacquea' | 'superficie' | null
 //   affidabilita: 'alta' | 'media' | 'bassa' | null
 // }
@@ -82,7 +83,8 @@ function riquadro(ctx, { x, y, w, h, u, etichetta, valore, colore, grande }) {
 // margineBasso: spazio da lasciare libero in fondo (sullo schermo ci sono i comandi)
 export function disegnaRiquadri(ctx, r, dati = {}, { margineBasso = 0 } = {}) {
   // unità: i riquadri crescono con il video ma restano leggibili anche su un telefono piccolo
-  const u = Math.min(Math.max(Math.min(r.w, r.h) / 380, 0.75), 3)
+  // (massimo 1,5: su un PC grande riquadri più grossi coprirebbero la vasca)
+  const u = Math.min(Math.max(Math.min(r.w, r.h) / 380, 0.75), 1.5)
   const pad = 12 * u
   const colore = COLORI_AFFIDABILITA[dati.affidabilita] || GRIGIO
 
@@ -97,6 +99,9 @@ export function disegnaRiquadri(ctx, r, dati = {}, { margineBasso = 0 } = {}) {
   const py = fondo - ph
 
   riquadro(ctx, { x: px, y: py, w: pw, h: ph, u, etichetta: 'Media', valore: scriviVelocita(dati.media), colore, grande: false })
+  if (dati.ciclo !== undefined) {
+    riquadro(ctx, { x: px - 8 * u - pw, y: py, w: pw, h: ph, u, etichetta: 'Ciclo', valore: scriviVelocita(dati.ciclo), colore, grande: false })
+  }
   riquadro(ctx, { x: gx, y: gy, w: gw, h: gh, u, etichetta: 'Velocità', valore: scriviVelocita(dati.istantanea), colore, grande: true })
 
   // fase: pastiglia sopra il riquadro grande
@@ -117,4 +122,31 @@ export function disegnaRiquadri(ctx, r, dati = {}, { margineBasso = 0 } = {}) {
     ctx.fillText(testo, fx + 11 * u, fy + fh / 2 + 0.5 * u)
     ctx.restore()
   }
+}
+
+// Riquadro attorno al nuotatore seguito (per controllare che l'app segua quello giusto).
+// c = campione del motore (pixel di analisi), k = pixel dello schermo per pixel di analisi
+export function disegnaInseguimento(ctx, r, k, c, affidabilita) {
+  if (!c) return
+  const x = r.x + (c.trovato ? c.x : c.xPrevisto) * k
+  const yy = c.y ?? null
+  const altezza = c.sopra && c.sotto
+    ? Math.abs((c.sotto.a + c.sotto.b * ((c.x ?? c.xPrevisto) - c.sotto.xc)) - (c.sopra.a + c.sopra.b * ((c.x ?? c.xPrevisto) - c.sopra.xc)))
+    : c.bw * 0.6
+  const y = r.y + (yy ?? (c.sopra && c.sotto ? (c.sopra.a + c.sotto.a) / 2 : 0)) * k
+  const bw = c.bw * k
+  const bh = altezza * 0.8 * k
+  ctx.save()
+  ctx.lineWidth = 2
+  ctx.setLineDash(c.trovato ? [] : [6, 5])
+  ctx.strokeStyle = c.trovato ? (COLORI_AFFIDABILITA[affidabilita] || '#ffffff') : 'rgba(255,255,255,0.6)'
+  rettangoloTondo(ctx, x - bw / 2, y - bh / 2, bw, bh, 8)
+  ctx.stroke()
+  if (!c.trovato) {
+    ctx.font = `700 12px ${DISPLAY}`
+    ctx.fillStyle = 'rgba(255,255,255,0.85)'
+    ctx.textAlign = 'center'
+    ctx.fillText('lo sto cercando…', x, y - bh / 2 - 6)
+  }
+  ctx.restore()
 }

@@ -10,6 +10,7 @@ const ICONE = {
   spunta: <><rect x="4" y="4" width="16" height="16" rx="4" /><path d="M8.5 12.5l2.5 2.5 4.5-5" /></>,
   coppa: <><path d="M8 4h8v5a4 4 0 0 1-8 0z" /><path d="M8 6H5.5a2.5 2.5 0 0 0 2.7 4" /><path d="M16 6h2.5a2.5 2.5 0 0 1-2.7 4" /><path d="M12 13v4" /><path d="M8.5 20h7" /><path d="M10 17h4" /></>,
   video: <><rect x="3" y="6" width="13" height="12" rx="3" /><path d="M16 10.5l5-3v9l-5-3" /></>,
+  fotocamera: <><path d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.8l1.4-2h4.6l1.4 2h1.8A2.5 2.5 0 0 1 20 8.5v9a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 17.5z" /><circle cx="12" cy="13" r="3.5" /></>,
   medaglia: <><path d="M7.5 3l3 6.5" /><path d="M16.5 3l-3 6.5" /><circle cx="12" cy="15" r="5.5" /><path d="M12 12.5v5" /></>,
   archivio: <><rect x="3" y="4" width="18" height="5" rx="1.5" /><path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9" /><path d="M10 13h4" /></>,
   gruppo: <><circle cx="9" cy="8" r="3.2" /><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5" /><circle cx="17" cy="9" r="2.5" /><path d="M17 14.5c2.4 0 4 1.8 4 4.5" /></>,

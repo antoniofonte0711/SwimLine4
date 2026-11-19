@@ -9,7 +9,7 @@ import react from '@vitejs/plugin-react'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const FINTO = path.resolve(__dirname, 'supabaseClient.js')
-const BACKUP = 'C:/Users/maipa/Documents/SwimLine4-backup'
+const BACKUP = 'C:/Users/maipa/Documents/Progetti/SwimLine4-backup'
 
 export default defineConfig({
   root: path.resolve(__dirname, '../..'),

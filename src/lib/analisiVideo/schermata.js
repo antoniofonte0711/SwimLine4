@@ -27,15 +27,14 @@ export function nomeSchermata(secondi) {
   return `swimline4-analisi-${g}-${t}s.png`
 }
 
-// Ritorna un messaggio da mostrare all'utente
-export async function salvaSchermata(video, dati) {
-  const blob = await inBlob(canvasSchermata(video, dati))
-  const nome = nomeSchermata(video.currentTime)
-  const file = new File([blob], nome, { type: 'image/png' })
+// Salva un file: su telefono con "Condividi" (da lì si mette nelle foto o si manda), su PC scaricandolo.
+// Ritorna un messaggio da mostrare all'utente.
+export async function salvaFile(blob, nome) {
+  const file = new File([blob], nome, { type: blob.type })
   if (eTelefono() && navigator.canShare?.({ files: [file] })) {
     try {
       await navigator.share({ files: [file] })
-      return 'Immagine pronta: scegli "Salva immagine" per metterla nelle foto.'
+      return 'Pronto: scegli dove salvarlo (Foto, File) o a chi mandarlo.'
     } catch (e) {
       if (e?.name === 'AbortError') return ''
       // condivisione non riuscita: si ripiega sul download
@@ -47,6 +46,11 @@ export async function salvaSchermata(video, dati) {
   document.body.appendChild(a)
   a.click()
   a.remove()
-  setTimeout(() => URL.revokeObjectURL(a.href), 2000)
-  return 'Immagine scaricata.'
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000)
+  return 'Salvato nella cartella dei download.'
+}
+
+export async function salvaSchermata(video, dati) {
+  const blob = await inBlob(canvasSchermata(video, dati))
+  return salvaFile(blob, nomeSchermata(video.currentTime))
 }

@@ -397,10 +397,12 @@ export const GUIDA = [
   {
     id: 'analisi-video', titolo: 'Analisi video', pagine: ['/analisi-video'], per: ['coach', 'admin'],
     passi: [
-      ['Scegli un video', 'Dal telefono o dal PC. Il video resta sul dispositivo: non va su nessun server e non viene salvato. Quando chiudi, viene tolto.'],
-      ['Guarda a tutto schermo', 'Tocca il video per avviarlo o fermarlo. Le frecce vanno avanti e indietro di un fotogramma, 1× / 0,5× / 0,25× rallenta.'],
-      ['Riquadri in basso a destra', 'Velocità istantanea (grande) e media (piccolo), in m/s. Il trattino "—" vuol dire nessun numero affidabile: il calcolo arriva nei prossimi passi.'],
-      ['Screenshot', 'Salva il fotogramma con i riquadri: sul PC si scarica, sul telefono scegli "Salva immagine".'],
+      ['Scegli un video', 'Dal telefono o dal PC. Il video resta sul dispositivo: non va su nessun server e non viene salvato. Quando chiudi, viene tolto insieme all’analisi.'],
+      ['Analizza', 'Metti in pausa dove vuoi iniziare e premi Analizza: scegli camera (ferma o in movimento), stile e quanto analizzare, poi tocca il nuotatore. L’app lo segue anche se altri lo superano (resta nella sua corsia).'],
+      ['Scala in metri', 'Con camera ferma: tocca i cambi di colore della corsia (5 m, 15 m…) su tutte e due le file di galleggianti (minimo 3 punti, meglio 6). Con camera in movimento la scala la cerco anche da sola dai cambi di colore; se la corsia è di un solo colore, impostala tu.'],
+      ['Riquadri in basso a destra', 'Velocità istantanea (grande) e media, in m/s; in delfino e rana anche la media dell’ultimo ciclo. Sopra: subacquea o superficie. La barretta colorata dice quanto fidarsi: verde alta, arancione media, rossa bassa. "—" = numero non affidabile, mai inventato.'],
+      ['Punti dubbi', 'A fine analisi Risultati elenca i tratti in cui il nuotatore si è perso o la misura è incerta: Correggi, tocca il nuotatore giusto e l’app rifà quel pezzo.'],
+      ['Controllo e video', 'Risultati mostra distanza e tempo misurati: confrontali con un tratto noto e il cronometro. Scarica video con i dati crea il video con i riquadri sul tuo dispositivo (dura quanto il tratto). Screenshot: sul PC si scarica, sul telefono scegli Salva immagine.'],
     ],
   },
 

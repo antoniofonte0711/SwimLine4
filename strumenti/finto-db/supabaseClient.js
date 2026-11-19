@@ -1,6 +1,6 @@
 // FINTO database in memoria per vedere il layout senza toccare nessun Supabase.
 // Dati = copia del backup di produzione dell'8 ottobre. Le scritture restano in memoria.
-import dati from 'C:/Users/maipa/Documents/SwimLine4-backup/2026-10-08/dati-produzione.json'
+import dati from 'C:/Users/maipa/Documents/Progetti/SwimLine4-backup/2026-10-08/dati-produzione.json'
 
 const tabelle = {}
 for (const [k, v] of Object.entries(dati)) if (Array.isArray(v)) tabelle[k] = structuredClone(v)

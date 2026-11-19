@@ -1,12 +1,20 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import AppShell from '../components/AppShell'
 import Icona from '../components/Icona'
-import { disegnaRiquadri, rettangoloVideo } from '../lib/analisiVideo/overlay'
-import { salvaSchermata } from '../lib/analisiVideo/schermata'
+import { disegnaInseguimento, disegnaRiquadri, rettangoloVideo } from '../lib/analisiVideo/overlay'
+import { salvaFile, salvaSchermata } from '../lib/analisiVideo/schermata'
+import { calibra } from '../lib/analisiVideo/calibrazione'
+import { disegnaScala } from '../lib/analisiVideo/disegnoScala'
+import { valoriAl } from '../lib/analisiVideo/serie'
+import { correggi, eseguiAnalisi } from '../lib/analisiVideo/analisi'
+import { esportaVideo, esportazionePossibile } from '../lib/analisiVideo/esporta'
+import { FoglioDistanza, PannelloScala } from '../components/analisiVideo/PannelloScala'
+import { PannelloAnalisi, PannelloRisultati } from '../components/analisiVideo/PannelloAnalisi'
 
-// Analisi video (passo 1): si carica un video dal dispositivo, si guarda a tutto schermo con i riquadri
-// della velocità e si salvano screenshot. Il video NON va su nessun server e non entra nel database:
-// resta nella memoria del browser e viene tolto quando si chiude.
+// Analisi video: si carica un video dal dispositivo, si imposta la scala, si tocca il nuotatore e l'app
+// calcola velocità istantanea, media (e per ciclo in delfino e rana), fase e affidabilità, scritte sopra il video.
+// Il video NON va su nessun server e non entra nel database: resta nella memoria del browser e viene tolto
+// quando si chiude. Si conservano solo gli screenshot o il video con i dati che il coach decide di salvare.
 
 // Messaggi chiari per i video che il dispositivo non riesce ad aprire
 function messaggioErrore(codice) {
@@ -24,16 +32,27 @@ export function scriviTempo(s) {
 }
 
 const VELOCITA_RIPRODUZIONE = [1, 0.5, 0.25]
-const PASSO = 1 / 30 // un fotogramma a 30 fps: il vero numero di fotogrammi arriva con l'analisi
+const PASSO = 1 / 30
+const VUOTO = { istantanea: null, media: null, fase: null, affidabilita: null }
 
-// Dati dei riquadri al tempo t. Per ora nessuna analisi: riquadri vuoti ("—"), mai numeri inventati.
-const datiAlTempo = () => ({ istantanea: null, media: null, fase: null, affidabilita: null })
+// campione più vicino al tempo t
+function campioneAl(campioni, t) {
+  if (!campioni?.length || t < campioni[0].t - 0.1 || t > campioni[campioni.length - 1].t + 0.1) return null
+  let lo = 0, hi = campioni.length - 1
+  while (hi - lo > 1) {
+    const m = (lo + hi) >> 1
+    if (campioni[m].t <= t) lo = m
+    else hi = m
+  }
+  return Math.abs(campioni[hi].t - t) < Math.abs(campioni[lo].t - t) ? campioni[hi] : campioni[lo]
+}
 
 function Lettore({ url, nome, onChiudi }) {
   const videoRef = useRef(null)
   const canvasRef = useRef(null)
-  const contRef = useRef(null)
+  const areaRef = useRef(null) // zona del video (con un pannello aperto lascia spazio sotto)
   const comandiRef = useRef(null)
+  const pannelloRef = useRef(null)
   const [pronto, setPronto] = useState(false)
   const [inPausa, setInPausa] = useState(true)
   const [tempo, setTempo] = useState(0)
@@ -42,15 +61,44 @@ function Lettore({ url, nome, onChiudi }) {
   const [errore, setErrore] = useState('')
   const [esito, setEsito] = useState('')
 
-  // Disegna i riquadri sopra il video (canvas grande quanto lo schermo, nitido sui display ad alta densità)
+  // 'guarda' | 'scala' | 'prepara' (pannello analisi, si tocca il nuotatore) | 'risultati' | 'correggi'
+  const [modo, setModo] = useState('guarda')
+  const [dopoScala, setDopoScala] = useState('guarda')
+
+  // Scala in metri
+  const [punti, setPunti] = useState([]) // [{ x, y, d, lato }] in pixel del video
+  const [tCalib, setTCalib] = useState(0)
+  const [vasca, setVasca] = useState(25)
+  const [foglio, setFoglio] = useState(null) // { indice } oppure { nuovo: { x, y } }
+  const [ultimoLato, setUltimoLato] = useState(0)
+  const [altezzaPannello, setAltezzaPannello] = useState(0)
+  const ris = useMemo(() => (punti.length ? calibra(punti) : null), [punti])
+
+  // Analisi
+  const [opzioni, setOpzioni] = useState({ camera: 'ferma', stile: 'crawl', durata: null })
+  const [analisi, setAnalisi] = useState(null) // stato del motore: campioni, serie, scala, avanzamento, finito
+  const [inCorso, setInCorso] = useState(false)
+  const [dubbioDaCorreggere, setDubbioDaCorreggere] = useState(null)
+  const [scaricando, setScaricando] = useState(null)
+  const annullaRef = useRef(false)
+  const stileAnalisi = useRef('crawl')
+
+  const stato = useRef({})
+  stato.current = { modo, punti, ris, vasca, analisi }
+  // solo in sviluppo: per le verifiche dalla console
+  useEffect(() => { if (import.meta.env.DEV) window.__analisiVideo = analisi }, [analisi])
+
+  const conPannello = modo === 'scala' || modo === 'prepara' || modo === 'risultati'
+
+  // Disegna sopra il video: riquadri della velocità e riquadro attorno al nuotatore, oppure punti della scala
   const disegna = useCallback(() => {
     const v = videoRef.current
     const c = canvasRef.current
-    const cont = contRef.current
-    if (!v || !c || !cont) return
+    const area = areaRef.current
+    if (!v || !c || !area) return
     const dpr = window.devicePixelRatio || 1
-    const cw = cont.clientWidth
-    const ch = cont.clientHeight
+    const cw = area.clientWidth
+    const ch = area.clientHeight
     if (c.width !== Math.round(cw * dpr) || c.height !== Math.round(ch * dpr)) {
       c.width = Math.round(cw * dpr)
       c.height = Math.round(ch * dpr)
@@ -60,13 +108,25 @@ function Lettore({ url, nome, onChiudi }) {
     ctx.clearRect(0, 0, cw, ch)
     if (!v.videoWidth) return
     const r = rettangoloVideo(cw, ch, v.videoWidth, v.videoHeight)
+    const s = stato.current
+    if (s.modo === 'scala') {
+      disegnaScala(ctx, r, v.videoWidth, s.punti, s.ris, s.vasca)
+      return
+    }
+    const dati = s.analisi?.serie ? valoriAl(s.analisi.serie, v.currentTime, stileAnalisi.current) : VUOTO
+    if (s.analisi) {
+      const camp = campioneAl(s.analisi.campioni, v.currentTime)
+      if (camp) disegnaInseguimento(ctx, r, (r.w / v.videoWidth) * s.analisi.fattore, camp, dati.affidabilita)
+    }
     // se i comandi in basso coprono il video, i riquadri salgono sopra di loro
-    const hComandi = comandiRef.current?.offsetHeight || 0
+    const hComandi = s.modo === 'guarda' ? comandiRef.current?.offsetHeight || 0 : 0
     const coperto = Math.max(0, r.y + r.h - (ch - hComandi))
-    disegnaRiquadri(ctx, r, datiAlTempo(v.currentTime), { margineBasso: coperto })
+    disegnaRiquadri(ctx, r, dati, { margineBasso: coperto })
   }, [])
 
-  // Aggiorna tempo e riquadri a ogni fotogramma mostrato (requestVideoFrameCallback dove c'è, sennò animazione)
+  useEffect(() => { disegna() }, [modo, punti, ris, vasca, analisi, altezzaPannello, disegna])
+
+  // Aggiorna tempo e disegno a ogni fotogramma mostrato
   useEffect(() => {
     const v = videoRef.current
     if (!v) return
@@ -89,15 +149,24 @@ function Lettore({ url, nome, onChiudi }) {
 
   useEffect(() => {
     const ro = new ResizeObserver(disegna)
-    if (contRef.current) ro.observe(contRef.current)
+    if (areaRef.current) ro.observe(areaRef.current)
     return () => ro.disconnect()
   }, [disegna])
 
-  // Mentre il lettore è aperto la pagina sotto non scorre
+  // altezza del pannello aperto: il video si restringe sopra di lui, così nulla resta coperto
+  useEffect(() => {
+    if (!conPannello || !pannelloRef.current) { setAltezzaPannello(0); return }
+    const el = pannelloRef.current
+    const ro = new ResizeObserver(() => setAltezzaPannello(el.offsetHeight))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [conPannello, modo])
+
+  // Mentre il lettore è aperto la pagina sotto non scorre; chiudendo si ferma l'analisi
   useEffect(() => {
     const prima = document.body.style.overflow
     document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = prima }
+    return () => { document.body.style.overflow = prima; annullaRef.current = true }
   }, [])
 
   const playPausa = useCallback(() => {
@@ -124,14 +193,14 @@ function Lettore({ url, nome, onChiudi }) {
   // Tastiera (PC): spazio = play/pausa, frecce = un fotogramma
   useEffect(() => {
     const tasto = (e) => {
-      if (e.target.closest?.('input, textarea, select')) return
+      if (e.target.closest?.('input, textarea, select') || foglio) return
       if (e.key === ' ') { e.preventDefault(); playPausa() }
       else if (e.key === 'ArrowRight') { e.preventDefault(); fotogramma(1) }
       else if (e.key === 'ArrowLeft') { e.preventDefault(); fotogramma(-1) }
     }
     window.addEventListener('keydown', tasto)
     return () => window.removeEventListener('keydown', tasto)
-  }, [playPausa, fotogramma])
+  }, [playPausa, fotogramma, foglio])
 
   function caricato() {
     const v = videoRef.current
@@ -172,7 +241,8 @@ function Lettore({ url, nome, onChiudi }) {
     v.pause()
     setEsito('')
     try {
-      setEsito(await salvaSchermata(v, datiAlTempo(v.currentTime)))
+      const dati = analisi?.serie ? valoriAl(analisi.serie, v.currentTime, stileAnalisi.current) : VUOTO
+      setEsito(await salvaSchermata(v, dati))
     } catch {
       setEsito('Screenshot non riuscito su questo dispositivo.')
     }
@@ -180,35 +250,195 @@ function Lettore({ url, nome, onChiudi }) {
 
   useEffect(() => {
     if (!esito) return
-    const t = setTimeout(() => setEsito(''), 4000)
+    const t = setTimeout(() => setEsito(''), 5000)
     return () => clearTimeout(t)
   }, [esito])
 
+  // ---- Tocchi sul video: punti della scala, nuotatore da seguire, correzione ----
+  // da coordinate dello schermo a pixel del video (null se fuori dall'immagine)
+  function aVideo(e) {
+    const v = videoRef.current
+    const area = areaRef.current
+    const b = area.getBoundingClientRect()
+    const r = rettangoloVideo(b.width, b.height, v.videoWidth, v.videoHeight)
+    const sx = e.clientX - b.left
+    const sy = e.clientY - b.top
+    if (sx < r.x || sx > r.x + r.w || sy < r.y || sy > r.y + r.h) return null
+    const k = v.videoWidth / r.w
+    return { x: (sx - r.x) * k, y: (sy - r.y) * k, k }
+  }
+  const trascina = useRef(null)
+  function giu(e) {
+    if (!pronto) return
+    const p = aVideo(e)
+    if (!p) return
+    e.currentTarget.setPointerCapture?.(e.pointerId)
+    let vicino = -1
+    if (modo === 'scala') {
+      // punto esistente entro 24 px sullo schermo: si trascina (o, se non si muove, si modifica)
+      let min = 24 * p.k
+      punti.forEach((q, i) => {
+        const dist = Math.hypot(q.x - p.x, q.y - p.y)
+        if (dist < min) { min = dist; vicino = i }
+      })
+    }
+    trascina.current = { indice: vicino, x0: e.clientX, y0: e.clientY, mosso: false, inizio: p }
+  }
+  function muovi(e) {
+    const t = trascina.current
+    if (!t || t.indice < 0) return
+    if (!t.mosso && Math.hypot(e.clientX - t.x0, e.clientY - t.y0) < 6) return
+    t.mosso = true
+    const p = aVideo(e)
+    if (!p) return
+    setPunti((pp) => pp.map((q, i) => (i === t.indice ? { ...q, x: p.x, y: p.y } : q)))
+  }
+  function su() {
+    const t = trascina.current
+    trascina.current = null
+    if (!t || t.mosso) return
+    if (modo === 'prepara') { avviaAnalisi(t.inizio); return }
+    if (modo === 'correggi') { avviaCorrezione(t.inizio); return }
+    if (t.indice >= 0) setFoglio({ indice: t.indice })
+    else setFoglio({ nuovo: { x: t.inizio.x, y: t.inizio.y } })
+  }
+  function confermaDistanza({ d, lato }) {
+    setUltimoLato(lato)
+    if (foglio.nuovo) {
+      if (!punti.length) setTCalib(videoRef.current?.currentTime || 0)
+      setPunti((pp) => [...pp, { ...foglio.nuovo, d, lato }])
+    } else setPunti((pp) => pp.map((q, i) => (i === foglio.indice ? { ...q, d, lato } : q)))
+    setFoglio(null)
+  }
+  function apriScala(ritorno = 'guarda') {
+    videoRef.current?.pause()
+    setDopoScala(ritorno)
+    setModo('scala')
+  }
+
+  // ---- Analisi ----
+  function apriAnalisi() {
+    videoRef.current?.pause()
+    setModo(analisi && !inCorso ? 'risultati' : 'prepara')
+  }
+
+  async function avviaAnalisi(tap) {
+    const v = videoRef.current
+    const tInizio = v.currentTime
+    const tFine = opzioni.durata ? Math.min(durata, tInizio + opzioni.durata) : durata
+    stileAnalisi.current = opzioni.stile
+    annullaRef.current = false
+    setModo('guarda')
+    setInCorso(true)
+    setAnalisi(null)
+    try {
+      const fine = await eseguiAnalisi(
+        { url, tInizio, tFine, tap, camera: opzioni.camera, stile: opzioni.stile, vasca, calib: ris?.ok ? ris : null, punti, tCalib },
+        { onAggiornamento: (s) => setAnalisi({ ...s }), annullato: () => annullaRef.current },
+      )
+      if (annullaRef.current) { setAnalisi(null); return }
+      setAnalisi({ ...fine, avanzamento: 1, finito: true })
+      setModo('risultati')
+    } catch {
+      setEsito('Analisi non riuscita: il video non si riesce a leggere fotogramma per fotogramma su questo dispositivo.')
+      setAnalisi(null)
+    } finally {
+      setInCorso(false)
+    }
+  }
+
+  function chiediCorrezione(d) {
+    setDubbioDaCorreggere(d)
+    vaiA(d.da)
+    setModo('correggi')
+  }
+
+  async function avviaCorrezione(tap) {
+    const d = dubbioDaCorreggere
+    if (!d || !analisi) return
+    setModo('guarda')
+    setInCorso(true)
+    annullaRef.current = false
+    try {
+      await correggi(analisi, { da: d.da, a: d.a, tap }, { onAggiornamento: (s) => setAnalisi({ ...s }), annullato: () => annullaRef.current })
+      setEsito('Correzione fatta.')
+      setModo('risultati')
+    } catch {
+      setEsito('Correzione non riuscita.')
+    } finally {
+      setInCorso(false)
+      setDubbioDaCorreggere(null)
+    }
+  }
+
+  async function scaricaVideo() {
+    if (!analisi?.serie?.t.length) return
+    setScaricando(0)
+    annullaRef.current = false
+    try {
+      const t = analisi.serie.t
+      const r = await esportaVideo({
+        url, da: t[0], a: t[t.length - 1], serie: analisi.serie, stile: stileAnalisi.current,
+        onAvanzamento: (p) => setScaricando(p), annullato: () => annullaRef.current,
+      })
+      if (r) setEsito(await salvaFile(r.blob, `swimline4-analisi.${r.estensione}`))
+    } catch {
+      setEsito('Su questo dispositivo non si riesce a creare il video. Usa gli screenshot.')
+    } finally {
+      setScaricando(null)
+    }
+  }
+
+  function chiudi() {
+    if (analisi && !window.confirm('Chiudere il video? L\'analisi non viene salvata e andrà persa.')) return
+    annullaRef.current = true
+    onChiudi()
+  }
+
+  const tocchiAttivi = modo === 'scala' || modo === 'prepara' || modo === 'correggi'
+  const avanzamento = inCorso && analisi ? analisi.avanzamento : inCorso ? 0 : null
+
   return (
-    <div ref={contRef} className="fixed inset-0 z-[70] bg-black text-white select-none" role="dialog" aria-label={`Analisi video: ${nome}`}>
-      {/* "#t=0.001": su iPhone senza questo il primo fotogramma resta nero finché non si preme play */}
-      <video ref={videoRef} src={`${url}#t=0.001`} playsInline preload="auto"
-        className="absolute inset-0 w-full h-full object-contain"
-        onLoadedMetadata={caricato}
-        onLoadedData={disegna}
-        onSeeked={disegna}
-        onPlay={() => setInPausa(false)}
-        onPause={() => setInPausa(true)}
-        onEnded={() => setInPausa(true)}
-        onError={(e) => setErrore(messaggioErrore(e.currentTarget.error?.code))}
-        onClick={playPausa} />
-      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" aria-hidden="true" />
+    <div className="fixed inset-0 z-[70] bg-black text-white select-none" role="dialog" aria-label={`Analisi video: ${nome}`}>
+      <div ref={areaRef} className="absolute inset-x-0 top-0" style={{ bottom: conPannello ? altezzaPannello : 0 }}>
+        {/* "#t=0.001": su iPhone senza questo il primo fotogramma resta nero finché non si preme play */}
+        <video ref={videoRef} src={`${url}#t=0.001`} playsInline preload="auto"
+          className="absolute inset-0 w-full h-full object-contain"
+          onLoadedMetadata={caricato}
+          onLoadedData={disegna}
+          onSeeked={disegna}
+          onPlay={() => setInPausa(false)}
+          onPause={() => setInPausa(true)}
+          onEnded={() => setInPausa(true)}
+          onError={(e) => setErrore(messaggioErrore(e.currentTarget.error?.code))}
+          onClick={modo === 'guarda' ? playPausa : undefined} />
+        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" aria-hidden="true" />
+        {tocchiAttivi && (
+          <div className="absolute inset-0 cursor-crosshair" style={{ touchAction: 'none' }}
+            onPointerDown={giu} onPointerMove={muovi} onPointerUp={su} onPointerCancel={() => { trascina.current = null }}
+            aria-label={modo === 'scala' ? 'Tocca un punto della vasca di cui conosci la distanza dalla parete' : 'Tocca il nuotatore da seguire'} />
+        )}
+      </div>
 
       {/* Fascia in alto: riservata alle informazioni che arriveranno (per ora vuota). A destra solo "chiudi". */}
-      <div className="absolute top-0 inset-x-0 bg-gradient-to-b from-black/60 to-transparent pt-[env(safe-area-inset-top)]">
+      <div className="absolute top-0 inset-x-0 bg-gradient-to-b from-black/60 to-transparent pt-[env(safe-area-inset-top)] pointer-events-none">
         <div className="h-14 px-3 flex items-center justify-end gap-2">
           <div data-fascia-info className="flex-1 min-w-0" />
-          <button type="button" onClick={onChiudi} aria-label="Chiudi e togli il video"
-            className="shrink-0 w-11 h-11 rounded-full bg-black/50 flex items-center justify-center text-2xl leading-none">
+          <button type="button" onClick={chiudi} aria-label="Chiudi e togli il video"
+            className="pointer-events-auto shrink-0 w-11 h-11 rounded-full bg-black/50 flex items-center justify-center text-2xl leading-none">
             ×
           </button>
         </div>
       </div>
+
+      {modo === 'correggi' && (
+        <div className="absolute top-[calc(env(safe-area-inset-top)+3.75rem)] inset-x-0 flex justify-center px-4">
+          <div className="bg-blue-500 rounded-campo px-4 py-2 text-sm font-bold flex items-center gap-3 shadow-flottante">
+            Tocca il nuotatore giusto ({scriviTempo(dubbioDaCorreggere?.da)})
+            <button type="button" onClick={() => setModo('risultati')} className="underline">Annulla</button>
+          </div>
+        </div>
+      )}
 
       {errore && (
         <div className="absolute inset-0 flex items-center justify-center p-6">
@@ -223,14 +453,55 @@ function Lettore({ url, nome, onChiudi }) {
       )}
 
       {esito && (
-        <div role="status" className="absolute top-[calc(env(safe-area-inset-top)+4rem)] inset-x-0 flex justify-center px-4">
-          <span className="bg-black/75 rounded-full px-4 py-2 text-sm font-semibold">{esito}</span>
+        <div role="status" className="absolute top-[calc(env(safe-area-inset-top)+4rem)] inset-x-0 flex justify-center px-4 pointer-events-none">
+          <span className="bg-black/80 rounded-full px-4 py-2 text-sm font-semibold text-center">{esito}</span>
         </div>
       )}
 
+      {/* Pannelli in basso */}
+      {!errore && conPannello && (
+        <div ref={pannelloRef} className="absolute bottom-0 inset-x-0">
+          {modo === 'scala' && (
+            <PannelloScala ris={ris} nPunti={punti.length} vasca={vasca} onVasca={setVasca}
+              onAnnullaUltimo={() => setPunti((pp) => pp.slice(0, -1))}
+              onCancellaTutto={() => setPunti([])}
+              onFatto={() => setModo(dopoScala)} />
+          )}
+          {modo === 'prepara' && (
+            <PannelloAnalisi opzioni={opzioni} onOpzioni={(o) => setOpzioni((x) => ({ ...x, ...o }))}
+              tInizio={tempo} durata={durata} scala={ris}
+              onScala={() => apriScala('prepara')} onAnnulla={() => setModo('guarda')} />
+          )}
+          {modo === 'risultati' && analisi && (
+            <PannelloRisultati analisi={analisi} onCorreggi={chiediCorrezione} onScarica={scaricaVideo} scaricando={scaricando}
+              esportabile={esportazionePossibile()}
+              onNuova={() => { setAnalisi(null); setModo('prepara') }} onChiudi={() => setModo('guarda')} />
+          )}
+        </div>
+      )}
+      {foglio && (
+        <FoglioDistanza
+          key={foglio.indice ?? 'nuovo'}
+          numero={foglio.nuovo ? punti.length + 1 : foglio.indice + 1}
+          iniziale={foglio.nuovo ? { d: null, lato: ultimoLato } : punti[foglio.indice]}
+          vasca={vasca}
+          onConferma={confermaDistanza}
+          onElimina={foglio.nuovo ? null : () => { setPunti((pp) => pp.filter((_, i) => i !== foglio.indice)); setFoglio(null) }}
+          onAnnulla={() => setFoglio(null)} />
+      )}
+
       {/* Comandi in basso */}
-      {!errore && (
+      {!errore && (modo === 'guarda' || modo === 'correggi') && (
         <div ref={comandiRef} className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent pt-6 px-3 pb-[max(env(safe-area-inset-bottom),0.75rem)]">
+          {avanzamento !== null && (
+            <div className="flex items-center gap-2 mb-1 text-xs font-semibold" role="status">
+              <div className="flex-1 h-1.5 rounded-full bg-white/20 overflow-hidden">
+                <div className="h-full bg-blue-500 transition-[width]" style={{ width: `${Math.round(avanzamento * 100)}%` }} />
+              </div>
+              <span>Analisi {Math.round(avanzamento * 100)}%</span>
+              <button type="button" onClick={() => { annullaRef.current = true }} className="underline">Ferma</button>
+            </div>
+          )}
           <div className="flex justify-between text-xs font-semibold tabular-nums px-1">
             <span>{scriviTempo(tempo)}</span>
             <span className="text-white/60">{scriviTempo(durata)}</span>
@@ -238,7 +509,7 @@ function Lettore({ url, nome, onChiudi }) {
           <input type="range" min={0} max={durata || 0} step={0.01} value={Math.min(tempo, durata || 0)}
             onChange={(e) => vaiA(Number(e.target.value))} disabled={!pronto}
             aria-label="Posizione nel video" className="w-full accent-blue-500 h-8" />
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             <button type="button" onClick={playPausa} disabled={!pronto} aria-label={inPausa ? 'Riproduci' : 'Pausa'}
               className="shrink-0 w-11 h-11 rounded-full bg-white text-abisso flex items-center justify-center disabled:opacity-40">
               {inPausa
@@ -255,12 +526,16 @@ function Lettore({ url, nome, onChiudi }) {
             </button>
             <span className="flex-1" />
             <button type="button" onClick={cambiaVelocita} disabled={!pronto} aria-label={`Velocità di riproduzione ${velocita}x`}
-              className="shrink-0 min-w-[52px] h-11 px-2 rounded-full bg-white/15 text-sm font-bold disabled:opacity-40">
+              className="shrink-0 min-w-[44px] h-11 px-2 rounded-full bg-white/15 text-sm font-bold disabled:opacity-40">
               {String(velocita).replace('.', ',')}×
             </button>
-            <button type="button" onClick={schermata} disabled={!pronto}
-              className="shrink-0 h-11 px-4 rounded-full bg-blue-500 text-white text-sm font-bold disabled:opacity-40">
-              Screenshot
+            <button type="button" onClick={apriAnalisi} disabled={!pronto || inCorso}
+              className="shrink-0 h-11 px-3 rounded-full bg-blue-500 text-sm font-bold disabled:opacity-60">
+              {analisi && !inCorso ? 'Risultati' : 'Analizza'}
+            </button>
+            <button type="button" onClick={schermata} disabled={!pronto} aria-label="Screenshot"
+              className="shrink-0 w-11 h-11 rounded-full bg-white/15 text-white flex items-center justify-center disabled:opacity-40">
+              <Icona nome="fotocamera" className="w-5 h-5" />
             </button>
           </div>
         </div>
@@ -294,8 +569,8 @@ export default function AnalisiVideo() {
       <div className="bg-white rounded-card p-5 shadow-card">
         <h2 className="font-display text-xl font-extrabold text-abisso mb-1">Velocità dell'atleta dal video</h2>
         <p className="text-sm text-slate-500 mb-4">
-          Carica un video di nuoto dal telefono o dal PC: lo guardi a tutto schermo e puoi salvare lo screenshot di un fotogramma.
-          Il calcolo della velocità arriva nei prossimi passi.
+          Carica un video di nuoto dal telefono o dal PC, premi <b>Analizza</b>, scegli camera e stile e tocca il nuotatore:
+          l'app scrive sopra il video la velocità istantanea e la media in m/s.
         </p>
         <label className="cliccabile flex items-center justify-center gap-2 w-full min-h-[52px] rounded-campo bg-blue-600 text-white font-bold cursor-pointer">
           <Icona nome="video" className="w-5 h-5" />
@@ -305,8 +580,17 @@ export default function AnalisiVideo() {
         {errore && <p role="alert" className="mt-3 text-sm font-semibold text-stato-errore">{errore}</p>}
         <p className="mt-4 text-xs text-slate-500">
           Il video resta sul tuo dispositivo: non viene caricato su nessun server né salvato nell'app.
-          Quando chiudi, viene tolto. Si conservano solo gli screenshot che salvi tu.
+          Quando chiudi, viene tolto insieme all'analisi. Si conservano solo gli screenshot e i video con i dati che salvi tu.
         </p>
+      </div>
+      <div className="bg-white rounded-card p-5 shadow-card mt-3 text-sm text-slate-500">
+        <p className="font-bold text-abisso mb-1">Per un risultato affidabile</p>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>Si devono vedere le due file di galleggianti ai lati del nuotatore.</li>
+          <li>Camera ferma: imposta la scala toccando i cambi di colore della corsia (5 m, 15 m…).</li>
+          <li>Camera in movimento: la scala la cerco dai cambi di colore; se la corsia è di un solo colore, impostala tu.</li>
+          <li>Dove l'immagine non basta l'app lascia un buco ("—") invece di un numero sbagliato.</li>
+        </ul>
       </div>
       {video && <Lettore key={video.url} url={video.url} nome={video.nome} onChiudi={() => setVideo(null)} />}
     </AppShell>
