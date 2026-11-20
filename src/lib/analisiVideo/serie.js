@@ -91,12 +91,73 @@ function retta(ts, ms) {
   return { k, rms: Math.sqrt(r / n) }
 }
 
+// Posizione (già ammorbidita) al tempo tt per interpolazione tra i due campioni validi più vicini della
+// stessa catena; null se lì l'inseguimento manca (più di 0,25 s senza dati).
+function posizioneAl(t, m, catena, tt) {
+  let prima = -1, dopo = -1
+  for (let i = 0; i < t.length; i++) {
+    if (m[i] === null) continue
+    if (t[i] <= tt) prima = i
+    else { dopo = i; break }
+  }
+  const ok = (i) => i >= 0 && Math.abs(t[i] - tt) <= 0.25
+  if (ok(prima) && ok(dopo) && catena[prima] === catena[dopo] && t[dopo] > t[prima]) {
+    const f = (tt - t[prima]) / (t[dopo] - t[prima])
+    return { m: m[prima] + f * (m[dopo] - m[prima]), catena: catena[prima] }
+  }
+  const i = ok(prima) && (!ok(dopo) || tt - t[prima] <= t[dopo] - tt) ? prima : ok(dopo) ? dopo : -1
+  return i < 0 ? null : { m: m[i], catena: catena[i] }
+}
+
+// Cronometro del coach: due momenti del video in cui il nuotatore passa due distanze note (es. la testa sul
+// cambio di colore dei 5 m e su quello dei 20 m). Media = metri / secondi, esatta come un cronometro a mano,
+// qualunque sia la scala. Le posizioni dell'inseguimento si moltiplicano per il fattore k che fa tornare quel
+// tratto: così anche istantanea e media dall'inizio diventano coerenti con il cronometro. Se c'era una scala
+// (toccata o dai colori), k dice di quanto sbagliava: è il controllo della precisione.
+// Ritorna { ok: true, k, media, distanza, tempo } oppure { ok: false, motivo }.
+export function fattoreCronometro(t, m, catena, cron) {
+  const { a, b } = cron || {}
+  if (!a || !b) return { ok: false, motivo: 'Segna entrambi i momenti.' }
+  const [p, q] = a.t <= b.t ? [a, b] : [b, a]
+  const tempo = q.t - p.t
+  const distanza = Math.abs(q.d - p.d)
+  if (tempo < 1) return { ok: false, motivo: 'I due momenti sono troppo vicini: servono almeno 1 secondo di nuotata tra l\'uno e l\'altro.' }
+  if (distanza <= 0) return { ok: false, motivo: 'Le due distanze sono uguali: scegli due riferimenti diversi (es. 5 m e 20 m).' }
+  const media = distanza / tempo
+  if (media > V_MAX) return { ok: false, motivo: `Così la media verrebbe ${media.toFixed(2).replace('.', ',')} m/s: impossibile. Controlla momenti e distanze.` }
+  const pa = posizioneAl(t, m, catena, p.t), pb = posizioneAl(t, m, catena, q.t)
+  if (!pa || !pb) return { ok: false, motivo: 'In uno dei due momenti il nuotatore non è seguito (fuori dal tratto analizzato o perso): scegli un altro momento o correggi i punti dubbi.', media, distanza, tempo }
+  if (pa.catena !== pb.catena) return { ok: false, motivo: 'Tra i due momenti l\'inseguimento si è interrotto: scegli due momenti più vicini o correggi i punti dubbi.', media, distanza, tempo }
+  const misurata = Math.abs(pb.m - pa.m)
+  if (misurata < 1e-6) return { ok: false, motivo: 'Tra i due momenti il nuotatore sembra fermo: controlla di aver segnato i momenti giusti.', media, distanza, tempo }
+  return { ok: true, k: distanza / misurata, media, distanza, tempo, catena: pa.catena }
+}
+
 export function calcolaSerie(campioni, opts) {
   const n = campioni.length
   const statica = opts.camera === 'ferma' && opts.calib?.ok
-  const m = ammorbidisci(campioni, posizioni(campioni, opts), opts, statica)
+  // con il cronometro la scala non serve: senza, le posizioni restano in "dischetti" e il cronometro le porta in metri
+  // (un cronometro a metà, con un solo momento segnato, non conta)
+  if (opts.cronometro && !(opts.cronometro.a && opts.cronometro.b)) opts = { ...opts, cronometro: null }
+  const optsPos = opts.cronometro && !opts.mpp ? { ...opts, mpp: 1 } : opts
+  let m = ammorbidisci(campioni, posizioni(campioni, optsPos), optsPos, statica)
   const t = campioni.map((c) => c.t)
   const catena = campioni.map((c) => (statica ? 0 : c.catena))
+  let cronometro = null
+  if (opts.cronometro) {
+    cronometro = fattoreCronometro(t, m, catena, opts.cronometro)
+    if (cronometro.ok) {
+      // di quanto sbagliava la scala di prima (solo se c'era): +10% = le distanze erano il 10% troppo corte
+      if (opts.mpp || statica) cronometro.erroreScala = cronometro.k - 1
+      const k = cronometro.k
+      m = m.map((x) => (x === null ? null : x * k))
+      // lettura a salti: tempi meno precisi, l'affidabilità non può essere "alta"
+      opts = { ...opts, qualitaScala: opts.aSalti ? 'media' : 'alta' }
+    } else if (!opts.mpp && !statica) {
+      // cronometro non utilizzabile e nessuna scala: niente metri
+      m = m.map(() => null)
+    }
+  }
   const dtMedio = n > 1 ? (t[n - 1] - t[0]) / (n - 1) : 1 / 30
   const cicli = aCicli(opts.stile)
   // finestra della velocità istantanea (s): nel crawl e nel dorso circa una bracciata
@@ -294,7 +355,7 @@ export function calcolaSerie(campioni, opts) {
   }
   if (riepilogo) riepilogo.media = riepilogo.tempo > 0 ? riepilogo.distanza / riepilogo.tempo : null
 
-  return { t, m, v, media, ciclo, limitiCicli, fase, fiduciaFase, aff, puntiDubbi, riepilogo }
+  return { t, m, v, media, ciclo, limitiCicli, fase, fiduciaFase, aff, puntiDubbi, riepilogo, cronometro }
 }
 
 // Valori da mostrare al tempo tt (il campione più vicino; fuori dall'analisi niente)

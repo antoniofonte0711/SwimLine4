@@ -3,10 +3,10 @@ import AppShell from '../components/AppShell'
 import Icona from '../components/Icona'
 import { disegnaInseguimento, disegnaRiquadri, rettangoloVideo } from '../lib/analisiVideo/overlay'
 import { salvaFile, salvaSchermata } from '../lib/analisiVideo/schermata'
-import { calibra } from '../lib/analisiVideo/calibrazione'
+import { calibra, riferimentiVasca } from '../lib/analisiVideo/calibrazione'
 import { disegnaScala } from '../lib/analisiVideo/disegnoScala'
 import { valoriAl } from '../lib/analisiVideo/serie'
-import { correggi, eseguiAnalisi } from '../lib/analisiVideo/analisi'
+import { applicaCronometro, correggi, eseguiAnalisi } from '../lib/analisiVideo/analisi'
 import { esportaVideo, esportazionePossibile } from '../lib/analisiVideo/esporta'
 import { FoglioDistanza, PannelloScala } from '../components/analisiVideo/PannelloScala'
 import { PannelloAnalisi, PannelloRisultati } from '../components/analisiVideo/PannelloAnalisi'
@@ -62,6 +62,7 @@ function Lettore({ url, nome, onChiudi }) {
   const [esito, setEsito] = useState('')
 
   // 'guarda' | 'scala' | 'prepara' (pannello analisi, si tocca il nuotatore) | 'risultati' | 'correggi'
+  // | 'cronometro' (si porta il video a un momento e si segna a che distanza è il nuotatore)
   const [modo, setModo] = useState('guarda')
   const [dopoScala, setDopoScala] = useState('guarda')
 
@@ -80,6 +81,7 @@ function Lettore({ url, nome, onChiudi }) {
   const [inCorso, setInCorso] = useState(false)
   const [dubbioDaCorreggere, setDubbioDaCorreggere] = useState(null)
   const [scaricando, setScaricando] = useState(null)
+  const [segno, setSegno] = useState(null) // cronometro: { qual: 'a'|'b', d }
   const annullaRef = useRef(false)
   const stileAnalisi = useRef('crawl')
 
@@ -119,7 +121,7 @@ function Lettore({ url, nome, onChiudi }) {
       if (camp) disegnaInseguimento(ctx, r, (r.w / v.videoWidth) * s.analisi.fattore, camp, dati.affidabilita)
     }
     // se i comandi in basso coprono il video, i riquadri salgono sopra di loro
-    const hComandi = s.modo === 'guarda' ? comandiRef.current?.offsetHeight || 0 : 0
+    const hComandi = s.modo === 'guarda' || s.modo === 'cronometro' ? comandiRef.current?.offsetHeight || 0 : 0
     const coperto = Math.max(0, r.y + r.h - (ch - hComandi))
     disegnaRiquadri(ctx, r, dati, { margineBasso: coperto })
   }, [])
@@ -371,6 +373,25 @@ function Lettore({ url, nome, onChiudi }) {
     }
   }
 
+  // ---- Cronometro: due momenti a distanza nota → media esatta ----
+  function apriSegno(qual) {
+    const c = analisi?.cronometro?.[qual]
+    const rif = riferimentiVasca(vasca)
+    const d = c ? c.d : qual === 'a' ? rif[1] : rif[rif.length - 2]
+    if (c) vaiA(c.t)
+    setSegno({ qual, d })
+    setModo('cronometro')
+  }
+  function confermaSegno() {
+    const v = videoRef.current
+    if (!v || !analisi || !segno) return
+    v.pause()
+    const cron = { ...(analisi.cronometro || {}), [segno.qual]: { t: v.currentTime, d: segno.d } }
+    setAnalisi(applicaCronometro(analisi, cron))
+    setSegno(null)
+    setModo('risultati')
+  }
+
   async function scaricaVideo() {
     if (!analisi?.serie?.t.length) return
     setScaricando(0)
@@ -440,6 +461,33 @@ function Lettore({ url, nome, onChiudi }) {
         </div>
       )}
 
+      {modo === 'cronometro' && segno && (
+        <div className="absolute top-[calc(env(safe-area-inset-top)+3.5rem)] inset-x-0 flex justify-center px-3">
+          <div className="max-w-md w-full bg-abisso/95 rounded-card px-3 py-2.5 shadow-flottante">
+            <p className="text-sm font-bold">{segno.qual === 'a' ? 'Primo' : 'Secondo'} momento</p>
+            <p className="text-[12px] text-white/70 mb-2">
+              Porta il video (anche un fotogramma alla volta) al momento in cui la testa passa il riferimento, scegli la distanza e premi Segna.
+            </p>
+            <div className="flex flex-wrap gap-1.5 mb-2" role="group" aria-label="Distanza dalla parete">
+              {riferimentiVasca(vasca).map((d) => (
+                <button key={d} type="button" onClick={() => setSegno((s) => ({ ...s, d }))} aria-pressed={segno.d === d}
+                  className={`h-9 min-w-[44px] px-2 rounded-full text-sm font-bold ${segno.d === d ? 'bg-white text-abisso' : 'bg-white/15'}`}>
+                  {d} m
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <button type="button" onClick={confermaSegno} className="flex-1 h-10 rounded-full bg-blue-500 text-sm font-bold">
+                Segna qui ({scriviTempo(tempo)})
+              </button>
+              <button type="button" onClick={() => { setSegno(null); setModo('risultati') }} className="h-10 px-4 rounded-full bg-white/15 text-sm font-bold">
+                Annulla
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {errore && (
         <div className="absolute inset-0 flex items-center justify-center p-6">
           <div role="alert" className="max-w-sm bg-white text-abisso rounded-card p-5 shadow-flottante">
@@ -475,6 +523,8 @@ function Lettore({ url, nome, onChiudi }) {
           {modo === 'risultati' && analisi && (
             <PannelloRisultati analisi={analisi} onCorreggi={chiediCorrezione} onScarica={scaricaVideo} scaricando={scaricando}
               esportabile={esportazionePossibile()}
+              onSegna={apriSegno}
+              onTogliCronometro={() => setAnalisi(applicaCronometro(analisi, null))}
               onNuova={() => { setAnalisi(null); setModo('prepara') }} onChiudi={() => setModo('guarda')} />
           )}
         </div>
@@ -491,7 +541,7 @@ function Lettore({ url, nome, onChiudi }) {
       )}
 
       {/* Comandi in basso */}
-      {!errore && (modo === 'guarda' || modo === 'correggi') && (
+      {!errore && (modo === 'guarda' || modo === 'correggi' || modo === 'cronometro') && (
         <div ref={comandiRef} className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent pt-6 px-3 pb-[max(env(safe-area-inset-bottom),0.75rem)]">
           {avanzamento !== null && (
             <div className="flex items-center gap-2 mb-1 text-xs font-semibold" role="status">

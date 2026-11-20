@@ -51,7 +51,17 @@ function serieDa(stato) {
     fattore,
     camera: opzioni.camera,
     stile: opzioni.stile,
+    cronometro: stato.cronometro || null,
+    aSalti: !!stato.aSalti,
   })
+}
+
+// Cronometro del coach (due momenti a distanza nota): ricalcola i numeri senza rifare l'analisi.
+// cron = { a: { t, d }, b: { t, d } } oppure null per toglierlo.
+export function applicaCronometro(stato, cron) {
+  const nuovo = { ...stato, cronometro: cron }
+  nuovo.serie = serieDa(nuovo)
+  return nuovo
 }
 
 // opzioni: { url, tInizio, tFine, tap: {x,y} pixel video, camera, stile, vasca, calib, punti, tCalib }
@@ -118,7 +128,7 @@ export async function eseguiAnalisi(opzioni, { onAggiornamento, annullato }) {
   aggiorna(true)
   const trovati = stato.campioni.filter((c) => c.trovato).length
   if (trovati < stato.campioni.length * 0.1) avvisi.push('Il nuotatore non si riesce a seguire quasi mai: prova a toccarlo in un momento in cui si vede bene, o con un video più vicino.')
-  if (!stato.scala) avvisi.push('Scala non trovata: non vedo cambi di colore dei galleggianti utilizzabili. Imposta la scala (tasto Scala) toccando almeno 2 punti a distanza nota.')
+  if (!stato.scala) avvisi.push('Scala non trovata: non vedo cambi di colore dei galleggianti utilizzabili. Usa il Cronometro qui sotto (due momenti in cui il nuotatore passa due distanze note) oppure imposta la scala toccando almeno 2 punti a distanza nota.')
   return stato
 }
 

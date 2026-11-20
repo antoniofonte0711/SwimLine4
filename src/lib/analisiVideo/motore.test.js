@@ -135,3 +135,39 @@ describe('motore — fotogrammi persi (uno ogni 5) con camera che segue', { time
     expect(Math.abs(serie.riepilogo.media - 1.5)).toBeLessThan(0.06)
   })
 })
+
+describe('cronometro del coach — la media torna esatta anche con la scala sbagliata', { timeout: 60000 }, () => {
+  const scena = creaScena({ camera: 'segue', velocita: () => 1.5, seme: 5 })
+  // scala sbagliata del 20% (come una stima dai galleggianti che non torna)
+  const { m } = analizza(scena, 5, { mpp: PASSO_DISCHETTI * 0.8 })
+  const cron = { a: { t: 1, d: scena.posizione(1) }, b: { t: 4, d: scena.posizione(4) } }
+  const opts = { mpp: PASSO_DISCHETTI * 0.8, qualitaScala: 'media', camera: 'movimento', stile: 'crawl', fattore: 1 }
+  const senza = calcolaSerie(m.campioni, opts)
+  const con = calcolaSerie(m.campioni, { ...opts, cronometro: cron })
+  it('senza cronometro la scala sbagliata sbaglia la media', () => {
+    expect(Math.abs(senza.riepilogo.media - 1.5)).toBeGreaterThan(0.2)
+  })
+  it('con il cronometro media e istantanea tornano vicine al vero', () => {
+    expect(con.cronometro.ok).toBe(true)
+    expect(con.cronometro.media).toBeCloseTo(1.5, 5)
+    expect(con.cronometro.erroreScala).toBeGreaterThan(0.15) // la scala di prima era corta del ~25%
+    const e = errori(scena, con)
+    expect(e.mediana).toBeLessThan(0.1)
+    expect(Math.abs(con.riepilogo.media - 1.5)).toBeLessThan(0.06)
+  })
+  it('funziona anche senza nessuna scala', () => {
+    const s = calcolaSerie(m.campioni, { ...opts, mpp: null, qualitaScala: 'bassa', cronometro: cron })
+    expect(s.cronometro.ok).toBe(true)
+    expect(Math.abs(s.riepilogo.media - 1.5)).toBeLessThan(0.06)
+    expect(s.aff.some((a) => a === 'media')).toBe(true)
+  })
+  it('rifiuta momenti impossibili con un motivo chiaro', () => {
+    const vicini = calcolaSerie(m.campioni, { ...opts, cronometro: { a: { t: 1, d: 5 }, b: { t: 1.5, d: 6 } } })
+    expect(vicini.cronometro.ok).toBe(false)
+    expect(vicini.cronometro.motivo).toMatch(/troppo vicini/)
+    const fuori = calcolaSerie(m.campioni, { ...opts, cronometro: { a: { t: 1, d: 5 }, b: { t: 9, d: 15 } } })
+    expect(fuori.cronometro.ok).toBe(false)
+    const veloce = calcolaSerie(m.campioni, { ...opts, cronometro: { a: { t: 1, d: 0 }, b: { t: 2, d: 25 } } })
+    expect(veloce.cronometro.motivo).toMatch(/impossibile/)
+  })
+})

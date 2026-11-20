@@ -70,10 +70,14 @@ export function PannelloAnalisi({ opzioni, onOpzioni, tInizio, durata, scala, on
 const metri = (v, d = 1) => `${v.toFixed(d).replace('.', ',')}`
 
 // Risultati: riepilogo per il controllo, avvisi, punti dubbi da correggere, scarica video
-export function PannelloRisultati({ analisi, onCorreggi, onScarica, scaricando, onNuova, onChiudi, esportabile }) {
-  const { serie, scala, avvisi } = analisi
+export function PannelloRisultati({ analisi, onCorreggi, onScarica, scaricando, onNuova, onChiudi, esportabile, onSegna, onTogliCronometro }) {
+  const { serie, scala } = analisi
   const rie = serie?.riepilogo
   const dubbi = serie?.puntiDubbi || []
+  const cron = analisi.cronometro || {}
+  const esitoCron = serie?.cronometro
+  // con il cronometro valido l'avviso "scala non trovata" non serve più
+  const avvisi = (analisi.avvisi || []).filter((a) => !(esitoCron?.ok && a.startsWith('Scala non trovata')))
   return (
     <div className="bg-abisso/95 px-4 pt-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] text-white max-h-[65vh] overflow-y-auto">
       <div className="flex items-center justify-between gap-2 mb-2">
@@ -86,14 +90,46 @@ export function PannelloRisultati({ analisi, onCorreggi, onScarica, scaricando, 
           Distanza misurata <b>{metri(rie.distanza)} m</b> in <b>{metri(rie.tempo)} s</b> · media <b>{metri(rie.media, 2)} m/s</b>
         </p>
       )}
-      {scala && (
+      {esitoCron?.ok ? (
+        <p className="text-[13px] text-white/70 mb-1">
+          Scala: dal cronometro (esatta tra i due momenti)
+          {Number.isFinite(esitoCron.erroreScala) && scala
+            ? ` · la scala ${NOMI_FONTE[scala.fonte]} ${Math.abs(esitoCron.erroreScala) < 0.03 ? 'tornava (scarto sotto il 3%)' : `sbagliava del ${Math.round(Math.abs(esitoCron.erroreScala) * 100)}%`}`
+            : ''}
+        </p>
+      ) : scala && (
         <p className="text-[13px] text-white/70 mb-1">
           Scala: {NOMI_FONTE[scala.fonte]} · affidabilità {scala.qualita}{scala.disaccordo ? ' (le due strategie non vanno d\'accordo: controlla la scala)' : ''}
         </p>
       )}
-      <p className="text-[12px] text-white/60 mb-2">
-        Per controllare la precisione: confronta la distanza misurata con un tratto noto (es. tra le bandierine dei 5 m e la parete) e il tempo con il cronometro.
-      </p>
+
+      {/* Cronometro: la media esatta da due momenti a distanza nota */}
+      <div className="bg-white/10 rounded-campo px-3 py-2.5 my-2">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-sm font-bold">Cronometro</p>
+          {(cron.a || cron.b) && (
+            <button type="button" onClick={onTogliCronometro} className="text-[13px] underline text-white/70">Togli</button>
+          )}
+        </div>
+        {esitoCron?.ok ? (
+          <p className="text-sm mt-0.5">
+            {metri(esitoCron.distanza, 0)} m in {metri(esitoCron.tempo, 2)} s · media <b>{metri(esitoCron.media, 2)} m/s</b>
+          </p>
+        ) : (
+          <p className="text-[12px] text-white/70 mt-0.5">
+            Per una media esatta segna due momenti in cui il nuotatore passa due distanze note (es. la testa sul cambio di colore dei 5 m e su quello dei 20 m).
+          </p>
+        )}
+        {esitoCron && !esitoCron.ok && <p className="text-[13px] text-amber-200 mt-1">{esitoCron.motivo}</p>}
+        <div className="flex flex-wrap gap-2 mt-2">
+          {[['a', 'Primo momento'], ['b', 'Secondo momento']].map(([k, nome]) => (
+            <button key={k} type="button" onClick={() => onSegna(k)}
+              className={`h-9 px-3 rounded-full text-sm font-bold ${cron[k] ? 'bg-white/15' : 'bg-white text-abisso'}`}>
+              {cron[k] ? `${nome}: ${metri(cron[k].d, 0)} m a ${tempo(cron[k].t)}` : `Segna ${nome.toLowerCase()}`}
+            </button>
+          ))}
+        </div>
+      </div>
       {avvisi?.map((a) => <p key={a} className="text-[13px] text-amber-200 mb-1">{a}</p>)}
 
       <p className="text-xs font-bold uppercase tracking-wider text-white/60 mt-2 mb-1">

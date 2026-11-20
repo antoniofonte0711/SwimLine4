@@ -86,6 +86,15 @@ export async function scorriFotogrammi(url, { da, a, larghezzaMax = LARGHEZZA_AN
     // il primo fotogramma è quello già mostrato dopo il salto
     if ((await suFotogramma(leggi(), v.currentTime, fattore)) === false) return
     let ultimo = v.currentTime
+    // Intervallo tra due fotogrammi, imparato strada facendo (il più piccolo visto). Se il browser ne salta
+    // qualcuno mentre riproduce (succede con i video di WhatsApp: 1 ogni 6 a velocità normale), si rallenta
+    // la lettura a 0,75× e si torna a prendere quelli persi (0,5× costava il doppio del tempo per
+    // pochissimi fotogrammi in più). Misurato: a 0,75× quasi nessun fotogramma
+    // perso e analisi circa in tempo reale; a 1× il 16% in meno.
+    let intervallo = Infinity
+    const VELOCITA = [1, 0.75]
+    let marcia = 0
+    v.playbackRate = VELOCITA[0]
     let fermato = false
     if ('requestVideoFrameCallback' in HTMLVideoElement.prototype) {
       const tentativi = new Map()
@@ -104,6 +113,16 @@ export async function scorriFotogrammi(url, { da, a, larghezzaMax = LARGHEZZA_AN
           // Buco (il video è andato avanti da solo mentre si analizzava, succede soprattutto all'avvio):
           // si torna subito dopo l'ultimo fotogramma letto e si riprende da lì. Massimo 3 tentativi per
           // punto, poi si accetta il buco (meglio un buco che un'analisi che non finisce).
+          const perso = Number.isFinite(intervallo) && t > ultimo + intervallo * 1.5
+          if (perso && marcia < VELOCITA.length - 1) {
+            v.playbackRate = VELOCITA[++marcia]
+            v.currentTime = ultimo + 0.001
+            await una(v, 'seeked')
+            arma()
+            v.requestVideoFrameCallback(passo)
+            v.play().catch(() => termina('bloccato'))
+            return
+          }
           if (t > ultimo + BUCO && (tentativi.get(ultimo) || 0) < 3) {
             tentativi.set(ultimo, (tentativi.get(ultimo) || 0) + 1)
             v.currentTime = ultimo + 0.001
@@ -114,6 +133,8 @@ export async function scorriFotogrammi(url, { da, a, larghezzaMax = LARGHEZZA_AN
             return
           }
           if (t > ultimo + 1e-4) {
+            // sotto 5 ms non è un fotogramma vero (240 fps e oltre: si resta sulla soglia fissa)
+            if (t - ultimo > 0.005) intervallo = Math.min(intervallo, t - ultimo)
             ultimo = t
             try {
               if ((await suFotogramma(leggi(), t, fattore)) === false) { termina(); return }
