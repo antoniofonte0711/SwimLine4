@@ -1,7 +1,7 @@
 // Regia dell'analisi nel browser: legge i fotogrammi, fa girare il motore, sceglie la scala migliore
 // (strategie a cascata), aggiorna i risultati man mano e permette di correggere i punti dubbi.
 import { MotoreAnalisi, metriPerDischettoDaCalibrazione } from './motore'
-import { metriPerDischettoDaColori } from './marche'
+import { posizioneInVasca, metroInVasca } from './zone'
 import { calcolaSerie } from './serie'
 import { firma as firmaFotogramma, scorriFotogrammi, unFotogramma } from './estrazione'
 
@@ -9,35 +9,41 @@ const RANGO = { alta: 3, media: 2, bassa: 1 }
 
 
 
-// Sceglie la scala: punti toccati con camera ferma (prospettiva completa), oppure metri per dischetto
-// dalla scala toccata o dai cambi di colore, la più affidabile.
-export function scegliScala({ camera, calib, mppCalib, voti, vasca }) {
+// Metri di un dischetto di questa vasca misurati in un video precedente (stessi galleggianti): si
+// ricordano sul dispositivo e servono quando nel video nuovo non si vedono i due cambi di colore dei 5 m.
+const chiaveVasca = (vasca) => `swimline4-analisi-mpp-${vasca}`
+export function leggiVascaNota(vasca) {
+  try { const x = Number(localStorage.getItem(chiaveVasca(vasca))); return x > 0.05 && x < 0.4 ? x : null } catch { return null }
+}
+function salvaVascaNota(vasca, mpp) {
+  try { localStorage.setItem(chiaveVasca(vasca), String(mpp)) } catch { /* niente: la prossima volta si stima */ }
+}
+
+// Sceglie la scala: punti toccati dal coach (se li ha messi) oppure quello che l'app capisce da sola dalla
+// vasca (zone di fine vasca → vasca già misurata → stima). Vedi zone.js.
+export function scegliScala({ camera, calib, mppCalib, pos }) {
   if (camera === 'ferma' && calib?.ok) return { fonte: 'punti', qualita: calib.affidabilita, mpp: mppCalib || null }
-  const candidati = []
   if (mppCalib && calib?.ok) {
     const q = calib.metodo === 'due-punti' ? 'bassa' : calib.metodo === 'linea' && calib.affidabilita === 'alta' ? 'media' : calib.affidabilita
-    candidati.push({ fonte: 'punti-galleggianti', qualita: q, mpp: mppCalib })
+    return { fonte: 'punti-galleggianti', qualita: q, mpp: mppCalib }
   }
-  // catena con più colori raccolti
-  let migliore = null
-  for (const v of voti || []) if (v && (!migliore || v.size > migliore.size)) migliore = v
-  const col = metriPerDischettoDaColori(migliore, vasca)
-  if (col) candidati.push({ fonte: 'colori', qualita: col.qualita, mpp: col.mpp })
-  if (!candidati.length) return null
-  // a parità vince la scala toccata (esplicita); se le due non vanno d'accordo, la qualità scende
-  candidati.sort((a, b) => RANGO[b.qualita] - RANGO[a.qualita] || (a.fonte === 'colori' ? 1 : -1))
-  let scelta = { ...candidati[0] }
-  if (candidati.length === 2 && Math.abs(candidati[0].mpp - candidati[1].mpp) / candidati[1].mpp > 0.15) {
-    // le due strategie non vanno d'accordo: vince quella toccata dall'utente, ma con affidabilità bassa
-    scelta = { ...(candidati.find((c) => c.fonte !== 'colori') || candidati[0]), qualita: 'bassa', disaccordo: true }
-  }
-  return scelta
+  return pos ? { fonte: pos.fonte, qualita: pos.qualita, mpp: pos.mpp } : null
 }
 
 export const NOMI_FONTE = {
   punti: 'scala toccata sul video',
   'punti-galleggianti': 'scala toccata + passo dei galleggianti',
-  colori: 'cambi di colore dei galleggianti',
+  zone: 'cambi di colore dei 5 m visti nel video (precisa)',
+  'vasca-nota': 'misurata in un video precedente di questa vasca',
+  stima: 'stimata (nel video non si vedono i due cambi di colore dei 5 m)',
+}
+
+// Tratto nuotato in metri della vasca (dal metro … al metro …), se l'app ha capito dov'è il nuotatore
+export function trattoInVasca(campioni, pos) {
+  if (!pos?.ancora) return null
+  const c = campioni.filter((x) => x.catena === pos.catena && x.u !== null && x.u !== undefined)
+  if (c.length < 2) return null
+  return { da: metroInVasca(pos, c[0].u), a: metroInVasca(pos, c[c.length - 1].u), tDa: c[0].t, tA: c[c.length - 1].t }
 }
 
 function serieDa(stato) {
@@ -85,7 +91,9 @@ export async function eseguiAnalisi(opzioni, { onAggiornamento, annullato }) {
   const durata = Math.max(0.1, (opzioni.tFine ?? Infinity) - opzioni.tInizio)
   const aggiorna = (fine) => {
     stato.voti = motore.voti
-    stato.scala = scegliScala({ camera: opzioni.camera, calib: opzioni.calib, mppCalib, voti: motore.voti, vasca: opzioni.vasca })
+    stato.posizione = posizioneInVasca({ campioni: stato.campioni, voti: motore.voti, vasca: opzioni.vasca, mppNoto: leggiVascaNota(opzioni.vasca) })
+    stato.scala = scegliScala({ camera: opzioni.camera, calib: opzioni.calib, mppCalib, pos: stato.posizione })
+    stato.tratto = trattoInVasca(stato.campioni, stato.posizione)
     stato.serie = serieDa(stato)
     const ultimo = stato.campioni[stato.campioni.length - 1]
     onAggiornamento?.({ ...stato, avanzamento: fine ? 1 : Math.min(0.99, (ultimo.t - opzioni.tInizio) / durata), finito: !!fine })
@@ -128,7 +136,16 @@ export async function eseguiAnalisi(opzioni, { onAggiornamento, annullato }) {
   aggiorna(true)
   const trovati = stato.campioni.filter((c) => c.trovato).length
   if (trovati < stato.campioni.length * 0.1) avvisi.push('Il nuotatore non si riesce a seguire quasi mai: prova a toccarlo in un momento in cui si vede bene, o con un video più vicino.')
-  if (!stato.scala) avvisi.push('Scala non trovata: non vedo cambi di colore dei galleggianti utilizzabili. Usa il Cronometro qui sotto (due momenti in cui il nuotatore passa due distanze note) oppure imposta la scala toccando almeno 2 punti a distanza nota.')
+  if (stato.posizione?.fonte === 'zone') salvaVascaNota(opzioni.vasca, stato.posizione.mpp)
+  // distanze quasi mai misurate (es. ripresa dalla testata della vasca: corsie che vanno verso la camera)
+  // oppure un nuotatore che "non avanza" (sotto 0,35 m/s per più di 3 s: nuotando è impossibile). Succede con
+  // la ripresa dalla testata: chi viene verso la camera non si sposta di lato e il motore misura quasi zero.
+  const misurati = stato.campioni.filter((c) => c.u !== null).length
+  const rie = stato.serie?.riepilogo
+  const fermo = rie && rie.tempo >= 3 && rie.media !== null && rie.media < 0.35
+  if (misurati < stato.campioni.length * 0.2 || fermo) {
+    stato.nonMisurabile = "In questo video non riesco a misurare la distanza. Serve una ripresa di lato: la corsia deve attraversare l'immagine da sinistra a destra, con i galleggianti ben visibili. Le riprese dalla testata della vasca (il nuotatore che viene verso la camera) non si possono misurare."
+  }
   return stato
 }
 

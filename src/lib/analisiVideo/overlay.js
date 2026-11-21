@@ -1,4 +1,5 @@
-// Riquadri disegnati sopra il video: velocità istantanea (grande) e media (piccolo), in basso a destra.
+// Riquadri disegnati sopra il video: SOLO velocità istantanea (grande) e velocità media (piccolo), in basso a
+// destra (scelta del coach, 21/11/2026: niente ciclo né fase, interessano solo le due velocità).
 // Un solo disegno per tre usi: schermo, screenshot e (in futuro) video scaricato, così non divergono mai.
 //
 // dati = {
@@ -99,29 +100,7 @@ export function disegnaRiquadri(ctx, r, dati = {}, { margineBasso = 0 } = {}) {
   const py = fondo - ph
 
   riquadro(ctx, { x: px, y: py, w: pw, h: ph, u, etichetta: 'Media', valore: scriviVelocita(dati.media), colore, grande: false })
-  if (dati.ciclo !== undefined) {
-    riquadro(ctx, { x: px - 8 * u - pw, y: py, w: pw, h: ph, u, etichetta: 'Ciclo', valore: scriviVelocita(dati.ciclo), colore, grande: false })
-  }
   riquadro(ctx, { x: gx, y: gy, w: gw, h: gh, u, etichetta: 'Velocità', valore: scriviVelocita(dati.istantanea), colore, grande: true })
-
-  // fase: pastiglia sopra il riquadro grande
-  if (dati.fase && NOMI_FASE[dati.fase]) {
-    ctx.save()
-    const testo = NOMI_FASE[dati.fase]
-    ctx.font = `700 ${12 * u}px ${DISPLAY}`
-    const tw = ctx.measureText(testo).width
-    const fh = 24 * u
-    const fw = tw + 22 * u
-    const fx = gx + gw - fw
-    const fy = gy - 6 * u - fh
-    rettangoloTondo(ctx, fx, fy, fw, fh, fh / 2)
-    ctx.fillStyle = COLORI_FASE[dati.fase]
-    ctx.fill()
-    ctx.fillStyle = '#ffffff'
-    ctx.textBaseline = 'middle'
-    ctx.fillText(testo, fx + 11 * u, fy + fh / 2 + 0.5 * u)
-    ctx.restore()
-  }
 }
 
 // Riquadro attorno al nuotatore seguito (per controllare che l'app segua quello giusto).

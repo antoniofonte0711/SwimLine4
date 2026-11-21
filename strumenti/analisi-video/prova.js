@@ -14,6 +14,7 @@ import { MotoreAnalisi } from '../../src/lib/analisiVideo/motore.js'
 import { scegliScala } from '../../src/lib/analisiVideo/analisi.js'
 import { calcolaSerie } from '../../src/lib/analisiVideo/serie.js'
 import { LARGHEZZA_ANALISI } from '../../src/lib/analisiVideo/estrazione.js'
+import { posizioneInVasca, metroInVasca } from '../../src/lib/analisiVideo/zone.js'
 
 const args = process.argv.slice(2).filter((a) => a !== '--')
 const video = args.find((a) => !a.startsWith('--') && !args[args.indexOf(a) - 1]?.startsWith('--'))
@@ -91,4 +92,32 @@ for (let i = 0; i < serie.t.length; i++) {
 console.log(righe.join('\n'))
 if (opt('csv')) {
   writeFileSync(opt('csv'), 't,x,y,trovato,conf,u,pos,ist,media,aff\n' + serie.t.map((t, i) => [t.toFixed(3), c[i].x, c[i].y, c[i].trovato, c[i].conf?.toFixed?.(2), c[i].u, serie.m[i], serie.v[i], serie.media[i], serie.aff[i]].join(',')).join('\n'))
+}
+// disegno dei galleggianti raccolto lungo la corsia (una lettera per mezzo dischetto, colore prevalente)
+if (args.includes('--disegno')) {
+  const L = ['R', 'G', 'V', 'B', 'w', '.']
+  motore.voti.forEach((v, cat) => {
+    if (!v || !v.size) return
+    const k = [...v.keys()].sort((p, q) => p - q)
+    let s = ''
+    for (let i = k[0]; i <= k[k.length - 1]; i++) {
+      const c = v.get(i)
+      if (!c) { s += ' '; continue }
+      const tot = c.reduce((a, b) => a + b, 0)
+      let best = 0; for (let j = 1; j < c.length; j++) if (c[j] > c[best]) best = j
+      s += tot < 3 ? '?' : L[best]
+    }
+    console.log(`catena ${cat}: da u=${(k[0] / 2).toFixed(1)} a u=${(k[k.length - 1] / 2).toFixed(1)} dischetti (${k.length} mezzi)`)
+    for (let i = 0; i < s.length; i += 100) console.log('  ' + s.slice(i, i + 100))
+  })
+}
+
+// posizione nella vasca capita dal video (zone di fine vasca)
+{
+  const pos = posizioneInVasca({ campioni: motore.campioni, voti: motore.voti, vasca })
+  console.log('zone:', pos.cambi.map((c) => `u=${c.u.toFixed(1)} forza ${c.forza.toFixed(2)}`).join(' | ') || 'nessun cambio')
+  console.log(`scala zone: ${pos.fonte} ${pos.qualita} ${pos.mpp.toFixed(4)} m/dischetto; ancora ${pos.ancora ? JSON.stringify(pos.ancora) : 'nessuna'}`)
+  const us = motore.campioni.filter((c) => c.catena === pos.catena && c.u !== null)
+  if (us.length) console.log(`tratto: dal metro ${f2(metroInVasca(pos, us[0].u))} al metro ${f2(metroInVasca(pos, us[us.length - 1].u))}`)
+  if (opt('salva-voti')) writeFileSync(opt('salva-voti'), JSON.stringify(motore.voti.map((v) => (v ? [...v].map(([k, c]) => [k, [...c]]) : null))))
 }
