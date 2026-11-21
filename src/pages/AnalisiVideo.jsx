@@ -48,7 +48,7 @@ function campioneAl(campioni, t) {
   return Math.abs(campioni[hi].t - t) < Math.abs(campioni[lo].t - t) ? campioni[hi] : campioni[lo]
 }
 
-function Lettore({ url, nome, onChiudi }) {
+function Lettore({ url, nome, onChiudi, stile, vasca }) {
   const videoRef = useRef(null)
   const canvasRef = useRef(null)
   const areaRef = useRef(null) // zona del video (con un pannello aperto lascia spazio sotto)
@@ -64,11 +64,9 @@ function Lettore({ url, nome, onChiudi }) {
 
   // 'scegli' (si tocca il nuotatore) | 'guarda' | 'risultati' | 'correggi'
   const [modo, setModo] = useState('scegli')
-  const [vasca, setVasca] = useState(25)
   const [altezzaPannello, setAltezzaPannello] = useState(0)
 
   // Analisi
-  const [stile, setStile] = useState('crawl')
   const [analisi, setAnalisi] = useState(null) // stato del motore: campioni, serie, scala, avanzamento, finito
   const [inCorso, setInCorso] = useState(false)
   const [dubbioDaCorreggere, setDubbioDaCorreggere] = useState(null)
@@ -404,25 +402,13 @@ function Lettore({ url, nome, onChiudi }) {
         </div>
       )}
 
+      {/* Solo una scritta piccola che NON blocca i tocchi (pointer-events-none): stile e vasca si scelgono
+          prima di aprire il video, così niente copre il nuotatore */}
       {modo === 'scegli' && !inCorso && pronto && !errore && (
-        <div className="absolute top-[calc(env(safe-area-inset-top)+3.5rem)] inset-x-0 flex justify-center px-3">
-          <div className="max-w-md w-full bg-abisso/95 rounded-card px-4 py-3 shadow-flottante">
-            <p className="font-bold">Tocca il nuotatore da analizzare</p>
-            <p className="text-[12px] text-white/70 mt-0.5 mb-2">
-              Se qui non si vede bene, sposta il video. L'analisi parte da questo punto e va fino alla fine; i metri li capisco io dai galleggianti.
-            </p>
-            <div className="flex flex-wrap gap-1.5" role="group" aria-label="Stile e vasca">
-              {STILI.map(([k, n]) => (
-                <button key={k} type="button" onClick={() => setStile(k)} aria-pressed={stile === k}
-                  className={`h-9 px-3 rounded-full text-sm font-bold ${stile === k ? 'bg-white text-abisso' : 'bg-white/15'}`}>{n}</button>
-              ))}
-              <span className="w-2" />
-              {[25, 50].map((v) => (
-                <button key={v} type="button" onClick={() => setVasca(v)} aria-pressed={vasca === v}
-                  className={`h-9 px-3 rounded-full text-sm font-bold ${vasca === v ? 'bg-white text-abisso' : 'bg-white/15'}`}>Vasca {v} m</button>
-              ))}
-            </div>
-          </div>
+        <div className="absolute top-[calc(env(safe-area-inset-top)+0.75rem)] inset-x-0 flex justify-center px-16 pointer-events-none">
+          <p className="bg-blue-600/90 rounded-full px-4 py-2 text-sm font-bold text-center shadow-flottante">
+            Tocca il nuotatore da analizzare
+          </p>
         </div>
       )}
 
@@ -518,6 +504,8 @@ function Lettore({ url, nome, onChiudi }) {
 
 export default function AnalisiVideo() {
   const [video, setVideo] = useState(null) // { url, nome }
+  const [stile, setStile] = useState('crawl')
+  const [vasca, setVasca] = useState(25)
   const [errore, setErrore] = useState('')
 
   // Il video vive solo nella memoria del browser: quando si chiude (o si lascia la pagina) si libera
@@ -541,9 +529,23 @@ export default function AnalisiVideo() {
       <div className="bg-white rounded-card p-5 shadow-card">
         <h2 className="font-display text-xl font-extrabold text-abisso mb-1">Velocità dell'atleta dal video</h2>
         <p className="text-sm text-slate-500 mb-4">
-          Carica un video di nuoto dal telefono o dal PC, premi <b>Analizza</b>, scegli camera e stile e tocca il nuotatore:
-          l'app scrive sopra il video la velocità istantanea e la media in m/s.
+          Scegli stile e vasca, carica il video e tocca il nuotatore: l'app analizza il video, capisce da sola
+          in che punto della vasca è e te lo rifà vedere con la velocità e la media in m/s.
         </p>
+        <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Stile</p>
+        <div className="flex flex-wrap gap-2 mb-3" role="group" aria-label="Stile">
+          {STILI.map(([k, n]) => (
+            <button key={k} type="button" onClick={() => setStile(k)} aria-pressed={stile === k}
+              className={`h-10 px-4 rounded-full text-sm font-bold ${stile === k ? 'bg-abisso text-white' : 'bg-slate-100 text-abisso'}`}>{n}</button>
+          ))}
+        </div>
+        <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Vasca</p>
+        <div className="flex flex-wrap gap-2 mb-4" role="group" aria-label="Lunghezza della vasca">
+          {[25, 50].map((v) => (
+            <button key={v} type="button" onClick={() => setVasca(v)} aria-pressed={vasca === v}
+              className={`h-10 px-4 rounded-full text-sm font-bold ${vasca === v ? 'bg-abisso text-white' : 'bg-slate-100 text-abisso'}`}>{v} m</button>
+          ))}
+        </div>
         <label className="cliccabile flex items-center justify-center gap-2 w-full min-h-[52px] rounded-campo bg-blue-600 text-white font-bold cursor-pointer">
           <Icona nome="video" className="w-5 h-5" />
           Scegli un video
@@ -558,13 +560,13 @@ export default function AnalisiVideo() {
       <div className="bg-white rounded-card p-5 shadow-card mt-3 text-sm text-slate-500">
         <p className="font-bold text-abisso mb-1">Per un risultato affidabile</p>
         <ul className="list-disc pl-5 space-y-1">
+          <li>Riprendi di lato: la corsia deve attraversare l'immagine da sinistra a destra (non dalla testata della vasca).</li>
           <li>Si devono vedere le due file di galleggianti ai lati del nuotatore.</li>
-          <li>Camera ferma: imposta la scala toccando i cambi di colore della corsia (5 m, 15 m…).</li>
-          <li>Camera in movimento: la scala la cerco dai cambi di colore; se la corsia è di un solo colore, impostala tu.</li>
+          <li>Più vasca si vede, più i metri sono precisi: con i due cambi di colore dei 5 m nel video la misura è esatta.</li>
           <li>Dove l'immagine non basta l'app lascia un buco ("—") invece di un numero sbagliato.</li>
         </ul>
       </div>
-      {video && <Lettore key={video.url} url={video.url} nome={video.nome} onChiudi={() => setVideo(null)} />}
+      {video && <Lettore key={video.url} url={video.url} nome={video.nome} stile={stile} vasca={vasca} onChiudi={() => setVideo(null)} />}
     </AppShell>
   )
 }
