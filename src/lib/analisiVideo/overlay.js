@@ -112,9 +112,14 @@ export function disegnaInseguimento(ctx, r, k, c, affidabilita) {
   const altezza = c.sopra && c.sotto
     ? Math.abs((c.sotto.a + c.sotto.b * ((c.x ?? c.xPrevisto) - c.sotto.xc)) - (c.sopra.a + c.sopra.b * ((c.x ?? c.xPrevisto) - c.sopra.xc)))
     : c.bw * 0.6
-  const y = r.y + (yy ?? (c.sopra && c.sotto ? (c.sopra.a + c.sotto.a) / 2 : 0)) * k
+  let y = r.y + (yy ?? (c.sopra && c.sotto ? (c.sopra.a + c.sotto.a) / 2 : 0)) * k
   const bw = c.bw * k
-  const bh = altezza * 0.8 * k
+  let bh = altezza * 0.8 * k
+  // ripresa dalla testata: il corpo è "in piedi" nell'immagine, il riquadro va dalla testa ai piedi
+  if (c.trovato && Number.isFinite(c.alto) && Number.isFinite(c.basso)) {
+    y = r.y + ((c.alto + c.basso) / 2) * k
+    bh = Math.max(20, (c.basso - c.alto) * k)
+  }
   ctx.save()
   ctx.lineWidth = 2
   ctx.setLineDash(c.trovato ? [] : [6, 5])

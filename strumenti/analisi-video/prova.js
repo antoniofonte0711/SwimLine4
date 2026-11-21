@@ -30,6 +30,7 @@ const FFMPEG = process.env.FFMPEG || candidati.find(existsSync)
 if (!FFMPEG) { console.error('ffmpeg non trovato (imposta FFMPEG=...)'); process.exit(1) }
 
 const da = Number(opt('da', 0)), a = opt('a') ? Number(opt('a')) : null
+const ruota = args.includes('--ruota')
 const camera = opt('camera', 'movimento'), stile = opt('stile', 'crawl'), vasca = Number(opt('vasca', 25))
 const [tx, ty] = opt('tap').split(',').map(Number)
 const cron = opt('cron') ? (() => { const [p, q] = opt('cron').split(',').map((s) => s.split(':').map(Number)); return { a: { t: p[0], d: p[1] }, b: { t: q[0], d: q[1] } } })() : null
@@ -60,10 +61,19 @@ for await (const pezzo of ff.stdout) {
   while (buf.length >= dim) {
     const data = new Uint8ClampedArray(buf.buffer.slice(buf.byteOffset, buf.byteOffset + dim))
     buf = buf.subarray(dim)
-    const img = { w, h, data }
+    let img = { w, h, data }
+    // --ruota: video ripreso dalla testata (corsia verticale) girato di 90° → corsia orizzontale
+    if (ruota) {
+      const r = new Uint8ClampedArray(dim)
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const i = (y * w + x) * 4, o = (x * h + (h - 1 - y)) * 4
+        r[o] = data[i]; r[o + 1] = data[i + 1]; r[o + 2] = data[i + 2]; r[o + 3] = 255
+      }
+      img = { w: h, h: w, data: r }
+    }
     const t = da + n / fps
     const s = performance.now()
-    if (!motore) { motore = new MotoreAnalisi({ w, h, camera }); esito = motore.inizia(img, t, { x: tx / fattore, y: ty / fattore }) }
+    if (!motore) { motore = new MotoreAnalisi({ w: img.w, h: img.h, camera }); esito = motore.inizia(img, t, ruota ? { x: h - 1 - ty / fattore, y: tx / fattore } : { x: tx / fattore, y: ty / fattore }) }
     else motore.passo(img, t)
     msMotore += performance.now() - s
     n++

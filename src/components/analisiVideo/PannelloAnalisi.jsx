@@ -20,6 +20,7 @@ export function PannelloRisultati({ analisi, onCorreggi, onScarica, scaricando, 
         <button type="button" onClick={onChiudi} className="h-10 px-4 rounded-full bg-white/15 text-sm font-bold">Chiudi</button>
       </div>
 
+      {analisi.testata && <p className="text-[13px] font-bold text-cyan-200 mb-1">Ripresa dalla testata: arrivo, virata, subacquea e ripartenza</p>}
       {rie && rie.media !== null && (
         <div className="bg-white/10 rounded-campo px-3 py-2.5 mb-2">
           {tratto && (
@@ -41,7 +42,9 @@ export function PannelloRisultati({ analisi, onCorreggi, onScarica, scaricando, 
         {dubbi.map((d) => (
           <div key={d.da} className="flex items-center gap-2 bg-white/10 rounded-campo px-3 py-2">
             <span className="flex-1 text-sm"><b>{tempo(d.da)}–{tempo(d.a)}</b> · {d.motivo}</span>
-            <button type="button" onClick={() => onCorreggi(d)} className="h-9 px-3 rounded-full bg-white text-abisso text-sm font-bold">Correggi</button>
+            {!analisi.testata && (
+              <button type="button" onClick={() => onCorreggi(d)} className="h-9 px-3 rounded-full bg-white text-abisso text-sm font-bold">Correggi</button>
+            )}
           </div>
         ))}
       </div>

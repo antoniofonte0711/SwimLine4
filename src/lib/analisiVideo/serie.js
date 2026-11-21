@@ -34,8 +34,9 @@ export function posizioni(campioni, opts) {
 // il braccio che esce dall'acqua (oscillazione a ogni bracciata, ~1,5 s) e la parabola non riesce a seguirla.
 export function ammorbidisci(campioni, m, opts, statica) {
   const n = m.length
-  const cicli = aCicli(opts.stile)
-  const semiMed = cicli ? 0.08 : 0.5, semiMedia = cicli ? 0.06 : 1.0
+  // ripresa dalla testata: virata e spinta cambiano velocità in pochi decimi → finestre corte come nei cicli
+  const cicli = aCicli(opts.stile) || opts.testata
+  const semiMed = opts.testata ? 0.15 : cicli ? 0.08 : 0.5, semiMedia = opts.testata ? 0.3 : cicli ? 0.06 : 1.0
   const base = campioni.map((c, i) => (m[i] === null ? null : statica ? 0 : c.ucam === null || c.ucam === undefined ? null : c.ucam * opts.mpp))
   const off = m.map((v, i) => (v === null || base[i] === null ? null : v - base[i]))
   const cat = campioni.map((c) => (statica ? 0 : c.catena))
@@ -160,8 +161,10 @@ export function calcolaSerie(campioni, opts) {
   }
   const dtMedio = n > 1 ? (t[n - 1] - t[0]) / (n - 1) : 1 / 30
   const cicli = aCicli(opts.stile)
-  // finestra della velocità istantanea (s): nel crawl e nel dorso circa una bracciata
-  const fin = cicli ? 0.3 : 1.0
+  // finestra della velocità istantanea (s): nel crawl e nel dorso circa una bracciata; dalla testata 0,5 s
+  // (circa una bracciata: cancella l'oscillazione del braccio che si allunga, ma la virata e la spinta in
+  // subacquea, che durano poco, restano visibili)
+  const fin = opts.testata ? 0.7 : cicli ? 0.3 : 1.0
 
   // velocità istantanea: pendenza della posizione in una finestra breve centrata
   const v = new Array(n).fill(null)
@@ -186,7 +189,7 @@ export function calcolaSerie(campioni, opts) {
   // (tuffo e virata a parte, che sono all'inizio dell'analisi). Un cambio più brusco è il riquadro che
   // ha sbagliato posto: lì la velocità istantanea non si mostra ("—"), la media resta.
   const impossibile = new Array(n).fill(false)
-  if (!cicli) {
+  if (!cicli && !opts.testata) {
     for (let i = 0; i < n; i++) {
       if (v[i] === null) continue
       for (let j = i + 1; j < n && t[j] - t[i] <= 1.0; j++) {
@@ -201,7 +204,13 @@ export function calcolaSerie(campioni, opts) {
   // media dall'inizio dell'analisi (stessa catena): distanza / tempo
   const media = new Array(n).fill(null)
   const primo = new Map()
-  for (let i = 0; i < n; i++) {
+  // Dalla testata c'è la virata: distanza / tempo darebbe ~0 (si torna indietro). La media è quella della
+  // velocità istantanea dall'inizio (= strada percorsa / tempo).
+  if (opts.testata) {
+    let somma = 0, k = 0
+    for (let i = 0; i < n; i++) { if (v[i] !== null) { somma += v[i]; k++ } if (k >= 10) media[i] = somma / k }
+  }
+  for (let i = 0; i < n && !opts.testata; i++) {
     if (m[i] === null) continue
     if (!primo.has(catena[i])) primo.set(catena[i], i)
     const k = primo.get(catena[i])
@@ -354,6 +363,19 @@ export function calcolaSerie(campioni, opts) {
     if (!riepilogo || dur > riepilogo.tempo) riepilogo = { distanza: Math.abs(m[i1] - m[i0]), tempo: dur, da: t[i0], a: t[i1] }
   }
   if (riepilogo) riepilogo.media = riepilogo.tempo > 0 ? riepilogo.distanza / riepilogo.tempo : null
+  // dalla testata (virata in mezzo) la distanza è la strada percorsa: somma di velocità × tempo
+  if (riepilogo && opts.testata) {
+    let strada = 0, t0 = null, t1 = null
+    for (let i = 1; i < n; i++) {
+      if (v[i] === null || v[i - 1] === null) continue
+      strada += ((v[i] + v[i - 1]) / 2) * (t[i] - t[i - 1])
+      if (t0 === null) t0 = t[i - 1]
+      t1 = t[i]
+    }
+    riepilogo.distanza = strada
+    riepilogo.tempo = t0 === null ? 0 : t1 - t0
+    riepilogo.media = riepilogo.tempo > 0 ? strada / riepilogo.tempo : null
+  }
 
   return { t, m, v, media, ciclo, limitiCicli, fase, fiduciaFase, aff, puntiDubbi, riepilogo, cronometro }
 }

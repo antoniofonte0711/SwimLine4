@@ -2,6 +2,7 @@
 // (strategie a cascata), aggiorna i risultati man mano e permette di correggere i punti dubbi.
 import { MotoreAnalisi, metriPerDischettoDaCalibrazione } from './motore'
 import { posizioneInVasca, metroInVasca } from './zone'
+import { MotoreTestata, taraTestata, campioniInMetri, eRipresaDallaTestata, DMAX } from './testata'
 import { calcolaSerie } from './serie'
 import { firma as firmaFotogramma, scorriFotogrammi, unFotogramma } from './estrazione'
 
@@ -36,6 +37,8 @@ export const NOMI_FONTE = {
   zone: 'cambi di colore dei 5 m visti nel video (precisa)',
   'vasca-nota': 'misurata in un video precedente di questa vasca',
   stima: 'stimata (nel video non si vedono i due cambi di colore dei 5 m)',
+  testata: 'ripresa dalla testata: prospettiva tarata sulla T a 2 m e sul cambio di colore a 5 m',
+  'testata-parziale': 'ripresa dalla testata: prospettiva tarata solo sul cambio di colore a 5 m (meno precisa)',
 }
 
 // Tratto nuotato in metri della vasca (dal metro … al metro …), se l'app ha capito dov'è il nuotatore
@@ -90,6 +93,18 @@ export async function eseguiAnalisi(opzioni, { onAggiornamento, annullato }) {
   let ultimaFirma = null
   const durata = Math.max(0.1, (opzioni.tFine ?? Infinity) - opzioni.tInizio)
   const aggiorna = (fine) => {
+    if (stato.testata) {
+      // dalla testata: prospettiva tarata su tutto quello che si è visto finora, poi metri dalla parete
+      const tara = taraTestata(motore.campioni, opzioni.vasca)
+      stato.tara = tara
+      stato.campioni = campioniInMetri(motore.campioni, tara)
+      stato.scala = tara ? { fonte: tara.qualita === 'alta' ? 'testata' : 'testata-parziale', qualita: tara.qualita === 'alta' ? 'alta' : 'media', mpp: 1 } : null
+      stato.tratto = null
+      stato.serie = calcolaSerie(stato.campioni, { mpp: 1, qualitaScala: stato.scala?.qualita || 'bassa', camera: 'movimento', stile: opzioni.stile, fattore: stato.fattore, testata: true })
+      const ultimo = stato.campioni[stato.campioni.length - 1]
+      onAggiornamento?.({ ...stato, avanzamento: fine ? 1 : Math.min(0.99, (ultimo.t - opzioni.tInizio) / durata), finito: !!fine })
+      return
+    }
     stato.voti = motore.voti
     stato.posizione = posizioneInVasca({ campioni: stato.campioni, voti: motore.voti, vasca: opzioni.vasca, mppNoto: leggiVascaNota(opzioni.vasca) })
     stato.scala = scegliScala({ camera: opzioni.camera, calib: opzioni.calib, mppCalib, pos: stato.posizione })
@@ -116,9 +131,19 @@ export async function eseguiAnalisi(opzioni, { onAggiornamento, annullato }) {
         stato.fattore = fattore
         stato.w = img.w
         stato.h = img.h
+        const tap = { x: opzioni.tap.x / fattore, y: opzioni.tap.y / fattore }
+        // Inquadratura: di lato (corsia orizzontale) o dalla testata (corsia che va verso il fondo)?
+        if (eRipresaDallaTestata(img, tap).testata) {
+          stato.testata = true
+          motore = new MotoreTestata({ w: img.w, h: img.h })
+          motore.inizia(img, t, tap)
+          stato.campioni = motore.campioni
+          n++
+          return
+        }
         motore = new MotoreAnalisi({ w: img.w, h: img.h, camera: opzioni.camera })
         stato.campioni = motore.campioni
-        const esito = motore.inizia(img, t, { x: opzioni.tap.x / fattore, y: opzioni.tap.y / fattore })
+        const esito = motore.inizia(img, t, tap)
         if (!esito.corsieTrovate) {
           avvisi.push(opzioni.camera === 'ferma' && opzioni.calib?.ok
             ? 'Non trovo le due file di galleggianti attorno al nuotatore: lo seguo senza il vincolo della corsia (meno sicuro con altri nuotatori vicini).'
@@ -142,10 +167,16 @@ export async function eseguiAnalisi(opzioni, { onAggiornamento, annullato }) {
   // la ripresa dalla testata: chi viene verso la camera non si sposta di lato e il motore misura quasi zero.
   const misurati = stato.campioni.filter((c) => c.u !== null).length
   const rie = stato.serie?.riepilogo
-  const fermo = rie && rie.tempo >= 3 && rie.media !== null && rie.media < 0.35
-  if (misurati < stato.campioni.length * 0.2 || fermo) {
-    stato.nonMisurabile = "In questo video non riesco a misurare la distanza. Serve una ripresa di lato: la corsia deve attraversare l'immagine da sinistra a destra, con i galleggianti ben visibili. Le riprese dalla testata della vasca (il nuotatore che viene verso la camera) non si possono misurare."
+  const fermo = !stato.testata && rie && rie.tempo >= 3 && rie.media !== null && rie.media < 0.35
+  if (stato.testata && !stato.tara) {
+    stato.nonMisurabile = "Video ripreso dalla testata: per misurare i metri mi servono il cambio di colore dei galleggianti a 5 m dalla parete e la T sul fondo (a 2 m). In questo video non li trovo: riprendi un po' più dall'alto, con la corsia intera nell'inquadratura."
+  } else if (misurati < stato.campioni.length * 0.2 || fermo) {
+    stato.nonMisurabile = stato.testata
+      ? `Video ripreso dalla testata: non riesco a seguire il nuotatore nei primi ${DMAX} m dalla parete. Tocca il nuotatore quando è vicino alla camera e si vede bene.`
+      : "In questo video non riesco a misurare la distanza. Serve una ripresa di lato (la corsia attraversa l'immagine da sinistra a destra) oppure dalla testata della vasca (la corsia va verso il fondo), con i galleggianti ben visibili."
   }
+  if (stato.testata && stato.tara?.qualita !== 'alta') avvisi.push('Non vedo la T sul fondo (2 m): i metri sono tarati solo sul cambio di colore a 5 m, meno precisi.')
+  if (stato.testata) avvisi.push(`Dalla testata misuro i primi ${DMAX} m dalla parete (arrivo, virata, subacquea, ripartenza): più lontano il nuotatore è troppo piccolo per una misura precisa.`)
   return stato
 }
 
