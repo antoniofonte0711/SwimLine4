@@ -35,7 +35,7 @@ for await (const pezzo of ff.stdout) {
 const c = motore.campioni
 const tara = taraTestata(c)
 console.log(`${n} fotogrammi, motore ${(ms / n).toFixed(1)} ms/fotogramma; corsia ${esito.corsieTrovate}, riferimenti ${esito.riferimenti}; seguito ${(100 * c.filter((x) => x.trovato).length / n).toFixed(0)}%`)
-console.log('taratura:', tara && `A ${tara.A.toFixed(0)} B ${tara.B.toFixed(2)} yv ${tara.yv.toFixed(0)} y5 ${tara.y5.toFixed(0)} yT ${tara.yT?.toFixed(0)} (${tara.qualita})`)
+console.log('taratura:', tara && `A ${tara.A.toFixed(0)} B ${tara.B.toFixed(2)} yv ${tara.yv.toFixed(0)} y5 ${tara.y5.toFixed(0)} passo ${tara.passo} (${tara.fonte})`)
 const f2 = (x) => (x === null || x === undefined || !Number.isFinite(x) ? '   —' : x.toFixed(2).padStart(5))
 const cm = campioniInMetri(c, tara)
 const serie = calcolaSerie(cm, { mpp: 1, qualitaScala: tara?.qualita || 'bassa', camera: 'movimento', stile: opt('stile', 'crawl'), fattore, testata: true })

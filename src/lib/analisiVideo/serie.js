@@ -177,7 +177,9 @@ export function calcolaSerie(campioni, opts) {
     const ts = [], ms = []
     for (let j = j0; j <= j1; j++) if (m[j] !== null && catena[j] === catena[i]) { ts.push(t[j]); ms.push(m[j]) }
     const attesi = Math.max(4, Math.round(fin / dtMedio) + 1)
-    if (ts.length < Math.max(4, attesi * 0.6)) continue
+    // dalla testata la finestra deve essere quasi piena: ai bordi (inizio, nuotatore che esce dall'immagine)
+    // una finestra a metà dava picchi falsi (video finto: 1,8 m/s invece di 1,4)
+    if (ts.length < Math.max(4, attesi * (opts.testata ? 0.85 : 0.6))) continue
     const r = retta(ts, ms)
     const vel = Math.abs(r.k)
     if (vel > V_MAX) continue

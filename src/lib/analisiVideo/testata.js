@@ -1,3 +1,6 @@
+import { periodo } from './corsie'
+import { MPP_STIMA } from './zone'
+
 // Ripresa dalla TESTATA della vasca (camera sul bordo, la corsia va "dentro" l'immagine verso il fondo).
 //
 // Qui il nuotatore non si sposta di lato: viene verso la camera o se ne allontana, e la prospettiva comprime
@@ -5,9 +8,10 @@
 //  1. Le due corde della corsia sono rette nell'immagine che convergono in un punto di fuga (riga yv).
 //  2. Lungo la corsia la distanza dalla parete della camera dipende solo dalla riga y (camera non inclinata
 //     di lato): d(y) = A / (y − yv) + B (proiezione di una retta: un punto all'infinito, la riga yv).
-//  3. A e B si ricavano dai riferimenti che ogni vasca da gara ha: i galleggianti cambiano colore a 5 m
-//     dalle pareti (vicino alla camera e in fondo, a vasca − 5 m). Due riferimenti bastano; se c'è anche il
-//     secondo cambio la misura si controlla da sola.
+//  3. A e B si ricavano da riferimenti IN SUPERFICIE (come il nuotatore): il passo dei dischetti delle corde
+//     (sempre uguale, misurato nella vasca o stimato) dà A, il cambio di colore a 5 m dalla parete dà B.
+//     NON si usa la T sul fondo: sta a 1,5–2 m di profondità e la rifrazione la fa sembrare molto più vicina
+//     alla camera (provato con il video finto: con la T la scala sbagliava di molto).
 //  4. Il nuotatore si segue come "ciò che non è sfondo" dentro la corsia (sfondo = mediana di molti
 //     fotogrammi): funziona sopra e sotto l'acqua, dove diventa una sagoma scura, e durante la virata.
 
@@ -86,8 +90,10 @@ export function cordeCorsia(rette, punto, w) {
   let sx = null, dx = null
   for (const l of rette) {
     const x = xRetta(l, punto.y)
-    if (x < punto.x && x > punto.x - w * 0.8 && (!sx || l.voti > sx.voti)) sx = l
-    if (x > punto.x && x < punto.x + w * 0.8 && (!dx || l.voti > dx.voti)) dx = l
+    // anche fuori dall'immagine: vicino alla camera (in basso) le corde escono dai lati, ma la retta prolungata
+    // dice lo stesso da che parte passano
+    if (x < punto.x && x > punto.x - w * 1.6 && (!sx || l.voti > sx.voti)) sx = l
+    if (x > punto.x && x < punto.x + w * 1.6 && (!dx || l.voti > dx.voti)) dx = l
   }
   return { sx, dx }
 }
@@ -264,38 +270,54 @@ export function rigaCinqueMetri(mappa, w, h, corde) {
   return righe.reduce((s, x) => s + x, 0) / righe.length
 }
 
-// Riga della T sul fondo (2 m dalla parete): la linea nera della corsia si allarga in una barra orizzontale.
-// Pixel "nero di corsia": blu scurissimo con il rosso quasi a zero (diverso dai dischetti blu, r ≥ 22).
-export function rigaT(img, corde) {
+// Passo dei dischetti lungo una corda, misurato in s = 1/(y − yv). In questa coordinata la prospettiva
+// sparisce: d(y) = A·s + B, quindi i dischetti (in superficie, tutti uguali) sono equidistanti e il loro passo
+// in s vale passo_m / A. Si campiona la corda tra le righe yA e yB (zona vicino alla camera, dischetti grandi).
+// Ritorna il passo in unità di s (o null).
+export function passoDischettiInS(img, corda, yv, yA, yB) {
   const { w, h, data } = img
-  if (!corde.sx || !corde.dx) return null
-  const conti = new Array(h).fill(0)
-  for (let y = 0; y < h; y++) {
-    const x0 = Math.max(0, Math.ceil(xRetta(corde.sx, y))), x1 = Math.min(w - 1, Math.floor(xRetta(corde.dx, y)))
-    if (x1 - x0 < 10) continue
-    for (let x = x0; x <= x1; x++) {
+  yA = Math.max(Math.ceil(yA), Math.ceil(yv + 5)); yB = Math.min(h - 2, Math.floor(yB))
+  if (yB - yA < 60) return null
+  // luminosità massima attraverso la corda (±2 px) riga per riga: i dischetti bianchi sono i picchi
+  const lum = new Float32Array(yB - yA + 1)
+  for (let y = yA; y <= yB; y++) {
+    const xc = Math.round(xRetta(corda, y))
+    let m = 0
+    for (let x = xc - 2; x <= xc + 2; x++) {
+      if (x < 0 || x >= w) continue
       const i = (y * w + x) * 4
-      if (data[i] < 25 && data[i + 2] > data[i] + 50 && data[i] + data[i + 1] + data[i + 2] < 260) conti[y]++
+      m = Math.max(m, data[i] + data[i + 1] + data[i + 2])
     }
-    conti[y] /= (x1 - x0) // quota della larghezza della corsia
+    lum[y - yA] = m
   }
-  // linea normale ~10–15% della corsia; la barra della T ~35% e oltre, per alcune righe di fila
-  let migliore = null
-  for (let y = 2; y < h - 2; y++) {
-    const m = (conti[y - 2] + conti[y - 1] + conti[y] + conti[y + 1] + conti[y + 2]) / 5
-    if (m > 0.3 && (!migliore || m > migliore.m)) migliore = { y, m }
+  const sA = 1 / (yA - yv), sB = 1 / (yB - yv) // sA > sB
+  const ds = sA - 1 / (yA + 1 - yv) // passo = 1 riga dove le righe sono più fitte (in alto)
+  const n = Math.floor((sA - sB) / ds)
+  if (n < 60) return null
+  const prof = new Float32Array(n)
+  for (let k = 0; k < n; k++) {
+    const y = yv + 1 / (sA - k * ds) - yA
+    const y0 = Math.floor(y), f = y - y0
+    prof[k] = lum[Math.min(lum.length - 1, y0)] * (1 - f) + lum[Math.min(lum.length - 1, y0 + 1)] * f
   }
-  return migliore ? migliore.y : null
+  const r = periodo(Array.from(prof), 3, 40)
+  return r && r.forza > 0.3 ? r.P * ds : null
 }
 
-// Geometria di un fotogramma: corde della corsia, punto di fuga, riga dei 5 m, riga della T
+// Geometria di un fotogramma: corde della corsia, punto di fuga, riga dei 5 m, passo dei dischetti (in s)
 export function geometriaFotogramma(img, punto) {
   const { w, h } = img
   const mappa = mappaCordaFotogramma(img)
   const rette = retteCorde(mappa, w, h)
   const corde = cordeCorsia(rette, punto, w)
   const fuga = puntoDiFuga(corde.sx, corde.dx)
-  return { corde, fuga, y5: rigaCinqueMetri(mappa, w, h, corde), yT: rigaT(img, corde), mappa }
+  const y5 = rigaCinqueMetri(mappa, w, h, corde)
+  let passoS = null
+  if (fuga && y5 !== null) {
+    const passi = [corde.sx, corde.dx].filter(Boolean).map((l) => passoDischettiInS(img, l, fuga.y, y5 + 12, h - 4)).filter((x) => x !== null)
+    if (passi.length) passoS = passi.reduce((a, b) => a + b, 0) / passi.length
+  }
+  return { corde, fuga, y5, passoS, mappa }
 }
 
 // ---------- inseguimento del nuotatore dentro la corsia ----------
@@ -319,7 +341,7 @@ export function cercaInCorsia(img, corde, prec, semiAltezza, yMin = 0) {
   if (!corde.sx || !corde.dx) return null
   const y0 = Math.max(0, Math.round(yMin), Math.round(prec.y - semiAltezza)), y1 = Math.min(h, Math.round(prec.y + semiAltezza))
   const acqua = rbAcqua(img, corde, y0, y1)
-  let sx = 0, sy = 0, m = 0, alto = Infinity, basso = -Infinity
+  let sx = 0, sy = 0, m = 0, alto = Infinity, basso = -Infinity, calore = 0
   for (let y = y0; y < y1; y++) {
     const xa = Math.max(0, Math.ceil(xRetta(corde.sx, y)) + 2), xb = Math.min(w - 1, Math.floor(xRetta(corde.dx, y)) - 2)
     for (let x = xa; x <= xb; x++) {
@@ -327,12 +349,13 @@ export function cercaInCorsia(img, corde, prec, semiAltezza, yMin = 0) {
       const c = data[i] - data[i + 2] - acqua - 35
       if (c <= 0) continue
       const peso = Math.min(1, c / 60)
-      sx += x * peso; sy += y * peso; m += peso
+      sx += x * peso; sy += y * peso; m += peso; calore += c * peso
       if (peso > 0.5) { if (y < alto) alto = y; if (y > basso) basso = y }
     }
   }
   if (m < 40) return { x: prec.x, y: prec.y, massa: m, trovato: false }
-  return { x: sx / m, y: sy / m, massa: m, alto, basso, trovato: true }
+  // calore: quanto la pelle è più calda dell'acqua (sott'acqua è più spenta: serve a riconoscere la subacquea)
+  return { x: sx / m, y: sy / m, massa: m, alto, basso, calore: calore / m, trovato: true }
 }
 
 export const DMAX = 7 // m dalla parete: oltre, dalla testata la misura non è abbastanza precisa
@@ -351,19 +374,19 @@ export class MotoreTestata {
     this.vy = 0
     this.passo(img, t, true)
     const g = this.ultimaGeo
-    return { corsieTrovate: !!(g.corde.sx && g.corde.dx), riferimenti: g.y5 !== null }
+    return { corsieTrovate: !!(g.corde.sx && g.corde.dx), riferimenti: g.y5 !== null && g.passoS !== null }
   }
 
   passo(img, t, primo = false) {
     // Geometria (la parte lenta) un fotogramma ogni 3: la camera si muove piano. In mezzo si tengono
-    // corde e riferimenti dell'ultima volta (y5/yT/fuga solo dove misurati davvero).
+    // corde e riferimenti dell'ultima volta (y5/passo/fuga solo dove misurati davvero).
     this.n = (this.n || 0) + 1
     let g
     if (primo || this.n % 3 === 1 || !this.ultimaGeo?.corde.sx || !this.ultimaGeo?.corde.dx) {
       g = geometriaFotogramma(img, this.pos)
       if ((!g.corde.sx || !g.corde.dx) && this.ultimaGeo) g.corde = this.ultimaGeo.corde
       this.ultimaGeo = g
-    } else g = { corde: this.ultimaGeo.corde, y5: null, yT: null, fuga: null }
+    } else g = { corde: this.ultimaGeo.corde, y5: null, passoS: null, fuga: null }
     const dt = primo ? 0 : t - this.campioni[this.campioni.length - 1].t
     const previsto = { x: this.pos.x, y: this.pos.y + this.vy * dt }
     // finestra: più alta vicino alla camera (il nuotatore è più grande); ~1/8 dell'altezza in cima, 1/4 in fondo
@@ -376,6 +399,8 @@ export class MotoreTestata {
     const yMin = this.rif ? this.rif.yv + (this.rif.y5 - this.rif.yv) / 3 : 0
     let r = cercaInCorsia(img, g.corde, previsto, semi, yMin)
     if (r?.trovato) r = cercaInCorsia(img, g.corde, r, semi * 0.8, yMin) // seconda passata centrata
+    // corpo tagliato dal bordo in basso (troppo vicino alla camera): il "centro" si sposta → niente misura
+    if (r?.trovato && Number.isFinite(r.basso) && r.basso >= this.h - 3) r = { ...r, trovato: false }
     // oltre ~7,5 m il nuotatore è troppo piccolo: la posizione balla di mezzo metro → niente misura
     if (r?.trovato && dStima(r.y) !== null && dStima(r.y) > DMAX) r = { ...r, trovato: false }
     if (r?.trovato && !primo && this.ultimoTrovato) {
@@ -392,8 +417,8 @@ export class MotoreTestata {
     if (trovato) { this.pos = { x: r.x, y: r.y }; this.ultimoTrovato = { y: r.y, t } }
     this.campioni.push({
       t, trovato, x: trovato ? r.x : null, y: trovato ? r.y : null, xPrevisto: this.pos.x,
-      alto: r?.alto ?? null, basso: r?.basso ?? null, massa: r?.massa ?? 0,
-      y5: g.y5, yT: g.yT, fugaY: g.fuga?.y ?? null,
+      alto: r?.alto ?? null, basso: r?.basso ?? null, massa: r?.massa ?? 0, calore: trovato ? r.calore : null,
+      y5: g.y5, passoS: g.passoS ?? null, fugaY: g.fuga?.y ?? null,
       sopra: null, sotto: null, bw: r?.trovato && Number.isFinite(r.basso) ? Math.max(20, (r.basso - r.alto) * 0.6) : 40,
       conf: trovato ? Math.min(1, r.massa / 200) : 0, catena: 0,
     })
@@ -402,21 +427,37 @@ export class MotoreTestata {
 
 const mediana = (v) => { const o = v.filter((x) => x !== null && Number.isFinite(x)).sort((a, b) => a - b); return o.length ? o[o.length >> 1] : null }
 
-// Taratura della prospettiva su tutto il video: righe tipiche dei 5 m, della T e del punto di fuga.
-// d(y) = A / (y − yv) + B con A e B costanti (altezza e zoom della camera non cambiano); il punto di fuga
-// di ogni fotogramma si ricava dalla sua riga dei 5 m (la camera si inclina un po' mentre segue).
-export function taraTestata(campioni, vasca = 25) {
-  const y5 = mediana(campioni.map((c) => c.y5)), yT = mediana(campioni.map((c) => c.yT)), yv = mediana(campioni.map((c) => c.fugaY))
-  if (y5 === null || yv === null) return null
-  const rif = [{ y: y5, d: 5 }]
-  if (yT !== null && yT > y5 + 20) rif.push({ y: yT, d: 2 })
-  const mappa = mappaDistanza(yv, rif)
-  if (!mappa || mappa.A <= 0) return null
-  const { A, B } = mappa
-  const fugaDa = (c) => (c.y5 !== null && Math.abs(c.y5 - y5) < 40 ? c.y5 - A / (5 - B) : c.fugaY !== null && Math.abs(c.fugaY - yv) < 60 ? c.fugaY : yv)
+// Taratura della prospettiva su tutto il video: d(y) = A / (y − yv) + B.
+//  - A dal passo dei dischetti: A = passo_m / passo_in_s (mediana su tutti i fotogrammi misurati);
+//  - B dal cambio di colore dei 5 m: 5 = A / (y5 − yv) + B.
+// A e B restano costanti (altezza e zoom della camera non cambiano); il punto di fuga di ogni fotogramma si
+// ricava dalla sua riga dei 5 m (la camera si inclina un po' mentre segue il nuotatore).
+// passoNoto: metri di una coppia di dischetti misurati in questa vasca (video di lato con due zone), o null.
+export function taraTestata(campioni, vasca = 25, passoNoto = null) {
+  const y5 = mediana(campioni.map((c) => c.y5)), yv = mediana(campioni.map((c) => c.fugaY)), ps = mediana(campioni.map((c) => c.passoS))
+  if (y5 === null || yv === null || ps === null || y5 <= yv + 5) return null
+  const passo = passoNoto || MPP_STIMA
+  const A = passo / ps
+  const B = 5 - A / (y5 - yv)
+  if (!(A > 0) || Math.abs(B) > 6) return null // camera a più di 6 m dalla parete: non credibile
+  // Punto di fuga di ogni fotogramma dalla sua riga dei 5 m. Nei fotogrammi senza misura (la geometria si
+  // calcola 1 volta su 3, e a volte non si vede) la riga dei 5 m si interpola nel tempo tra le misure vicine:
+  // con la camera che si inclina, tenere un valore fisso faceva sbagliare la velocità (prova finta 9).
+  const mis = campioni.filter((c) => c.y5 !== null && Math.abs(c.y5 - y5) < 40).map((c) => [c.t, c.y5])
+  const y5Al = (t) => {
+    if (!mis.length) return null
+    let lo = 0, hi = mis.length - 1
+    if (t <= mis[0][0]) return mis[0][1]
+    if (t >= mis[hi][0]) return mis[hi][1]
+    while (hi - lo > 1) { const m = (lo + hi) >> 1; if (mis[m][0] <= t) lo = m; else hi = m }
+    const f = (t - mis[lo][0]) / (mis[hi][0] - mis[lo][0])
+    return mis[lo][1] + f * (mis[hi][1] - mis[lo][1])
+  }
+  const fugaDa = (c) => { const r = y5Al(c.t); return r !== null ? r - A / (5 - B) : yv }
   return {
-    A, B, yv, y5, yT, vasca,
-    qualita: yT !== null ? 'alta' : 'bassa',
+    A, B, yv, y5, vasca, passo,
+    fonte: passoNoto ? 'testata' : 'testata-stima',
+    qualita: passoNoto ? 'alta' : 'media',
     metri: (c, y = c.y) => {
       if (y === null || y === undefined) return null
       const v = fugaDa(c)
@@ -427,10 +468,59 @@ export function taraTestata(campioni, vasca = 25) {
 
 // Campioni "come quelli del motore di lato" (u = metri dalla parete) per riusare calcolaSerie
 export function campioniInMetri(campioni, tara) {
-  return campioni.map((c) => {
+  const cm = campioni.map((c) => {
     const d = c.trovato && tara ? tara.metri(c) : null
     return { ...c, u: d, ucam: d === null ? null : 0, trovato: c.trovato && d !== null, qualitaCorsia: 1, previsto: false, schiuma: null }
   })
+  correggiSubacquea(cm)
+  return cm
+}
+
+// Sott'acqua, guardato dall'alto e di sbieco, il corpo sembra più vicino alla camera di dove è davvero (la
+// rifrazione "alza" e avvicina ciò che sta sotto la superficie): ~0,5 m con il nuotatore a 40–50 cm. Mentre
+// resta sotto la velocità è giusta, ma quando esce la posizione salta in avanti e la velocità fa un falso picco
+// (video finto: 2,0 m/s invece di 1,5). Qui: si riconoscono i tratti in subacquea (pelle più spenta), si misura
+// il salto all'uscita (rette prima e dopo, lontano dal momento dell'uscita) e si sposta avanti il tratto sotto.
+export function correggiSubacquea(cm) {
+  const cal = cm.filter((c) => c.u !== null && c.calore !== null && c.calore !== undefined).map((c) => c.calore).sort((a, b) => a - b)
+  if (cal.length < 20) return
+  const basso = cal[Math.floor(cal.length * 0.15)], alto = cal[Math.floor(cal.length * 0.85)]
+  if (basso > alto * 0.7) return // nessuna differenza netta: niente subacquea riconoscibile
+  const soglia = (basso + alto) / 2
+  // stato per campione, poi tratti sotto più lunghi di 0,4 s
+  const sotto = cm.map((c) => (c.u === null || c.calore === null || c.calore === undefined ? null : c.calore < soglia))
+  const n = cm.length
+  let i = 0
+  while (i < n) {
+    if (sotto[i] !== true) { i++; continue }
+    let j = i
+    while (j + 1 < n && sotto[j + 1] !== false) j++
+    if (cm[j].t - cm[i].t >= 0.4 && j + 1 < n) {
+      const tU = (cm[j].t + cm[j + 1].t) / 2 // uscita
+      const retta = (t0, t1) => {
+        const pts = cm.filter((c) => c.u !== null && c.t >= t0 && c.t <= t1)
+        if (pts.length < 5) return null
+        const mt = pts.reduce((s, c) => s + c.t, 0) / pts.length, md = pts.reduce((s, c) => s + c.u, 0) / pts.length
+        let a = 0, b = 0
+        for (const c of pts) { a += (c.t - mt) * (c.u - md); b += (c.t - mt) ** 2 }
+        const k = b > 0 ? a / b : 0
+        return (t) => md + k * (t - mt)
+      }
+      const prima = retta(tU - 0.7, tU - 0.2), dopo = retta(tU + 0.2, tU + 0.7)
+      if (prima && dopo) {
+        const salto = dopo(tU) - prima(tU)
+        if (Math.abs(salto) > 0.1 && Math.abs(salto) < 1.5) {
+          // il tratto sotto (con 0,2 s di raccordo dopo l'uscita) si sposta del salto
+          for (let k = i; k < n && cm[k].t <= tU + 0.2; k++) {
+            if (cm[k].u === null) continue
+            const f = cm[k].t <= tU - 0.2 ? 1 : Math.max(0, (tU + 0.2 - cm[k].t) / 0.4)
+            cm[k].u += salto * f
+          }
+        }
+      }
+    }
+    i = j + 1
+  }
 }
 
 // È una ripresa dalla testata? Le due corde attorno al nuotatore sono quasi verticali e convergono verso

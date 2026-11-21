@@ -351,7 +351,9 @@ export class MotoreAnalisi {
     if (!this.P) return
     const mappa = (this.voti[this.catena] ||= new Map())
     const { img } = ctx
-    const m = Math.round(this.w * 0.22)
+    // solo vicino al nuotatore (±12% della larghezza): lì il passo dei dischetti è quello misurato e i colori
+    // finiscono nella stessa "u" del nuotatore. Più lontano la prospettiva li spostava (zone sbagliate del 3–5%).
+    const m = Math.round(this.w * 0.12)
     const x0 = Math.max(3, Math.round(this.a - m)), x1 = Math.min(this.w - 4, Math.round(this.a + m))
     const libero = (x) => Math.abs(x - this.n.x) > this.mezzaMaschera() * 1.15
     for (const k of ['sopra', 'sotto']) {

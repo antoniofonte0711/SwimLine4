@@ -3,14 +3,10 @@ import { mappaDistanza, puntoDiFuga, cambiLungoCorda, retteCorde, cordeCorsia, x
 import { calcolaSerie } from './serie'
 
 describe('ripresa dalla testata — prospettiva', () => {
-  it('d(y) = A/(y−yv)+B passa per i riferimenti (valori del video WhatsApp 19.01.34)', () => {
+  it('d(y) = A/(y−yv)+B passa per i riferimenti', () => {
     const m = mappaDistanza(-42, [{ y: 212, d: 5 }, { y: 601, d: 2 }])
     expect(m.metri(212)).toBeCloseTo(5, 5)
     expect(m.metri(601)).toBeCloseTo(2, 5)
-    // controllo indipendente: una coppia di dischetti (0,145 m) vicino alla T occupa ~45 px
-    const pxCoppia = 0.145 / (m.A / (580 + 42) ** 2)
-    expect(pxCoppia).toBeGreaterThan(38)
-    expect(pxCoppia).toBeLessThan(52)
   })
 
   it('punto di fuga = incrocio delle due corde', () => {
@@ -47,10 +43,11 @@ describe('ripresa dalla testata — prospettiva', () => {
     for (let i = 0; i <= 300; i++) {
       const t = i / 30
       const d = t < 5 ? 6 - t : 1 + (t - 5)
-      campioni.push({ t, trovato: true, x: 100, y: yDi(d), y5: yDi(5), yT: yDi(2), fugaY: yv, conf: 1, catena: 0 })
+      campioni.push({ t, trovato: true, x: 100, y: yDi(d), y5: yDi(5), passoS: 0.145 / A, fugaY: yv, conf: 1, catena: 0 })
     }
-    const tara = taraTestata(campioni)
+    const tara = taraTestata(campioni, 25, 0.145)
     expect(tara.qualita).toBe('alta')
+    expect(tara.A).toBeCloseTo(A, 0)
     const cm = campioniInMetri(campioni, tara)
     expect(cm[0].u).toBeCloseTo(6, 1)
     const s = calcolaSerie(cm, { mpp: 1, qualitaScala: 'alta', camera: 'movimento', stile: 'crawl', fattore: 1, testata: true })

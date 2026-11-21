@@ -3,6 +3,14 @@
 // Serve a misurare l'errore del motore contro la verità (senza video veri non si può dire altro).
 
 const COLORI = { rosso: [210, 30, 35], blu: [25, 60, 200], giallo: [235, 205, 40], bianco: [240, 240, 240] }
+// Disegno della vasca di Stefano (21/11/2026): ultimi 5 m blu/bianchi, centro bianco con un tratto rosso
+// ogni ~2 m (e ogni tanto blu al posto del rosso). Un "passo" = un dischetto bianco + uno colorato.
+function coloreStefano(m, k) {
+  if (m < 5 || m >= 20) return k % 2 ? COLORI.blu : COLORI.bianco
+  const blocco = Math.floor(m / 1.9)
+  if (m % 1.9 < 0.55) return blocco % 4 === 2 ? COLORI.blu : COLORI.rosso
+  return COLORI.bianco
+}
 function coloreGalleggiante(m) {
   if (m < 5 || m >= 20) return COLORI.rosso
   if (m < 10 || m >= 15) return COLORI.blu
@@ -16,6 +24,7 @@ function generatore(seme) {
 }
 
 export const PASSO_DISCHETTI = 0.12 // m
+export const PASSO_STEFANO = 0.145 // m (coppia di dischetti)
 
 // opts: { w, h, durata, camera: 'ferma'|'segue', velocita(t) m/s, partenza m, subacqueaFino s, nascostoDa, nascostoA, seme }
 export function creaScena(opts = {}) {
@@ -67,7 +76,8 @@ export function creaScena(opts = {}) {
       data[i + 1] = data[i + 1] * (1 - alfa) + col[1] * alfa
       data[i + 2] = data[i + 2] * (1 - alfa) + col[2] * alfa
     }
-    // galleggianti: dischetti larghi 0,07 m ogni 0,12 m
+    // galleggianti: dischetti larghi 0,07 m ogni 0,12 m (disegno 'stefano': due dischetti per passo, senza buchi)
+    const passo = opts.disegno === 'stefano' ? PASSO_STEFANO : PASSO_DISCHETTI
     for (const f of file) {
       const spess = Math.max(2, Math.round(f.k / 10))
       for (let x = 0; x < w; x++) {
@@ -75,9 +85,15 @@ export function creaScena(opts = {}) {
         let m = c + (x - w / 2) / f.k
         for (let it = 0; it < 3; it++) m -= (colonna(m, c, f.k) - x) / (f.k * (1 - 0.02 * (m - c)))
         if (m < 0 || m > 25) continue
-        const fase = ((m % PASSO_DISCHETTI) + PASSO_DISCHETTI) % PASSO_DISCHETTI
-        const disco = fase < 0.07
-        const col = disco ? coloreGalleggiante(m) : [20, 30, 40]
+        const fase = ((m % passo) + passo) % passo
+        let disco = fase < 0.07, col
+        if (opts.disegno === 'stefano') {
+          const k = Math.floor(m / (passo / 2))
+          disco = true
+          col = k % 2 ? coloreStefano(m, k) : (m < 5 || m >= 20 ? COLORI.bianco : (coloreStefano(m, k) === COLORI.bianco ? [200, 205, 210] : coloreStefano(m, k)))
+          // separazione scura tra un dischetto e l'altro
+          if (((m % (passo / 2)) + passo) % (passo / 2) < 0.012) col = [20, 30, 40]
+        } else col = disco ? coloreGalleggiante(m) : [20, 30, 40]
         const bob = Math.sin(m * 3 + t * 4) * 0.8
         for (let dy = -spess; dy <= spess; dy++) pixel(x, f.y + dy + bob, col, disco ? 1 : 0.6)
       }
