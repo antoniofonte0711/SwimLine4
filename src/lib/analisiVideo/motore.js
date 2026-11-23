@@ -356,9 +356,15 @@ export class MotoreAnalisi {
     const m = Math.round(this.w * 0.12)
     const x0 = Math.max(3, Math.round(this.a - m)), x1 = Math.min(this.w - 4, Math.round(this.a + m))
     const libero = (x) => Math.abs(x - this.n.x) > this.mezzaMaschera() * 1.15
+    const cx = this.w / 2
     for (const k of ['sopra', 'sotto']) {
       const l = this.corsie[k]
       if (!l) continue
+      // ogni fila con il SUO passo in pixel: la fila lontana ha dischetti più piccoli. Con il passo medio P
+      // (quello giusto a metà corsia, per il nuotatore) un cambio di colore a 1 m dal nuotatore finiva ~10%
+      // troppo vicino sulla fila lontana e ~10% troppo lontano su quella vicina; i confini delle zone dei 5 m
+      // si allargavano verso le pareti e le velocità uscivano ~5% basse (prova del 9, video finti, 23/11/2026).
+      const Pk = this.passoFila(k) || this.P
       for (let x = x0; x <= x1; x++) {
         if (!libero(x)) continue
         const y = Math.round(yLinea(l, x))
@@ -366,7 +372,10 @@ export class MotoreAnalisi {
         const i = (y * this.w + x) * 4
         const c = classeGalleggiante(img.data[i], img.data[i + 1], img.data[i + 2])
         if (c === 5) continue
-        const u = this.R + (x - this.a) / this.P
+        // Le righe "di traverso" alla vasca (stesso metro su tutte le file) convergono verso il centro
+        // dell'immagine: è lì, non sulla colonna del nuotatore, che tutte le file mostrano lo stesso metro.
+        // Quindi: dal nuotatore al centro con il passo a metà corsia, dal centro al punto con il passo della fila.
+        const u = this.R + (cx - this.a) / this.P + (x - cx) / Pk
         const chiave = Math.round(u * 2)
         let v = mappa.get(chiave)
         if (!v) { v = new Uint32Array(N_CLASSI); mappa.set(chiave, v) }

@@ -15,11 +15,13 @@ const conPasso = (p) => { globalThis.localStorage = { getItem: () => (p === null
 
 describe('video finti di lato', { timeout: 120000 }, () => {
   beforeAll(() => conPasso(null))
-  it('vasca intera: riconosce le DUE zone dei 5 m (prima venivano scartate) e la media sta entro il 7%', () => {
+  // 23/11/2026: era −5% fisso (colori delle due file messi con lo stesso passo → zone dei 5 m allargate);
+  // corretto in votaColori, ora ~−1,5%: la soglia al 3% impedisce di tornare indietro
+  it('vasca intera: riconosce le DUE zone dei 5 m (prima venivano scartate) e la media sta entro il 3%', () => {
     const s = creaScena({ disegno: 'stefano', w: 854, h: 480, camera: 'segue', velocita: () => 1.5, partenza: 3 })
     const st = analizza(s, { x: s.colonnaNuotatore(0) + 10, y: s.yNuotatore }, 12)
     expect(st.scala.fonte).toBe('zone')
-    expect(Math.abs(st.serie.riepilogo.media - 1.5) / 1.5).toBeLessThan(0.07)
+    expect(Math.abs(st.serie.riepilogo.media - 1.5) / 1.5).toBeLessThan(0.03)
   })
   it('una zona sola: il tratto della vasca è giusto entro mezzo metro (prima +1,5 m)', () => {
     const s = creaScena({ disegno: 'stefano', w: 854, h: 480, camera: 'segue', velocita: () => 1.4, partenza: 9 })

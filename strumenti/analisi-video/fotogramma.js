@@ -10,6 +10,22 @@ export const FFMPEG = process.env.FFMPEG || [
   path.resolve(radice, '../../../video/node_modules/@remotion/compositor-win32-x64-msvc/ffmpeg.exe'),
 ].find(existsSync)
 
+export const FFPROBE = FFMPEG && path.join(path.dirname(FFMPEG), path.basename(FFMPEG).replace(/ffmpeg/i, 'ffprobe'))
+
+// Tempi VERI di ogni fotogramma (i video dei telefoni possono avere fotogrammi a intervalli irregolari:
+// contare "n / fps" sbaglia i secondi). Sono gli stessi tempi che il browser dà all'app.
+export function tempiFotogrammi(video) {
+  return new Promise((ok, ko) => {
+    const p = spawn(FFPROBE, ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'frame=pts_time,best_effort_timestamp_time', '-of', 'csv=p=0', video])
+    let s = ''
+    p.stdout.on('data', (d) => { s += d })
+    p.on('close', (code) => {
+      if (code) return ko(new Error('ffprobe non riesce a leggere ' + video))
+      ok(s.trim().split(/\r?\n/).map((r) => { const [a, b] = r.split(','); const x = Number(a); return Number.isFinite(x) ? x : Number(b) }).filter(Number.isFinite))
+    })
+  })
+}
+
 export function info(video) {
   return new Promise((ok) => {
     const p = spawn(FFMPEG, ['-hide_banner', '-i', video]); let s = ''

@@ -342,6 +342,7 @@ export function cercaInCorsia(img, corde, prec, semiAltezza, yMin = 0) {
   const y0 = Math.max(0, Math.round(yMin), Math.round(prec.y - semiAltezza)), y1 = Math.min(h, Math.round(prec.y + semiAltezza))
   const acqua = rbAcqua(img, corde, y0, y1)
   let sx = 0, sy = 0, m = 0, alto = Infinity, basso = -Infinity, calore = 0
+  const righe = new Float32Array(Math.max(0, y1 - y0)) // "massa" di pelle per riga: serve al centro in metri
   for (let y = y0; y < y1; y++) {
     const xa = Math.max(0, Math.ceil(xRetta(corde.sx, y)) + 2), xb = Math.min(w - 1, Math.floor(xRetta(corde.dx, y)) - 2)
     for (let x = xa; x <= xb; x++) {
@@ -350,12 +351,13 @@ export function cercaInCorsia(img, corde, prec, semiAltezza, yMin = 0) {
       if (c <= 0) continue
       const peso = Math.min(1, c / 60)
       sx += x * peso; sy += y * peso; m += peso; calore += c * peso
+      righe[y - y0] += peso
       if (peso > 0.5) { if (y < alto) alto = y; if (y > basso) basso = y }
     }
   }
   if (m < 40) return { x: prec.x, y: prec.y, massa: m, trovato: false }
   // calore: quanto la pelle è più calda dell'acqua (sott'acqua è più spenta: serve a riconoscere la subacquea)
-  return { x: sx / m, y: sy / m, massa: m, alto, basso, calore: calore / m, trovato: true }
+  return { x: sx / m, y: sy / m, massa: m, alto, basso, calore: calore / m, trovato: true, profilo: { y0, m: righe } }
 }
 
 export const DMAX = 7 // m dalla parete: oltre, dalla testata la misura non è abbastanza precisa
@@ -421,6 +423,7 @@ export class MotoreTestata {
       y5: g.y5, passoS: g.passoS ?? null, fugaY: g.fuga?.y ?? null,
       sopra: null, sotto: null, bw: r?.trovato && Number.isFinite(r.basso) ? Math.max(20, (r.basso - r.alto) * 0.6) : 40,
       conf: trovato ? Math.min(1, r.massa / 200) : 0, catena: 0,
+      profilo: trovato ? r.profilo : null,
     })
   }
 }
@@ -461,6 +464,34 @@ export function taraTestata(campioni, vasca = 25, passoNoto = null) {
     metri: (c, y = c.y) => {
       if (y === null || y === undefined) return null
       const v = fugaDa(c)
+      if (y === c.y && c.profilo) {
+        // Centro del corpo IN METRI, non in pixel. In prospettiva la metà del corpo vicina alla camera occupa
+        // più righe e più pixel per riga: il centro della macchia nell'immagine cade più vicino alla parete
+        // del centro vero, tanto più quanto il nuotatore è vicino (a 2 m: −0,3 m; velocità +8% in arrivo,
+        // prova del 9 del 23/11/2026). Ogni riga pesa per i metri quadri che rappresenta: in lunghezza
+        // A/(y−v)² metri per riga, in larghezza ∝ 1/(y−v) (le corde convergono nel punto di fuga).
+        const { y0, m } = c.profilo
+        let s = 0, sw = 0
+        // MEDIANA in metri (non media): le righe lontane pesano molto, e con la media un riflesso o uno schizzo
+        // in cima alla finestra spostava il centro di mezzo metro (video compresso); per un corpo intero la
+        // mediana coincide con il centro.
+        const pesi = new Float64Array(m.length)
+        for (let i = 0; i < m.length; i++) {
+          const dy = y0 + i - v
+          if (!m[i] || dy <= 2) continue
+          pesi[i] = m[i] / (dy * dy * dy); sw += pesi[i]
+        }
+        if (sw > 0) {
+          for (let i = 0; i < m.length; i++) {
+            if (!pesi[i]) continue
+            if (s + pesi[i] >= sw / 2) {
+              const yy = y0 + i - 0.5 + (sw / 2 - s) / pesi[i] // dentro la riga, in proporzione
+              return A / (yy - v) + B
+            }
+            s += pesi[i]
+          }
+        }
+      }
       return y > v + 2 ? A / (y - v) + B : null
     },
   }

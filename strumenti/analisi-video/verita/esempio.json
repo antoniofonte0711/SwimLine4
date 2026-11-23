@@ -1,0 +1,19 @@
+{
+ "video": "C:/Users/maipa/Desktop/prova-del-9/crawl-tranquillo.mp4",
+ "note": "crawl tranquillo, telefono fermo a metà vasca, 60 fps",
+ "tap": [640, 360],
+ "da": 1.0,
+ "a": 14.0,
+ "vasca": 25,
+ "stile": "crawl",
+ "camera": "movimento",
+ "passaggi": [
+  { "t": 2.133, "m": 5 },
+  { "t": 4.050, "m": 7.5 },
+  { "t": 5.983, "m": 10 },
+  { "t": 7.917, "m": 12.5 },
+  { "t": 9.850, "m": 15 },
+  { "t": 11.783, "m": 17.5 },
+  { "t": 13.700, "m": 20 }
+ ]
+}
