@@ -1,6 +1,5 @@
 // Gare FIN nell'app: chiamate al server (/api/fin) e regole senza database usate dalle schermate.
 import { supabase } from '../supabaseClient'
-import { vascaDi } from '../lavori'
 
 // Chiede al server di leggere il sito FIN (serve il login: il token va nell'intestazione)
 export async function chiediFin(parametri) {
@@ -25,15 +24,13 @@ export function righeIscrizioni(trovati = [], manifestazioneId) {
 // Stessa iscrizione (per non rimetterla quando si aggiorna dal programma)
 export const chiaveIscrizione = (r) => [r.atleta_id, r.distanza, r.stile, r.societa || ''].join('|')
 
-// Ogni quanti metri si scrive il passaggio. Se ci sono già passaggi si capisce dal loro numero
-// (vecchie gare a 50 m, nuove a 25); le gare FIN seguono la vasca (in vasca da 25 ogni 25 m, come in allenamento);
-// le altre restano come prima: ogni 25 fino ai 50 m, poi ogni 50.
+// Ogni quanti metri si scrive il passaggio: ogni 50 m (anche in vasca da 25), nei 50 m al 25.
+// Se ci sono già passaggi salvati si capisce dal loro numero (gare vecchie scritte ogni 25).
 export function passoGara(g) {
   const d = Number(g?.distanza) || 0
   const n = (g?.passaggi || []).length
   if (n && n === d / 25 - 1) return 25
   if (n && n === d / 50 - 1) return 50
-  if (d <= 50) return 25
-  return String(g?.note || '').startsWith('FIN') ? vascaDi(g) : 50
+  return d <= 50 ? 25 : 50
 }
 export const quantiPassaggi = (g) => Math.max(0, Math.ceil((Number(g?.distanza) || 0) / passoGara(g)) - 1)

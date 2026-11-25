@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Reorder, AnimatePresence, useDragControls } from 'framer-motion'
+import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import AppShell from './AppShell'
 import InputTempo from './InputTempo'
@@ -16,6 +17,7 @@ import Schede from './Schede'
 import { GareFinCoach } from './GareFin'
 import { passoGara } from '../lib/fin/app'
 import { ordinaPersone } from '../lib/persone'
+import { eDoppione, messaggioDoppione, primoDoppione } from '../lib/gareDoppie'
 
 const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white'
 const CARD = 'bg-white rounded-3xl p-5 mb-3 shadow-card'
@@ -78,7 +80,7 @@ function Parziali({ passaggi, finale, passo, distanza }) {
 }
 
 // Scheda di un atleta in una gara già assegnata: tempo effettivo + passaggi
-function SchedaRisultato({ g, onSalvato }) {
+export function SchedaRisultato({ g, onSalvato, raggruppata = false }) {
   const d = Number(g.distanza)
   const passo = passoGara(g)
   const nPassaggi = Math.max(0, Math.ceil(d / passo) - 1)
@@ -116,6 +118,12 @@ function SchedaRisultato({ g, onSalvato }) {
       <button onClick={() => setAperta(!aperta)} className="w-full flex items-center justify-between gap-2 text-left">
         <span className="min-w-0">
           <span className="font-semibold block truncate">{g.atleta?.nome} {g.atleta?.cognome}</span>
+          {(!raggruppata || g.orario) && (
+            <span className="block text-sm font-bold text-blue-700">
+              {!raggruppata && nomeGara(g)}
+              {g.orario && <span className={raggruppata ? '' : 'font-semibold text-slate-500'}>{raggruppata ? '' : ' · '}ore {g.orario.slice(0, 5)}</span>}
+            </span>
+          )}
           <span className="text-xs text-slate-500">
             {g.tempo_iscrizione ? `Iscrizione ${g.tempo_iscrizione}` : 'Senza tempo di iscrizione'}
           </span>
@@ -156,15 +164,61 @@ function SchedaRisultato({ g, onSalvato }) {
   )
 }
 
+// Schermata Oggi del coach nei giorni di gara: ogni gara con gli atleti che la nuotano, i loro tempi e i passaggi,
+// tutto modificabile da qui (stessa scheda di Gare › Risultati)
+export function GareGiornoCoach({ squadraId, giorno }) {
+  const [gare, setGare] = useState([])
+  const carica = useCallback(async () => {
+    if (!squadraId) return
+    const { data: a } = await supabase.from('profiles').select('id, nome, cognome').in('role', ['atleta', 'admin']).eq('squadra_id', squadraId).is('eliminato_il', null)
+    const ids = (a || []).map((x) => x.id)
+    if (!ids.length) return setGare([])
+    const { data: g } = await supabase.from('gare').select('*').in('atleta_id', ids).eq('data_gara', giorno)
+    setGare((g || []).map((r) => ({ ...r, atleta: a.find((x) => x.id === r.atleta_id) })))
+  }, [squadraId, giorno])
+  useEffect(() => { carica() }, [carica])
+
+  const gruppi = useMemo(() => {
+    const m = new Map()
+    gare.forEach((g) => { const k = nomeGara(g); if (!m.has(k)) m.set(k, []); m.get(k).push(g) })
+    const primo = (l) => l.map((g) => g.orario || '99').sort()[0]
+    return [...m.entries()].map(([k, righe]) => ({
+      k, righe: righe.sort((a, b) => String(a.orario || '99').localeCompare(String(b.orario || '99')) || String(a.atleta?.cognome).localeCompare(String(b.atleta?.cognome), 'it')),
+    })).sort((a, b) => primo(a.righe).localeCompare(primo(b.righe)) || a.k.localeCompare(b.k, 'it', { numeric: true }))
+  }, [gare])
+  if (!gare.length) return null
+
+  const fatti = gare.filter((g) => g.tempo).length
+  return (
+    <section aria-label="Gare del giorno" className="mb-3">
+      <div className="flex items-baseline justify-between px-1 mb-2">
+        <h2 className="font-display text-xl font-extrabold">{giorno === dataLocale() ? 'Gare di oggi' : `Gare di ${dataIt(giorno)}`}</h2>
+        <span className="text-[13px] font-semibold text-slate-500">{fatti} su {gare.length} con il tempo</span>
+      </div>
+      {gruppi.map(({ k, righe }) => (
+        <div key={k} className={CARD}>
+          <p className="font-display text-lg font-extrabold text-abisso">{k}</p>
+          <p className="text-xs text-slate-500 mb-1">{righe[0].nome_gara} · {righe.length} {righe.length === 1 ? 'atleta' : 'atleti'}</p>
+          {righe.map((g) => <SchedaRisultato key={g.id} g={g} raggruppata onSalvato={carica} />)}
+        </div>
+      ))}
+      <Link to="/gare" className="cliccabile block text-center min-h-[44px] leading-[44px] text-sm font-bold text-blue-600">Modifica data, orario e luogo delle gare →</Link>
+    </section>
+  )
+}
+
 // Cambia nome, data, orario, luogo e note di tutto il trofeo (atleti e genitori ricevono un avviso)
 function ModificaTrofeo({ righe, onSalvato }) {
   const g = righe[0]
   const [aperta, setAperta] = useState(false)
   const [f, setF] = useState({})
   const [errore, setErrore] = useState('')
+  // orari diversi (gare FIN: ogni gara ha il suo) = nessun orario comune: non si toccano se non lo cambi tu
+  const orari = new Set(righe.map((r) => (r.orario || '').slice(0, 5)))
+  const orarioComune = orari.size === 1 ? [...orari][0] : ''
 
   function apri() {
-    setF({ nome: g.nome_gara || '', data: g.data_gara, orario: (g.orario || '').slice(0, 5), luogo: g.luogo || '', note: g.note || '', vasca: vascaDi(g) })
+    setF({ nome: g.nome_gara || '', data: g.data_gara, orario: orarioComune, luogo: g.luogo || '', note: g.note || '', vasca: vascaDi(g) })
     setErrore('')
     setAperta(true)
   }
@@ -172,7 +226,8 @@ function ModificaTrofeo({ righe, onSalvato }) {
   async function salva() {
     if (!f.nome.trim()) return setErrore('Scrivi il nome della gara.')
     const { error } = await supabase.from('gare').update({
-      nome_gara: f.nome.trim(), data_gara: f.data, orario: f.orario || null, luogo: f.luogo.trim() || null, note: f.note.trim() || null, vasca: f.vasca,
+      nome_gara: f.nome.trim(), data_gara: f.data, luogo: f.luogo.trim() || null, note: f.note.trim() || null, vasca: f.vasca,
+      ...(f.orario !== orarioComune ? { orario: f.orario || null } : {}),
     }).in('id', righe.map((r) => r.id))
     if (error) return setErrore('Non sono riuscito a salvare: ' + error.message)
     setAperta(false)
@@ -335,10 +390,14 @@ export default function GareCoach() {
         })
       })
     }
+    // mai la stessa gara due volte per lo stesso atleta (nello stesso giorno)
+    const doppia = primoDoppione(records, gare)
+    if (doppia) return setErrore(messaggioDoppione(doppia, atleti.find((a) => a.id === doppia.atleta_id)?.nome))
     setInvio(true)
     const { error } = await supabase.from('gare').insert(records)
     setInvio(false)
     if (error) {
+      if (eDoppione(error)) return setErrore('Non si può: una di queste gare c\'è già per un atleta. Una gara non può esserci due volte.')
       return setErrore(/tempo_iscrizione|orario|ordine|null value/.test(error.message)
         ? MSG_MIGRAZIONE : 'Non sono riuscito a salvare: ' + error.message)
     }
@@ -354,7 +413,7 @@ export default function GareCoach() {
     return [...m.values()]
   }, [gare])
   const delTrofeo = gare.filter((g) => `${g.nome_gara}||${g.data_gara}` === trofeo)
-    .sort((a, b) => (a.ordine ?? 0) - (b.ordine ?? 0))
+    .sort((a, b) => String(a.orario || '').localeCompare(String(b.orario || '')) || (a.ordine ?? 0) - (b.ordine ?? 0))
   const gareDelTrofeo = [...new Set(delTrofeo.map(nomeGara))]
   const risultati = delTrofeo.filter((g) => !garaSel || nomeGara(g) === garaSel)
 
@@ -475,14 +534,11 @@ export default function GareCoach() {
                       <p className="font-bold">{garaSel || 'Tutte le gare'}</p>
                       <button onClick={eliminaGara} aria-label="Elimina" className="text-red-500 text-lg">🗑</button>
                     </div>
-                    {risultati[0]?.orario && <p className="text-xs text-slate-500 mb-1">Orario {risultati[0].orario.slice(0, 5)}</p>}
+                    {new Set(risultati.map((g) => g.orario)).size === 1 && risultati[0]?.orario && <p className="text-xs text-slate-500 mb-1">Orario {risultati[0].orario.slice(0, 5)}</p>}
                     <ModificaTrofeo key={trofeo} righe={delTrofeo}
                       onSalvato={(k) => { setTrofeo(k); setGaraSel(''); caricaGare(atleti) }} />
                     {risultati.map((g) => (
-                      <div key={g.id}>
-                        {!garaSel && <p className="text-xs font-bold text-slate-500 mt-2">{nomeGara(g)}</p>}
-                        <SchedaRisultato g={g} onSalvato={() => caricaGare(atleti)} />
-                      </div>
+                      <SchedaRisultato key={g.id} g={g} onSalvato={() => caricaGare(atleti)} />
                     ))}
                   </div>
                 )}

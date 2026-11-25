@@ -14,6 +14,7 @@ import { useRegole } from '../lib/regole'
 import { leggiPreferenze } from '../lib/preferenze'
 import Schede from '../components/Schede'
 import { ERRORE_TEMPO, erroreTempoImpossibile, normalizzaTempo, tempoPlausibile, tempoValido, passaggiCoerenti } from '../lib/tempo'
+import { eDoppione, messaggioDoppione } from '../lib/gareDoppie'
 import {
   leggiCoda, aggiungiInCoda, rimuoviDaCoda, sincronizza,
   salvaCache, leggiCache, erroreDiRete, useOnline,
@@ -46,8 +47,11 @@ function ProssimeGare({ gare }) {
     <section className="mb-4">
       <h2 className="text-xs font-bold tracking-widest text-slate-500 uppercase px-1 mb-2">Prossime gare</h2>
       {lista.map((righe) => {
+        // in ordine di orario (poi di programma): l'orario della scheda è quello della prima gara
+        righe.sort((a, b) => String(a.orario || '99').localeCompare(String(b.orario || '99')) || (a.ordine ?? 0) - (b.ordine ?? 0))
         const g = righe[0]
-        const prove = righe.sort((a, b) => (a.ordine ?? 0) - (b.ordine ?? 0)).map((r) => `${r.distanza} m ${r.stile}`).join(', ') + ` (${testoVasca(vascaDi(righe[0]))})`
+        const conOrari = righe.some((r) => r.orario)
+        const prove = righe.map((r) => `${r.distanza} m ${r.stile}${conOrari && r.orario ? ` (${r.orario.slice(0, 5)})` : ''}`).join(', ') + ` · ${testoVasca(vascaDi(righe[0]))}`
         return (
           <div key={g.id} className="bg-white rounded-3xl p-5 mb-2.5">
             <p className="font-display text-xl font-extrabold text-abisso">{g.nome_gara}</p>
@@ -194,7 +198,7 @@ function GareAtleta() {
       if (error) {
         if (erroreDiRete(error)) inCoda = true
         else {
-          setErrore('Non sono riuscito a salvare: ' + error.message)
+          setErrore(eDoppione(error) ? messaggioDoppione(record) + ' Se è una gara messa dal coach, scrivi il tempo da Oggi.' : 'Non sono riuscito a salvare: ' + error.message)
           setSalvando(false)
           return
         }

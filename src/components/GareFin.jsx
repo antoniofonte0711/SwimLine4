@@ -7,6 +7,7 @@ import {
   ERRORE_TEMPO_BREVE, erroreTempoImpossibile, normalizzaTempo, passaggiCoerenti, secondiInTempo, tempoInSecondi, tempoPlausibile, tempoValido,
 } from '../lib/tempo'
 import InputTempo from './InputTempo'
+import { chiaveGara } from '../lib/gareDoppie'
 
 const CARD = 'bg-white rounded-3xl p-5 mb-3 shadow-card'
 const giornoIt = (d) => (d ? new Date(d + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' }) : 'data da capire')
@@ -66,6 +67,18 @@ function NuovaManifestazione({ squadra, atleti, onSalvata, onAnnulla }) {
 
   async function salva() {
     setErrore('')
+    setStato('Controllo che non ci siano gare già salvate…')
+    // niente doppioni: le gare che un atleta ha già (da un'altra manifestazione o messe a mano) non si rimettono
+    const daSalvare = righeIscrizioni(risultato.trovati, null)
+    const ids = [...new Set(daSalvare.map((r) => r.atleta_id))]
+    const [{ data: giaIsc }, { data: giaGare }] = await Promise.all([
+      supabase.from('iscrizioni_fin').select('atleta_id, data, distanza, stile').in('atleta_id', ids),
+      supabase.from('gare').select('atleta_id, data_gara, distanza, stile').in('atleta_id', ids),
+    ])
+    const esistenti = new Set([...(giaIsc || []).map((x) => chiaveGara({ ...x, data_gara: x.data })), ...(giaGare || []).map(chiaveGara)])
+    const nuove = daSalvare.filter((r) => !esistenti.has(chiaveGara({ ...r, data_gara: r.data })))
+    const scartate = daSalvare.length - nuove.length
+    if (!nuove.length) { setStato(''); return setErrore('Non lo posso fare: tutte queste gare ci sono già. Una gara non può esserci due volte.') }
     setStato('Salvo…')
     const nome = scelto.titolo.replace(/^\d+-\d+\s+(Linee Guida\s+)?/i, '').trim() || scelto.titolo
     const { data: m, error } = await supabase.from('manifestazioni_fin').insert({
@@ -73,13 +86,14 @@ function NuovaManifestazione({ squadra, atleti, onSalvata, onAnnulla }) {
       documento_url: scelto.documento?.url || null, programma_url: citta.url,
     }).select().single()
     if (error) { setStato(''); return setErrore(erroreDb(error)) }
-    const righe = righeIscrizioni(risultato.trovati, m.id)
-    if (righe.length) {
-      const { error: e2 } = await supabase.from('iscrizioni_fin').insert(righe)
-      if (e2) { setStato(''); return setErrore(erroreDb(e2)) }
+    const { error: e2 } = await supabase.from('iscrizioni_fin').insert(nuove.map((r) => ({ ...r, manifestazione_id: m.id })))
+    if (e2) {
+      await supabase.from('manifestazioni_fin').delete().eq('id', m.id)
+      setStato('')
+      return setErrore(erroreDb(e2))
     }
     setStato('')
-    onSalvata(m.id)
+    onSalvata(m.id, scartate)
   }
 
   const nonTrovati = risultato ? atleti.filter((a) => !risultato.trovati.some((t) => t.atleta.id === a.id)) : []
@@ -114,7 +128,7 @@ function NuovaManifestazione({ squadra, atleti, onSalvata, onAnnulla }) {
             <div className="flex gap-2 mb-1">
               {[25, 50].map((v) => <Pulsante key={v} attivo={vasca === v} onClick={() => setVasca(v)}>{v} m</Pulsante>)}
             </div>
-            <p className="text-xs text-slate-500 mb-4">La FIN non la scrive nei documenti: sceglila tu (decide ogni quanti metri si scrivono i passaggi).</p>
+            <p className="text-xs text-slate-500 mb-4">La FIN non la scrive nei documenti: sceglila tu. I passaggi si scrivono sempre ogni 50 m.</p>
             <button type="button" onClick={cerca} disabled={!citta || !!stato}
               className="w-full font-display text-lg font-extrabold text-white bg-blue-600 rounded-2xl min-h-[52px] disabled:opacity-50">
               Cerca i miei atleti
@@ -257,6 +271,7 @@ export function GareFinCoach({ squadra, onCambiate }) {
   const [lista, setLista] = useState(null)
   const [nuova, setNuova] = useState(false)
   const [problema, setProblema] = useState('')
+  const [avviso, setAvviso] = useState('')
 
   const carica = useCallback(async () => {
     const [{ data: a }, { data: m, error }] = await Promise.all([
@@ -274,10 +289,14 @@ export function GareFinCoach({ squadra, onCambiate }) {
   if (problema) return <p className="text-sm text-amber-800 bg-amber-50 rounded-2xl px-4 py-3">{problema}</p>
   if (nuova) {
     return <NuovaManifestazione squadra={squadra} atleti={atleti} onAnnulla={() => setNuova(false)}
-      onSalvata={() => { setNuova(false); carica(); onCambiate?.() }} />
+      onSalvata={(id, scartate) => {
+        setNuova(false); carica(); onCambiate?.()
+        setAvviso(scartate ? `${scartate} gare c'erano già e non le ho rimesse.` : '')
+      }} />
   }
   return (
     <>
+      {avviso && <p role="status" className="text-sm text-amber-800 bg-amber-50 rounded-2xl px-4 py-3 mb-3">{avviso}</p>}
       <button type="button" onClick={() => setNuova(true)}
         className="cliccabile w-full min-h-[56px] mb-3 font-display text-lg font-extrabold text-blue-600 bg-schiuma border-2 border-dashed border-blue-200 rounded-3xl">
         + Gara dai comunicati FIN

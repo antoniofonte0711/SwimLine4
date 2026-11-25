@@ -48,8 +48,13 @@ export function creaIcs(gara) {
 export function aggiungiAlCalendario(gara) {
   const testo = creaIcs(gara)
   const nomeFile = `gara-${gara.data}.ics`
-  if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
-    window.location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(testo)
+  // iPhone e iPad (anche iPad che si presenta come Mac): Safari non apre il file creato dalla pagina,
+  // apre invece quello che arriva da un indirizzo vero (api/calendario)
+  const apple = /iphone|ipad|ipod/i.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1)
+  if (apple) {
+    const dati = { id: gara.id, nome: gara.nome, data: gara.data, orario: gara.orario, luogo: gara.luogo, note: gara.note, dettagli: gara.dettagli }
+    const q = new URLSearchParams(Object.entries(dati).filter(([, v]) => v))
+    window.location.href = `/api/calendario?${q}`
     return
   }
   const url = URL.createObjectURL(new Blob([testo], { type: 'text/calendar;charset=utf-8' }))

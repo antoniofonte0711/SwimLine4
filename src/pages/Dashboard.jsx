@@ -24,6 +24,7 @@ import CondividiAllenamento from '../components/CondividiAllenamento'
 import { ProponiFuoriPiano, ProposteFuoriPiano } from '../components/FuoriPiano'
 import { RiscaldamentoOggi } from '../components/RiscaldamentiGara'
 import { ConfermaFin, GareOggi } from '../components/GareFin'
+import { GareGiornoCoach } from '../components/GareCoach'
 
 const COLORE_STATO = {
   presente: 'bg-green-100 text-green-700',
@@ -349,6 +350,7 @@ function OggiCoach({ squadra, giorno, settimana, onScrivi, avviso }) {
     <div className="lg:grid lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:gap-6 lg:items-start">
       <div>
         {avviso && <p role="status" className="text-sm font-semibold text-green-700 bg-green-50 rounded-2xl px-4 py-3 mb-3">{avviso}</p>}
+        <GareGiornoCoach squadraId={squadra.id} giorno={giorno} />
         {piano ? (
           <section className="relative overflow-hidden rounded-[32px] bg-blue-600 text-white p-5 mb-3">
             <Onde />

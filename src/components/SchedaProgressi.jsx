@@ -9,6 +9,7 @@ import { lavoriDaScegliere } from '../lib/tipiLavoro'
 import { useTipiLavoro } from '../lib/useTipiLavoro'
 import { tempoInSecondi, secondiInTempo, formattaData, normalizzaTempo, tempoValido, tempoPlausibile, erroreTempoImpossibile, ERRORE_TEMPO_BREVE } from '../lib/tempo'
 import { STILI_COACH } from '../lib/pianoSquadra'
+import { eDoppione, messaggioDoppione } from '../lib/gareDoppie'
 
 const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white'
 // I tempi si confrontano dentro lo stesso lavoro (un 100 in A2 e uno in B1 sono velocità diverse per scelta)
@@ -278,7 +279,7 @@ function NuovoTempo({ atletaId, onSalvato }) {
       ? await supabase.from('gare').insert({ atleta_id: atletaId, nome_gara: nome.trim(), distanza: Number(distanza), stile, vasca, tempo: t, data_gara: data })
       : await supabase.from('allenamenti').insert({ atleta_id: atletaId, tipo_lavoro: lavoro, distanza: Number(distanza), ripetizioni: 1, stile, tempo_totale: t, data_allenamento: data })
     setInvio(false)
-    if (error) return setErrore('Non sono riuscito a salvare: ' + error.message)
+    if (error) return setErrore(eDoppione(error) ? messaggioDoppione({ distanza, stile, data_gara: data }) : 'Non sono riuscito a salvare: ' + error.message)
     onSalvato({ distanza: Number(distanza), stile, ...(tipo === 'gara' ? { vasca } : { lavoro }) })
   }
 

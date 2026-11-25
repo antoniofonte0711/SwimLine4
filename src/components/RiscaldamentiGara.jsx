@@ -44,6 +44,7 @@ function useRiscaldamenti(atletaId) {
 function SceltaGara({ prossime, esistenti, onScegli, onAnnulla }) {
   const [distanza, setDistanza] = useState(100)
   const [stile, setStile] = useState('Stile libero')
+  const [nome, setNome] = useState('')
   const suggerite = [...new Set(prossime.map((g) => garaDi(g.distanza, g.stile)))]
   return (
     <div className="bg-white rounded-3xl p-5 mb-3 shadow-card">
@@ -69,9 +70,16 @@ function SceltaGara({ prossime, esistenti, onScegli, onAnnulla }) {
         className="w-full font-display text-lg font-extrabold text-white bg-blue-600 rounded-2xl min-h-[52px] mb-2">
         {garaDi(distanza, stile)}{esistenti.includes(garaDi(distanza, stile)) ? ' (ce l\'hai già)' : ''}
       </button>
-      <button type="button" onClick={() => onScegli(TUTTE)} className="w-full font-bold text-blue-600 bg-schiuma rounded-2xl min-h-[48px] mb-2">
+      <button type="button" onClick={() => onScegli(TUTTE)} className="w-full font-bold text-blue-600 bg-schiuma rounded-2xl min-h-[48px] mb-4">
         Uno per tutte le gare
       </button>
+      <label htmlFor="risc-nome" className="block text-xs font-bold tracking-widest text-slate-500 uppercase mb-2">Oppure dagli un nome tuo</label>
+      <div className="flex gap-2 mb-3">
+        <input id="risc-nome" value={nome} onChange={(e) => setNome(e.target.value)} maxLength={60} placeholder="Es. 100 Stile libero · finale"
+          className={CAMPO} />
+        <button type="button" disabled={!nome.trim()} onClick={() => onScegli(nome.trim())}
+          className="shrink-0 px-4 font-bold text-white bg-blue-600 rounded-2xl min-h-[46px] disabled:opacity-40">Crea</button>
+      </div>
       <button type="button" onClick={onAnnulla} className="w-full min-h-[44px] text-sm font-bold text-slate-600">Annulla</button>
     </div>
   )
@@ -231,6 +239,7 @@ export default function RiscaldamentiGara({ atletaId, prossime = [], soloLettura
         const futuri = (g.attuale.giorni || []).filter((d) => d >= oggi)
         return (
           <button key={g.gara} type="button" onClick={() => apri(g.gara)} className="cliccabile w-full text-left bg-white rounded-3xl p-5 mb-2.5 shadow-card">
+            <span className="block text-[11px] font-bold tracking-widest text-slate-500 uppercase">{g.gara === TUTTE ? 'Riscaldamento per' : 'Riscaldamento per la gara'}</span>
             <span className="flex items-baseline justify-between gap-3">
               <span className="font-display text-lg font-extrabold text-abisso">{g.gara}</span>
               <span className="text-sm font-bold text-blue-600 shrink-0">{metriPiano(g.attuale.righe || [])} m</span>
