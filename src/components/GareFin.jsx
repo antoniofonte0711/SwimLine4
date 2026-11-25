@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { dataLocale } from '../lib/lavori'
 import { cercaAtleti } from '../lib/fin/abbina'
-import { chiaveIscrizione, chiediFin, passoGara, quantiPassaggi, righeIscrizioni } from '../lib/fin/app'
+import { chiediFin, passoGara, quantiPassaggi, righeIscrizioni } from '../lib/fin/app'
 import {
   ERRORE_TEMPO_BREVE, erroreTempoImpossibile, normalizzaTempo, passaggiCoerenti, secondiInTempo, tempoInSecondi, tempoPlausibile, tempoValido,
 } from '../lib/tempo'
@@ -166,7 +166,7 @@ function NuovaManifestazione({ squadra, atleti, onSalvata, onAnnulla }) {
   )
 }
 
-// Una manifestazione salvata: atleti e gare, pubblica, aggiorna dal programma, elimina
+// Una manifestazione salvata: atleti e gare, pubblica, elimina
 function Manifestazione({ m, atleti, onCambiata }) {
   const [msg, setMsg] = useState({})
   const [invio, setInvio] = useState('')
@@ -180,25 +180,6 @@ function Manifestazione({ m, atleti, onCambiata }) {
     if (error) return setMsg({ errore: erroreDb(error) })
     setMsg({ ok: `Pubblicata: ${data ?? 0} gare messe agli atleti.` })
     onCambiata()
-  }
-
-  // Rilegge il programma (iscrizioni dell'ultimo minuto) e aggiunge solo quelle nuove
-  async function aggiorna() {
-    setInvio('aggiorna')
-    setMsg({})
-    try {
-      const programma = await chiediFin({ azione: 'programma', linee: m.documento_url || '', programma: m.programma_url, citta: m.citta })
-      const gia = new Set(m.iscrizioni.map(chiaveIscrizione))
-      const nuove = righeIscrizioni(cercaAtleti(programma.gare, atleti), m.id).filter((r) => !gia.has(chiaveIscrizione(r)))
-      if (nuove.length) {
-        const { error } = await supabase.from('iscrizioni_fin').insert(nuove)
-        if (error) throw new Error(erroreDb(error))
-        if (m.pubblicata) await supabase.rpc('pubblica_manifestazione_fin', { p_id: m.id })
-      }
-      setMsg({ ok: nuove.length ? `Aggiunte ${nuove.length} iscrizioni nuove.` : 'Nessuna iscrizione nuova.' })
-      onCambiata()
-    } catch (e) { setMsg({ errore: e.message }) }
-    setInvio('')
   }
 
   async function elimina() {
@@ -234,16 +215,11 @@ function Manifestazione({ m, atleti, onCambiata }) {
       {!m.iscrizioni.length && <p className="text-sm text-slate-500 mt-2">Nessun atleta trovato negli iscritti.</p>}
       {msg.ok && <p role="status" className="text-sm text-green-700 bg-green-50 rounded-xl px-3 py-2 mt-2">{msg.ok}</p>}
       {msg.errore && <p role="alert" className="text-sm text-white bg-red-600 rounded-xl px-3 py-2 mt-2">{msg.errore}</p>}
-      <div className="grid grid-cols-2 gap-2 mt-3">
-        <button type="button" onClick={aggiorna} disabled={!!invio} className="font-bold text-blue-600 bg-schiuma rounded-2xl min-h-[48px] disabled:opacity-50">
-          {invio === 'aggiorna' ? 'Leggo…' : 'Aggiorna iscritti'}
-        </button>
-        {m.pubblicata
-          ? <span className="text-xs text-slate-500 flex items-center justify-center text-center">Gli atleti la vedono nelle loro gare</span>
-          : <button type="button" onClick={pubblica} disabled={!!invio} className="font-bold text-white bg-blue-600 rounded-2xl min-h-[48px] disabled:opacity-50">
-              {invio === 'pubblica' ? 'Pubblico…' : 'Pubblica agli atleti'}
-            </button>}
-      </div>
+      {m.pubblicata
+        ? <p className="text-xs text-slate-500 text-center mt-3">Gli atleti la vedono nelle loro gare e nella schermata Oggi.</p>
+        : <button type="button" onClick={pubblica} disabled={!!invio} className="w-full mt-3 font-bold text-white bg-blue-600 rounded-2xl min-h-[48px] disabled:opacity-50">
+            {invio ? 'Pubblico…' : 'Pubblica agli atleti'}
+          </button>}
       <button type="button" onClick={elimina} className="w-full min-h-[44px] mt-1 text-sm text-red-500">Elimina</button>
     </div>
   )
