@@ -182,6 +182,17 @@ function Manifestazione({ m, atleti, onCambiata }) {
     onCambiata()
   }
 
+  // Il coach conferma chi c'è: vale per tutte le gare dell'atleta in questa manifestazione (di nuovo = annulla)
+  async function segnaPresenza(atletaId, attuale, valore) {
+    const nuovo = attuale === valore ? null : valore
+    setInvio(atletaId)
+    const { error } = await supabase.from('iscrizioni_fin').update({ presente: nuovo })
+      .eq('manifestazione_id', m.id).eq('atleta_id', atletaId)
+    setInvio('')
+    if (error) return setMsg({ errore: erroreDb(error) })
+    onCambiata()
+  }
+
   async function elimina() {
     if (!window.confirm(`Eliminare "${m.nome}" (${m.citta})? Spariscono anche le gare messe agli atleti che non hanno ancora il tempo.`)) return
     const gare = m.iscrizioni.map((i) => i.gara_id).filter(Boolean)
@@ -202,11 +213,26 @@ function Manifestazione({ m, atleti, onCambiata }) {
           {m.pubblicata ? 'Pubblicata' : 'Bozza'}
         </span>
       </div>
+      {perAtleta.size > 0 && (() => {
+        const stati = [...perAtleta.values()].map((l) => l[0].presente ?? null)
+        const n = (v) => stati.filter((s) => s === v).length
+        return <p className="text-xs text-slate-500 mt-1">Presenti {n(true)} · Assenti {n(false)} · da confermare {n(null)}</p>
+      })()}
       {[...perAtleta.entries()].map(([id, lista]) => {
         const dubbie = lista.filter((i) => i.stato === 'da_confermare')
+        const presente = lista[0].presente ?? null
+        const pill = (attivo, colore) => `px-3 min-h-[36px] rounded-full text-xs font-bold border disabled:opacity-50 ${attivo ? colore : 'bg-white text-slate-500 border-slate-200'}`
         return (
           <div key={id} className="border-t border-slate-100 py-3 mt-2">
-            <p className="font-semibold">{nomeAtleta(atleti.find((a) => a.id === id)) || lista[0].nome_fin}</p>
+            <div className="flex items-center justify-between gap-2">
+              <p className="font-semibold min-w-0 truncate">{nomeAtleta(atleti.find((a) => a.id === id)) || lista[0].nome_fin}</p>
+              <div className="flex gap-1.5 shrink-0" role="group" aria-label="Presenza">
+                <button type="button" disabled={invio === id} aria-pressed={presente === true} onClick={() => segnaPresenza(id, presente, true)}
+                  className={pill(presente === true, 'bg-emerald-600 text-white border-emerald-600')}>Presente</button>
+                <button type="button" disabled={invio === id} aria-pressed={presente === false} onClick={() => segnaPresenza(id, presente, false)}
+                  className={pill(presente === false, 'bg-slate-700 text-white border-slate-700')}>Assente</button>
+              </div>
+            </div>
             {dubbie.length > 0 && <p className="text-xs font-bold text-amber-800">Deve confermare la società ({[...new Set(dubbie.map((i) => i.societa))].join(' o ')})</p>}
             <ListaGare gare={lista.filter((i) => i.stato === 'confermata' || dubbie.length).filter((i, k, a) => a.findIndex((x) => x.distanza === i.distanza && x.stile === i.stile) === k)} />
           </div>
