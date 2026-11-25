@@ -107,7 +107,7 @@ function query(nome) {
       })
       return { data: null, error: null }
     }
-    if (azione === 'ins') { const lista = [].concat(valori).map((r) => ({ id: crypto.randomUUID(), created_at: new Date().toISOString(), ...r })); t.push(...lista); return { data: lista, error: null } }
+    if (azione === 'ins') { const lista = [].concat(valori).map((r) => ({ id: crypto.randomUUID(), created_at: new Date().toISOString(), ...r })); t.push(...lista); return { data: modo === 'lista' ? lista : structuredClone(lista[0]), error: null } }
     let righe = t.filter((r) => filtri.every((f) => f(r)))
     if (azione === 'upd') { righe.forEach((r) => Object.assign(r, valori)); return { data: righe, error: null } }
     if (azione === 'del') { tabelle[nome] = t.filter((r) => !righe.includes(r)); return { data: null, error: null } }
@@ -166,6 +166,19 @@ const RPC = {
     if (e) e.stato = p_accetta ? 'accettato' : 'rifiutato'
   },
   admin_account_eliminati() { return [] },
+  // migrazione 50: gare FIN (come crea_gare_fin, semplificata)
+  pubblica_manifestazione_fin({ p_id }) {
+    const m = (tabelle.manifestazioni_fin || []).find((x) => x.id === p_id)
+    if (!m) return 0
+    m.pubblicata = true
+    return creaGareFin(m)
+  },
+  conferma_iscrizioni_fin({ p_manifestazione, p_societa }) {
+    tabelle.iscrizioni_fin = (tabelle.iscrizioni_fin || []).filter((i) => !(i.manifestazione_id === p_manifestazione && i.atleta_id === utente.id
+      && i.stato === 'da_confermare' && (p_societa == null || i.societa !== p_societa)))
+    tabelle.iscrizioni_fin.forEach((i) => { if (i.manifestazione_id === p_manifestazione && i.atleta_id === utente.id) i.stato = 'confermata' })
+    return creaGareFin((tabelle.manifestazioni_fin || []).find((x) => x.id === p_manifestazione), utente.id)
+  },
   // migrazione 43: premi a scelta (estrazione semplificata: i primi 3 premi attivi a caso)
   proponi_premi() {
     const io = tabelle.profiles.find((r) => r.id === utente.id)
@@ -243,6 +256,20 @@ const RPC = {
     }
     const s = tabelle.squadre.find((x) => x.id === p_squadra); if (s) s.coach_id = p_coach
   },
+}
+
+function creaGareFin(m, atleta) {
+  if (!m?.pubblicata) return 0
+  let n = 0
+  ;(tabelle.iscrizioni_fin || []).filter((i) => i.manifestazione_id === m.id && i.stato === 'confermata' && !i.gara_id && (!atleta || i.atleta_id === atleta))
+    .forEach((i) => {
+      const id = crypto.randomUUID()
+      ;(tabelle.gare ||= []).push({ id, atleta_id: i.atleta_id, nome_gara: m.nome, distanza: i.distanza, stile: i.stile, data_gara: i.data, orario: i.orario,
+        luogo: m.citta + (m.impianto ? ' · ' + m.impianto : ''), vasca: m.vasca, tempo_iscrizione: i.tempo_iscrizione, passaggi: [], ordine: n, note: 'FIN · ' + (i.societa || ''), tempo: null, created_at: new Date().toISOString() })
+      i.gara_id = id
+      n++
+    })
+  return n
 }
 
 // per le prove: le tabelle si leggono dalla console con __fintoDb

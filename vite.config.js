@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import apiLocale from './strumenti/api-locale.js'
 
 // Librerie grandi in file separati: restano in cache tra un rilascio e l'altro.
 // Ogni voce è l'inizio del percorso dentro node_modules.
@@ -11,7 +12,7 @@ const VENDOR = {
 }
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), apiLocale()],
   build: {
     rollupOptions: {
       output: {

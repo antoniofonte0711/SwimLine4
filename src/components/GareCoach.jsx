@@ -13,6 +13,8 @@ import {
 import { useMiaSquadra } from '../lib/pianoSquadra'
 import { useRegole } from '../lib/regole'
 import Schede from './Schede'
+import { GareFinCoach } from './GareFin'
+import { passoGara } from '../lib/fin/app'
 import { ordinaPersone } from '../lib/persone'
 
 const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white'
@@ -78,7 +80,7 @@ function Parziali({ passaggi, finale, passo, distanza }) {
 // Scheda di un atleta in una gara già assegnata: tempo effettivo + passaggi
 function SchedaRisultato({ g, onSalvato }) {
   const d = Number(g.distanza)
-  const passo = d <= 50 ? 25 : 50
+  const passo = passoGara(g)
   const nPassaggi = Math.max(0, Math.ceil(d / passo) - 1)
   const [aperta, setAperta] = useState(false)
   const [tempo, setTempo] = useState(g.tempo || '')
@@ -372,11 +374,12 @@ export default function GareCoach() {
         : (
           <>
             {assegna && (
-              <Schede etichetta="Gare" valore={modo === 'nuova' ? '+ Nuova gara' : 'Risultati'} opzioni={['+ Nuova gara', 'Risultati']}
-                onCambia={(v) => setModo(v === 'Risultati' ? 'risultati' : 'nuova')} />
+              <Schede etichetta="Gare" valore={{ nuova: '+ Nuova gara', fin: 'Gare FIN', risultati: 'Risultati' }[modo]}
+                opzioni={['+ Nuova gara', 'Gare FIN', 'Risultati']}
+                onCambia={(v) => setModo(v === 'Risultati' ? 'risultati' : v === 'Gare FIN' ? 'fin' : 'nuova')} />
             )}
 
-            {modo === 'nuova' ? (
+            {modo === 'fin' ? <GareFinCoach squadra={squadra} onCambiate={() => caricaGare(atleti)} /> : modo === 'nuova' ? (
               <>
                 <div className={CARD}>
                   <label className="block text-xs text-slate-500 mb-1">Nome gara / trofeo</label>

@@ -23,6 +23,7 @@ import Icona from '../components/Icona'
 import CondividiAllenamento from '../components/CondividiAllenamento'
 import { ProponiFuoriPiano, ProposteFuoriPiano } from '../components/FuoriPiano'
 import { RiscaldamentoOggi } from '../components/RiscaldamentiGara'
+import { ConfermaFin, GareOggi } from '../components/GareFin'
 
 const COLORE_STATO = {
   presente: 'bg-green-100 text-green-700',
@@ -168,7 +169,9 @@ function HomeAtleta() {
       {/* Computer: allenamento a sinistra, riepilogo e azioni a destra. Telefono: una colonna, stesso ordine */}
       <div className="lg:grid lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:gap-6 lg:items-start">
       <div>
-      {/* giorno di gara: il riscaldamento dell'atleta */}
+      {/* giorno di gara: "Sei tu?" per gli omonimi FIN, le gare del giorno con i passaggi e il riscaldamento */}
+      {ruolo !== 'genitore' && <ConfermaFin atletaId={user.id} />}
+      {ruolo !== 'genitore' && <GareOggi atletaId={user.id} giorno={giorno} />}
       {ruolo !== 'genitore' && <RiscaldamentoOggi atletaId={user.id} giorno={giorno} />}
       {ruolo === 'genitore' && !puo('g_allenamento') ? null : piano ? (
         <>

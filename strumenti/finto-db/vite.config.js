@@ -6,6 +6,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import apiLocale from '../api-locale.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const FINTO = path.resolve(__dirname, 'supabaseClient.js')
@@ -13,7 +14,7 @@ const BACKUP = 'C:/Users/maipa/Documents/Progetti/SwimLine4-backup'
 
 export default defineConfig({
   root: path.resolve(__dirname, '../..'),
-  plugins: [react(), {
+  plugins: [react(), apiLocale(), {
     name: 'finto-supabase', enforce: 'pre',
     resolveId(src, importer) {
       if (/supabaseClient(\.js)?$/.test(src) && importer && !importer.includes('finto-db')) return FINTO
