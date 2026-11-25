@@ -6,6 +6,8 @@ import { STILI, VASCHE, dataLocale, testoVasca, vascaDi } from '../lib/lavori'
 import { AVVISO_VIDEO, VIDEO_ATTIVI, puoModificare } from '../lib/permessi'
 import InputTempo from '../components/InputTempo'
 import GareCoach from '../components/GareCoach'
+import RiscaldamentiGara from '../components/RiscaldamentiGara'
+import { useSearchParams } from 'react-router-dom'
 import { useFigli, useFiglioScelto } from '../lib/famiglia'
 import { aggiungiAlCalendario } from '../lib/ics'
 import { useRegole } from '../lib/regole'
@@ -18,7 +20,7 @@ import {
 } from '../lib/codaOffline'
 
 const TABELLA = 'gare'
-const VISTE = ['Nuova gara', 'Le mie gare']
+const VISTE = ['Nuova gara', 'Le mie gare', 'Riscaldamenti']
 const DISTANZE = ['50', '100', '200', '400', '800', '1500']
 const CAMPO = 'w-full min-h-[46px] border border-slate-200 bg-bordo rounded-2xl px-3.5 py-2.5 text-[15px] font-semibold text-abisso focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white'
 // modulo vuoto: la distanza parte da quella preferita (Profilo › Allenamento)
@@ -76,8 +78,9 @@ function GareAtleta() {
   const user = genitore ? { id: figlio?.atleta_id } : io
   const online = useOnline()
   const { puo } = useRegole()
-  const viste = puoModificare(ruolo) && puo('a_gare') ? VISTE : [VISTE[1]]
-  const [vista, setVista] = useState(viste[0])
+  const viste = puoModificare(ruolo) && puo('a_gare') ? VISTE : VISTE.slice(1)
+  const [parametri] = useSearchParams()
+  const [vista, setVista] = useState(parametri.get('vista') === 'riscaldamenti' ? 'Riscaldamenti' : viste[0])
   const [gare, setGare] = useState([])
   const [coda, setCoda] = useState([])
   const [form, setForm] = useState(vuoto)
@@ -334,6 +337,11 @@ function GareAtleta() {
             {salvando ? 'Salvataggio...' : 'Salva gara'}
           </button>
         </form>
+      )}
+
+      {vista === 'Riscaldamenti' && user.id && (
+        <RiscaldamentiGara atletaId={user.id} soloLettura={genitore}
+          prossime={gare.filter((g) => !g.tempo && g.data_gara >= dataLocale())} />
       )}
 
       {vista === 'Le mie gare' && (

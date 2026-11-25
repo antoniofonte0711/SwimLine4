@@ -27,7 +27,7 @@ const ANIMA = {
   transition: { type: 'spring', stiffness: 500, damping: 38 },
 }
 
-const nuovaRiga = (extra = {}) => ({ ...RIGA_VUOTA, ...extra, _id: crypto.randomUUID() })
+export const nuovaRiga = (extra = {}) => ({ ...RIGA_VUOTA, ...extra, _id: crypto.randomUUID() })
 // Nell'editor le righe di una serie a giri tengono le ripetizioni di un solo giro (si moltiplicano al salvataggio)
 const conId = (lista) => lista.map((r) => ({ ...r, _id: r._id || crypto.randomUUID(), ...(r.serie && { ripetizioni: perGiro(r) }) }))
 // Ripetizioni di un giro di una riga dell'editor (qui sono già per giro: perGiro vale solo sulle righe salvate)
@@ -225,7 +225,7 @@ function VascheDaCronometrare({ r, rip, onCambia }) {
 }
 
 // Il pannello che sale dal basso per compilare un lavoro: pulsanti grandi al posto delle tendine
-function FoglioLavoro({ r, i, n, inSerie, squadraId, cambia, cambiaTipo, onSu, onGiu, primo, ultimo, onTogli, onChiudi }) {
+export function FoglioLavoro({ r, i, n, inSerie, semplice = false, squadraId, cambia, cambiaTipo, onSu, onGiu, primo, ultimo, onTogli, onChiudi }) {
   const [altro, setAltro] = useState(!!(r.note || r.minuti || Array.isArray(r.ripartenze)))
   const [nuovoTipo, setNuovoTipo] = useState(false)
   const rip = Math.min(50, Math.max(1, Number(r.ripetizioni) || 1))
@@ -292,7 +292,7 @@ function FoglioLavoro({ r, i, n, inSerie, squadraId, cambia, cambiaTipo, onSu, o
             {lavoriDaScegliere({ coach: true, tieni: r.tipo_lavoro }).map((t) => (
               <Pillola key={t} attiva={t === r.tipo_lavoro} onClick={() => cambiaTipo(i, t)}>{t}</Pillola>
             ))}
-            {!nuovoTipo && <Pillola onClick={() => setNuovoTipo(true)} etichetta="Aggiungi un tipo di lavoro">+</Pillola>}
+            {!nuovoTipo && squadraId && <Pillola onClick={() => setNuovoTipo(true)} etichetta="Aggiungi un tipo di lavoro">+</Pillola>}
           </div>
           {nuovoTipo && (
             <FormLavoro esistenti={[]} conSquadra onSalva={salvaTipo} onAnnulla={() => setNuovoTipo(false)} />
@@ -339,7 +339,7 @@ function FoglioLavoro({ r, i, n, inSerie, squadraId, cambia, cambiaTipo, onSu, o
           </button>
         ))}
 
-        {!inSerie && !aScelta(r) && <VascheDaCronometrare r={r} rip={rip} onCambia={(v) => cambia(i, 'tratti', v)} />}
+        {!inSerie && !semplice && !aScelta(r) && <VascheDaCronometrare r={r} rip={rip} onCambia={(v) => cambia(i, 'tratti', v)} />}
 
         <InputRipartenza etichetta="Ripartenza (facoltativa)" value={r.ripartenza} onChange={(v) => cambia(i, 'ripartenza', v)} />
 
@@ -441,7 +441,7 @@ function Maniglia({ controlli }) {
 }
 
 // Un lavoro singolo nella lista: si trascina dalla maniglia ⠿ (o con le frecce nel pannello)
-function RigaLavoro({ chiave, r, onApri, onTogli }) {
+export function RigaLavoro({ chiave, r, onApri, onTogli }) {
   const controlli = useDragControls()
   return (
     <Reorder.Item as="div" value={chiave} dragListener={false} dragControls={controlli} {...ANIMA}
