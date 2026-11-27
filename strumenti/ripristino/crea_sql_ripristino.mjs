@@ -15,10 +15,11 @@ if (!file) { console.error('Uso: node crea_sql_ripristino.mjs <copia.json> [prov
 const copia = JSON.parse(readFileSync(file, 'utf8'))
 
 // Prima le tabelle a cui le altre si collegano
-const ORDINE = ['squadre', 'profiles', 'impostazioni_app', 'impostazioni_squadra', 'punti_config', 'premi_catalogo',
+const ORDINE = ['societa', 'squadre', 'profiles', 'registro_modifiche', 'impostazioni_app', 'impostazioni_squadra', 'punti_config', 'premi_catalogo',
   'allenamenti_squadra', 'presenze', 'allenamenti', 'gare', 'punti_movimenti', 'premi_atleta', 'genitori_figli',
   'incoraggiamenti', 'notifiche', 'atleta_riferimenti', 'richieste_squadra', 'segnalazioni', 'accessi_admin',
-  'tipi_lavoro', 'tipi_lavoro_squadra', 'video']
+  'tipi_lavoro', 'tipi_lavoro_squadra', 'video', 'errori_app', 'allenamenti_extra', 'punti_voci', 'premi_proposte',
+  'riscaldamenti', 'manifestazioni_fin', 'iscrizioni_fin']
 const tabelle = ORDINE.filter((t) => Array.isArray(copia[t]) && copia[t].length > 0)
 const sconosciute = Object.keys(copia).filter((k) => Array.isArray(copia[k]) && !ORDINE.includes(k) && k !== 'utenti_auth')
 if (sconosciute.length) console.error('Attenzione, tabelle non previste (saltate):', sconosciute.join(', '))
