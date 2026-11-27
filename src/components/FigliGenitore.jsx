@@ -28,9 +28,11 @@ export default function FigliGenitore() {
 
   async function invia() {
     if (!scelti.length) return
-    const { error } = await supabase.rpc('chiedi_figli', { p_atleti: scelti })
+    const { data: inviate, error } = await supabase.rpc('chiedi_figli', { p_atleti: scelti })
     if (error) return setEsito('Non sono riuscito a inviare: ' + error.message)
-    setEsito(scelti.length === 1 ? 'Richiesta inviata: appena tuo figlio approva, vedi i suoi progressi.' : 'Richieste inviate: appena approvano, vedi i loro progressi.')
+    // il database salta chi non si può collegare (o ha già una richiesta): in quel caso non è partito niente
+    if (!inviate) return setEsito('Nessuna richiesta inviata: questo collegamento non si può fare o c’è già.')
+    setEsito(inviate === 1 ? 'Richiesta inviata: appena tuo figlio approva, vedi i suoi progressi.' : 'Richieste inviate: appena approvano, vedi i loro progressi.')
     setScelti([])
     setAperto(false)
     ricarica()
