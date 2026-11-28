@@ -1,5 +1,5 @@
 // Edge Function "risultati": mette da sola i tempi ufficiali delle gare presi da nuoto.ficr.it,
-// con passaggi, posto in batteria e posto in classifica. La chiama il database ogni 20 minuti (pg_cron,
+// con passaggi, posto in batteria e posto in classifica. La chiama il database ogni 30 minuti (pg_cron,
 // chiama_risultati, migrazione 56) solo se ci sono gare degli ultimi 7 giorni ancora senza piazzamento.
 // POST { interno }                  -> cerca e scrive
 // POST { interno, soloProva: true } -> cerca e dice cosa scriverebbe, senza scrivere

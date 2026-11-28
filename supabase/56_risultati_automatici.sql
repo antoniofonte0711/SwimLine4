@@ -5,7 +5,7 @@
 -- - gare.piazzamento: { batteria, posto_batteria, categoria, posizione, classificati }
 -- - il piazzamento lo scrive solo il sistema: dall'app non si può inventare; se qualcuno cambia tempo,
 --   giorno, distanza o stile, il piazzamento si cancella (non vale più)
--- - ogni 20 minuti il database chiama la funzione, ma solo se c'è una gara degli ultimi 7 giorni senza piazzamento
+-- - ogni 30 minuti il database chiama la funzione, ma solo se c'è una gara degli ultimi 7 giorni senza piazzamento
 -- Si può rieseguire. Prima pubblicare la funzione "risultati" con verify_jwt = false.
 -- ============================================
 
@@ -43,4 +43,4 @@ end $$;
 revoke all on function public.chiama_risultati() from public, anon, authenticated;
 
 select cron.unschedule(jobid) from cron.job where jobname = 'swimline4-risultati-gare';
-select cron.schedule('swimline4-risultati-gare', '*/20 * * * *', 'select public.chiama_risultati()');
+select cron.schedule('swimline4-risultati-gare', '*/30 * * * *', 'select public.chiama_risultati()');
