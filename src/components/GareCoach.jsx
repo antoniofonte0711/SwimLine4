@@ -16,6 +16,7 @@ import { useRegole } from '../lib/regole'
 import Schede from './Schede'
 import { GareFinCoach } from './GareFin'
 import { passoGara } from '../lib/fin/app'
+import Piazzamento from './Piazzamento'
 import { ordinaPersone } from '../lib/persone'
 import { eDoppione, messaggioDoppione, primoDoppione } from '../lib/gareDoppie'
 
@@ -144,6 +145,8 @@ export function SchedaRisultato({ g, onSalvato, raggruppata = false }) {
             : <span className="text-xs font-bold px-3 py-1 rounded-full bg-yellow-100 text-yellow-700">Da inserire</span>}
         </span>
       </button>
+
+      <Piazzamento g={g} />
 
       {g.tempo && g.da_confermare && (
         <div className="mt-2 flex items-center justify-between gap-2 rounded-2xl bg-yellow-50 px-3 py-2">

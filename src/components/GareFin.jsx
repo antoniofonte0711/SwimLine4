@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import Piazzamento from './Piazzamento'
 import { dataLocale } from '../lib/lavori'
 import { cercaAtleti } from '../lib/fin/abbina'
 import { chiediFin, passoGara, quantiPassaggi, righeIscrizioni } from '../lib/fin/app'
@@ -400,6 +401,8 @@ function SchedaGaraOggi({ g, onSalvata }) {
         {g.orario && `Ore ${g.orario.slice(0, 5)} · `}{g.luogo}{` · vasca ${g.vasca || 25}`}
       </p>
       {g.note?.startsWith('FIN · ') && g.note.length > 6 && <p className="text-xs text-slate-500 mt-0.5">{g.note.slice(6)}</p>}
+
+      <Piazzamento g={g} />
 
       <div className="grid grid-cols-2 gap-3 mt-4">
         <div>

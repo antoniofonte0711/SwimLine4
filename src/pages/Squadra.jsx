@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
+import Piazzamento from '../components/Piazzamento'
 import { useAuth } from '../context/AuthContext'
 import AppShell from '../components/AppShell'
 import { coloreLavoro, formattaGiorno, testoVasca, vascaDi } from '../lib/lavori'
@@ -162,6 +163,7 @@ function SquadraCompagni() {
                 <span className="whitespace-nowrap">{g.distanza} m {g.stile}</span> · <span className="whitespace-nowrap">{testoVasca(vascaDi(g))}</span>
               </p>
               {g.passaggi?.length > 0 && <p className="text-xs text-slate-500 mt-2">Passaggi: {g.passaggi.map((p) => p || '–').join(' · ')}</p>}
+              <Piazzamento g={g} />
             </div>
           ))}
         </>
@@ -445,6 +447,7 @@ function GareDi({ atletaId }) {
             <span className="whitespace-nowrap">{g.distanza} m {g.stile}</span> · <span className="whitespace-nowrap">{testoVasca(vascaDi(g))}</span>
           </p>
           {g.passaggi?.length > 0 && <p className="text-xs text-slate-500 mt-2">Passaggi: {g.passaggi.map((p) => p || '–').join(' · ')}</p>}
+          <Piazzamento g={g} />
         </div>
       ))}
     </>

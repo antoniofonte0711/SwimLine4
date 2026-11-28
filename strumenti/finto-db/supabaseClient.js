@@ -22,6 +22,8 @@ const UTENTI = {
     // 50 SL con tempi vicini: per vedere la scala ai decimi del grafico
     id: 'gara50-' + i, atleta_id: A, nome_gara: 'Meeting ' + (i + 1), distanza: 50, stile: 'Stile libero', vasca: 25, tempo: t(s), data_gara: g(-60 + i * 12), passaggi: [],
   }))).concat([{ id: 'gara9', atleta_id: A, nome_gara: "Trofeo d'Autunno", distanza: 100, stile: 'Stile libero', tempo: null, data_gara: g(8), orario: '09:30:00', luogo: 'Piscina Comunale', note: 'Ritrovo 8:45', passaggi: [], ordine: 0 }]).map((r) => ({ da_confermare: false, ...r }))
+  // un risultato arrivato dal sito ufficiale (migrazione 56), per vedere posto in batteria e in classifica
+  Object.assign(tabelle.gare[3], { passaggi: [t(30.4)], piazzamento: { batteria: 4, posto_batteria: 3, categoria: 'Unica Femmine', posizione: 19, classificati: 70 } })
   tabelle.allenamenti = [0, 1, 2].map((i) => ({
     id: 'all' + i, atleta_id: A, tipo_lavoro: 'C1', distanza: 100, ripetizioni: 4, stile: 'Stile libero',
     passaggi: [t(70 - i), t(70.5 - i), t(71 - i), t(71.2 - i)], data_allenamento: g(-12 + i * 4),
