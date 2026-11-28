@@ -44,7 +44,7 @@ function Finestra({ piano, giorno, atletaId, onChiudi }) {
       const [lg, a, g] = await Promise.all([
         caricaLogo(),
         atletaId ? caricaTutto(() => supabase.from('allenamenti').select('id, tipo_lavoro, distanza, stile, passaggi, data_allenamento').eq('atleta_id', atletaId)) : { data: null },
-        atletaId ? caricaTutto(() => supabase.from('gare').select('id, nome_gara, distanza, stile, vasca, tempo, data_gara').eq('atleta_id', atletaId)) : { data: [] },
+        atletaId ? caricaTutto(() => supabase.from('gare').select('id, nome_gara, distanza, stile, vasca, tempo, data_gara').eq('atleta_id', atletaId).eq('da_confermare', false)) : { data: [] },
       ])
       await document.fonts?.ready
       if (!attivo) return

@@ -97,7 +97,7 @@ function SquadraCompagni() {
   // Miglior tempo per ogni distanza, stile e vasca (25 e 50 m sono prove diverse)
   const migliori = {}
   gare.forEach((g) => {
-    const sec = tempoInSecondi(g.tempo)
+    const sec = g.da_confermare ? null : tempoInSecondi(g.tempo)
     if (sec === null) return
     const k = `${g.distanza} m ${g.stile} · ${testoVasca(vascaDi(g))}`
     if (!migliori[k] || sec < migliori[k].sec) migliori[k] = { sec, tempo: g.tempo, dist: g.distanza, vasca: vascaDi(g) }
@@ -412,7 +412,7 @@ function GareDi({ atletaId }) {
   if (gare === null) return <p className="text-center text-slate-500 py-6">Carico…</p>
   const migliori = {}
   gare.forEach((g) => {
-    const sec = tempoInSecondi(g.tempo)
+    const sec = g.da_confermare ? null : tempoInSecondi(g.tempo)
     if (sec === null) return
     const k = `${g.distanza} m ${g.stile} · ${testoVasca(vascaDi(g))}`
     if (!migliori[k] || sec < migliori[k].sec) migliori[k] = { sec, tempo: g.tempo, dist: g.distanza, vasca: vascaDi(g) }

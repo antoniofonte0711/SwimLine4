@@ -41,7 +41,7 @@ export default function Record() {
       setNomi(mappa)
 
       const [g, a] = await Promise.all([
-        caricaTutto(() => supabase.from('gare').select('id, atleta_id, distanza, stile, vasca, tempo, nome_gara, data_gara, created_at')),
+        caricaTutto(() => supabase.from('gare').select('id, atleta_id, distanza, stile, vasca, tempo, nome_gara, data_gara, created_at, da_confermare')),
         caricaTutto(() => supabase.from('allenamenti').select('id, atleta_id, tipo_lavoro, distanza, stile, tempo_totale, passaggi, data_allenamento, created_at')),
       ])
       setGare(g.data || [])
@@ -56,6 +56,8 @@ export default function Record() {
     const lista = []
     if (fonte === 'Gare') {
       gare.forEach((g) => {
+        // una gara scritta dall'atleta e non ancora confermata dal coach non è un record di squadra
+        if (g.da_confermare && ambito === 'Squadra') return
         const sec = tempoInSecondi(g.tempo)
         // vasca corta e lunga non si confrontano: si guarda solo quella scelta
         if (sec !== null && vascaDi(g) === vasca) lista.push({ id: g.id, tabella: 'gare', idx: -1, tempo: g.tempo, creato: g.created_at, atleta: g.atleta_id, distanza: g.distanza, stile: g.stile, sec, quando: g.data_gara, extra: g.nome_gara })

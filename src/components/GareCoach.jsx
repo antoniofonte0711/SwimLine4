@@ -106,10 +106,20 @@ export function SchedaRisultato({ g, onSalvato, raggruppata = false }) {
     const incoerente = passaggiCoerenti(p, t)
     if (incoerente) return setErrore(incoerente)
     setInvio(true)
-    const { error } = await supabase.from('gare').update({ tempo: t, passaggi: p }).eq('id', g.id)
+    // il coach che salva il risultato lo conferma anche, se l'aveva scritto l'atleta
+    const { error } = await supabase.from('gare').update({ tempo: t, passaggi: p, da_confermare: false }).eq('id', g.id)
     setInvio(false)
     if (error) return setErrore('Non sono riuscito a salvare: ' + error.message)
     setAperta(false)
+    onSalvato()
+  }
+
+  async function conferma() {
+    setErrore('')
+    setInvio(true)
+    const { error } = await supabase.from('gare').update({ da_confermare: false }).eq('id', g.id)
+    setInvio(false)
+    if (error) return setErrore('Non sono riuscito a confermare: ' + error.message)
     onSalvato()
   }
 
@@ -134,6 +144,17 @@ export function SchedaRisultato({ g, onSalvato, raggruppata = false }) {
             : <span className="text-xs font-bold px-3 py-1 rounded-full bg-yellow-100 text-yellow-700">Da inserire</span>}
         </span>
       </button>
+
+      {g.tempo && g.da_confermare && (
+        <div className="mt-2 flex items-center justify-between gap-2 rounded-2xl bg-yellow-50 px-3 py-2">
+          <span className="text-sm text-yellow-800">Tempo scritto dall'atleta: diventa primato solo se lo confermi</span>
+          <button onClick={conferma} disabled={invio}
+            className="shrink-0 min-h-[44px] px-4 font-bold text-white bg-blue-600 disabled:bg-gray-300 rounded-2xl">
+            Conferma
+          </button>
+        </div>
+      )}
+      {!aperta && errore && <p className="text-sm text-white bg-red-600 rounded-lg px-3 py-2 mt-2">{errore}</p>}
 
       {aperta && (
         <div className="mt-3">

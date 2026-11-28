@@ -359,6 +359,7 @@ function GareAtleta() {
                   <p className="text-sm text-slate-500 mt-0.5">
                     {formattaDataGara(g.data_gara)}
                     {g.inAttesa && <span className="ml-2 text-xs text-yellow-700 bg-yellow-100 px-2 py-0.5 rounded-full whitespace-nowrap">⏳ da inviare</span>}
+                    {g.da_confermare && <span className="ml-2 text-xs text-yellow-700 bg-yellow-100 px-2 py-0.5 rounded-full whitespace-nowrap">da confermare dal coach</span>}
                   </p>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">

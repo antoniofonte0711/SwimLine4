@@ -38,7 +38,7 @@ export default function VistaOrgoglio() {
       supabase.from('allenamenti').select('id, tipo_lavoro, distanza, stile, passaggi, data_allenamento')
         .eq('atleta_id', figlio.atleta_id).gte('data_allenamento', inizio),
       supabase.from('gare').select('id, nome_gara, distanza, stile, vasca, tempo, data_gara')
-        .eq('atleta_id', figlio.atleta_id).not('tempo', 'is', null).gte('data_gara', inizio),
+        .eq('atleta_id', figlio.atleta_id).not('tempo', 'is', null).eq('da_confermare', false).gte('data_gara', inizio),
       supabase.from('presenze').select('data, stato').eq('atleta_id', figlio.atleta_id).gte('data', inizio),
       supabase.from('incoraggiamenti').select('riferimento, tipo').eq('atleta_id', figlio.atleta_id),
     ]).then(([a, g, p, i]) => {
