@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>SwimLine4 · tre proposte di grafica da condividere</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;800;900&family=Permanent+Marker&family=Kalam:wght@400;700&family=Unbounded:wght@400;700;900&family=Figtree:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root { --scala: .3; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #e6e9ee; font-family: Figtree, sans-serif; color: #1c2533; padding: 32px 24px 60px; }
+  h1 { font-size: 22px; margin-bottom: 6px; }
+  p.nota { font-size: 15px; color: #4a5568; max-width: 70ch; margin-bottom: 28px; }
+  .galleria { display: flex; flex-wrap: wrap; gap: 28px; }
+  figure { width: calc(1080px * var(--scala)); }
+  figcaption { font-size: 16px; font-weight: 700; margin: 12px 0 2px; }
+  figcaption span { display: block; font-weight: 500; font-size: 14px; color: #4a5568; }
+  .cornice { width: calc(1080px * var(--scala)); height: calc(1920px * var(--scala)); overflow: hidden; border-radius: 14px; box-shadow: 0 10px 30px rgba(20,40,80,.18); }
+  .tavola { width: 1080px; height: 1920px; transform: scale(var(--scala)); transform-origin: 0 0; position: relative; overflow: hidden; }
+  body.vera { padding: 0; background: #000; }
+  body.vera h1, body.vera p.nota, body.vera figcaption { display: none; }
+  body.vera { --scala: 1; }
+  body.vera .cornice { border-radius: 0; box-shadow: none; }
+  body.vera .galleria { gap: 0; }
+
+  /* ---------- A. Fondo vasca ---------- */
+  .fondo { background: #1fb0d0; font-family: "Big Shoulders Display", sans-serif; color: #fff; }
+  .fondo .piastrelle { position: absolute; inset: 0;
+    background-image: linear-gradient(rgba(255,255,255,.22) 3px, transparent 3px), linear-gradient(90deg, rgba(255,255,255,.22) 3px, transparent 3px);
+    background-size: 60px 60px; }
+  .fondo .riflessi { position: absolute; inset: -40px; mix-blend-mode: screen; opacity: .55; }
+  .fondo .linea { position: absolute; left: 600px; top: 250px; width: 120px; bottom: 0; display: flex; flex-direction: column; outline: 12px solid #10295f; }
+  .fondo .linea div { flex-basis: 0; }
+  .fondo .croce { position: absolute; left: 440px; top: 250px; width: 440px; height: 120px; background: #10295f; }
+  .fondo .data { position: absolute; left: 0; right: 0; top: 96px; text-align: center; font-weight: 800; font-size: 64px; letter-spacing: .02em; color: #10295f; }
+  .fondo .km { position: absolute; left: 70px; top: 440px; font-weight: 900; font-size: 560px; line-height: .78; color: #fff; text-shadow: 0 8px 0 rgba(16,41,95,.25); }
+  .fondo .km small { display: block; font-size: 150px; font-weight: 800; color: #10295f; margin-top: 30px; text-shadow: none; }
+  .fondo .targhe { position: absolute; left: 70px; top: 1190px; display: grid; gap: 22px; width: 480px; }
+  .fondo .targa { background: rgba(255,255,255,.92); color: #10295f; padding: 22px 30px 18px; border-left: 16px solid var(--c); }
+  .fondo .targa b { display: block; font-size: 110px; font-weight: 900; line-height: .9; }
+  .fondo .targa i { font-style: normal; font-family: Figtree, sans-serif; font-weight: 700; font-size: 30px; }
+  .fondo .legenda { position: absolute; right: 60px; top: 430px; width: 230px; font-family: Figtree, sans-serif; font-weight: 700; font-size: 26px; color: #fff; line-height: 1.25; }
+  .fondo .legenda li { list-style: none; display: flex; gap: 12px; align-items: center; margin-bottom: 14px; }
+  .fondo .legenda li::before { content: ""; width: 26px; height: 26px; flex: none; background: var(--c); border: 3px solid #fff; }
+  .fondo .marchio { position: absolute; left: 70px; bottom: 70px; font-weight: 800; font-size: 60px; color: #fff; display: flex; align-items: center; gap: 18px; }
+  .marchio img { width: 84px; height: 84px; border-radius: 22px; }
+
+  /* ---------- B. Lavagna del coach ---------- */
+  .lavagna { background: #f4f6f4; font-family: "Permanent Marker", cursive; color: #1b3f9c; }
+  .lavagna .alone { position: absolute; inset: 0;
+    background: radial-gradient(ellipse 420px 160px at 760px 300px, rgba(120,140,170,.10), transparent 70%),
+                radial-gradient(ellipse 500px 120px at 300px 1500px, rgba(120,140,170,.09), transparent 70%),
+                radial-gradient(ellipse 300px 90px at 820px 1120px, rgba(200,60,60,.05), transparent 70%); }
+  .lavagna .bordo { position: absolute; inset: 0; border: 34px solid #c9ced6; box-shadow: inset 0 0 0 6px #aab1bc; }
+  .lavagna .vaschetta { position: absolute; left: 0; right: 0; bottom: 0; height: 64px; background: #aab1bc; }
+  .lavagna .vaschetta span { position: absolute; bottom: 40px; height: 34px; width: 210px; border-radius: 10px; }
+  .lavagna .titolo { position: absolute; left: 100px; top: 120px; font-size: 76px; transform: rotate(-2deg); }
+  .lavagna .titolo u { text-decoration-thickness: 8px; text-underline-offset: 14px; }
+  .lavagna .serie { position: absolute; left: 110px; top: 290px; font-family: Kalam, cursive; font-weight: 700; font-size: 82px; line-height: 1.32; color: #1d2433; }
+  .lavagna .serie li { list-style: none; position: relative; }
+  .lavagna .serie li em { font-style: normal; font-family: "Permanent Marker", cursive; font-size: 60px; color: var(--c); margin-left: 18px; }
+  .lavagna .tot { position: absolute; left: 540px; top: 860px; width: 470px; height: 330px; transform: rotate(-4deg); color: #d0262c; text-align: center; }
+  .lavagna .tot svg { position: absolute; inset: 0; }
+  .lavagna .tot b { position: relative; display: block; font-size: 170px; line-height: 1; padding-top: 52px; font-weight: 400; }
+  .lavagna .tot i { position: relative; font-style: normal; font-size: 54px; }
+  .lavagna .tempo { position: absolute; left: 100px; top: 1230px; transform: rotate(3deg); color: #128a3e; }
+  .lavagna .tempo b { display: block; font-size: 180px; font-weight: 400; line-height: 1; }
+  .lavagna .tempo i { font-style: normal; font-family: Kalam, cursive; font-weight: 700; font-size: 50px; color: #1d2433; }
+  .lavagna .note { position: absolute; left: 110px; top: 1540px; font-family: Kalam, cursive; font-weight: 700; font-size: 58px; color: #1d2433; line-height: 1.35; }
+  .lavagna .note s { text-decoration: none; color: #d0262c; font-family: "Permanent Marker", cursive; }
+  .lavagna .barre { position: absolute; left: 110px; right: 110px; top: 1700px; height: 46px; display: flex; gap: 10px; }
+  .lavagna .barre div { border-radius: 4px 10px 6px 12px; transform: skewX(-6deg); }
+  .lavagna .marchio { position: absolute; right: 90px; top: 112px; transform: rotate(4deg); background: #ffd84a; color: #1d2433; font-family: Figtree, sans-serif; font-weight: 700; font-size: 38px; padding: 16px 22px 16px 16px; display: flex; gap: 14px; align-items: center; box-shadow: 0 6px 12px rgba(0,0,0,.15); }
+  .lavagna .marchio img { width: 58px; height: 58px; border-radius: 14px; }
+
+  /* ---------- C. Sott'acqua ---------- */
+  .sotto { background: linear-gradient(#0fb5c9 0%, #0a6fa3 38%, #06336b 100%); font-family: Unbounded, sans-serif; color: #fff; }
+  .sotto .superficie { position: absolute; left: 0; right: 0; top: 0; height: 230px; }
+  .sotto .raggi { position: absolute; inset: 0; opacity: .5; mix-blend-mode: soft-light; }
+  .sotto .data { position: absolute; left: 80px; top: 280px; font-size: 44px; font-weight: 400; opacity: .9; }
+  .sotto .grande { position: absolute; left: 0; right: 0; top: 330px; height: 700px; }
+  .sotto .bolle { position: absolute; inset: 0; }
+  .sotto .bolla { position: absolute; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+    background: radial-gradient(circle at 32% 28%, rgba(255,255,255,.55), rgba(255,255,255,.08) 34%, rgba(255,255,255,.04) 70%, rgba(255,255,255,.22));
+    border: 4px solid rgba(255,255,255,.55); }
+  .sotto .bolla b { font-weight: 900; line-height: 1; }
+  .sotto .bolla i { font-style: normal; font-family: Figtree, sans-serif; font-weight: 700; margin-top: 10px; opacity: .92; }
+  .sotto .scia { position: absolute; left: 80px; right: 80px; top: 1690px; height: 60px; }
+  .sotto .marchio { position: absolute; left: 80px; bottom: 70px; font-weight: 700; font-size: 46px; display: flex; gap: 18px; align-items: center; }
+  .sotto .marchio img { width: 76px; height: 76px; border-radius: 20px; }
+</style>
+</head>
+<body>
+<h1>Tre proposte di grafica da condividere</h1>
+<p class="nota">Stesso allenamento finto per tutte e tre: 2,6 km, difficoltà 4,3, miglior tempo 29"84 sui 50 stile, 1 record. Formato storia Instagram 1080×1920. Aggiungi <b>?vera</b> all'indirizzo per vederle a grandezza piena.</p>
+
+<div class="galleria">
+
+<!-- A. FONDO VASCA -->
+<figure>
+<div class="cornice"><div class="tavola fondo">
+  <div class="piastrelle"></div>
+  <svg class="riflessi" width="1160" height="2000" aria-hidden="true">
+    <filter id="caustica"><feTurbulence type="fractalNoise" baseFrequency=".006 .011" numOctaves="2" seed="7"/><feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 -2.6 1.55"/></filter>
+    <rect width="1160" height="2000" filter="url(#caustica)"/>
+  </svg>
+  <div class="croce"></div>
+  <div class="linea" id="lineaA"></div>
+  <p class="data">Sabato 28 novembre</p>
+  <div class="km">2,6<small>chilometri</small></div>
+  <ul class="legenda" id="legendaA"></ul>
+  <div class="targhe">
+    <div class="targa" style="--c:#ffd23f"><b>29"84</b><i>miglior tempo, 50 stile</i></div>
+    <div class="targa" style="--c:#e0393e"><b>4,3<span style="font-size:60px">/10</span></b><i>difficoltà, moderato</i></div>
+    <div class="targa" style="--c:#1fd17a"><b>1</b><i>record battuto, 50 SL −0"40</i></div>
+  </div>
+  <div class="marchio"><img src="../../public/logo/swimline4-logo-680.jpg" alt="">SwimLine4</div>
+</div></div>
+<figcaption>A. Fondo vasca<span>La riga nera sul fondo della corsia diventa l'allenamento: un pezzo per lavoro, lungo quanto i metri.</span></figcaption>
+</figure>
+
+<!-- B. LAVAGNA DEL COACH -->
+<figure>
+<div class="cornice"><div class="tavola lavagna">
+  <div class="alone"></div>
+  <div class="bordo"></div>
+  <p class="titolo"><u>Sab 28/11</u></p>
+  <div class="marchio"><img src="../../public/logo/swimline4-logo-680.jpg" alt="">SwimLine4</div>
+  <ul class="serie" id="serieB"></ul>
+  <div class="tot">
+    <svg viewBox="0 0 470 330" aria-hidden="true"><path d="M70 70 C 140 18, 360 10, 430 90 S 410 300, 230 312 S 20 280, 30 160 S 120 50, 250 40" fill="none" stroke="#d0262c" stroke-width="11" stroke-linecap="round"/></svg>
+    <b>2<span style="font-family:Kalam,cursive;font-weight:700;font-size:150px">,</span>6</b><i>km fatti</i>
+  </div>
+  <div class="tempo"><b>29"84!</b><i>miglior 50 stile</i></div>
+  <div class="note">fatica <s>4,3</s>/10 · record <s>+1</s></div>
+  <div class="barre" id="barreB"></div>
+  <div class="vaschetta"><span style="left:160px;background:#1b3f9c"></span><span style="left:400px;background:#d0262c"></span><span style="left:640px;background:#128a3e"></span></div>
+</div></div>
+<figcaption>B. Lavagna del coach<span>Come la lavagna a bordo vasca: le serie scritte a pennarello, il totale cerchiato.</span></figcaption>
+</figure>
+
+<!-- C. SOTT'ACQUA -->
+<figure>
+<div class="cornice"><div class="tavola sotto">
+  <svg class="raggi" width="1080" height="1920" aria-hidden="true">
+    <g fill="#fff"><polygon points="140,0 260,0 520,1920 300,1920"/><polygon points="460,0 520,0 760,1920 640,1920"/><polygon points="760,0 900,0 1080,1300 1080,1920 980,1920"/></g>
+  </svg>
+  <svg class="superficie" viewBox="0 0 1080 230" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0 0 H1080 V150 C 960 200, 860 110, 740 150 S 520 210, 400 160 S 160 110, 0 170 Z" fill="#7fe3ef" opacity=".55"/>
+    <path d="M0 0 H1080 V110 C 940 150, 820 70, 700 112 S 470 160, 350 118 S 130 80, 0 128 Z" fill="#c9f6fb" opacity=".6"/>
+  </svg>
+  <p class="data">Sabato 28 novembre</p>
+  <svg class="grande" viewBox="0 0 1080 700" aria-label="2,6 chilometri">
+    <filter id="ondeggia" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency=".003 .016" numOctaves="1" seed="3" result="r"/><feDisplacementMap in="SourceGraphic" in2="r" scale="26"/></filter>
+    <g filter="url(#ondeggia)">
+      <text x="70" y="470" font-family="Unbounded" font-weight="900" font-size="470" fill="#fff" letter-spacing="-16">2,6</text>
+      <text x="80" y="640" font-family="Unbounded" font-weight="700" font-size="110" fill="#bff3fa">chilometri</text>
+    </g>
+  </svg>
+  <div class="bolle">
+    <div class="bolla" style="left:470px;top:1040px;width:500px;height:500px"><b style="font-size:120px">29"84</b><i style="font-size:34px">miglior tempo<br>50 stile</i></div>
+    <div class="bolla" style="left:90px;top:1100px;width:340px;height:340px"><b style="font-size:96px">4,3</b><i style="font-size:28px">difficoltà /10</i></div>
+    <div class="bolla" style="left:230px;top:1440px;width:240px;height:240px"><b style="font-size:84px">1</b><i style="font-size:24px">record</i></div>
+    <div class="bolla" style="left:880px;top:900px;width:60px;height:60px"></div>
+    <div class="bolla" style="left:960px;top:820px;width:34px;height:34px"></div>
+    <div class="bolla" style="left:120px;top:1010px;width:44px;height:44px"></div>
+    <div class="bolla" style="left:560px;top:1580px;width:70px;height:70px"></div>
+    <div class="bolla" style="left:660px;top:1640px;width:30px;height:30px"></div>
+  </div>
+  <svg class="scia" viewBox="0 0 920 60" preserveAspectRatio="none" id="sciaC" aria-hidden="true"></svg>
+  <div class="marchio"><img src="../../public/logo/swimline4-logo-680.jpg" alt="">SwimLine4</div>
+</div></div>
+<figcaption>C. Sott'acqua<span>I km visti da sotto la superficie, deformati dall'acqua; gli altri numeri salgono come bolle.</span></figcaption>
+</figure>
+
+</div>
+
+<script>
+  if (location.search.includes('vera')) document.body.classList.add('vera')
+  // l'allenamento di prova: metri e colore del lavoro (colori di SwimLine4)
+  const serie = [
+    { testo: '4×100 SL', lavoro: 'A1', metri: 400, c: '#a9dcff' },
+    { testo: '8×50 misti', lavoro: 'B1', metri: 400, c: '#ffc21a' },
+    { testo: '10×100 SL', lavoro: 'A2', metri: 1000, c: '#2f6cf6' },
+    { testo: '12×50 SL', lavoro: 'C1', metri: 600, c: '#e0393e' },
+    { testo: '200 dorso', lavoro: 'A1', metri: 200, c: '#a9dcff' },
+  ]
+  const tot = serie.reduce((a, s) => a + s.metri, 0)
+
+  // A: la riga sul fondo, dal muro verso di noi, a pezzi
+  const linea = document.getElementById('lineaA')
+  serie.forEach((s, i) => {
+    const d = document.createElement('div')
+    d.style.cssText = `flex-grow:${s.metri};background:${s.c};border-top:${i ? 10 : 0}px solid #10295f`
+    linea.appendChild(d)
+  })
+  const legenda = document.getElementById('legendaA')
+  serie.forEach((s) => { const li = document.createElement('li'); li.style.setProperty('--c', s.c); li.textContent = `${s.testo} ${s.lavoro}`; legenda.appendChild(li) })
+
+  // B: le serie scritte a pennarello e le barre colorate
+  const lista = document.getElementById('serieB')
+  serie.forEach((s) => { const li = document.createElement('li'); li.innerHTML = `${s.testo}<em>${s.lavoro}</em>`; li.style.setProperty('--c', s.c === '#a9dcff' ? '#2b8fd6' : s.c); lista.appendChild(li) })
+  const barre = document.getElementById('barreB')
+  serie.forEach((s) => { const d = document.createElement('div'); d.style.cssText = `flex:${s.metri};background:${s.c === '#a9dcff' ? '#2b8fd6' : s.c}`; barre.appendChild(d) })
+
+  // C: la scia ondulata, un tratto per lavoro
+  const scia = document.getElementById('sciaC')
+  let x = 0
+  serie.forEach((s) => {
+    const w = (s.metri / tot) * (920 - 14 * (serie.length - 1))
+    let d = `M${x} 30`
+    for (let k = x; k <= x + w; k += 6) d += ` L${k} ${30 + Math.sin(k / 22) * 14}`
+    const p = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    p.setAttribute('d', d); p.setAttribute('fill', 'none'); p.setAttribute('stroke', s.c); p.setAttribute('stroke-width', '16'); p.setAttribute('stroke-linecap', 'round')
+    scia.appendChild(p)
+    x += w + 14
+  })
+</script>
+</body>
+</html>

@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import AppShell from '../components/AppShell'
 import { STILI, VASCHE, dataLocale, testoVasca, vascaDi } from '../lib/lavori'
 import Piazzamento from '../components/Piazzamento'
+import { CondividiGara } from '../components/CondividiAllenamento'
 import { AVVISO_VIDEO, VIDEO_ATTIVI, puoModificare } from '../lib/permessi'
 import InputTempo from '../components/InputTempo'
 import GareCoach from '../components/GareCoach'
@@ -374,6 +375,7 @@ function GareAtleta() {
               </p>
               {g.passaggi?.length > 0 && <p className="text-xs text-slate-500 mt-2">Passaggi: {g.passaggi.join(' · ')}</p>}
               <Piazzamento g={g} />
+              {!g.inAttesa && !g.da_confermare && <CondividiGara g={g} />}
             </div>
           ))}
         </>
